@@ -195,14 +195,77 @@ async function main() {
 
   console.log(`=== Episode: ${taskId} | engine ${ENGINE.label} (${ENGINE.model}) ===`);
 
-  const mcp = new McpClient(config.mcp.command, config.mcp.args, {
-    cwd: ROOT,
-    env: { ...process.env, BLOBFISH_LOCAL: process.env.BLOBFISH_LOCAL ?? "1" },
-  });
-  const init = await mcp.start();
-  const mcpTools = await mcp.listTools();
-  const HARNESS = new Set(["verify_task", "reset_session"]);
-  const llmTools = mcpTools.filter((t) => !HARNESS.has(t.name)).map((t) => ({
+  // MCP topology: "multi" = one MCP server per firm system (mcp/systems.json),
+  // all sharing one episode session over the world runtime; "bridge" (default)
+  // = the single-surface bridge every measured run to date used. The default
+  // stays "bridge" so measurement protocol never changes implicitly — switch
+  // per run with --mcp multi.
+  const mcpMode = opt("--mcp", "bridge");
+  const localBase = (process.env.BLOBFISH_LOCAL_BASE ?? config.blobfish.localBase).replace(/\/$/, "");
+  let mcp;               // { instructions, tools, callTool(name,args,timeout), verify(taskId), close() }
+
+  if (mcpMode === "multi") {
+    const systems = JSON.parse(readFileSync(join(ROOT, "mcp", "systems.json"), "utf8")).systems;
+    const sess = await fetch(`${localBase}/sessions`, { method: "POST", body: "{}", headers: { "Content-Type": "application/json" } }).then((r) => r.json());
+    const sessionId = sess.session_id;
+    const TRACE = [];
+    const clients = {};
+    const route = {};
+    const tools = [];
+    const instructions = [];
+    for (const [sysName, spec] of Object.entries(systems)) {
+      const c = new McpClient("node", ["mcp/serve-system.mjs", "--system", sysName], {
+        cwd: ROOT,
+        env: { ...process.env, BLOBFISH_SESSION_ID: sessionId, BLOBFISH_LOCAL_BASE: localBase },
+      });
+      const init = await c.start();
+      instructions.push(`${spec.product}: ${spec.description}`);
+      clients[sysName] = c;
+      for (const t of await c.listTools()) {
+        route[t.name] = c;
+        tools.push(t);
+      }
+    }
+    mcp = {
+      instructions:
+        `The firm runs ${Object.keys(systems).length} separate systems, each exposed as its own MCP server: ` +
+        instructions.join(" · "),
+      tools,
+      async callTool(name, args, timeoutMs) {
+        const c = route[name];
+        if (!c) return { ok: false, text: `ERROR: unknown tool '${name}'`, data: null };
+        const r = await c.callTool(name, args, timeoutMs);
+        TRACE.push({ tool: name, requested_tool: name, arguments: args, observation: String(r.text).slice(0, 4000), ok: r.ok });
+        return r;
+      },
+      async verify(tid) {
+        const res = await fetch(`${localBase}/verify/${encodeURIComponent(tid)}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Mcp-Session-Id": sessionId },
+          body: JSON.stringify({ trace: TRACE }),
+        });
+        const data = await res.json().catch(() => null);
+        return { ok: res.ok, text: JSON.stringify(data, null, 2), data };
+      },
+      close() { for (const c of Object.values(clients)) c.close(); },
+    };
+  } else {
+    const client = new McpClient(config.mcp.command, config.mcp.args, {
+      cwd: ROOT,
+      env: { ...process.env, BLOBFISH_LOCAL: process.env.BLOBFISH_LOCAL ?? "1" },
+    });
+    const init = await client.start();
+    const HARNESS = new Set(["verify_task", "reset_session"]);
+    mcp = {
+      instructions: init.instructions ?? "",
+      tools: (await client.listTools()).filter((t) => !HARNESS.has(t.name)),
+      callTool: (n, a, t) => client.callTool(n, a, t),
+      verify: (tid) => client.callTool("verify_task", { task_id: tid }, 60000),
+      close: () => client.close(),
+    };
+  }
+
+  const llmTools = mcp.tools.map((t) => ({
     type: "function",
     function: { name: t.name, description: t.description, parameters: t.inputSchema },
   }));
@@ -213,7 +276,7 @@ async function main() {
       content:
         `You are an agent operating inside a fully synthetic litigation/corporate law-firm ` +
         `simulation world ("Eve Litigation" — SIMULATED; no real entities, clients, or matters). ` +
-        `${init.instructions ?? ""} ` +
+        `${mcp.instructions ?? ""} ` +
         `Complete the task using the available tools. Be precise with record ids and values. ` +
         `Read input documents in full before drafting deliverables from them. ` +
         `When the task is complete, reply with a final answer and no further tool calls.`,
@@ -225,7 +288,7 @@ async function main() {
   const maxTurns = maxTurnsFlag ? Number(maxTurnsFlag) : Math.max(config.engine.maxAgentTurns, refWalk * 3 + 6);
   const { usage, toolCallCount, steps, turnsUsed } = await runAgent(mcp, llmTools, messages, { maxTurns });
 
-  const v = await mcp.callTool("verify_task", { task_id: taskId }, 60000);
+  const v = await mcp.verify(taskId);
   log({ type: "verify", taskId, result: v.text });
   mcp.close();
 
@@ -238,6 +301,7 @@ async function main() {
     taskId,
     engine: ENGINE.id,
     model: ENGINE.model,
+    mcpMode,
     passed,
     reward: v.data?.reward ?? 0,
     failedConditions: v.data?.failed_conditions ?? [],

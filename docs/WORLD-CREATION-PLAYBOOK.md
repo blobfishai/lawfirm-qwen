@@ -61,7 +61,10 @@ Enumerate the real tool landscape of the domain, then mock **all of it**:
 
 *Lawfirm status:* partial — 102 executable tools over one unified SQLite
 world with chaos-lite (distractor documents, superseded drafts, ambiguous
-acks, injected API friction; `world/local/server.py`). **NEW for sales (the
+acks, injected API friction; `world/local/server.py`), now fronted by **8
+per-system MCP servers** (practice management, docketing, DMS, billing,
+discovery, office suite, HR, knowledge — `mcp/systems.json`,
+`mcp/serve-system.mjs`, topology-proven by `npm run mcp:test`). **NEW for sales (the
 headline gap):** multi-system fragmentation — several mock services with
 separate namespaces/storage and cross-system reconciliation tasks. The local
 runtime already supports the mechanics (tool namespaces, per-table state,

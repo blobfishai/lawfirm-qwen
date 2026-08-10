@@ -39,6 +39,7 @@ const RESUME = argv.includes("--resume"); // skip episodes whose record already 
 const AGG_ONLY = argv.includes("--aggregate-only"); // no API calls: aggregate existing episode files
 const WORLD_FILE = opt("--world-file", null);      // e.g. world/blobfish/world-expanded.json
 const LOCAL_BASE = opt("--local-base", null);      // e.g. http://127.0.0.1:8972
+const MCP_MODE = opt("--mcp", "bridge");           // bridge | multi (per-system MCP servers)
 
 if (!ENGINES.length) {
   console.error(`--engines required. Registry: ${Object.keys(config.models ?? {}).join(", ")}`);
@@ -108,7 +109,7 @@ function runEpisode(engine, taskId, ep) {
   return new Promise((resolve) => {
     const child = spawn("node", [
       "sim/run-simulation.mjs", "--task", taskId, "--engine", engine,
-      "--episode-out", out,
+      "--episode-out", out, "--mcp", MCP_MODE,
       ...(WORLD_FILE ? ["--world-file", join(ROOT, WORLD_FILE)] : []),
     ], {
       cwd: ROOT,

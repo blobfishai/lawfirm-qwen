@@ -671,6 +671,7 @@ def make_handler(world: dict, runtime: ToolRuntime, friction: Friction,
 
         # ---------------------------------------------------------- DELETE
         def do_DELETE(self):
+            self._body()  # drain any body — see do_POST
             m = re.match(r"^/sessions/([\w\-]+)$", self.path)
             if m:
                 s = sessions.pop(m.group(1), None)
@@ -681,6 +682,11 @@ def make_handler(world: dict, runtime: ToolRuntime, friction: Friction,
 
         # ------------------------------------------------------------- POST
         def do_POST(self):
+            # Always drain the request body FIRST: an unread body on a
+            # keep-alive connection corrupts the next request on it (the
+            # leftover bytes parse as a garbage request line → HTML 400).
+            body = self._body()
+
             if self.path == "/sessions":
                 sid = uuid.uuid4().hex[:16]
                 sessions[sid] = Session(sid)
@@ -688,22 +694,22 @@ def make_handler(world: dict, runtime: ToolRuntime, friction: Friction,
 
             m = re.match(r"^/verify/([\w\-]+)$", self.path)
             if m:
-                return self._verify(m.group(1))
+                return self._verify(m.group(1), body)
 
             if self.path == "/mcp":
-                return self._mcp()
+                return self._mcp(body)
 
             return self._json(404, {"error": "not_found"})
 
         # ------------------------------------------------------------ verify
-        def _verify(self, task_id: str):
+        def _verify(self, task_id: str, body: dict):
             v = verifiers.get(task_id)
             if not v:
                 return self._json(404, {"error": f"no verifier for {task_id}"})
             sess = self._session()
             if not sess:
                 return self._json(400, {"error": "missing or unknown session header"})
-            trace = self._body().get("trace") or []
+            trace = body.get("trace") or []
             final_state = snapshot(sess.db_path)
             ns: dict = {}
             try:
@@ -714,8 +720,8 @@ def make_handler(world: dict, runtime: ToolRuntime, friction: Friction,
             return self._json(200, verdict)
 
         # --------------------------------------------------------------- mcp
-        def _mcp(self):
-            msg = self._body()
+        def _mcp(self, body: dict):
+            msg = body
             mid = msg.get("id")
             method = msg.get("method", "")
             params = msg.get("params") or {}

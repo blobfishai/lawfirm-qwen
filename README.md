@@ -40,8 +40,12 @@ Three things live here:
                                              │ MCP (stdio, JSON-RPC)
                                              ▼
                              ┌───────────────────────────────────────────────┐
-                             │ mcp/blobfish-lawfirm-bridge.mjs (LOCAL mode)  │
-                             │ + verify_task / reset_session harness tools   │
+                             │ mcp/ — the firm stack as MCP servers          │
+                             │  8 per-system servers (practice mgmt, docket, │
+                             │  DMS, billing, discovery, office, HR, know-   │
+                             │  ledge) via serve-system.mjs + systems.json,  │
+                             │  or the legacy single bridge (measurement     │
+                             │  default; --mcp multi switches per run)       │
                              └───────────────┬───────────────────────────────┘
                                              │ sessions · /mcp · /verify
                                              ▼
