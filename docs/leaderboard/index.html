@@ -1,0 +1,352 @@
+<title>lawfirm-qwen — Legal Agent Leaderboard</title>
+<style>
+  :root {
+    --paper: #f9f9f7; --card: #ffffff; --ink: #1c2128; --ink-2: #57606d;
+    --mut: #8a919c; --line: #e4e5e1; --accent: #33415e;
+    --s0: #2a78d6; --s1: #eb6834; --s2: #1baf7a; --s3: #eda100; --s4: #e87ba4;
+    --heat-h: 42, 120, 214;
+    --good: #008300; --warn: #eda100; --crit: #e34948;
+    --m-deliverable_in_chat: #2a78d6; --m-emission_collapse: #e34948;
+    --m-workflow_shortcut: #eda100; --m-wrong_value: #eb6834;
+    --m-evidence_gap: #1baf7a; --m-fabrication: #8f2f8b;
+    --m-friction_non_recovery: #4a3aa7; --m-no_action: #8a919c;
+    --m-turn_exhaustion: #5d4037; --m-off_task_damage: #d55181;
+    --m-api_error: #9e9e9e; --m-other: #c3c2b7;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #16161a; --card: #1e1e23; --ink: #eceae2; --ink-2: #b9bcc4;
+      --mut: #868c96; --line: #2e2e34; --accent: #9fb2d8;
+      --s0: #3987e5; --s1: #d95926; --s2: #199e70; --s3: #c98500; --s4: #d55181;
+      --heat-h: 57, 135, 229;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #16161a; --card: #1e1e23; --ink: #eceae2; --ink-2: #b9bcc4;
+    --mut: #868c96; --line: #2e2e34; --accent: #9fb2d8;
+    --s0: #3987e5; --s1: #d95926; --s2: #199e70; --s3: #c98500; --s4: #d55181;
+    --heat-h: 57, 135, 229;
+  }
+  * { box-sizing: border-box; }
+  body { background: var(--paper); color: var(--ink); margin: 0;
+    font: 16px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .wrap { max-width: 1060px; margin: 0 auto; padding: 40px 24px 80px; }
+  h1, h2 { font-family: Georgia, "Iowan Old Style", "Times New Roman", serif;
+    text-wrap: balance; letter-spacing: 0.1px; }
+  h1 { font-size: 2rem; margin: 0 0 6px; }
+  h2 { font-size: 1.35rem; margin: 48px 0 6px; }
+  .sub { color: var(--ink-2); max-width: 68ch; margin: 0 0 4px; }
+  .eyebrow { text-transform: uppercase; letter-spacing: 0.14em; font-size: 0.72rem;
+    color: var(--mut); font-weight: 600; margin-bottom: 10px; }
+  .disclaimer { border: 1px solid var(--line); background: var(--card); color: var(--ink-2);
+    border-left: 3px solid var(--accent); padding: 10px 14px; font-size: 0.85rem;
+    margin: 18px 0 0; max-width: 76ch; }
+  .stats { display: flex; flex-wrap: wrap; gap: 12px; margin: 26px 0 8px; }
+  .stat { background: var(--card); border: 1px solid var(--line); padding: 12px 18px;
+    min-width: 128px; }
+  .stat b { display: block; font-size: 1.5rem; font-variant-numeric: tabular-nums;
+    font-family: Georgia, serif; }
+  .stat span { color: var(--mut); font-size: 0.75rem; text-transform: uppercase;
+    letter-spacing: 0.1em; }
+  .lb { background: var(--card); border: 1px solid var(--line); padding: 20px 22px 14px;
+    margin-top: 14px; }
+  .lb-row { display: grid; grid-template-columns: 300px 1fr; gap: 14px;
+    align-items: center; padding: 7px 0; border-bottom: 1px solid var(--line); }
+  .lb-row:last-child { border-bottom: none; }
+  .lb-name { font-weight: 600; font-size: 0.95rem; display: flex; align-items: baseline;
+    gap: 8px; flex-wrap: wrap; }
+  .lb-model { color: var(--mut); font-weight: 400; font-size: 0.75rem; }
+  .lb-track { position: relative; height: 26px; background: transparent; display: flex;
+    align-items: center; gap: 10px; }
+  .lb-bar { height: 18px; border-radius: 0 4px 4px 0; min-width: 3px; }
+  .lb-val { font-variant-numeric: tabular-nums; font-weight: 650; font-size: 0.95rem; }
+  .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%;
+    flex: none; align-self: center; }
+  .s0 { background: var(--s0); } .s1 { background: var(--s1); } .s2 { background: var(--s2); }
+  .s3 { background: var(--s3); } .s4 { background: var(--s4); }
+  .fm-row { background: var(--card); border: 1px solid var(--line); padding: 14px 18px;
+    margin-top: 10px; }
+  .fm-head { display: flex; gap: 8px; align-items: baseline; margin-bottom: 8px; }
+  .fm-n { color: var(--mut); font-size: 0.8rem; }
+  .fm-stack { display: flex; height: 22px; border-radius: 3px; overflow: hidden; gap: 2px;
+    background: var(--paper); }
+  .seg { min-width: 3px; }
+  .seg[data-mode="deliverable_in_chat"], .mode-chip[data-mode="deliverable_in_chat"]::before { background: var(--m-deliverable_in_chat); }
+  .seg[data-mode="emission_collapse"], .mode-chip[data-mode="emission_collapse"]::before { background: var(--m-emission_collapse); }
+  .seg[data-mode="workflow_shortcut"], .mode-chip[data-mode="workflow_shortcut"]::before { background: var(--m-workflow_shortcut); }
+  .seg[data-mode="wrong_value"], .mode-chip[data-mode="wrong_value"]::before { background: var(--m-wrong_value); }
+  .seg[data-mode="evidence_gap"], .mode-chip[data-mode="evidence_gap"]::before { background: var(--m-evidence_gap); }
+  .seg[data-mode="fabrication"], .mode-chip[data-mode="fabrication"]::before { background: var(--m-fabrication); }
+  .seg[data-mode="friction_non_recovery"], .mode-chip[data-mode="friction_non_recovery"]::before { background: var(--m-friction_non_recovery); }
+  .seg[data-mode="no_action"], .mode-chip[data-mode="no_action"]::before { background: var(--m-no_action); }
+  .seg[data-mode="turn_exhaustion"], .mode-chip[data-mode="turn_exhaustion"]::before { background: var(--m-turn_exhaustion); }
+  .seg[data-mode="off_task_damage"], .mode-chip[data-mode="off_task_damage"]::before { background: var(--m-off_task_damage); }
+  .seg[data-mode="api_error"], .mode-chip[data-mode="api_error"]::before { background: var(--m-api_error); }
+  .seg[data-mode="other"], .mode-chip[data-mode="other"]::before { background: var(--m-other); }
+  .fm-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 8px; }
+  .mode-chip { font-size: 0.76rem; color: var(--ink-2); display: inline-flex;
+    align-items: center; gap: 6px; }
+  .mode-chip::before { content: ""; width: 9px; height: 9px; border-radius: 2px;
+    display: inline-block; }
+  .table-scroll { overflow-x: auto; margin-top: 14px; }
+  table { border-collapse: collapse; width: 100%; background: var(--card);
+    border: 1px solid var(--line); font-size: 0.85rem; }
+  th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--line);
+    white-space: nowrap; }
+  thead th { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--mut); font-weight: 600; }
+  tbody th { font-weight: 600; }
+  td { font-variant-numeric: tabular-nums; }
+  td.heat { background: rgba(var(--heat-h), var(--ha, 0)); }
+  td.heat.none, .mut { color: var(--mut); }
+  .note { color: var(--ink-2); font-size: 0.85rem; max-width: 76ch; }
+  .meth { background: var(--card); border: 1px solid var(--line); padding: 20px 24px;
+    margin-top: 14px; }
+  .meth h3 { margin: 14px 0 4px; font-size: 1rem; }
+  .meth p, .meth li { color: var(--ink-2); font-size: 0.9rem; max-width: 80ch; }
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.85em;
+    background: var(--paper); border: 1px solid var(--line); padding: 1px 5px;
+    border-radius: 3px; }
+  footer { margin-top: 56px; color: var(--mut); font-size: 0.78rem; }
+  a { color: var(--accent); }
+</style>
+<div class="wrap">
+  <div class="eyebrow">lawfirm-qwen · Eve Litigation world (simulated)</div>
+  <h1>Legal Agent Leaderboard</h1>
+  <p class="sub">Models measured as agents inside an executable law-firm simulation:
+  74 live tables, 102 executable tools, 231 tasks
+  (156 original + 75 eval-anchored expansion),
+  211 seeded matter documents. Every score comes from deterministic VCode verifiers —
+  per-assertion verdicts, anti-hack vetoes, no LLM judge — over 3
+  episodes per task.</p>
+  <p class="disclaimer"><strong>Simulation only.</strong> Every matter, client, document, attorney,
+  and figure is synthetic test data. Task shapes are anchored to public benchmarks
+  (Harvey LAB, BigLaw Bench, LegalBench, CUAD, MAUD, TaxCalcBench …) — no affiliation with any
+  benchmark publisher or law firm. Scores below are <em>not</em> comparable to any other harness's absolute numbers.</p>
+
+  <div class="stats">
+    <div class="stat"><b>2</b><span>models measured</span></div>
+    <div class="stat"><b>855</b><span>episodes run</span></div>
+    <div class="stat"><b>231</b><span>tasks in world</span></div>
+    <div class="stat"><b>211</b><span>seeded documents</span></div>
+    <div class="stat"><b>21</b><span>boundary-proven flaky tasks</span></div>
+    <div class="stat"><b>$94</b><span>total measurement cost</span></div>
+  </div>
+
+  <h2>Task Pass Rate</h2>
+  <p class="note">Mean per-task pass rate across 3 episodes
+  (a task passed 2 of 3 episodes contributes 66.7). Deterministic verifier, structural conditions only.</p>
+  <div class="lb">
+      <div class="lb-row">
+        <div class="lb-name"><span class="dot s0"></span>DeepSeek V3.2 (chat)<span class="lb-model">deepseek-chat · 155 tasks · 3 eps</span></div>
+        <div class="lb-track"><div class="lb-bar s0" style="width:88.2%"></div><span class="lb-val">88.2</span></div>
+      </div>
+      <div class="lb-row">
+        <div class="lb-name"><span class="dot s1"></span>Claude Haiku 4.5<span class="lb-model">claude-haiku-4-5 · 130 tasks · 3 eps</span></div>
+        <div class="lb-track"><div class="lb-bar s1" style="width:60.3%"></div><span class="lb-val">60.3</span></div>
+      </div></div>
+
+  <h2>Pass^3 — the hard metric</h2>
+  <p class="note">Share of tasks passed in <em>every</em> episode. This is the reliability number:
+  a model that "can" do a task but only sometimes does not clear this bar
+  (the analogue of Harvey LAB's all-pass rate, but over repeated executions instead of rubric criteria).</p>
+  <div class="lb">
+      <div class="lb-row">
+        <div class="lb-name"><span class="dot s0"></span>DeepSeek V3.2 (chat)<span class="lb-model">deepseek-chat · 155 tasks · 3 eps</span></div>
+        <div class="lb-track"><div class="lb-bar s0" style="width:76.1%"></div><span class="lb-val">76.1</span></div>
+      </div>
+      <div class="lb-row">
+        <div class="lb-name"><span class="dot s1"></span>Claude Haiku 4.5<span class="lb-model">claude-haiku-4-5 · 130 tasks · 3 eps</span></div>
+        <div class="lb-track"><div class="lb-bar s1" style="width:48.5%"></div><span class="lb-val">48.5</span></div>
+      </div></div>
+
+  <h2>Failure modes — why each model fails when it fails</h2>
+  <p class="note">Every failing episode classified from its full step trace
+  (tool calls, arguments, observations). Hover segments for counts. Full per-model reports in
+  <code>docs/failure-reports/</code>.</p>
+  
+      <div class="fm-row">
+        <div class="fm-head"><span class="dot s0"></span><strong>DeepSeek V3.2 (chat)</strong>
+          <span class="fm-n">55 failing episodes of 465</span></div>
+        <div class="fm-stack"><div class="seg" style="width:38.18181818181819%" data-mode="workflow_shortcut" title="Workflow shortcut: 21 episodes (38.2% of failures)"></div><div class="seg" style="width:61.81818181818181%" data-mode="off_task_damage" title="Off-task damage: 34 episodes (61.8% of failures)"></div></div>
+        <div class="fm-legend"><span class="mode-chip" data-mode="off_task_damage">Off-task damage 61.8%</span><span class="mode-chip" data-mode="workflow_shortcut">Workflow shortcut 38.2%</span></div>
+      </div>
+      <div class="fm-row">
+        <div class="fm-head"><span class="dot s1"></span><strong>Claude Haiku 4.5</strong>
+          <span class="fm-n">155 failing episodes of 388</span></div>
+        <div class="fm-stack"><div class="seg" style="width:23.225806451612904%" data-mode="deliverable_in_chat" title="Deliverable left in chat: 36 episodes (23.2% of failures)"></div><div class="seg" style="width:69.6774193548387%" data-mode="workflow_shortcut" title="Workflow shortcut: 108 episodes (69.7% of failures)"></div><div class="seg" style="width:0.6451612903225806%" data-mode="friction_non_recovery" title="Friction non-recovery: 1 episodes (0.6% of failures)"></div><div class="seg" style="width:6.451612903225806%" data-mode="no_action" title="No effective action: 10 episodes (6.5% of failures)"></div></div>
+        <div class="fm-legend"><span class="mode-chip" data-mode="workflow_shortcut">Workflow shortcut 69.7%</span><span class="mode-chip" data-mode="deliverable_in_chat">Deliverable left in chat 23.2%</span><span class="mode-chip" data-mode="no_action">No effective action 6.5%</span><span class="mode-chip" data-mode="friction_non_recovery">Friction non-recovery 0.6%</span></div>
+      </div>
+
+  <h2>The capability boundary</h2>
+  <p class="note">The 21 tasks with prior mixed-outcome proof at a model boundary
+  (<code>docs/FAILURE-REPORT.md</code>), re-measured per model. "Outcome stability" =
+  share of tasks with a consistent verdict across all episodes (either all pass or all fail);
+  low stability means the model sits at this world's difficulty boundary.</p>
+  <div class="table-scroll"><table class="data-table">
+    <thead><tr><th>Model</th><th>Flaky-21 score</th><th>Flaky-21 pass 3/3</th><th># tasks flaky for this model</th><th>Outcome stability</th></tr></thead>
+    <tbody>
+    <tr><th><span class="dot s0"></span>DeepSeek V3.2 (chat)</th>
+      <td>87.3%</td>
+      <td>71.4%</td>
+      <td>32</td>
+      <td>79.4%</td></tr>
+    <tr><th><span class="dot s1"></span>Claude Haiku 4.5</th>
+      <td>56.9%</td>
+      <td>41.2%</td>
+      <td>33</td>
+      <td>74.6%</td></tr></tbody></table></div>
+
+  <h2>Jagged intelligence — score by family</h2>
+  <p class="note">Per-task-shape and per-practice-area scores (sequential shading, darker = higher).
+  No model dominates every family — the same "jagged intelligence" pattern the
+  Harvey LAB &times; Artificial Analysis leaderboard reports across practice areas.</p>
+  
+    <div class="table-scroll"><table class="heat-table">
+      <thead><tr><th>Task shape</th>
+        <th><span class="dot s0"></span>DeepSeek V3.2</th><th><span class="dot s1"></span>Claude Haiku 4.5</th>
+        <th class="mut">tasks</th></tr></thead>
+      <tbody><tr><th>workflow-chain</th>
+        <td class="heat" style="--ha:0.59">92.3</td><td class="heat" style="--ha:0.61">97.1</td>
+        <td class="mut">39</td></tr><tr><th>document-drafting</th>
+        <td class="heat" style="--ha:0.58">90.3</td><td class="heat" style="--ha:0.35">49.8</td>
+        <td class="mut">110</td></tr><tr><th>records-research</th>
+        <td class="heat" style="--ha:0.20">22.2</td><td class="heat" style="--ha:0.08">0</td>
+        <td class="mut">6</td></tr>
+      </tbody></table></div>
+    <div class="table-scroll"><table class="heat-table">
+      <thead><tr><th>Practice area / family</th>
+        <th><span class="dot s0"></span>DeepSeek V3.2</th><th><span class="dot s1"></span>Claude Haiku 4.5</th>
+        <th class="mut">tasks</th></tr></thead>
+      <tbody><tr><th>banking-finance</th>
+        <td class="heat" style="--ha:0.56">86.7</td><td class="heat" style="--ha:0.54">84.4</td>
+        <td class="mut">15</td></tr><tr><th>arbitration-international-dispute-resolution</th>
+        <td class="heat" style="--ha:0.47">71.4</td><td class="heat" style="--ha:0.34">47.6</td>
+        <td class="mut">14</td></tr><tr><th>antitrust-competition</th>
+        <td class="heat" style="--ha:0.53">81</td><td class="heat" style="--ha:0.32">42.9</td>
+        <td class="mut">14</td></tr><tr><th>bankruptcy-restructuring</th>
+        <td class="heat" style="--ha:0.62">97.4</td><td class="heat" style="--ha:0.48">72.7</td>
+        <td class="mut">13</td></tr><tr><th>multi-hop</th>
+        <td class="heat" style="--ha:0.63">100</td><td class="heat" style="--ha:0.63">100</td>
+        <td class="mut">8</td></tr><tr><th>employment-labor</th>
+        <td class="heat" style="--ha:0.59">93.3</td><td class="heat" style="--ha:0.31">41.7</td>
+        <td class="mut">5</td></tr><tr><th>emerging-companies-venture-capital</th>
+        <td class="heat" style="--ha:0.59">93.3</td><td class="heat" style="--ha:0.54">83.3</td>
+        <td class="mut">5</td></tr><tr><th>diligence</th>
+        <td class="heat" style="--ha:0.19">20</td><td class="heat" style="--ha:0.63">100</td>
+        <td class="mut">5</td></tr><tr><th>data-privacy-cybersecurity</th>
+        <td class="heat" style="--ha:0.48">73.3</td><td class="heat" style="--ha:0.31">41.7</td>
+        <td class="mut">5</td></tr><tr><th>corporate-ma</th>
+        <td class="heat" style="--ha:0.56">86.7</td><td class="heat" style="--ha:0.31">41.7</td>
+        <td class="mut">5</td></tr><tr><th>corporate-governance</th>
+        <td class="heat" style="--ha:0.63">100</td><td class="heat" style="--ha:0.17">16.7</td>
+        <td class="mut">5</td></tr><tr><th>contracts</th>
+        <td class="heat" style="--ha:0.56">86.7</td><td class="heat" style="--ha:0.17">16.7</td>
+        <td class="mut">5</td></tr><tr><th>capital-markets</th>
+        <td class="heat" style="--ha:0.63">100</td><td class="heat" style="--ha:0.45">66.7</td>
+        <td class="mut">5</td></tr><tr><th>international-trade-sanctions</th>
+        <td class="heat" style="--ha:0.54">83.3</td><td class="heat" style="--ha:0.32">44.4</td>
+        <td class="mut">4</td></tr><tr><th>intellectual-property</th>
+        <td class="heat" style="--ha:0.63">100</td><td class="heat" style="--ha:0.39">55.6</td>
+        <td class="mut">4</td></tr><tr><th>insurance</th>
+        <td class="heat" style="--ha:0.63">100</td><td class="heat" style="--ha:0.26">33.3</td>
+        <td class="mut">4</td></tr><tr><th>immigration</th>
+        <td class="heat" style="--ha:0.58">91.7</td><td class="heat" style="--ha:0.57">88.9</td>
+        <td class="mut">4</td></tr><tr><th>healthcare-life-sciences</th>
+        <td class="heat" style="--ha:0.63">100</td><td class="heat" style="--ha:0.32">44.4</td>
+        <td class="mut">4</td></tr><tr><th>funds-asset-management</th>
+        <td class="heat" style="--ha:0.63">100</td><td class="heat" style="--ha:0.39">55.6</td>
+        <td class="mut">4</td></tr><tr><th>environmental-esg</th>
+        <td class="heat" style="--ha:0.54">83.3</td><td class="heat" style="--ha:0.51">77.8</td>
+        <td class="mut">4</td></tr><tr><th>energy-natural-resources</th>
+        <td class="heat" style="--ha:0.63">100</td><td class="heat" style="--ha:0.32">44.4</td>
+        <td class="mut">4</td></tr><tr><th>white-collar-defense-investigations</th>
+        <td class="heat" style="--ha:0.63">100</td><td class="heat" style="--ha:0.36">50</td>
+        <td class="mut">3</td></tr><tr><th>trusts-estates-private-client</th>
+        <td class="heat" style="--ha:0.63">100</td><td class="heat" style="--ha:0.45">66.7</td>
+        <td class="mut">3</td></tr><tr><th>tax</th>
+        <td class="heat" style="--ha:0.63">100</td><td class="heat" style="--ha:0.63">100</td>
+        <td class="mut">3</td></tr><tr><th>structured-finance-securitization</th>
+        <td class="heat" style="--ha:0.57">88.9</td><td class="heat" style="--ha:0.45">66.7</td>
+        <td class="mut">3</td></tr><tr><th>real-estate</th>
+        <td class="heat" style="--ha:0.63">100</td><td class="heat" style="--ha:0.54">83.3</td>
+        <td class="mut">3</td></tr><tr><th>litigation-dispute-resolution</th>
+        <td class="heat" style="--ha:0.63">100</td><td class="heat" style="--ha:0.45">66.7</td>
+        <td class="mut">3</td></tr><tr><th>graph-walk</th>
+        <td class="heat" style="--ha:0.63">100</td><td class="heat" style="--ha:0.08">0</td>
+        <td class="mut">1</td></tr>
+      </tbody></table></div>
+
+  
+
+  <h2>Full results</h2>
+  <div class="table-scroll"><table class="data-table">
+    <thead><tr><th>Model</th><th>Score</th><th>Pass^3 rate</th><th>Mean reward</th><th>Flaky-21</th><th>Avg tool calls</th><th>$/episode</th><th>$ total</th><th>Infra errors</th></tr></thead>
+    <tbody>
+    <tr><th><span class="dot s0"></span>DeepSeek V3.2 (chat)</th>
+      <td><strong>88.2</strong></td>
+      <td>76.1</td>
+      <td>88.2</td>
+      <td>87.3%</td>
+      <td>23</td>
+      <td>$0.107</td>
+      <td>$49.61</td>
+      <td>0</td></tr>
+    <tr><th><span class="dot s1"></span>Claude Haiku 4.5</th>
+      <td><strong>60.3</strong></td>
+      <td>48.5</td>
+      <td>60.3</td>
+      <td>56.9%</td>
+      <td>6.1</td>
+      <td>$0.115</td>
+      <td>$44.72</td>
+      <td>0</td></tr></tbody></table></div>
+
+  <h2>Context — the same task-shape lineage on Harvey LAB (Artificial Analysis)</h2>
+  <p class="note">For orientation only: the Artificial Analysis &times; Harvey LAB leaderboard
+  (<a href="https://artificialanalysis.ai/evaluations/harvey-lab-aa">harvey-lab-aa</a>, 120 private
+  LAB tasks, single LLM-judge, criterion pass rate / all-pass) — a <em>different benchmark and
+  grading system</em> whose task shapes this world hosts in executable form. Do not compare
+  absolute numbers across the two.</p>
+  <div class="table-scroll"><table class="data-table">
+    <thead><tr><th>Model (AA harness)</th><th>Criterion pass %</th><th>All-pass %</th></tr></thead>
+    <tbody><tr><th>Kimi K3 (max)</th><td>94.6</td><td>26.7</td></tr><tr><th>Claude Fable 5 (max)</th><td>93.6</td><td>14.2</td></tr><tr><th>Muse Spark 1.1 (xhigh)</th><td>93.1</td><td>8.3</td></tr><tr><th>Grok 4.5 (high)</th><td>92.4</td><td>13.3</td></tr><tr><th>Claude Opus 4.8 (max)</th><td>91.1</td><td>7.5</td></tr><tr><th>…</th><td></td><td></td></tr><tr><th>DeepSeek V4 Flash (Reasoning)</th><td>81.3</td><td>1.7</td></tr><tr><th>Claude 4.5 Haiku (Reasoning)</th><td>61.1</td><td>0.0</td></tr><tr><th>gpt-oss-120b (high)</th><td>13.9</td><td>0.0</td></tr></tbody>
+  </table></div>
+
+  <h2>Methodology</h2>
+  <div class="meth">
+    <h3>Environment</h3>
+    <p>The world (id <code>sbx_206712ec47f741d3</code>) runs fully locally:
+    <code>world/local/server.py</code> hydrates the shipped world document into SQLite and serves
+    the same session/MCP/verify surface the original hosted runtime exposed. Fidelity is proven by
+    a reference-walk oracle: 156/156 original tasks execute and pass their shipped verifiers.
+    Seeded friction is active: 3% injected <code>rate_limited</code>/<code>stale_reference</code>
+    tool failures, 15% ambiguous write-acks, per-session write cap — all deterministic.</p>
+    <h3>Protocol</h3>
+    <p>Each episode: fresh session (pristine DB copy), the task prompt verbatim, all
+    102 world tools exposed via MCP, reference-relative turn budget
+    (3&times; walk length + 6, min 50). Scoring calls the task's VCode verifier with the full
+    rollout trace: structural conditions decide pass/fail; anti-hack conditions (workflow
+    shortcuts, fabricated rows, collateral damage) veto reward to 0; tool-success is advisory.
+    1 task(s) quarantined from scoring
+    for prompt/verifier drift (task_016).</p>
+    <h3>Honesty notes</h3>
+    <ul>
+      <li>Scores are world-specific. Cross-harness comparison of absolute numbers is invalid — the same
+      LAB family yields 26.7% (AA), ~7–12% (Harvey held-out), ~13.3% (Vals) top all-pass under three
+      different graders.</li>
+      <li>All models measured on the identical scored task set.</li>
+      <li>Verifiers are generated and execution-grounded, not attorney-reviewed; they grade operational
+      correctness (right records, right values, right evidence chain), not prose quality.</li>
+      <li>qwen3-8b is the repo's target training policy; it appears here only when an endpoint is
+      configured (<code>QWEN_BASE_URL</code>).</li>
+    </ul>
+    <h3>Reproduce / extend</h3>
+    <p><code>npm run world:serve</code> · <code>npm run leaderboard -- --engines &lt;id,…&gt; --episodes 3</code> ·
+    <code>npm run failure-report -- --all</code> · <code>node docs/leaderboard/build-page.mjs</code>.
+    Adding a model = one entry in <code>config/world.config.json</code> models registry.</p>
+  </div>
+
+  <footer>Generated 2026-08-10 17:12 UTC · lawfirm-qwen · world sbx_206712ec47f741d3 v19
+  · all data in <code>data/leaderboard/</code></footer>
+</div>

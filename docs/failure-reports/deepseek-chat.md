@@ -17,7 +17,7 @@ Measured on the lawfirm-qwen world (local runtime, seeded + deterministic verifi
 
 ### off_task_damage — 34 episodes (61.8% of failures)
 
-Off-task damage — modified tables/rows outside the task's declared scope
+Off-task damage — modified tables/rows outside the task's declared scope (side-copies, undeclared records)
 
 Tasks: task_005, task_008, task_011, task_012, task_020, task_024, task_026, task_028, task_034, task_035, task_036, task_039 (+14 more)
 
@@ -33,7 +33,7 @@ Exemplar (task_005, final steps):
 
 ### workflow_shortcut — 21 episodes (38.2% of failures)
 
-Workflow shortcut — skipped required ordered checkpoints (e.g. drafted from search previews instead of full reads)
+Workflow shortcut — skipped or reordered required checkpoints (e.g. drafted from search previews instead of full reads, or get before list)
 
 Tasks: task_001, task_002, task_075, task_076, task_085, task_086, task_095, task_096, task_113, task_114, task_115, task_116
 

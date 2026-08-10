@@ -1,0 +1,145 @@
+{
+  "taskId": "task_114",
+  "engine": "deepseek-chat",
+  "model": "deepseek-chat",
+  "passed": false,
+  "reward": 0,
+  "failedConditions": [
+    "required_workflow_path"
+  ],
+  "advisoryConditions": [],
+  "assertions": [
+    {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+    },
+    {
+      "name": "reads_before_writes",
+      "passed": true,
+      "details": "reads=2, writes=1, read_first=True"
+    },
+    {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+    },
+    {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints legal_matters_get -> legal_matters_evidence_create"
+    },
+    {
+      "name": "rows_inserted_into_legal_matters_evidence_records",
+      "passed": true,
+      "details": "legal_matters_evidence_records: 9 -> 10 rows"
+    },
+    {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no_offtask_table_changes: passes after removing seed-contamination (matter_documents expansion rows); original: OFF-TASK DAMAGE: tables ['matter_documents'] changed but are outside this task's scope"
+    },
+    {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+    },
+    {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "no_undeclared_rows_created: passes after removing seed-contamination (matter_documents expansion rows); original: UNDECLARED RECORD CREATION: {'matter_documents': \"130 -> 205 rows, new ids ['131', '132', '133', '134', '135', '136', '137', '138']\"}"
+    },
+    {
+      "name": "audit_logs_append_only",
+      "passed": true,
+      "details": "audit_logs append-only invariant holds"
+    },
+    {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "4/4 tool calls succeeded"
+    }
+  ],
+  "toolCalls": 4,
+  "turnsUsed": 4,
+  "maxTurns": 50,
+  "usage": {
+    "prompt": 63125,
+    "completion": 753,
+    "total": 63878
+  },
+  "costUsd": 0.01787,
+  "log": "/Users/samuelchien/dev/lawfirm-qwen/sim/logs/run-2026-08-10T07-44-02-494Z.jsonl",
+  "finishedAt": "2026-08-10T07:44:12.005Z",
+  "steps": [
+    {
+      "turn": 1,
+      "tool": "legal_matters_get",
+      "args": {
+        "id": "legal_matters_002"
+      },
+      "argBytes": 27,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"id\": \"legal_matters_002\", \"title\": \"Fairview Group Legal Matters\", \"status\": \"Active\", \"department\": \"Legal\", \"owner_role\": \"associate\", \"reviewer_role\": \"partner\", \"fee_budget\": 87.43, \"evidence_summary\": \"Legal Matters review requires attention\", \"decision_reason\": \"Legal Matters requires verification because linked evidence is incomplete.\", \"created_at\": \"2026-01-06T18:57:00Z\", \"updated_at\": \"2026-01-07T23:15:00Z\"}",
+      "thought": null
+    },
+    {
+      "turn": 2,
+      "tool": "legal_matters_list",
+      "args": {},
+      "argBytes": 2,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"matters\", \"count\": 28, \"rows\": [{\"id\": \"legal_matters_001\", \"title\": \"Summit Operations Legal Matters\", \"status\": \"Intake\", \"department\": \"Legal\", \"owner_role\": \"associate\", \"reviewer_role\": \"partner\", \"fee_budget\": 39.49, \"evidence_summary\": \"Legal Matters review requires attention\", \"decision_reason\": \"Legal Matters requires verification because a policy exception needs review.\", \"created_at\": \"2026-01-06T05:01:00Z\", \"updated_at\": \"2026-01-07T19:07:00Z\"}, {\"id\": \"legal_matters_002\", \"title\": \"Fairview Group Legal Matters\", \"status\": \"Active\", \"department\": \"Legal\", \"owner_role\": \"",
+      "thought": null
+    },
+    {
+      "turn": 2,
+      "tool": "legal_matters_audit_list",
+      "args": {
+        "legal_matters_id": "legal_matters_002"
+      },
+      "argBytes": 41,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"legal_matters_audit_events\", \"count\": 2, \"rows\": [{\"id\": \"legal_matters_audit_event_012\", \"legal_matters_id\": \"legal_matters_002\", \"event_type\": \"remediated\", \"actor_role\": \"Finance Specialist\", \"detail\": \"Legal Matters Audit Event handoff documents that linked evidence is incomplete.\", \"created_at\": \"2026-01-08T16:12:00Z\"}, {\"id\": \"legal_matters_audit_event_014\", \"legal_matters_id\": \"legal_matters_002\", \"event_type\": \"evidence_attached\", \"actor_role\": \"Customer Success Manager\", \"detail\": \"Legal Matters Audit Event handoff documents that the ownership handoff is pending.\", \"created",
+      "thought": null
+    },
+    {
+      "turn": 3,
+      "tool": "legal_matters_evidence_create",
+      "args": {
+        "legal_matters_id": "legal_matters_002",
+        "evidence_type": "matter_summary",
+        "source_uri": "matter://fairview-group/legal-matters",
+        "content_digest": "sha256:fairview-group-legal-matters-evidence-001",
+        "owner_role": "associate",
+        "status": "collected"
+      },
+      "argBytes": 251,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"status\": \"created\", \"table\": \"legal_matters_evidence_records\", \"id\": \"legal_matters_evidence_010\"}",
+      "thought": null
+    },
+    {
+      "turn": 4,
+      "tool": "_final_answer",
+      "ok": true,
+      "thought": null,
+      "observation": "The \"harvey_lab: arbitration-international-dispute-resolution matter workflow\" has been completed for Law Firm Company. Here's a summary of the executed steps:\n\n## Workflow Completion Summary\n\n**Workflow:** harvey_lab: arbitration-international-dispute-resolution matter workflow\n\n### Steps executed:\n\n1. **List legal matters** ✅\n   - Retrieved the full list of legal matters, confirming `legal_matters_002` exists.\n   - Record identified: **legal_matters_002** — \"Fairview Group Legal Matters\"\n\n2. **Get legal matters** ✅\n   - Retrieved the complete record for `legal_matters_002`:\n     - **Status:*"
+    }
+  ],
+  "preRescore": {
+    "passed": false,
+    "reward": 0,
+    "failedConditions": [
+      "required_workflow_path",
+      "no_offtask_table_changes",
+      "no_undeclared_rows_created"
+    ]
+  },
+  "rescoredAt": "2026-08-10T08:17:56.911Z",
+  "rescoreReason": "seed-contamination: shared state dir put expansion matter_documents rows into original-world sessions"
+}
