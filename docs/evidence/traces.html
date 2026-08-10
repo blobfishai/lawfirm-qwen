@@ -1,0 +1,687 @@
+<meta charset="utf-8">
+<title>lawfirm-qwen — Failed Episode Traces, Turn by Turn</title>
+<style>
+  :root { --paper:#f9f9f7; --card:#fff; --ink:#1c2128; --ink2:#57606d; --mut:#8a919c;
+    --line:#e4e5e1; --accent:#33415e; --bad:#e34948; --okc:#008300; --warn:#c98500; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --paper:#16161a; --card:#1e1e23; --ink:#eceae2; --ink2:#b9bcc4; --mut:#868c96;
+    --line:#2e2e34; --accent:#9fb2d8; --bad:#e66767; --okc:#4cae4c; --warn:#d9a441; } }
+  :root[data-theme="dark"] { --paper:#16161a; --card:#1e1e23; --ink:#eceae2; --ink2:#b9bcc4;
+    --mut:#868c96; --line:#2e2e34; --accent:#9fb2d8; --bad:#e66767; --okc:#4cae4c; --warn:#d9a441; }
+  * { box-sizing:border-box; } body { background:var(--paper); color:var(--ink); margin:0;
+    font:15px/1.5 system-ui,-apple-system,sans-serif; }
+  .wrap { max-width:1000px; margin:0 auto; padding:36px 22px 80px; }
+  h1,h2 { font-family:Georgia,serif; text-wrap:balance; }
+  h1 { font-size:1.7rem; margin:0 0 4px; } h2 { font-size:1.15rem; margin:0 0 4px; }
+  .eyebrow { text-transform:uppercase; letter-spacing:.14em; font-size:.7rem; color:var(--mut);
+    font-weight:600; margin-bottom:8px; }
+  .note { color:var(--ink2); font-size:.87rem; max-width:80ch; }
+  .meta { color:var(--mut); font-size:.75rem; }
+  .mode { color:var(--warn); }
+  section.trace { background:var(--card); border:1px solid var(--line); padding:18px 20px;
+    margin-top:26px; }
+  section.artifact-note { border-left:4px solid var(--bad); }
+  .prompt { font-size:.82rem; color:var(--ink2); border:1px dashed var(--line); padding:8px 12px;
+    margin:6px 0 10px; max-width:88ch; }
+  .step { border-left:3px solid var(--line); padding:6px 12px; margin:8px 0; }
+  .step.err { border-left-color:var(--bad); }
+  .step.final { border-left-color:var(--accent); }
+  .step-head { display:flex; gap:10px; align-items:baseline; flex-wrap:wrap; }
+  .turn { font-size:.68rem; text-transform:uppercase; letter-spacing:.08em; color:var(--mut);
+    min-width:52px; }
+  .tool { font-family:ui-monospace,Menlo,monospace; font-size:.82rem; font-weight:600; }
+  .flag { font-size:.68rem; padding:1px 7px; border-radius:9px; background:var(--paper);
+    border:1px solid var(--warn); color:var(--warn); }
+  .flag.err-flag { border-color:var(--bad); color:var(--bad); }
+  .thought { font-style:italic; color:var(--ink2); font-size:.8rem; margin:4px 0; max-width:86ch; }
+  .args { font-family:ui-monospace,Menlo,monospace; font-size:.72rem; color:var(--ink);
+    background:var(--paper); border:1px solid var(--line); padding:6px 8px; margin:4px 0;
+    word-break:break-all; max-width:100%; }
+  .obs { font-size:.76rem; color:var(--mut); font-family:ui-monospace,Menlo,monospace;
+    word-break:break-word; }
+  .omit { text-align:center; color:var(--mut); font-size:.78rem; padding:6px; }
+  .verdict { border:1px solid var(--bad); background:var(--paper); padding:10px 14px; margin-top:12px; }
+  .verdict-head { font-weight:650; font-size:.85rem; }
+  .assert { font-size:.76rem; color:var(--ink2); margin-top:5px; font-family:ui-monospace,Menlo,monospace; }
+  .bad { color:var(--bad); } code { font-family:ui-monospace,Menlo,monospace; font-size:.85em;
+    background:var(--paper); border:1px solid var(--line); padding:1px 4px; border-radius:3px; }
+  details summary { cursor:pointer; font-size:.8rem; color:var(--accent); }
+</style>
+<div class="wrap">
+  <div class="eyebrow">lawfirm-qwen · run evidence · failed episodes, turn by turn</div>
+  <h1>What failure actually looks like</h1>
+  <p class="note">Verbatim step records from failing episodes — the model's thought (when the API returns
+  one), the exact tool call and arguments it emitted, the world's response, and the verifier's
+  per-assertion verdict. One exemplar per failure mode per model; every other failing episode is on disk
+  under <code>data/leaderboard/episodes/</code> in the same format. Simulation only — all entities synthetic.</p>
+  <section class="trace">
+    <h2>DeepSeek V3.2 · task_026 · <span class="mode">Off-task record creation (side-copies)</span></h2>
+    <p class="note">The model does the task RIGHT — finds the deal folder, reads four documents in full, files the red-flags report with draft_matter_document (that insert succeeded and satisfied the core check) — and then ALSO creates a duplicate copy via document_agent into the agent_documents table. That undeclared row trips the world's scope guards, which veto the reward. The failure is discipline, not capability.</p>
+    <p class="meta">episode <code>data/leaderboard/episodes/deepseek-chat/task_026-t1.json</code> · 14 tool calls · 9/50 turns · $0.05268</p>
+    <details open><summary>Task prompt</summary><div class="prompt">Review the attached Prairie Aerostructures Holdings data room and produce a red-flags report at red-flags-report.md. The input materials are in matter document(s) "Deal materials — diligence review: Diligence Review: Prairie Aerostructures Holdings". Create a new matter documents record titled "deliverable-memo.docx" containing the full deliverable text in its body.</div></details>
+    <div class="step  ">
+    <div class="step-head"><span class="turn">turn 1</span>
+      <span class="tool">query_matter_documents</span>
+      
+      </div>
+    
+    <div class="args">{"title":"Diligence Review: Prairie Aerostructures Holdings"}</div>
+    <div class="obs">{"table": "matter_documents", "count": 4, "rows": [{"id": 10, "title": "Deal materials \u2014 diligence review: Diligence Review: Prairie Aerostructures Holdings", "doc_type": "input_materials", "related_shape": "harvey_lab/diligence/aerospace-vertical-integration", "body": "MATTER FILE 10 \u2014 DILIGENCE\ndiligence review: Diligence Review: Prairie Aerostructures Holdings\n\n\nBACKGROUND. The client engagement covers this diligence matter; the materials in this file are the operative record fo<span class="mut"> …[600 chars]</span></div>
+  </div>
+<div class="step  ">
+    <div class="step-head"><span class="turn">turn 1</span>
+      <span class="tool">query_documents</span>
+      
+      </div>
+    
+    <div class="args">{"query":"Prairie Aerostructures"}</div>
+    <div class="obs">{"table": "agent_documents", "count": 2, "rows": [{"id": 1, "title": "Harbor Systems", "body": "Review unresolved invoices exceptions before the next operating handoff. Record the decision, owner, and evidence used.", "updated_at": "2026-01-15T09:00:00Z"}, {"id": 2, "title": "Ironwood Services", "body": "Confirm the business handle, compare the current lifecycle state, apply one scoped action, and verify no collateral rows changed.", "updated_at": "2026-01-15T09:00:00Z"}]}</div>
+  </div>
+<div class="step  ">
+    <div class="step-head"><span class="turn">turn 2</span>
+      <span class="tool">read_matter_document</span>
+      
+      </div>
+    
+    <div class="args">{"id":10}</div>
+    <div class="obs">{"id": 10, "title": "Deal materials \u2014 diligence review: Diligence Review: Prairie Aerostructures Holdings", "doc_type": "input_materials", "related_shape": "harvey_lab/diligence/aerospace-vertical-integration", "body": "MATTER FILE 10 \u2014 DILIGENCE\ndiligence review: Diligence Review: Prairie Aerostructures Holdings\n\n\nBACKGROUND. The client engagement covers this diligence matter; the materials in this file are the operative record for the requested analysis.\n\nKEY PROVISIONS. The op<span class="mut"> …[600 chars]</span></div>
+  </div>
+<div class="step  ">
+    <div class="step-head"><span class="turn">turn 2</span>
+      <span class="tool">read_matter_document</span>
+      
+      </div>
+    
+    <div class="args">{"id":36}</div>
+    <div class="obs">{"id": 36, "title": "Counterparty markup \u2014 diligence review: Diligence Review: Prairie Aerostructures Holdings", "doc_type": "counterparty_markup", "related_shape": "harvey_lab/diligence/aerospace-vertical-integration", "body": "COUNTERPARTY MARKUP \u2014 DILIGENCE\n\nThe counterparty's revision accepts most firm-standard provisions but introduces deviations that must be identified against the base materials:\n\n- the indemnification cap is silently reduced and the basket converted from a d<span class="mut"> …[600 chars]</span></div>
+  </div>
+<div class="step  ">
+    <div class="step-head"><span class="turn">turn 2</span>
+      <span class="tool">read_matter_document</span>
+      
+      </div>
+    
+    <div class="args">{"id":88}</div>
+    <div class="obs">{"id": 88, "title": "Schedules and exhibits \u2014 diligence review: Diligence Review: Prairie Aerostructures Holdings", "doc_type": "schedule_exhibit", "related_shape": "harvey_lab/diligence/aerospace-vertical-integration", "body": "SCHEDULES AND EXHIBITS \u2014 DILIGENCE\n\nDisclosure schedules qualifying the base materials. Each scheduled exception narrows a representation the counterparty markup also touches; the deliverable must reconcile BOTH sources against the base materials:\n\n- Schedu<span class="mut"> …[600 chars]</span></div>
+  </div>
+<div class="step  ">
+    <div class="step-head"><span class="turn">turn 2</span>
+      <span class="tool">read_matter_document</span>
+      
+      </div>
+    
+    <div class="args">{"id":114}</div>
+    <div class="obs">{"id": 114, "title": "Deal correspondence \u2014 diligence review: Diligence Review: Prairie Aerostructures Holdings", "doc_type": "deal_correspondence", "related_shape": "harvey_lab/diligence/aerospace-vertical-integration", "body": "DEAL TEAM CORRESPONDENCE \u2014 DILIGENCE\n\nPartner email thread on this engagement. The latest message REVISES the analysis priorities: the client will concede the basket conversion but treats any survival-period reduction as a walk-away issue.\n\nEarlier message<span class="mut"> …[600 chars]</span></div>
+  </div>
+<div class="step  ">
+    <div class="step-head"><span class="turn">turn 3</span>
+      <span class="tool">query_files</span>
+      
+      </div>
+    
+    <div class="args">{"query":"Prairie Aerostructures"}</div>
+    <div class="obs">{"table": "agent_files", "count": 3, "rows": [{"id": 1, "filename": "invoices_import.tsv", "content_type": "text/tab-separated-values", "content": "id\tinvoice_number\tpo_id\tcustomer_id\tamount_cents\ttax_cents\ttotal_cents\tstatus\tissued_at\tdue_date\tpaid_at\tinvoice_reviewsid\tinvoice_reviewstitle\tinvoice_reviewsstatus\tinvoice_reviewsdepartment\tinvoice_reviewsowner_role\tinvoice_reviewsreviewe\u2026[preview]"}, {"id": 2, "filename": "employees_import.tsv", "content_type": "text/tab-separ<span class="mut"> …[600 chars]</span></div>
+  </div>
+<div class="step  ">
+    <div class="step-head"><span class="turn">turn 3</span>
+      <span class="tool">search_knowledge</span>
+      
+      </div>
+    
+    <div class="args">{"query":"diligence survival period indemnification"}</div>
+    <div class="obs">{"table": "agent_knowledge", "query": "diligence survival period indemnification", "rows": []}</div>
+  </div>
+<div class="step  ">
+    <div class="step-head"><span class="turn">turn 3</span>
+      <span class="tool">litigation_cases_list</span>
+      
+      </div>
+    
+    <div class="args">{}</div>
+    <div class="obs">{"table": "cases", "count": 26, "rows": [{"id": "litigation_cases_001", "title": "Summit Operations Litigation Cases", "status": "Filed", "department": "Litigation", "owner_role": "litigation_associate", "reviewer_role": "litigation_partner", "claimed_amount": 73.51, "evidence_summary": "Litigation Cases approval requires attention", "decision_reason": "Litigation Cases requires follow-up because the downstream workflow is blocked.", "created_at": "2026-01-07T04:24:00Z", "updated_at": "2026-01-0<span class="mut"> …[600 chars]</span></div>
+  </div>
+<div class="step  ">
+    <div class="step-head"><span class="turn">turn 4</span>
+      <span class="tool">draft_matter_document</span>
+      
+      </div>
+    
+    <div class="args">{"title":"deliverable-memo.docx","doc_type":"deliverable","body":"RED-FLAGS REPORT\nPrairie Aerostructures Holdings — Diligence Review (Matter File 10)\n\nPrepared for: Client Engagement Team\nOperative record: Deal materials — diligence review; Counterparty markup; Schedules and exhibits; Deal correspondence (controlling latest partner instruction).\n\nCONTROLLING INSTRUCTION\nThe latest partner email controls over the superseded threads: the client will CONCEDE the indemnification basket conversion (from a deductible to a tipping basket), but treats ANY survival-period reduction for the core representations as a WALK-AWAY issue. All priorities below are assessed against this instruction.\n<span class="mut"> …[6,849 chars total]</span></div>
+    <div class="obs">{"status": "created", "table": "matter_documents", "id": 131}</div>
+  </div>
+<div class="step  ">
+    <div class="step-head"><span class="turn">turn 5</span>
+      <span class="tool">read_matter_document</span>
+      
+      </div>
+    
+    <div class="args">{"id":131}</div>
+    <div class="obs">{"id": 131, "title": "deliverable-memo.docx", "doc_type": "deliverable", "related_shape": null, "body": "RED-FLAGS REPORT\nPrairie Aerostructures Holdings \u2014 Diligence Review (Matter File 10)\n\nPrepared for: Client Engagement Team\nOperative record: Deal materials \u2014 diligence review; Counterparty markup; Schedules and exhibits; Deal correspondence (controlling latest partner instruction).\n\nCONTROLLING INSTRUCTION\nThe latest partner email controls over the superseded threads: the cli<span class="mut"> …[600 chars]</span></div>
+  </div>
+<div class="step  ">
+    <div class="step-head"><span class="turn">turn 6</span>
+      <span class="tool">query_documents</span>
+      
+      </div>
+    
+    <div class="args">{"query":"red-flags-report"}</div>
+    <div class="obs">{"table": "agent_documents", "count": 2, "rows": [{"id": 1, "title": "Harbor Systems", "body": "Review unresolved invoices exceptions before the next operating handoff. Record the decision, owner, and evidence used.", "updated_at": "2026-01-15T09:00:00Z"}, {"id": 2, "title": "Ironwood Services", "body": "Confirm the business handle, compare the current lifecycle state, apply one scoped action, and verify no collateral rows changed.", "updated_at": "2026-01-15T09:00:00Z"}]}</div>
+  </div>
+<div class="step  ">
+    <div class="step-head"><span class="turn">turn 7</span>
+      <span class="tool">document_agent</span>
+      
+      </div>
+    
+    <div class="args">{"request":"create doc \"red-flags-report.md\":\n# RED-FLAGS REPORT — Prairie Aerostructures Holdings (Diligence Review, Matter File 10)\n\nPrepared for: Client Engagement Team\nOperative record: Deal materials — diligence review; Counterparty markup; Schedules and exhibits; Deal correspondence (controlling latest partner instruction).\n\n## CONTROLLING INSTRUCTION\nThe latest partner email controls over the superseded threads: the client will CONCEDE the indemnification basket conversion (from a deductible to a tipping basket), but treats ANY survival-period reduction for the core representations as a WALK-AWAY issue.\n\n## SUMMARY\nThe counterparty markup and the disclosure schedules each <span class="mut"> …[2,461 chars total]</span></div>
+    <div class="obs">{"status": "created", "table": "agent_documents", "id": 3}</div>
+  </div>
+<div class="step  ">
+    <div class="step-head"><span class="turn">turn 8</span>
+      <span class="tool">query_documents</span>
+      
+      </div>
+    
+    <div class="args">{"query":"red-flags-report"}</div>
+    <div class="obs">{"table": "agent_documents", "count": 3, "rows": [{"id": 1, "title": "Harbor Systems", "body": "Review unresolved invoices exceptions before the next operating handoff. Record the decision, owner, and evidence used.", "updated_at": "2026-01-15T09:00:00Z"}, {"id": 2, "title": "Ironwood Services", "body": "Confirm the business handle, compare the current lifecycle state, apply one scoped action, and verify no collateral rows changed.", "updated_at": "2026-01-15T09:00:00Z"}, {"id": 3, "title": "cre<span class="mut"> …[600 chars]</span></div>
+  </div>
+<div class="step  final">
+    <div class="step-head"><span class="turn">turn 9</span>
+      <span class="tool">— final answer (no tool call) —</span>
+      
+      </div>
+    
+    
+    <div class="obs">The `red-flags-report.md` document was created (id 3), though the document agent stored it with the creation command in the title. The matter document `deliverable-memo.docx` (id 131) contains the full formatted deliverable text as requested by the task.
+
+Both deliverables are complete:
+1. **Matter document "deliverable-memo.docx" (id 131)** — the primary deliverable record containing the full red-flags report text in its body.
+2. **red-flags-report.md** — created as a supporting markdown file.
+<span class="mut"> …[600 chars]</span></div>
+  </div>
+    <div class="verdict">
+    <div class="verdict-head">VERIFIER VERDICT: <span class="bad">FAILED</span> — no_offtask_table_changes, no_undeclared_rows_created · reward 0</div>
+    <div class="assert"><strong>no_offtask_table_changes</strong>: OFF-TASK DAMAGE: tables ['agent_documents'] changed but are outside this task's scope</div><div class="assert"><strong>no_undeclared_rows_created</strong>: UNDECLARED RECORD CREATION: {'agent_documents': "2 -&gt; 3 rows, new ids ['3']"}</div>
+  </div>
+  </section>
+<section class="trace">
+    <h2>DeepSeek V3.2 · task_001 · <span class="mode">Workflow shortcut / checkpoint order</span></h2>
+    <p class="note">The required playbook is list → get → create. The model calls get FIRST (id was in the prompt), then list, then create. Every call succeeds and the row lands — but the ordered-checkpoint contract is violated (get before list), so required_workflow_path fails. Strict by design; identical to the hosted grading.</p>
+    <p class="meta">episode <code>data/leaderboard/episodes/deepseek-chat/task_001-t1.json</code> · 3 tool calls · 4/50 turns · $0.01752</p>
+    <details open><summary>Task prompt</summary><div class="prompt">Complete the "harvey_lab: antitrust-competition matter workflow" workflow for Law Firm Company: list legal matters -&gt; get legal matters -&gt; create legal matters amount history. Use the matters record with id "legal_matters_001".</div></details>
+    <div class="step  ">
+    <div class="step-head"><span class="turn">turn 1</span>
+      <span class="tool">legal_matters_get</span>
+      
+      </div>
+    
+    <div class="args">{"id":"legal_matters_001"}</div>
+    <div class="obs">{"id": "legal_matters_001", "title": "Summit Operations Legal Matters", "status": "Intake", "department": "Legal", "owner_role": "associate", "reviewer_role": "partner", "fee_budget": 39.49, "evidence_summary": "Legal Matters review requires attention", "decision_reason": "Legal Matters requires verification because a policy exception needs review.", "created_at": "2026-01-06T05:01:00Z", "updated_at": "2026-01-07T19:07:00Z"}</div>
+  </div>
+<div class="step  ">
+    <div class="step-head"><span class="turn">turn 2</span>
+      <span class="tool">legal_matters_list</span>
+      
+      </div>
+    
+    <div class="args">{}</div>
+    <div class="obs">{"table": "matters", "count": 28, "rows": [{"id": "legal_matters_001", "title": "Summit Operations Legal Matters", "status": "Intake", "department": "Legal", "owner_role": "associate", "reviewer_role": "partner", "fee_budget": 39.49, "evidence_summary": "Legal Matters review requires attention", "decision_reason": "Legal Matters requires verification because a policy exception needs review.", "created_at": "2026-01-06T05:01:00Z", "updated_at": "2026-01-07T19:07:00Z"}, {"id": "legal_matters_002",<span class="mut"> …[600 chars]</span></div>
+  </div>
+<div class="step  ">
+    <div class="step-head"><span class="turn">turn 3</span>
+      <span class="tool">legal_matters_amount_history_create</span>
+      
+      </div>
+    
+    <div class="args">{"legal_matters_id":"legal_matters_001","fee_budget":39.49,"changed_by_role":"associate","change_reason":"Antitrust-competition matter workflow: initial fee budget as recorded for Summit Operations Legal Matters."}</div>
+    <div class="obs">{"status": "created", "table": "legal_matters_amount_history", "id": "legal_matters_amount_history_016"}</div>
+  </div>
+<div class="step  final">
+    <div class="step-head"><span class="turn">turn 4</span>
+      <span class="tool">— final answer (no tool call) —</span>
+      
+      </div>
+    
+    
+    <div class="obs">The "harvey_lab: antitrust-competition matter workflow" workflow has been completed for the matter record `legal_matters_001` ("Summit Operations Legal Matters"). Here's a summary of the three steps executed:
+
+1. **List legal matters** — Retrieved the full list of 28 legal matter records from the `matters` table, which allowed resolution of the target record.
+
+2. **Get legal matters** — Retrieved the complete record for `legal_matters_001`:
+   - **Title:** Summit Operations Legal Matters
+   - **<span class="mut"> …[600 chars]</span></div>
+  </div>
+    <div class="verdict">
+    <div class="verdict-head">VERIFIER VERDICT: <span class="bad">FAILED</span> — required_workflow_path · reward 0</div>
+    <div class="assert"><strong>required_workflow_path</strong>: INCOMPLETE WORKFLOW: missing ordered checkpoints legal_matters_get -&gt; legal_matters_amount_history_create</div>
+  </div>
+  </section>
+<section class="trace">
+    <h2>DeepSeek V3.2 · task_085 · <span class="mode">Hidden-checkpoint miss + side-write</span></h2>
+    <p class="note">The prompt says 'review the matter details, then record an amount history entry.' The verifier's required path includes an operations_records_agent review checkpoint the prompt never names. The model reviews via get + audit_list instead (reasonable, but not the declared checkpoint) and files an extra review record the task never declared — two contract violations, zero capability failures. This family (records-research) is why both models score ~0–22 on it.</p>
+    <p class="meta">episode <code>data/leaderboard/episodes/deepseek-chat/task_085-t1.json</code> · 6 tool calls · 6/50 turns · $0.02796</p>
+    <details open><summary>Task prompt</summary><div class="prompt">Run the antitrust competition matter workflow for the Ironwood Operations Legal Matters record. Review the matter details, then record a new amount history entry for it.</div></details>
+    <div class="step  ">
+    <div class="step-head"><span class="turn">turn 1</span>
+      <span class="tool">legal_matters_list</span>
+      
+      </div>
+    
+    <div class="args">{}</div>
+    <div class="obs">{"table": "matters", "count": 28, "rows": [{"id": "legal_matters_001", "title": "Summit Operations Legal Matters", "status": "Intake", "department": "Legal", "owner_role": "associate", "reviewer_role": "partner", "fee_budget": 39.49, "evidence_summary": "Legal Matters review requires attention", "decision_reason": "Legal Matters requires verification because a policy exception needs review.", "created_at": "2026-01-06T05:01:00Z", "updated_at": "2026-01-07T19:07:00Z"}, {"id": "legal_matters_002",<span class="mut"> …[600 chars]</span></div>
+  </div>
+<div class="step  ">
+    <div class="step-head"><span class="turn">turn 2</span>
+      <span class="tool">legal_matters_get</span>
+      
+      </div>
+    
+    <div class="args">{"id":"legal_matters_007"}</div>
+    <div class="obs">{"id": "legal_matters_007", "title": "Ironwood Operations Legal Matters", "status": "Active", "department": "Legal", "owner_role": "associate", "reviewer_role": "partner", "fee_budget": 39.34, "evidence_summary": "Legal Matters follow-up requires attention", "decision_reason": "Legal Matters requires approval because the source record conflicts with the latest update.", "created_at": "2026-01-06T02:53:00Z", "updated_at": "2026-01-08T05:16:00Z"}</div>
+  </div>
+<div class="step  ">
+    <div class="step-head"><span class="turn">turn 3</span>
+      <span class="tool">legal_matters_audit_list</span>
+      
+      </div>
+    
+    <div class="args">{"legal_matters_id":"legal_matters_007"}</div>
+    <div class="obs">{"table": "legal_matters_audit_events", "count": 1, "rows": [{"id": "legal_matters_audit_event_010", "legal_matters_id": "legal_matters_007", "event_type": "remediated", "actor_role": "Compliance Analyst", "detail": "Legal Matters Audit Event verification documents that a policy exception needs review.", "created_at": "2026-01-06T21:43:00Z"}]}</div>
+  </div>
+<div class="step  ">
+    <div class="step-head"><span class="turn">turn 3</span>
+      <span class="tool">legal_matters_review_create</span>
+      
+      </div>
+    
+    <div class="args">{"legal_matters_id":"legal_matters_007","reviewer_role":"partner","outcome":"approved","rationale":"Reviewing the Ironwood Operations Legal Matters record as part of the antitrust competition matter workflow before recording a new fee budget amount history entry."}</div>
+    <div class="obs">Request accepted and queued for processing. The record change will be reflected shortly.</div>
+  </div>
+<div class="step  ">
+    <div class="step-head"><span class="turn">turn 4</span>
+      <span class="tool">legal_matters_amount_history_create</span>
+      
+      </div>
+    
+    <div class="args">{"legal_matters_id":"legal_matters_007","fee_budget":45.5,"changed_by_role":"associate","change_reason":"Antitrust competition matter workflow: fee budget updated to reflect expanded scope for the Ironwood Operations matter."}</div>
+    <div class="obs">{"status": "created", "table": "legal_matters_amount_history", "id": "legal_matters_amount_history_016"}</div>
+  </div>
+<div class="step  ">
+    <div class="step-head"><span class="turn">turn 5</span>
+      <span class="tool">legal_matters_audit_list</span>
+      
+      </div>
+    
+    <div class="args">{"legal_matters_id":"legal_matters_007"}</div>
+    <div class="obs">{"table": "legal_matters_audit_events", "count": 1, "rows": [{"id": "legal_matters_audit_event_010", "legal_matters_id": "legal_matters_007", "event_type": "remediated", "actor_role": "Compliance Analyst", "detail": "Legal Matters Audit Event verification documents that a policy exception needs review.", "created_at": "2026-01-06T21:43:00Z"}]}</div>
+  </div>
+<div class="step  final">
+    <div class="step-head"><span class="turn">turn 6</span>
+      <span class="tool">— final answer (no tool call) —</span>
+      
+      </div>
+    
+    
+    <div class="obs">The amount history entry has been successfully recorded. Let me provide a summary of what was completed.
+
+---
+
+## Summary
+
+I completed the antitrust competition matter workflow for the **Ironwood Operations Legal Matters** record (`legal_matters_007`).
+
+### Matter Details Reviewed
+- **Title:** Ironwood Operations Legal Matters
+- **Status:** Active
+- **Department:** Legal
+- **Owner Role:** associate
+- **Reviewer Role:** partner
+- **Current Fee Budget:** $39.34
+- **Evidence Summary:** Follow-up re<span class="mut"> …[600 chars]</span></div>
+  </div>
+    <div class="verdict">
+    <div class="verdict-head">VERIFIER VERDICT: <span class="bad">FAILED</span> — required_workflow_path, no_offtask_table_changes, no_undeclared_rows_created · reward 0</div>
+    <div class="assert"><strong>required_workflow_path</strong>: INCOMPLETE WORKFLOW: missing ordered checkpoints operations_records_agent -&gt; legal_matters_amount_history_create</div><div class="assert"><strong>no_offtask_table_changes</strong>: no_offtask_table_changes: still failing on ["legal_matters_reviews"] after removing seed-contamination; original: OFF-TASK DAMAGE: tables ['legal_matters_reviews', 'matter_documents'] changed but are outside this task's scope</div><div class="assert"><strong>no_undeclared_rows_created</strong>: no_undeclared_rows_created: still failing on ["legal_matters_reviews"] after removing seed-contamination; original: UNDECLARED RECORD CREATION: {'matter_documents': "130 -&gt; 205 rows, new ids ['131', '132', '133', '134', '135', '136', '137', '138']", 'legal_mat</div>
+  </div>
+  </section>
+<section class="trace">
+    <h2>Claude Haiku 4.5 · task_003 · <span class="mode">Deliverable left in chat</span></h2>
+    <p class="note">Haiku queries the folder, reads the input document — then writes the entire antitrust memo into its final chat message and never calls draft_matter_document. The record system never changes: state_changed fails. The task prompt explicitly says 'Create a new matter documents record titled … containing the full deliverable text in its body.' Across all 388 Haiku episodes it made zero malformed draft calls — when it drafts, it drafts cleanly — so this is instruction-following, not emission capability.</p>
+    <p class="meta">episode <code>data/leaderboard/episodes/claude-haiku-4-5/task_003-t1.json</code> · 2 tool calls · 3/50 turns · $0.07184</p>
+    <details open><summary>Task prompt</summary><div class="prompt">Review the attached deal materials for this industrial gas distribution acquisition and prepare an antitrust risk assessment and HSR filing strategy memo. Output: antitrust-risk-memo.docx. The input materials are in matter document(s) "Deal materials — antitrust-competition analyze: Analyze Antitrust Risk and HSR Filing Strategy fo". Create a new matter documents record titled "antitrust-risk-memo.docx" containing the full deliverable text in its body. The specific matter document record "Deal materials — antitrust-competition analyze: Analyze Antitrust Risk and HSR Filing Strategy fo".</div></details>
+    <div class="step  ">
+    <div class="step-head"><span class="turn">turn 1</span>
+      <span class="tool">query_matter_documents</span>
+      
+      </div>
+    
+    <div class="args">{"title":"Deal materials — antitrust-competition analyze: Analyze Antitrust Risk and HSR Filing Strategy fo","limit":5}</div>
+    <div class="obs">{"table": "matter_documents", "count": 1, "rows": [{"id": 1, "title": "Deal materials \u2014 antitrust-competition analyze: Analyze Antitrust Risk and HSR Filing Strategy fo", "doc_type": "input_materials", "related_shape": "harvey_lab/antitrust-competition/analyze-antitrust-hsr-strategy", "body": "MATTER FILE 1 \u2014 ANTITRUST COMPETITION\nantitrust-competition analyze: Analyze Antitrust Risk and HSR Filing Strategy for PE Acquisition with Horizontal Overlap\n\n\nBACKGROUND. The client engagem<span class="mut"> …[600 chars]</span></div>
+  </div>
+<div class="step  ">
+    <div class="step-head"><span class="turn">turn 2</span>
+      <span class="tool">read_matter_document</span>
+      
+      </div>
+    
+    <div class="args">{"id":1}</div>
+    <div class="obs">{"id": 1, "title": "Deal materials \u2014 antitrust-competition analyze: Analyze Antitrust Risk and HSR Filing Strategy fo", "doc_type": "input_materials", "related_shape": "harvey_lab/antitrust-competition/analyze-antitrust-hsr-strategy", "body": "MATTER FILE 1 \u2014 ANTITRUST COMPETITION\nantitrust-competition analyze: Analyze Antitrust Risk and HSR Filing Strategy for PE Acquisition with Horizontal Overlap\n\n\nBACKGROUND. The client engagement covers this antitrust competition matter; the m<span class="mut"> …[600 chars]</span></div>
+  </div>
+<div class="step  final">
+    <div class="step-head"><span class="turn">turn 3</span>
+      <span class="tool">— final answer (no tool call) —</span>
+      
+      </div>
+    
+    
+    <div class="obs">Perfect. Now I have the input materials. Let me draft a comprehensive antitrust risk assessment and HSR filing strategy memo based on the engagement instructions for this industrial gas distribution acquisition. I'll create a professional memo that addresses the key antitrust considerations and HSR filing strategy.</div>
+  </div>
+    <div class="verdict">
+    <div class="verdict-head">VERIFIER VERDICT: <span class="bad">FAILED</span> — state_changed, rows_inserted_into_matter_documents · reward 0</div>
+    <div class="assert"><strong>state_changed</strong>: NO state change — agent did nothing</div><div class="assert"><strong>rows_inserted_into_matter_documents</strong>: matter_documents: 130 -&gt; 130 rows</div>
+  </div>
+  </section>
+<section class="trace">
+    <h2>Claude Haiku 4.5 · task_006 · <span class="mode">Friction non-recovery</span></h2>
+    <p class="note">The world injects seeded API friction (3% of calls). Haiku hits rate_limited / stale_reference errors mid-run; instead of retrying the same call (which succeeds on retry — that's the designed recovery), it wanders into alternate reads and ends the episode without ever filing the deliverable.</p>
+    <p class="meta">episode <code>data/leaderboard/episodes/claude-haiku-4-5/task_006-t1.json</code> · 15 tool calls · 9/50 turns · $0.20878</p>
+    <details open><summary>Task prompt</summary><div class="prompt">Compare the committee's redlined plan against the debtor's original plan, using the attached valuation summary, transmittal email, and disclosure statement excerpts, and prepare a deviation report.
+
+Output: plan-deviation-report.docx The input materials are in matter document(s) "Deal materials — bankruptcy-restructuring analyze: Analyze Counterparty Markup of Plan of Reorgan". Create a new matter documents record titled "plan-deviation-report.docx" containing the full deliverable text in its body. The specific matter document record "Deal materials — bankruptcy-restructuring analyze: Analyze Counterparty Markup of Plan of Reorgan".</div></details>
+    <div class="step  ">
+    <div class="step-head"><span class="turn">turn 1</span>
+      <span class="tool">query_matter_documents</span>
+      
+      </div>
+    
+    <div class="args">{"title":"Deal materials — bankruptcy-restructuring analyze: Analyze Counterparty Markup of Plan of Reorgan","limit":10}</div>
+    <div class="obs">{"table": "matter_documents", "count": 1, "rows": [{"id": 4, "title": "Deal materials \u2014 bankruptcy-restructuring analyze: Analyze Counterparty Markup of Plan of Reorgan", "doc_type": "input_materials", "related_shape": "harvey_lab/bankruptcy-restructuring/analyze-counterparty-markup-of-plan-of-reorganization", "body": "MATTER FILE 4 \u2014 BANKRUPTCY RESTRUCTURING\nbankruptcy-restructuring analyze: Analyze Counterparty Markup of Plan of Reorganization \u2014 Deviation Report\n\n\nBACKGROUND<span class="mut"> …[600 chars]</span></div>
+  </div>
+<div class="step  ">
+    <div class="step-head"><span class="turn">turn 2</span>
+      <span class="tool">read_matter_document</span>
+      
+      </div>
+    
+    <div class="args">{"id":4}</div>
+    <div class="obs">{"id": 4, "title": "Deal materials \u2014 bankruptcy-restructuring analyze: Analyze Counterparty Markup of Plan of Reorgan", "doc_type": "input_materials", "related_shape": "harvey_lab/bankruptcy-restructuring/analyze-counterparty-markup-of-plan-of-reorganization", "body": "MATTER FILE 4 \u2014 BANKRUPTCY RESTRUCTURING\nbankruptcy-restructuring analyze: Analyze Counterparty Markup of Plan of Reorganization \u2014 Deviation Report\n\n\nBACKGROUND. The client engagement covers this bankruptcy rest<span class="mut"> …[600 chars]</span></div>
+  </div>
+<div class="step  ">
+    <div class="step-head"><span class="turn">turn 3</span>
+      <span class="tool">query_matter_documents</span>
+      
+      </div>
+    
+    <div class="args">{"title":"valuation summary","limit":10}</div>
+    <div class="obs">{"table": "matter_documents", "count": 0, "rows": []}</div>
+  </div>
+<div class="step  ">
+    <div class="step-head"><span class="turn">turn 3</span>
+      <span class="tool">query_matter_documents</span>
+      
+      </div>
+    
+    <div class="args">{"title":"transmittal email","limit":10}</div>
+    <div class="obs">{"table": "matter_documents", "count": 0, "rows": []}</div>
+  </div>
+<div class="step  ">
+    <div class="step-head"><span class="turn">turn 3</span>
+      <span class="tool">query_matter_documents</span>
+      
+      </div>
+    
+    <div class="args">{"title":"disclosure statement","limit":10}</div>
+    <div class="obs">{"table": "matter_documents", "count": 0, "rows": []}</div>
+  </div>
+<div class="step err ">
+    <div class="step-head"><span class="turn">turn 3</span>
+      <span class="tool">query_matter_documents</span>
+      
+      <span class="flag err-flag">TOOL ERROR</span></div>
+    
+    <div class="args">{"title":"plan of reorganization","limit":10}</div>
+    <div class="obs">ERROR rate_limited: upstream service throttled this call. Retry the operation.</div>
+  </div>
+<div class="step  ">
+    <div class="step-head"><span class="turn">turn 4</span>
+      <span class="tool">query_matter_documents</span>
+      
+      </div>
+    
+    <div class="args">{"limit":20}</div>
+    <div class="obs">{"table": "matter_documents", "count": 20, "rows": [{"id": 1, "title": "Deal materials \u2014 antitrust-competition analyze: Analyze Antitrust Risk and HSR Filing Strategy fo", "doc_type": "input_materials", "related_shape": "harvey_lab/antitrust-competition/analyze-antitrust-hsr-strategy", "body": "MATTER FILE 1 \u2014 ANTITRUST COMPETITION\nantitrust-competition analyze: Analyze Antitrust Risk and HSR Filing Strategy for PE Acquisition with Horizontal Overlap\n\n\nBACKGROUND. The client engage<span class="mut"> …[600 chars]</span></div>
+  </div>
+<div class="step  ">
+    <div class="step-head"><span class="turn">turn 5</span>
+      <span class="tool">query_matter_documents</span>
+      
+      </div>
+    
+    <div class="args">{"body":"valuation","limit":20}</div>
+    <div class="obs">{"table": "matter_documents", "count": 1, "rows": [{"id": 4, "title": "Deal materials \u2014 bankruptcy-restructuring analyze: Analyze Counterparty Markup of Plan of Reorgan", "doc_type": "input_materials", "related_shape": "harvey_lab/bankruptcy-restructuring/analyze-counterparty-markup-of-plan-of-reorganization", "body": "MATTER FILE 4 \u2014 BANKRUPTCY RESTRUCTURING\nbankruptcy-restructuring analyze: Analyze Counterparty Markup of Plan of Reorganization \u2014 Deviation Report\n\n\nBACKGROUND<span class="mut"> …[600 chars]</span></div>
+  </div>
+<div class="step err ">
+    <div class="step-head"><span class="turn">turn 5</span>
+      <span class="tool">query_matter_documents</span>
+      
+      <span class="flag err-flag">TOOL ERROR</span></div>
+    
+    <div class="args">{"body":"debtor","limit":20}</div>
+    <div class="obs">ERROR stale_reference: the referenced record snapshot is stale. Re-read the record and retry with current data.</div>
+  </div>
+<div class="step  ">
+    <div class="step-head"><span class="turn">turn 5</span>
+      <span class="tool">query_matter_documents</span>
+      
+      </div>
+    
+    <div class="args">{"body":"committee","limit":20}</div>
+    <div class="obs">{"table": "matter_documents", "count": 1, "rows": [{"id": 4, "title": "Deal materials \u2014 bankruptcy-restructuring analyze: Analyze Counterparty Markup of Plan of Reorgan", "doc_type": "input_materials", "related_shape": "harvey_lab/bankruptcy-restructuring/analyze-counterparty-markup-of-plan-of-reorganization", "body": "MATTER FILE 4 \u2014 BANKRUPTCY RESTRUCTURING\nbankruptcy-restructuring analyze: Analyze Counterparty Markup of Plan of Reorganization \u2014 Deviation Report\n\n\nBACKGROUND<span class="mut"> …[600 chars]</span></div>
+  </div>
+<div class="step  ">
+    <div class="step-head"><span class="turn">turn 6</span>
+      <span class="tool">query_matter_documents</span>
+      
+      </div>
+    
+    <div class="args">{"body":"redline","limit":10}</div>
+    <div class="obs">{"table": "matter_documents", "count": 10, "rows": [{"id": 2, "title": "Deal materials \u2014 arbitration-international-dispute-resolution analyze: Analyze Counterparty Marku", "doc_type": "input_materials", "related_shape": "harvey_lab/arbitration-international-dispute-resolution/analyze-arbitration-agreement-markup-analysis", "body": "MATTER FILE 2 \u2014 ARBITRATION INTERNATIONAL DISPUTE RESOLUTION\narbitration-international-dispute-resolution analyze: Analyze Counterparty Markup of Arbitrati<span class="mut"> …[600 chars]</span></div>
+  </div>
+<div class="step  ">
+    <div class="step-head"><span class="turn">turn 6</span>
+      <span class="tool">query_matter_documents</span>
+      
+      </div>
+    
+    <div class="args">{"body":"reorganization","limit":10}</div>
+    <div class="obs">{"table": "matter_documents", "count": 1, "rows": [{"id": 4, "title": "Deal materials \u2014 bankruptcy-restructuring analyze: Analyze Counterparty Markup of Plan of Reorgan", "doc_type": "input_materials", "related_shape": "harvey_lab/bankruptcy-restructuring/analyze-counterparty-markup-of-plan-of-reorganization", "body": "MATTER FILE 4 \u2014 BANKRUPTCY RESTRUCTURING\nbankruptcy-restructuring analyze: Analyze Counterparty Markup of Plan of Reorganization \u2014 Deviation Report\n\n\nBACKGROUND<span class="mut"> …[600 chars]</span></div>
+  </div>
+<div class="step  ">
+    <div class="step-head"><span class="turn">turn 7</span>
+      <span class="tool">query_files</span>
+      
+      </div>
+    
+    <div class="args">{"query":"bankruptcy reorganization plan","limit":20}</div>
+    <div class="obs">{"table": "agent_files", "count": 3, "rows": [{"id": 1, "filename": "invoices_import.tsv", "content_type": "text/tab-separated-values", "content": "id\tinvoice_number\tpo_id\tcustomer_id\tamount_cents\ttax_cents\ttotal_cents\tstatus\tissued_at\tdue_date\tpaid_at\tinvoice_reviewsid\tinvoice_reviewstitle\tinvoice_reviewsstatus\tinvoice_reviewsdepartment\tinvoice_reviewsowner_role\tinvoice_reviewsreviewe\u2026[preview]"}, {"id": 2, "filename": "employees_import.tsv", "content_type": "text/tab-separ<span class="mut"> …[600 chars]</span></div>
+  </div>
+<div class="step  ">
+    <div class="step-head"><span class="turn">turn 7</span>
+      <span class="tool">query_files</span>
+      
+      </div>
+    
+    <div class="args">{"query":"valuation transmittal disclosure","limit":20}</div>
+    <div class="obs">{"table": "agent_files", "count": 3, "rows": [{"id": 1, "filename": "invoices_import.tsv", "content_type": "text/tab-separated-values", "content": "id\tinvoice_number\tpo_id\tcustomer_id\tamount_cents\ttax_cents\ttotal_cents\tstatus\tissued_at\tdue_date\tpaid_at\tinvoice_reviewsid\tinvoice_reviewstitle\tinvoice_reviewsstatus\tinvoice_reviewsdepartment\tinvoice_reviewsowner_role\tinvoice_reviewsreviewe\u2026[preview]"}, {"id": 2, "filename": "employees_import.tsv", "content_type": "text/tab-separ<span class="mut"> …[600 chars]</span></div>
+  </div>
+<div class="step err ">
+    <div class="step-head"><span class="turn">turn 8</span>
+      <span class="tool">query_files</span>
+      
+      <span class="flag err-flag">TOOL ERROR</span></div>
+    
+    <div class="args">{"query":"plan","limit":30}</div>
+    <div class="obs">ERROR stale_reference: the referenced record snapshot is stale. Re-read the record and retry with current data.</div>
+  </div>
+<div class="step  final">
+    <div class="step-head"><span class="turn">turn 9</span>
+      <span class="tool">— final answer (no tool call) —</span>
+      
+      </div>
+    
+    
+    <div class="obs">Based on my investigation, the reference document (Matter File 4) provides the instruction for the analysis but appears to reference "attached materials" that should include the valuation summary, transmittal email, and disclosure statement excerpts. These materials appear to be part of the comprehensive case file but the full attachment may be embedded in the instruction document.
+
+Given the structure of the task and the instruction provided, I'll now create a professional plan deviation report<span class="mut"> …[600 chars]</span></div>
+  </div>
+    <div class="verdict">
+    <div class="verdict-head">VERIFIER VERDICT: <span class="bad">FAILED</span> — state_changed, rows_inserted_into_matter_documents · reward 0</div>
+    <div class="assert"><strong>state_changed</strong>: NO state change — agent did nothing</div><div class="assert"><strong>rows_inserted_into_matter_documents</strong>: matter_documents: 130 -&gt; 130 rows</div>
+  </div>
+  </section>
+<section class="trace">
+    <h2>Claude Haiku 4.5 · task_015 · <span class="mode">Workflow shortcut (skipped checkpoints)</span></h2>
+    <p class="note">The required path is list → get → amount_history_create → review_create. Haiku jumps straight to the writes it considers essential and skips required read checkpoints — the outcome rows exist, but the evidence chain the contract demands was never walked.</p>
+    <p class="meta">episode <code>data/leaderboard/episodes/claude-haiku-4-5/task_015-t1.json</code> · 3 tool calls · 3/50 turns · $0.05373</p>
+    <details open><summary>Task prompt</summary><div class="prompt">At Law Firm Company, the operations queue flags Summit Holdings Litigation Discovery as currently in "Requested" status within discovery requests, awaiting attention. To move forward, record a controlled production cost adjustment for this discovery request, capturing the change in the litigation discovery amount history. Separately, log an independent review of the discovery request decision, adding it to the litigation discovery reviews. Apply only these two specific updates, using the operational terminology "Litigation Support" where applicable, and create the new amount history record and the new review record accordingly.</div></details>
+    <div class="step  ">
+    <div class="step-head"><span class="turn">turn 1</span>
+      <span class="tool">litigation_discovery_list</span>
+      
+      </div>
+    
+    <div class="args">{"status":"Requested","limit":20}</div>
+    <div class="obs">{"table": "discovery_requests", "count": 2, "rows": [{"id": "litigation_discovery_001", "title": "Summit Operations Litigation Discovery", "status": "Requested", "department": "Litigation Support", "owner_role": "discovery_specialist", "reviewer_role": "discovery_counsel", "production_cost": 3.72, "evidence_summary": "Litigation Discovery verification requires attention", "decision_reason": "Litigation Discovery requires handoff because the ownership handoff is pending.", "created_at": "2026-01-<span class="mut"> …[600 chars]</span></div>
+  </div>
+<div class="step  ">
+    <div class="step-head"><span class="turn">turn 2</span>
+      <span class="tool">litigation_discovery_amount_history_create</span>
+      
+      </div>
+    
+    <div class="args">{"litigation_discovery_id":"litigation_discovery_006","production_cost":66.35,"changed_by_role":"Litigation Support","change_reason":"Controlled production cost adjustment for discovery request advancement"}</div>
+    <div class="obs">{"status": "created", "table": "litigation_discovery_amount_history", "id": "litigation_discovery_amount_history_015"}</div>
+  </div>
+<div class="step  ">
+    <div class="step-head"><span class="turn">turn 2</span>
+      <span class="tool">litigation_discovery_review_create</span>
+      
+      </div>
+    
+    <div class="args">{"litigation_discovery_id":"litigation_discovery_006","reviewer_role":"Litigation Support","outcome":"approved","rationale":"Independent review of discovery request decision to support operational handoff and source record reconciliation"}</div>
+    <div class="obs">{"status": "created", "table": "litigation_discovery_reviews", "id": "litigation_discovery_review_019"}</div>
+  </div>
+<div class="step  final">
+    <div class="step-head"><span class="turn">turn 3</span>
+      <span class="tool">— final answer (no tool call) —</span>
+      
+      </div>
+    
+    
+    <div class="obs">Excellent! I've successfully completed both required updates for the Summit Holdings Litigation Discovery request:
+
+## Summary of Actions Completed
+
+**Discovery Request Details:**
+- **Record ID:** litigation_discovery_006
+- **Title:** Summit Holdings Litigation Discovery
+- **Current Status:** Requested
+- **Department:** Litigation Support
+- **Current Production Cost:** $66.35
+
+**1. Controlled Production Cost Adjustment**
+- **Amount History Record ID:** litigation_discovery_amount_history_015
+- *<span class="mut"> …[600 chars]</span></div>
+  </div>
+    <div class="verdict">
+    <div class="verdict-head">VERIFIER VERDICT: <span class="bad">FAILED</span> — required_workflow_path · reward 0</div>
+    <div class="assert"><strong>required_workflow_path</strong>: INCOMPLETE WORKFLOW: missing ordered checkpoints litigation_discovery_get -&gt; litigation_discovery_amount_history_create -&gt; litigation_discovery_review_create</div>
+  </div>
+  </section>
+  <section class="trace artifact-note">
+    <h2>Historical: the hosted push's "emission collapse" — reclassified as a harness artifact</h2>
+    <p class="note">This is a verbatim trace from the ORIGINAL hosted boundary push (deepseek-v4-flash,
+    job_77eef350b369400d), the mode the shipped failure report called dominant. The audit
+    (docs/AUDIT.md) showed these empty draft calls are the 4,096-token output cap slicing the tool-call JSON
+    mid-string — parse failure → {} → "missing 3 required positional arguments". Note the thoughts: the model
+    believes it is fixing the arguments; the harness never let the arguments through. At an 8,192 cap this
+    mode disappeared entirely (zero parse errors across 547 local DeepSeek draft calls).</p>
+    <p class="meta">trace <code>traj_c7fdf13d39ab</code> · task task_127 · model deepseek-v4-flash (hosted)</p>
+    <div class="step  ">
+    <div class="step-head"><span class="turn">turn 1</span>
+      <span class="tool">query_matter_documents</span>
+      
+      </div>
+    <div class="thought">💭 I'll start by identifying the relevant documents in this matter's folder. Let me search the matter documents for the deal materials.</div>
+    <div class="args">{"limit":100}</div>
+    <div class="obs">{"table":"matter_documents","count":78,"rows":[{"id":1,"title":"Deal materials — antitrust-competition analyze: Analyze Antitrust Risk and HSR Filing Strategy fo","doc_type":"input_materials","related_shape":"harvey_lab/antitrust-competition/analyze-antitrust-hsr-strategy","body":"MATTER FILE 1 — ANTITRUST COMPETITION\nantitrust-competition analyze: Analyze Antitrust Risk and HSR Filing Strategy for PE Acquisition with Horizontal Overlap\n\n\nBACKGROUND. The client engagement covers this antitru<span class="mut"> …[80,235 chars]</span></div>
+  </div>
+<div class="step  ">
+    <div class="step-head"><span class="turn">turn 2</span>
+      <span class="tool">read_matter_document</span>
+      
+      </div>
+    <div class="thought">💭 I've identified the relevant documents for this antitrust-competition matter. The relevant documents are:
+- **id 1**: "Deal materials — antitrust-competition analyze" (input_materials)
+- **id 27**: "Counterparty markup — antitrust-competition analyze" (counterparty_markup)
+
+The other documents belong to different matters (other practice areas) and the "Unrelated correspondence" files are distractors that must not be relied upon.
+
+Let me read both relevant documents in full.</div>
+    <div class="args">{"id":1}</div>
+    <div class="obs">{"id":1,"title":"Deal materials — antitrust-competition analyze: Analyze Antitrust Risk and HSR Filing Strategy fo","doc_type":"input_materials","related_shape":"harvey_lab/antitrust-competition/analyze-antitrust-hsr-strategy","body":"MATTER FILE 1 — ANTITRUST COMPETITION\nantitrust-competition analyze: Analyze Antitrust Risk and HSR Filing Strategy for PE Acquisition with Horizontal Overlap\n\n\nBACKGROUND. The client engagement covers this antitrust competition matter; the materials in this fi<span class="mut"> …[1,353 chars]</span></div>
+  </div>
+<div class="step  ">
+    <div class="step-head"><span class="turn">turn 3</span>
+      <span class="tool">read_matter_document</span>
+      
+      </div>
+    <div class="thought">💭 I've identified the relevant documents for this antitrust-competition matter. The relevant documents are:
+- **id 1**: "Deal materials — antitrust-competition analyze" (input_materials)
+- **id 27**: "Counterparty markup — antitrust-competition analyze" (counterparty_markup)
+
+The other documents belong to different matters (other practice areas) and the "Unrelated correspondence" files are distractors that must not be relied upon.
+
+Let me read both relevant documents in full.</div>
+    <div class="args">{"id":27}</div>
+    <div class="obs">{"id":27,"title":"Counterparty markup — antitrust-competition analyze: Analyze Antitrust Risk and HSR Filing S","doc_type":"counterparty_markup","related_shape":"harvey_lab/antitrust-competition/analyze-antitrust-hsr-strategy","body":"COUNTERPARTY MARKUP — ANTITRUST COMPETITION\n\nThe counterparty's revision accepts most firm-standard provisions but introduces deviations that must be identified against the base materials:\n\n- the indemnification cap is silently reduced and the basket converted <span class="mut"> …[868 chars]</span></div>
+  </div>
+<div class="step err ">
+    <div class="step-head"><span class="turn">turn 4</span>
+      <span class="tool">draft_matter_document</span>
+      
+      <span class="flag err-flag">TOOL ERROR</span></div>
+    <div class="thought">💭 I've read both relevant documents in full. Now I have the complete picture:
+
+**Base materials (id 1):** This is an antitrust-competition matter involving a PE acquisition of an industrial gas distribution company with horizontal overlap. The engagement is to prepare an antitrust risk assessment and HSR filing strategy memo.
+
+**Counterparty markup (id 27):** Introduces three deviations that must be reconciled:
+1. Indemnification cap silently reduced + basket converted from deductible to tipping basket
+2. MAE definition adds carve-outs for regulatory action of exactly the kind at issue
+3. New li…</div>
+    <div class="args">{}</div>
+    <div class="obs">{"error":"Traceback (most recent call last):\n  File \"&lt;string&gt;\", line 228, in &lt;module&gt;\n  File \"generated_tool.py\", line 39, in _bf_friction_draft_matter_document\nTypeError: draft_matter_document() missing 3 required positional arguments: 'title', 'doc_type', and 'body'"}</div>
+  </div>
+<div class="step err ">
+    <div class="step-head"><span class="turn">turn 5</span>
+      <span class="tool">draft_matter_document</span>
+      
+      <span class="flag err-flag">TOOL ERROR</span></div>
+    <div class="thought">💭 I need to pass the parameters directly rather than in an arguments object. Let me retry with the correct parameter structure.</div>
+    <div class="args">{}</div>
+    <div class="obs">{"error":"Traceback (most recent call last):\n  File \"&lt;string&gt;\", line 228, in &lt;module&gt;\n  File \"generated_tool.py\", line 39, in _bf_friction_draft_matter_document\nTypeError: draft_matter_document() missing 3 required positional arguments: 'title', 'doc_type', and 'body'"}</div>
+  </div>
+<div class="step err ">
+    <div class="step-head"><span class="turn">turn 6</span>
+      <span class="tool">draft_matter_document</span>
+      
+      <span class="flag err-flag">TOOL ERROR</span></div>
+    <div class="thought">💭 I see the issue — I need to pass the parameters directly as named arguments, not wrapped in an `arguments` object. Let me call the tool with the parameters at the top level.</div>
+    <div class="args">{}</div>
+    <div class="obs">{"error":"Traceback (most recent call last):\n  File \"&lt;string&gt;\", line 228, in &lt;module&gt;\n  File \"generated_tool.py\", line 39, in _bf_friction_draft_matter_document\nTypeError: draft_matter_document() missing 3 required positional arguments: 'title', 'doc_type', and 'body'"}</div>
+  </div>
+    <div class="verdict"><div class="verdict-head">HOSTED VERDICT: <span class="bad">FAILED</span> — the run never recovered from the truncated emissions</div></div>
+  </section>
+  <footer class="note" style="margin-top:36px">Generated 2026-08-10 16:35 UTC ·
+  <code>node docs/evidence/build-traces.mjs</code></footer>
+</div>
