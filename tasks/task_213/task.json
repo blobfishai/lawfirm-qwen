@@ -1,0 +1,83 @@
+{
+ "task_id": "task_213",
+ "outcome_class": "eligible_action",
+ "prompt": "Brand clearance classification for client matter legal_matters_001. First query the document store to locate the firm's rule memo on the Abercrombie spectrum of trademark distinctiveness, and the Halcyon Provisions client letter covering acquisitions and brand clearance questions; read the rule memo in full first, then the client letter in full. Then classify MARK 1 in Part Two of the letter (the QUELLIVAR canned soup mark) into exactly one Abercrombie category. Record the classification with the legal matter evidence tool for legal_matters_001: set evidence_type to exactly one lowercase category slug from the memo — 'generic', 'descriptive', 'suggestive', 'arbitrary', or 'fanciful' — whichever the memo's test assigns to Mark 1; set source_uri to exactly 'matter://legal_matters_001/brand-clearance/mark-1'; and summarize the classification reasoning in content_summary.",
+ "goal": "Classify QUELLIVAR (a pure coinage with no prior meaning in any language) as fanciful, not arbitrary.",
+ "required_tools": [
+  "query_matter_documents",
+  "read_matter_document",
+  "legal_matters_evidence_create"
+ ],
+ "complexity": "medium",
+ "method": "eval_anchored_expansion",
+ "steps": [
+  "Locate the input documents for this engagement in the matter folder",
+  "Read every required input document in full",
+  "Derive the graded determinations strictly from the documents",
+  "Record the determinations with the required write tools"
+ ],
+ "relevant_data": [
+  {
+   "table": "matter_documents",
+   "id": 194,
+   "field": "title",
+   "value": "legalbench-rule-application pack — Firm rule memo: Abercrombie spectrum of trademark distinctiveness"
+  },
+  {
+   "table": "matter_documents",
+   "id": 198,
+   "field": "title",
+   "value": "legalbench-rule-application pack — Client letter: Halcyon Provisions acquisitions and brand clearance questions"
+  }
+ ],
+ "expected_state_changes": [
+  {
+   "table": "legal_matters_evidence_records",
+   "field": "(new row)",
+   "note": ">=1 rows with pinned fields"
+  }
+ ],
+ "tables_affected": [
+  "legal_matters_evidence_records"
+ ],
+ "walk": [
+  "query_matter_documents",
+  "read_matter_document",
+  "read_matter_document",
+  "legal_matters_evidence_create"
+ ],
+ "reference_args": [
+  {
+   "title": "legalbench-rule-application pack — Firm rule memo: Abercromb"
+  },
+  {
+   "id": 194
+  },
+  {
+   "id": 198
+  },
+  {
+   "legal_matters_id": "legal_matters_001",
+   "source_uri": "matter://legal_matters_001/brand-clearance/mark-1",
+   "evidence_type": "fanciful",
+   "content_digest": "sha256:reference-digest",
+   "owner_role": "associate",
+   "status": "open"
+  }
+ ],
+ "effects": [
+  {
+   "table": "legal_matters_evidence_records",
+   "op": "insert"
+  }
+ ],
+ "provenance": {
+  "source_workflow": "legalbench: legalbench-rule-application/lbra-abercrombie-fanciful"
+ },
+ "difficulty_tier": "medium",
+ "acceptance_label": "pending_calibration",
+ "expansion": {
+  "pack": "legalbench-rule-application.json",
+  "slug": "lbra-abercrombie-fanciful"
+ }
+}

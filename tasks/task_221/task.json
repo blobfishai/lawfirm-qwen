@@ -1,0 +1,71 @@
+{
+ "task_id": "task_221",
+ "outcome_class": "eligible_action",
+ "prompt": "Remedies determination for the Silverline Data Systems / Aurelian Summit agreement: can the target specifically enforce the buyer's obligation to consummate the Offer and the Closing, or is the target limited to monetary remedies? Query the matter documents, find the Silverline note to file covering deal protection and termination provisions (including the remedies section), and read it in full. Then record your determination as a review on legal matter legal_matters_001 via legal_matters_review_create, with reviewer_role set exactly to 'ma-deal-points-counsel' and outcome set exactly to 'approved' if the Company IS entitled to specific performance to compel the buyer to close, or exactly 'rejected' if the Company is limited to monetary remedies. Add a one-sentence rationale citing the section. Do not confuse this agreement's remedies scheme with any other transaction in the files.",
+ "goal": "Determine from Silverline Section 8.9 that the Company is NOT entitled to specific performance to compel closing (monetary damages capped at the Parent Liability Cap are the sole remedy) — outcome 'rejected'. Halcyon's Section 8.4 (both-parties specific performance) is the confusable contrast.",
+ "required_tools": [
+  "query_matter_documents",
+  "read_matter_document",
+  "legal_matters_review_create"
+ ],
+ "complexity": "high",
+ "method": "eval_anchored_expansion",
+ "steps": [
+  "Locate the input documents for this engagement in the matter folder",
+  "Read every required input document in full",
+  "Derive the graded determinations strictly from the documents",
+  "Record the determinations with the required write tools"
+ ],
+ "relevant_data": [
+  {
+   "table": "matter_documents",
+   "id": 203,
+   "field": "title",
+   "value": "MAUD deal points pack — Silverline Data Systems deal protection and termination note to file (Sections 5.1, 5.3, 7.3 and 8.9)"
+  }
+ ],
+ "expected_state_changes": [
+  {
+   "table": "legal_matters_reviews",
+   "field": "(new row)",
+   "note": ">=1 rows with pinned fields"
+  }
+ ],
+ "tables_affected": [
+  "legal_matters_reviews"
+ ],
+ "walk": [
+  "query_matter_documents",
+  "read_matter_document",
+  "legal_matters_review_create"
+ ],
+ "reference_args": [
+  {
+   "title": "MAUD deal points pack — Silverline Data Systems deal protect"
+  },
+  {
+   "id": 203
+  },
+  {
+   "legal_matters_id": "legal_matters_001",
+   "reviewer_role": "ma-deal-points-counsel",
+   "outcome": "rejected",
+   "rationale": "Reference determination grounded in the required reads."
+  }
+ ],
+ "effects": [
+  {
+   "table": "legal_matters_reviews",
+   "op": "insert"
+  }
+ ],
+ "provenance": {
+  "source_workflow": "maud: maud-deal-points/maud-silverline-specific-performance"
+ },
+ "difficulty_tier": "high",
+ "acceptance_label": "pending_calibration",
+ "expansion": {
+  "pack": "maud-deal-points.json",
+  "slug": "maud-silverline-specific-performance"
+ }
+}

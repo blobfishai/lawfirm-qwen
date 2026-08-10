@@ -1,0 +1,71 @@
+{
+ "task_id": "task_169",
+ "outcome_class": "eligible_action",
+ "prompt": "Meridian's allocated share of the e-discovery vendor costs must be recorded on the discovery cost ledger. Query the document index and locate the discovery cost-sharing stipulation with the vendor cost report for Meridian v. Corvess. Read it in full. Compute the aggregate vendor cost from the stated rates and volumes (processing, hosting, and first-pass review), then apply the stipulated allocation percentage that the requesting party bears. Round to whole dollars. Record the result using litigation_discovery_amount_history_create for litigation_discovery_001, with production_cost set to Meridian's allocated share and changed_by_role set to exactly discovery_manager. Record the allocated share, not the full vendor total.",
+ "goal": "Compute aggregate vendor cost and apply the 60% requesting-party allocation.",
+ "required_tools": [
+  "query_matter_documents",
+  "read_matter_document",
+  "litigation_discovery_amount_history_create"
+ ],
+ "complexity": "medium",
+ "method": "eval_anchored_expansion",
+ "steps": [
+  "Locate the input documents for this engagement in the matter folder",
+  "Read every required input document in full",
+  "Derive the graded determinations strictly from the documents",
+  "Record the determinations with the required write tools"
+ ],
+ "relevant_data": [
+  {
+   "table": "matter_documents",
+   "id": 139,
+   "field": "title",
+   "value": "damages-computation pack — Discovery Cost-Sharing Stipulation and Vendor Cost Report (Meridian v. Corvess)"
+  }
+ ],
+ "expected_state_changes": [
+  {
+   "table": "litigation_discovery_amount_history",
+   "field": "(new row)",
+   "note": ">=1 rows with pinned fields"
+  }
+ ],
+ "tables_affected": [
+  "litigation_discovery_amount_history"
+ ],
+ "walk": [
+  "query_matter_documents",
+  "read_matter_document",
+  "litigation_discovery_amount_history_create"
+ ],
+ "reference_args": [
+  {
+   "title": "damages-computation pack — Discovery Cost-Sharing Stipulatio"
+  },
+  {
+   "id": 139
+  },
+  {
+   "litigation_discovery_id": "litigation_discovery_001",
+   "production_cost": 52260,
+   "changed_by_role": "discovery_manager",
+   "change_reason": "Requesting-party 60% share of aggregate vendor cost per the ESI cost-sharing stipulation."
+  }
+ ],
+ "effects": [
+  {
+   "table": "litigation_discovery_amount_history",
+   "op": "insert"
+  }
+ ],
+ "provenance": {
+  "source_workflow": "taxcalcbench: damages-computation/dc-discovery-cost-allocation"
+ },
+ "difficulty_tier": "medium",
+ "acceptance_label": "pending_calibration",
+ "expansion": {
+  "pack": "damages-computation.json",
+  "slug": "dc-discovery-cost-allocation"
+ }
+}

@@ -1,0 +1,132 @@
+{
+ "task_id": "task_072",
+ "outcome_class": "eligible_action",
+ "prompt": "Complete the \"harvey_lab: bankruptcy-restructuring matter workflow\" workflow for Law Firm Company: list legal matters -> get legal matters -> create legal matters review. Use the matters record with id \"the matter whose title is \"Fairview Group Legal Matters\" and whose status is \"Active\"\".",
+ "prompt_generation": {
+  "source": "deterministic",
+  "template_family": "workflow.compiled_research@1",
+  "template_key": "harvey lab bankruptcy restructuring <entity> workflow|list legal <entity>|get legal <entity>|create <entity>",
+  "template_signature": "template:cd2ed3144b5da5dc"
+ },
+ "goal": "Execute the harvey_lab: bankruptcy-restructuring matter workflow process end to end, in order, using the available tools.",
+ "required_tools": [],
+ "complexity": "high",
+ "method": "graph_walk",
+ "steps": [
+  "1. list legal matters (legal_matters_list)",
+  "2. get legal matters (legal_matters_get)",
+  "3. create legal matters review (legal_matters_review_create)"
+ ],
+ "relevant_data": [
+  {
+   "table": "matters",
+   "id": "legal_matters_002",
+   "field": "id",
+   "value": "legal_matters_002"
+  }
+ ],
+ "expected_state_changes": [
+  {
+   "table": "legal_matters_reviews",
+   "id": "legal_matters_review_110",
+   "field": "(new row)",
+   "from": "9 rows",
+   "to": "10 rows"
+  }
+ ],
+ "tables_affected": [
+  "legal_matters_reviews"
+ ],
+ "walk": [
+  "legal_matters_list",
+  "legal_matters_get",
+  "legal_matters_review_create"
+ ],
+ "anchor_refs": [
+  "anc_f05fb377aefb"
+ ],
+ "provenance": {
+  "source_workflow": "harvey_lab: bankruptcy-restructuring matter workflow",
+  "evidence_ids": [
+   "anc_f05fb377aefb"
+  ],
+  "tool_graph_path": [
+   "legal_matters_list",
+   "legal_matters_get",
+   "legal_matters_review_create"
+  ],
+  "verifier_id": "",
+  "workflow_binding": {
+   "workflow_name": "harvey_lab: bankruptcy-restructuring matter workflow",
+   "steps": [
+    "list legal matters",
+    "get legal matters",
+    "create legal matters review"
+   ],
+   "step_bindings": [
+    {
+     "step": "list legal matters",
+     "tool": "legal_matters_list",
+     "matched_tokens": [
+      "list",
+      "legal",
+      "matter"
+     ]
+    },
+    {
+     "step": "get legal matters",
+     "tool": "legal_matters_get",
+     "matched_tokens": [
+      "get",
+      "legal",
+      "matter"
+     ]
+    },
+    {
+     "step": "create legal matters review",
+     "tool": "legal_matters_review_create",
+     "matched_tokens": [
+      "create",
+      "legal",
+      "matter",
+      "review"
+     ]
+    }
+   ],
+   "passed": true,
+   "reasons": [],
+   "source_steps": [
+    "list legal matters",
+    "get legal matters",
+    "create legal matters review"
+   ],
+   "omitted_steps": [],
+   "scope": "full"
+  }
+ },
+ "_reference_tools": [
+  "legal_matters_list",
+  "legal_matters_get",
+  "legal_matters_review_create"
+ ],
+ "difficulty_tier": "hard",
+ "effects": [
+  {
+   "table": "legal_matters_reviews",
+   "op": "insert"
+  }
+ ],
+ "acceptance_evidence": {
+  "protocol": "vcode_discrimination",
+  "attempts": 1,
+  "passes": 1,
+  "pass_rate": 1,
+  "reference_passed": true,
+  "negative_probes_passed": true,
+  "timed_out": false,
+  "accepted_by": "discrimination_gate",
+  "contract_digest": "acceptance_v2_7a24048c45ffd29bf9cb31bdd970e3b496d3d13c8086b4c27c28a2267d5b935b",
+  "reason": "accepted: deterministic reference execution passed; null, shortcut, wrong-row, wrong-value, blind-fallback + incomplete baselines fail"
+ },
+ "acceptance_label": "too_easy"
+}

@@ -1,0 +1,130 @@
+{
+  "taskId": "task_113",
+  "engine": "claude-haiku-4-5",
+  "model": "claude-haiku-4-5",
+  "passed": true,
+  "reward": 1,
+  "failedConditions": [],
+  "advisoryConditions": [],
+  "assertions": [
+    {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+    },
+    {
+      "name": "reads_before_writes",
+      "passed": true,
+      "details": "reads=2, writes=1, read_first=True"
+    },
+    {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+    },
+    {
+      "name": "required_workflow_path",
+      "passed": true,
+      "details": "completed ordered workflow: legal_matters_list -> legal_matters_get -> legal_matters_amount_history_create"
+    },
+    {
+      "name": "rows_inserted_into_legal_matters_amount_history",
+      "passed": true,
+      "details": "legal_matters_amount_history: 15 -> 16 rows"
+    },
+    {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no_offtask_table_changes: passes after removing seed-contamination (matter_documents expansion rows); original: OFF-TASK DAMAGE: tables ['matter_documents'] changed but are outside this task's scope"
+    },
+    {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+    },
+    {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "no_undeclared_rows_created: passes after removing seed-contamination (matter_documents expansion rows); original: UNDECLARED RECORD CREATION: {'matter_documents': \"130 -> 205 rows, new ids ['131', '132', '133', '134', '135', '136', '137', '138']\"}"
+    },
+    {
+      "name": "audit_logs_append_only",
+      "passed": true,
+      "details": "audit_logs append-only invariant holds"
+    },
+    {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "3/3 tool calls succeeded"
+    }
+  ],
+  "toolCalls": 3,
+  "turnsUsed": 3,
+  "maxTurns": 50,
+  "usage": {
+    "prompt": 54913,
+    "completion": 641,
+    "total": 55554
+  },
+  "costUsd": 0.05812,
+  "log": "/Users/samuelchien/dev/lawfirm-qwen/sim/logs/run-2026-08-10T07-33-08-114Z.jsonl",
+  "finishedAt": "2026-08-10T07:33:16.690Z",
+  "steps": [
+    {
+      "turn": 1,
+      "tool": "legal_matters_list",
+      "args": {
+        "limit": 20
+      },
+      "argBytes": 13,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"matters\", \"count\": 20, \"rows\": [{\"id\": \"legal_matters_001\", \"title\": \"Summit Operations Legal Matters\", \"status\": \"Intake\", \"department\": \"Legal\", \"owner_role\": \"associate\", \"reviewer_role\": \"partner\", \"fee_budget\": 39.49, \"evidence_summary\": \"Legal Matters review requires attention\", \"decision_reason\": \"Legal Matters requires verification because a policy exception needs review.\", \"created_at\": \"2026-01-06T05:01:00Z\", \"updated_at\": \"2026-01-07T19:07:00Z\"}, {\"id\": \"legal_matters_002\", \"title\": \"Fairview Group Legal Matters\", \"status\": \"Active\", \"department\": \"Legal\", \"owner_role\": \"",
+      "thought": null
+    },
+    {
+      "turn": 1,
+      "tool": "legal_matters_get",
+      "args": {
+        "id": "legal_matters_002"
+      },
+      "argBytes": 27,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"id\": \"legal_matters_002\", \"title\": \"Fairview Group Legal Matters\", \"status\": \"Active\", \"department\": \"Legal\", \"owner_role\": \"associate\", \"reviewer_role\": \"partner\", \"fee_budget\": 87.43, \"evidence_summary\": \"Legal Matters review requires attention\", \"decision_reason\": \"Legal Matters requires verification because linked evidence is incomplete.\", \"created_at\": \"2026-01-06T18:57:00Z\", \"updated_at\": \"2026-01-07T23:15:00Z\"}",
+      "thought": null
+    },
+    {
+      "turn": 2,
+      "tool": "legal_matters_amount_history_create",
+      "args": {
+        "legal_matters_id": "legal_matters_002",
+        "fee_budget": 87.43,
+        "changed_by_role": "associate",
+        "change_reason": "Antitrust-competition matter workflow update and verification"
+      },
+      "argBytes": 176,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"status\": \"created\", \"table\": \"legal_matters_amount_history\", \"id\": \"legal_matters_amount_history_016\"}",
+      "thought": null
+    },
+    {
+      "turn": 3,
+      "tool": "_final_answer",
+      "ok": true,
+      "thought": null,
+      "observation": "Perfect! I have successfully completed the \"harvey_lab: antitrust-competition matter workflow\" for Law Firm Company. Here's a summary of what was accomplished:\n\n## Workflow Completion Summary\n\n**1. List Legal Matters:**\n- Retrieved 20 legal matter records from the Law Firm Company database\n- Confirmed multiple matters across various statuses (Intake, Active, Partner Review, Engaged, Declined)\n\n**2. Get Legal Matter (legal_matters_002):**\n- **ID:** legal_matters_002\n- **Title:** Fairview Group Legal Matters\n- **Status:** Active\n- **Department:** Legal\n- **Fee Budget:** $87.43\n- **Owner Role:** "
+    }
+  ],
+  "preRescore": {
+    "passed": false,
+    "reward": 0,
+    "failedConditions": [
+      "no_offtask_table_changes",
+      "no_undeclared_rows_created"
+    ]
+  },
+  "rescoredAt": "2026-08-10T08:17:56.870Z",
+  "rescoreReason": "seed-contamination: shared state dir put expansion matter_documents rows into original-world sessions"
+}

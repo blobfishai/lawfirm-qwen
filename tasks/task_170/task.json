@@ -1,0 +1,71 @@
+{
+ "task_id": "task_170",
+ "outcome_class": "eligible_action",
+ "prompt": "The liquidated damages assessment on the Corvess plant expansion contract must be recorded as the deadline exposure for the litigation file. Query the document index and locate the liquidated damages notice and delay certification for the plant expansion contract. Read it in full. Compute the assessment exactly as the notice's assessment method directs: the certified delay period times the contractual daily rate, limited by the contractual aggregate cap if the product exceeds it. Round to whole dollars. Record the result using litigation_deadlines_amount_history_create for litigation_deadlines_001, with deadline_exposure set to the assessed amount and changed_by_role set to exactly construction_counsel. If the cap applies, the recorded figure must be the capped amount, not the uncapped product.",
+ "goal": "Compute per-day liquidated damages and apply the contractual cap.",
+ "required_tools": [
+  "query_matter_documents",
+  "read_matter_document",
+  "litigation_deadlines_amount_history_create"
+ ],
+ "complexity": "medium",
+ "method": "eval_anchored_expansion",
+ "steps": [
+  "Locate the input documents for this engagement in the matter folder",
+  "Read every required input document in full",
+  "Derive the graded determinations strictly from the documents",
+  "Record the determinations with the required write tools"
+ ],
+ "relevant_data": [
+  {
+   "table": "matter_documents",
+   "id": 140,
+   "field": "title",
+   "value": "damages-computation pack — Liquidated Damages Notice and Delay Certification (Corvess Plant Expansion Contract)"
+  }
+ ],
+ "expected_state_changes": [
+  {
+   "table": "litigation_deadlines_amount_history",
+   "field": "(new row)",
+   "note": ">=1 rows with pinned fields"
+  }
+ ],
+ "tables_affected": [
+  "litigation_deadlines_amount_history"
+ ],
+ "walk": [
+  "query_matter_documents",
+  "read_matter_document",
+  "litigation_deadlines_amount_history_create"
+ ],
+ "reference_args": [
+  {
+   "title": "damages-computation pack — Liquidated Damages Notice and Del"
+  },
+  {
+   "id": 140
+  },
+  {
+   "litigation_deadlines_id": "litigation_deadlines_001",
+   "deadline_exposure": 315000,
+   "changed_by_role": "construction_counsel",
+   "change_reason": "Section 11.4 liquidated damages assessment: 75-day delay at the daily rate, limited to the contractual cap."
+  }
+ ],
+ "effects": [
+  {
+   "table": "litigation_deadlines_amount_history",
+   "op": "insert"
+  }
+ ],
+ "provenance": {
+  "source_workflow": "taxcalcbench: damages-computation/dc-liquidated-damages-cap"
+ },
+ "difficulty_tier": "medium",
+ "acceptance_label": "pending_calibration",
+ "expansion": {
+  "pack": "damages-computation.json",
+  "slug": "dc-liquidated-damages-cap"
+ }
+}

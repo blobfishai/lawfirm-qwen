@@ -1,0 +1,132 @@
+{
+ "task_id": "task_079",
+ "outcome_class": "eligible_action",
+ "prompt": "Complete the \"harvey_lab: banking-finance matter workflow\" workflow for Law Firm Company: list legal matters -> get legal matters -> create legal matters remediation. Use the matters record with id \"the matter whose title is \"Summit Operations Legal Matters\" and whose status is \"Intake\"\".",
+ "prompt_generation": {
+  "source": "deterministic",
+  "template_family": "workflow.compiled_research@1",
+  "template_key": "harvey lab banking finance <entity> workflow|list legal <entity>|get legal <entity>|create <entity>",
+  "template_signature": "template:30c0936ae86dc3d6"
+ },
+ "goal": "Execute the harvey_lab: banking-finance matter workflow process end to end, in order, using the available tools.",
+ "required_tools": [],
+ "complexity": "high",
+ "method": "graph_walk",
+ "steps": [
+  "1. list legal matters (legal_matters_list)",
+  "2. get legal matters (legal_matters_get)",
+  "3. create legal matters remediation (legal_matters_remediation_create)"
+ ],
+ "relevant_data": [
+  {
+   "table": "matters",
+   "id": "legal_matters_001",
+   "field": "id",
+   "value": "legal_matters_001"
+  }
+ ],
+ "expected_state_changes": [
+  {
+   "table": "legal_matters_remediations",
+   "id": "legal_matters_remediation_109",
+   "field": "(new row)",
+   "from": "8 rows",
+   "to": "9 rows"
+  }
+ ],
+ "tables_affected": [
+  "legal_matters_remediations"
+ ],
+ "walk": [
+  "legal_matters_list",
+  "legal_matters_get",
+  "legal_matters_remediation_create"
+ ],
+ "anchor_refs": [
+  "anc_f05fb377aefb"
+ ],
+ "provenance": {
+  "source_workflow": "harvey_lab: banking-finance matter workflow",
+  "evidence_ids": [
+   "anc_f05fb377aefb"
+  ],
+  "tool_graph_path": [
+   "legal_matters_list",
+   "legal_matters_get",
+   "legal_matters_remediation_create"
+  ],
+  "verifier_id": "",
+  "workflow_binding": {
+   "workflow_name": "harvey_lab: banking-finance matter workflow",
+   "steps": [
+    "list legal matters",
+    "get legal matters",
+    "create legal matters remediation"
+   ],
+   "step_bindings": [
+    {
+     "step": "list legal matters",
+     "tool": "legal_matters_list",
+     "matched_tokens": [
+      "list",
+      "legal",
+      "matter"
+     ]
+    },
+    {
+     "step": "get legal matters",
+     "tool": "legal_matters_get",
+     "matched_tokens": [
+      "get",
+      "legal",
+      "matter"
+     ]
+    },
+    {
+     "step": "create legal matters remediation",
+     "tool": "legal_matters_remediation_create",
+     "matched_tokens": [
+      "create",
+      "legal",
+      "matter",
+      "remediation"
+     ]
+    }
+   ],
+   "passed": true,
+   "reasons": [],
+   "source_steps": [
+    "list legal matters",
+    "get legal matters",
+    "create legal matters remediation"
+   ],
+   "omitted_steps": [],
+   "scope": "full"
+  }
+ },
+ "_reference_tools": [
+  "legal_matters_list",
+  "legal_matters_get",
+  "legal_matters_remediation_create"
+ ],
+ "difficulty_tier": "hard",
+ "effects": [
+  {
+   "table": "legal_matters_remediations",
+   "op": "insert"
+  }
+ ],
+ "acceptance_evidence": {
+  "protocol": "vcode_discrimination",
+  "attempts": 1,
+  "passes": 1,
+  "pass_rate": 1,
+  "reference_passed": true,
+  "negative_probes_passed": true,
+  "timed_out": false,
+  "accepted_by": "discrimination_gate",
+  "contract_digest": "acceptance_v2_c8ae93291a3132969c6612b272224cac7b1c94cf96343e3eb807f088afcab1d5",
+  "reason": "accepted: deterministic reference execution passed; null, shortcut, wrong-row, wrong-value, blind-fallback + incomplete baselines fail"
+ },
+ "acceptance_label": "too_easy"
+}

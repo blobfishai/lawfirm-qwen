@@ -1,0 +1,71 @@
+{
+ "task_id": "task_216",
+ "outcome_class": "eligible_action",
+ "prompt": "For the Halcyon Therapeutics / Meridian Compass deal-points grid we need the reverse break fee. Query the matter documents, find the EXECUTION-VERSION termination excerpt of the Halcyon merger agreement (not any superseded draft), and read it in full. Then record on litigation case litigation_cases_001, via litigation_cases_amount_history_create, the exact dollar amount of the Parent Termination Fee — the fee payable BY the acquiror TO the target — as claimed_amount (a plain number), with changed_by_role set exactly to 'deal-points-analyst' and a short change_reason citing the section. Be careful not to record the company-side fee.",
+ "goal": "Extract the Halcyon Parent Termination Fee of $265,000,000 (Section 8.3), not the $125,000,000 company fee and not the superseded draft's $240,000,000.",
+ "required_tools": [
+  "query_matter_documents",
+  "read_matter_document",
+  "litigation_cases_amount_history_create"
+ ],
+ "complexity": "medium",
+ "method": "eval_anchored_expansion",
+ "steps": [
+  "Locate the input documents for this engagement in the matter folder",
+  "Read every required input document in full",
+  "Derive the graded determinations strictly from the documents",
+  "Record the determinations with the required write tools"
+ ],
+ "relevant_data": [
+  {
+   "table": "matter_documents",
+   "id": 200,
+   "field": "title",
+   "value": "MAUD deal points pack — Merger Agreement (Meridian Compass / Halcyon Therapeutics) execution version — Article II consideration and Article VIII termination excerpt"
+  }
+ ],
+ "expected_state_changes": [
+  {
+   "table": "litigation_cases_amount_history",
+   "field": "(new row)",
+   "note": ">=1 rows with pinned fields"
+  }
+ ],
+ "tables_affected": [
+  "litigation_cases_amount_history"
+ ],
+ "walk": [
+  "query_matter_documents",
+  "read_matter_document",
+  "litigation_cases_amount_history_create"
+ ],
+ "reference_args": [
+  {
+   "title": "MAUD deal points pack — Merger Agreement (Meridian Compass /"
+  },
+  {
+   "id": 200
+  },
+  {
+   "litigation_cases_id": "litigation_cases_001",
+   "claimed_amount": 265000000,
+   "changed_by_role": "deal-points-analyst",
+   "change_reason": "Reference value recorded from source documents."
+  }
+ ],
+ "effects": [
+  {
+   "table": "litigation_cases_amount_history",
+   "op": "insert"
+  }
+ ],
+ "provenance": {
+  "source_workflow": "maud: maud-deal-points/maud-halcyon-parent-termination-fee"
+ },
+ "difficulty_tier": "medium",
+ "acceptance_label": "pending_calibration",
+ "expansion": {
+  "pack": "maud-deal-points.json",
+  "slug": "maud-halcyon-parent-termination-fee"
+ }
+}

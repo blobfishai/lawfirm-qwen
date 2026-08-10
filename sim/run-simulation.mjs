@@ -206,7 +206,7 @@ async function main() {
 
   if (mcpMode === "multi") {
     const systems = JSON.parse(readFileSync(join(ROOT, "mcp", "systems.json"), "utf8")).systems;
-    const sess = await fetch(`${localBase}/sessions`, { method: "POST", body: "{}", headers: { "Content-Type": "application/json" } }).then((r) => r.json());
+    const sess = await fetch(`${localBase}/sessions`, { method: "POST", body: JSON.stringify({ task_id: taskId }), headers: { "Content-Type": "application/json" } }).then((r) => r.json());
     const sessionId = sess.session_id;
     const TRACE = [];
     const clients = {};
@@ -252,7 +252,7 @@ async function main() {
   } else {
     const client = new McpClient(config.mcp.command, config.mcp.args, {
       cwd: ROOT,
-      env: { ...process.env, BLOBFISH_LOCAL: process.env.BLOBFISH_LOCAL ?? "1" },
+      env: { ...process.env, BLOBFISH_LOCAL: process.env.BLOBFISH_LOCAL ?? "1", BLOBFISH_TASK_ID: taskId },
     });
     const init = await client.start();
     const HARNESS = new Set(["verify_task", "reset_session"]);

@@ -1,0 +1,252 @@
+{
+  "taskId": "task_076",
+  "engine": "deepseek-chat",
+  "model": "deepseek-chat",
+  "passed": false,
+  "reward": 0,
+  "failedConditions": [
+    "required_workflow_path"
+  ],
+  "advisoryConditions": [
+    "all_tools_succeeded"
+  ],
+  "assertions": [
+    {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+    },
+    {
+      "name": "reads_before_writes",
+      "passed": true,
+      "details": "reads=8, writes=1, read_first=True"
+    },
+    {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+    },
+    {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints operations_records_agent -> legal_matters_evidence_create"
+    },
+    {
+      "name": "rows_inserted_into_legal_matters_evidence_records",
+      "passed": true,
+      "details": "legal_matters_evidence_records: 9 -> 10 rows"
+    },
+    {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no_offtask_table_changes: passes after removing seed-contamination (matter_documents expansion rows); original: OFF-TASK DAMAGE: tables ['matter_documents'] changed but are outside this task's scope"
+    },
+    {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+    },
+    {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "no_undeclared_rows_created: passes after removing seed-contamination (matter_documents expansion rows); original: UNDECLARED RECORD CREATION: {'matter_documents': \"130 -> 205 rows, new ids ['131', '132', '133', '134', '135', '136', '137', '138']\"}"
+    },
+    {
+      "name": "audit_logs_append_only",
+      "passed": true,
+      "details": "audit_logs append-only invariant holds"
+    },
+    {
+      "name": "all_tools_succeeded",
+      "passed": false,
+      "details": "10/13 tool calls succeeded"
+    }
+  ],
+  "toolCalls": 13,
+  "turnsUsed": 11,
+  "maxTurns": 50,
+  "usage": {
+    "prompt": 192933,
+    "completion": 1692,
+    "total": 194625
+  },
+  "costUsd": 0.05395,
+  "log": "/Users/samuelchien/dev/lawfirm-qwen/sim/logs/run-2026-08-10T07-27-00-347Z.jsonl",
+  "finishedAt": "2026-08-10T07:27:22.022Z",
+  "steps": [
+    {
+      "turn": 1,
+      "tool": "legal_matters_list",
+      "args": {
+        "status": "Active"
+      },
+      "argBytes": 20,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"matters\", \"count\": 4, \"rows\": [{\"id\": \"legal_matters_002\", \"title\": \"Fairview Group Legal Matters\", \"status\": \"Active\", \"department\": \"Legal\", \"owner_role\": \"associate\", \"reviewer_role\": \"partner\", \"fee_budget\": 87.43, \"evidence_summary\": \"Legal Matters review requires attention\", \"decision_reason\": \"Legal Matters requires verification because linked evidence is incomplete.\", \"created_at\": \"2026-01-06T18:57:00Z\", \"updated_at\": \"2026-01-07T23:15:00Z\"}, {\"id\": \"legal_matters_007\", \"title\": \"Ironwood Operations Legal Matters\", \"status\": \"Active\", \"department\": \"Legal\", \"owner_role\": \"a",
+      "thought": null
+    },
+    {
+      "turn": 2,
+      "tool": "legal_matters_get",
+      "args": {
+        "id": "legal_matters_002"
+      },
+      "argBytes": 27,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"id\": \"legal_matters_002\", \"title\": \"Fairview Group Legal Matters\", \"status\": \"Active\", \"department\": \"Legal\", \"owner_role\": \"associate\", \"reviewer_role\": \"partner\", \"fee_budget\": 87.43, \"evidence_summary\": \"Legal Matters review requires attention\", \"decision_reason\": \"Legal Matters requires verification because linked evidence is incomplete.\", \"created_at\": \"2026-01-06T18:57:00Z\", \"updated_at\": \"2026-01-07T23:15:00Z\"}",
+      "thought": null
+    },
+    {
+      "turn": 2,
+      "tool": "query_files",
+      "args": {
+        "query": "arbitration international dispute resolution"
+      },
+      "argBytes": 57,
+      "argParseError": false,
+      "ok": false,
+      "observation": "ERROR rate_limited: upstream service throttled this call. Retry the operation.",
+      "thought": null
+    },
+    {
+      "turn": 3,
+      "tool": "query_files",
+      "args": {
+        "query": "arbitration"
+      },
+      "argBytes": 24,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"agent_files\", \"count\": 3, \"rows\": [{\"id\": 1, \"filename\": \"invoices_import.tsv\", \"content_type\": \"text/tab-separated-values\", \"content\": \"id\\tinvoice_number\\tpo_id\\tcustomer_id\\tamount_cents\\ttax_cents\\ttotal_cents\\tstatus\\tissued_at\\tdue_date\\tpaid_at\\tinvoice_reviewsid\\tinvoice_reviewstitle\\tinvoice_reviewsstatus\\tinvoice_reviewsdepartment\\tinvoice_reviewsowner_role\\tinvoice_reviewsreviewe\\u2026[preview]\"}, {\"id\": 2, \"filename\": \"employees_import.tsv\", \"content_type\": \"text/tab-separated-values\", \"content\": \"id\\tcasesid\\trole\\temail\\tphone\\twarehouse_id\\thire_date\\tactive\\tcertific",
+      "thought": null
+    },
+    {
+      "turn": 3,
+      "tool": "query_matter_documents",
+      "args": {
+        "title": "Fairview"
+      },
+      "argBytes": 21,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"matter_documents\", \"count\": 0, \"rows\": []}",
+      "thought": null
+    },
+    {
+      "turn": 4,
+      "tool": "legal_matters_audit_list",
+      "args": {
+        "legal_matters_id": "legal_matters_002"
+      },
+      "argBytes": 41,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"legal_matters_audit_events\", \"count\": 2, \"rows\": [{\"id\": \"legal_matters_audit_event_012\", \"legal_matters_id\": \"legal_matters_002\", \"event_type\": \"remediated\", \"actor_role\": \"Finance Specialist\", \"detail\": \"Legal Matters Audit Event handoff documents that linked evidence is incomplete.\", \"created_at\": \"2026-01-08T16:12:00Z\"}, {\"id\": \"legal_matters_audit_event_014\", \"legal_matters_id\": \"legal_matters_002\", \"event_type\": \"evidence_attached\", \"actor_role\": \"Customer Success Manager\", \"detail\": \"Legal Matters Audit Event handoff documents that the ownership handoff is pending.\", \"created",
+      "thought": null
+    },
+    {
+      "turn": 4,
+      "tool": "query_matter_documents",
+      "args": {},
+      "argBytes": 2,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"matter_documents\", \"count\": 25, \"rows\": [{\"id\": 1, \"title\": \"Deal materials \\u2014 antitrust-competition analyze: Analyze Antitrust Risk and HSR Filing Strategy fo\", \"doc_type\": \"input_materials\", \"related_shape\": \"harvey_lab/antitrust-competition/analyze-antitrust-hsr-strategy\", \"body\": \"MATTER FILE 1 \\u2014 ANTITRUST COMPETITION\\nantitrust-competition analyze: Analyze Antitrust Risk and HSR Filing Strategy for PE Acquisition with Horizontal Overlap\\n\\n\\nBACKGROUND. The client engagement covers this antitrust competition matter; the\\u2026[preview]\"}, {\"id\": 2, \"title\": \"Deal materi",
+      "thought": null
+    },
+    {
+      "turn": 5,
+      "tool": "read_matter_document",
+      "args": {
+        "id": 2
+      },
+      "argBytes": 9,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"id\": 2, \"title\": \"Deal materials \\u2014 arbitration-international-dispute-resolution analyze: Analyze Counterparty Marku\", \"doc_type\": \"input_materials\", \"related_shape\": \"harvey_lab/arbitration-international-dispute-resolution/analyze-arbitration-agreement-markup-analysis\", \"body\": \"MATTER FILE 2 \\u2014 ARBITRATION INTERNATIONAL DISPUTE RESOLUTION\\narbitration-international-dispute-resolution analyze: Analyze Counterparty Markup of Arbitration Agreement and Prepare Accept/Reject/Counter Memorandum\\n\\n\\nBACKGROUND. The client engagement covers this arbitration international dispute resolutio",
+      "thought": null
+    },
+    {
+      "turn": 6,
+      "tool": "legal_matters_evidence_create",
+      "args": {
+        "legal_matters_id": "legal_matters_002",
+        "evidence_type": "input_materials",
+        "source_uri": "harvey_lab/arbitration-international-dispute-resolution/analyze-arbitration-agreement-markup-analysis",
+        "content_digest": "matter-file-2-arbitration-counterparty-markup-analysis",
+        "owner_role": "associate",
+        "status": "collected"
+      },
+      "argBytes": 322,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"status\": \"created\", \"table\": \"legal_matters_evidence_records\", \"id\": \"legal_matters_evidence_010\"}",
+      "thought": null
+    },
+    {
+      "turn": 7,
+      "tool": "legal_matters_audit_list",
+      "args": {
+        "legal_matters_id": "legal_matters_002"
+      },
+      "argBytes": 41,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"legal_matters_audit_events\", \"count\": 2, \"rows\": [{\"id\": \"legal_matters_audit_event_012\", \"legal_matters_id\": \"legal_matters_002\", \"event_type\": \"remediated\", \"actor_role\": \"Finance Specialist\", \"detail\": \"Legal Matters Audit Event handoff documents that linked evidence is incomplete.\", \"created_at\": \"2026-01-08T16:12:00Z\"}, {\"id\": \"legal_matters_audit_event_014\", \"legal_matters_id\": \"legal_matters_002\", \"event_type\": \"evidence_attached\", \"actor_role\": \"Customer Success Manager\", \"detail\": \"Legal Matters Audit Event handoff documents that the ownership handoff is pending.\", \"created",
+      "thought": null
+    },
+    {
+      "turn": 8,
+      "tool": "query_matter_documents",
+      "args": {
+        "title": "Fairview",
+        "doc_type": "input_materials"
+      },
+      "argBytes": 52,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"matter_documents\", \"count\": 0, \"rows\": []}",
+      "thought": null
+    },
+    {
+      "turn": 9,
+      "tool": "list_playbooks",
+      "args": {},
+      "argBytes": 2,
+      "argParseError": false,
+      "ok": false,
+      "observation": "ERROR: tool 'list_playbooks' has no synthesized behavior",
+      "thought": null
+    },
+    {
+      "turn": 10,
+      "tool": "list_scheduled_runs",
+      "args": {},
+      "argBytes": 2,
+      "argParseError": false,
+      "ok": false,
+      "observation": "ERROR: tool 'list_scheduled_runs' has no synthesized behavior",
+      "thought": null
+    },
+    {
+      "turn": 11,
+      "tool": "_final_answer",
+      "ok": true,
+      "thought": null,
+      "observation": "The task requested the specific sequence: list legal matters, get the legal matter, then create legal matters evidence. I have completed all three steps:\n\n1. **Listed legal matters** — Found \"Fairview Group Legal Matters\" with id `legal_matters_002`, status \"Active\".\n2. **Got the legal matter** — Retrieved the full record for `legal_matters_002`.\n3. **Created legal matters evidence** — Created a new evidence record (`legal_matters_evidence_010`) for the arbitration international dispute resolution worksheet, sourcing the matter file `harvey_lab/arbitration-international-dispute-resolution/anal"
+    }
+  ],
+  "preRescore": {
+    "passed": false,
+    "reward": 0,
+    "failedConditions": [
+      "required_workflow_path",
+      "no_offtask_table_changes",
+      "no_undeclared_rows_created"
+    ]
+  },
+  "rescoredAt": "2026-08-10T08:17:56.898Z",
+  "rescoreReason": "seed-contamination: shared state dir put expansion matter_documents rows into original-world sessions"
+}

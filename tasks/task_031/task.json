@@ -1,0 +1,70 @@
+{
+ "task_id": "task_031",
+ "prompt": "Review the underwriter's redline against our original draft and the firm's playbook, then prepare a negotiation-ready redline analysis memo. Output: redline-analysis-memo.docx. The input materials are in matter document(s) \"Deal materials — capital-markets analyze: Analyze Counterparty Markup of Underwriting Agreement —\" and \"Counterparty markup — capital-markets analyze: Analyze Counterparty Markup of Underwriting A\". Reconcile the counterparty markup against the base materials and address every deviation. Create a new matter documents record titled \"redline-analysis-memo.docx\" containing the full deliverable text in its body.",
+ "goal": "Produce redline-analysis-memo.docx grounded in the matter materials",
+ "required_tools": [
+  "read_matter_document",
+  "draft_matter_document"
+ ],
+ "complexity": "high",
+ "method": "graph_walk",
+ "steps": [
+  "Read every input file for the matter in full",
+  "Reconcile the counterparty markup against the base materials",
+  "Analyze them per the engagement instruction",
+  "Draft and file the deliverable redline-analysis-memo.docx"
+ ],
+ "relevant_data": [
+  {
+   "table": "matter_documents",
+   "id": 5,
+   "field": "title",
+   "value": "Deal materials — capital-markets analyze: Analyze Counterparty Markup of Underwriting Agreement —"
+  },
+  {
+   "table": "matter_documents",
+   "id": 31,
+   "field": "title",
+   "value": "Counterparty markup — capital-markets analyze: Analyze Counterparty Markup of Underwriting A"
+  }
+ ],
+ "expected_state_changes": [
+  {
+   "table": "matter_documents",
+   "id": "53",
+   "field": "(new row)",
+   "from": "52 rows",
+   "to": "53 rows"
+  }
+ ],
+ "tables_affected": [
+  "matter_documents"
+ ],
+ "walk": [
+  "read_matter_document",
+  "read_matter_document",
+  "draft_matter_document"
+ ],
+ "effects": [
+  {
+   "table": "matter_documents",
+   "op": "insert"
+  }
+ ],
+ "provenance": {
+  "source_workflow": "harvey_lab: capital-markets/analyze-counterparty-markup-of-underwriting-agreement"
+ },
+ "acceptance_evidence": {
+  "protocol": "vcode_discrimination",
+  "attempts": 1,
+  "passes": 1,
+  "pass_rate": 1,
+  "reference_passed": true,
+  "negative_probes_passed": true,
+  "timed_out": false,
+  "accepted_by": "discrimination_gate",
+  "contract_digest": "acceptance_v2_4c7279e44c20fd53c4e746fabbe49acc7d326d1e7e5c574bb532e42bdd0d3105",
+  "reason": "accepted: deterministic reference execution passed; null, shortcut, wrong-row, wrong-value, blind-fallback + incomplete baselines fail"
+ },
+ "acceptance_label": "in_band"
+}

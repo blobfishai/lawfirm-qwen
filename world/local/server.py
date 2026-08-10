@@ -584,12 +584,48 @@ class ToolRuntime:
 # ---------------------------------------------------------------------------
 
 class Session:
-    def __init__(self, sid: str):
+    """One episode's world state. With a task, the task's seed bundle
+    (documents + core_data rows) is upserted over the base world at creation
+    — idempotent for tasks derived from the base world, and the mechanism by
+    which future tasks ship their own data without touching global tables."""
+
+    def __init__(self, sid: str, task: dict | None = None,
+                 md_rows_by_id: dict | None = None,
+                 table_defs: dict | None = None):
         self.id = sid
+        self.task_id = (task or {}).get("task_id")
         self.db_path = os.path.join(SESS_DIR, f"{sid}.db")
         shutil.copyfile(SEED_DB, self.db_path)
         self.call_index = 0
         self.write_count = 0
+        seed = (task or {}).get("seed") or {}
+        if seed:
+            self._apply_seed(seed, md_rows_by_id or {}, table_defs or {})
+
+    def _apply_seed(self, seed: dict, md_rows_by_id: dict, table_defs: dict) -> None:
+        conn = sqlite3.connect(self.db_path)
+        try:
+            def upsert(table: str, row: dict) -> None:
+                cols = [c["name"] for c in table_defs[table]["columns"]]
+                vals = [json.dumps(row.get(c)) if isinstance(row.get(c), (dict, list))
+                        else row.get(c) for c in cols]
+                cq = ", ".join(f'"{c}"' for c in cols)
+                ph = ", ".join("?" for _ in cols)
+                conn.execute(
+                    f'INSERT OR REPLACE INTO "{table}" ({cq}) VALUES ({ph})', vals)
+
+            for doc_id in seed.get("documents") or []:
+                row = md_rows_by_id.get(doc_id)
+                if row and "matter_documents" in table_defs:
+                    upsert("matter_documents", row)
+            for table, rows in (seed.get("core_data") or {}).items():
+                if table not in table_defs:
+                    continue
+                for row in rows:
+                    upsert(table, row)
+            conn.commit()
+        finally:
+            conn.close()
 
     def close(self):
         try:
@@ -605,6 +641,19 @@ class Session:
 def make_handler(world: dict, runtime: ToolRuntime, friction: Friction,
                  initial_state: dict, verifiers: dict):
     sessions: dict[str, Session] = {}
+    tasks_by_id = {t["task_id"]: t for t in world.get("tasks") or []}
+    table_defs = {t["name"]: t for t in world["tables"]}
+    md_rows_by_id = {r["id"]: r for r in
+                     (table_defs.get("matter_documents") or {}).get("sample_rows") or []}
+    # initial-state baseline per task seed (deterministic → cache by task_id);
+    # sessions without a task use the base-world baseline.
+    initial_cache: dict[str, dict] = {"__base__": initial_state}
+
+    def baseline_for(sess: Session) -> dict:
+        key = sess.task_id or "__base__"
+        if key not in initial_cache:
+            initial_cache[key] = snapshot(sess.db_path)
+        return initial_cache[key]
     world_tools_mcp = []
     for t in world["tools"]:
         params = norm_params(t)
@@ -689,8 +738,13 @@ def make_handler(world: dict, runtime: ToolRuntime, friction: Friction,
 
             if self.path == "/sessions":
                 sid = uuid.uuid4().hex[:16]
-                sessions[sid] = Session(sid)
-                return self._json(200, {"session_id": sid})
+                task = tasks_by_id.get((body or {}).get("task_id"))
+                sess = Session(sid, task=task, md_rows_by_id=md_rows_by_id,
+                               table_defs=table_defs)
+                sessions[sid] = sess
+                baseline_for(sess)  # warm the per-task baseline cache
+                return self._json(200, {"session_id": sid,
+                                        "task_id": sess.task_id})
 
             m = re.match(r"^/verify/([\w\-]+)$", self.path)
             if m:
@@ -714,7 +768,7 @@ def make_handler(world: dict, runtime: ToolRuntime, friction: Friction,
             ns: dict = {}
             try:
                 exec(v["vcode"], ns)  # shipped verifier code, executed verbatim
-                verdict = ns["verify"](copy.deepcopy(initial_state), final_state, trace)
+                verdict = ns["verify"](copy.deepcopy(baseline_for(sess)), final_state, trace)
             except Exception as e:  # noqa: BLE001 — surface verifier bugs
                 return self._json(500, {"error": f"verifier crashed: {e!r}"})
             return self._json(200, verdict)

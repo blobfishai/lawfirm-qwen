@@ -346,7 +346,7 @@ const html = `<title>lawfirm-qwen — Legal Agent Leaderboard</title>
   <h2>Failure modes — why each model fails when it fails</h2>
   <p class="note">Every failing episode classified from its full step trace
   (tool calls, arguments, observations). Hover segments for counts. Full per-model reports in
-  <code>docs/failure-reports/</code>.</p>
+  <code>reports/</code>.</p>
   ${modeStacks()}
 
   <h2>The capability boundary</h2>

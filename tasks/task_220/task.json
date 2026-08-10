@@ -1,0 +1,71 @@
+{
+ "task_id": "task_220",
+ "outcome_class": "eligible_action",
+ "prompt": "MAE carveout determination for the Halcyon Therapeutics / Meridian Compass agreement: is the pandemic / public-health-event carveout in the Company Material Adverse Effect definition subject to a disproportionate-impact modifier (i.e., pandemic effects still count toward an MAE to the extent they disproportionately impact the target relative to industry peers)? Query the matter documents, find the Halcyon conformed-provisions memorandum containing the MAE definition, and read it in full. Then record your determination as a review on legal matter legal_matters_001 via legal_matters_review_create, with reviewer_role set exactly to 'ma-deal-points-counsel' and outcome set exactly to 'approved' if the pandemic carveout IS subject to the disproportionate-impact modifier, or exactly 'rejected' if it is not. Give a one-sentence rationale citing the clause numbers.",
+ "goal": "Determine from the Halcyon MAE definition that clause (iv) (pandemic) is among the carveouts subject to the disproportionate-impact proviso (clauses i, ii, iv, v) — outcome 'approved'.",
+ "required_tools": [
+  "query_matter_documents",
+  "read_matter_document",
+  "legal_matters_review_create"
+ ],
+ "complexity": "high",
+ "method": "eval_anchored_expansion",
+ "steps": [
+  "Locate the input documents for this engagement in the matter folder",
+  "Read every required input document in full",
+  "Derive the graded determinations strictly from the documents",
+  "Record the determinations with the required write tools"
+ ],
+ "relevant_data": [
+  {
+   "table": "matter_documents",
+   "id": 201,
+   "field": "title",
+   "value": "MAUD deal points pack — Halcyon Therapeutics merger agreement conformed provisions — MAE definition, interim operating covenant and non-solicitation (Sections 1.1, 5.1, 5.4)"
+  }
+ ],
+ "expected_state_changes": [
+  {
+   "table": "legal_matters_reviews",
+   "field": "(new row)",
+   "note": ">=1 rows with pinned fields"
+  }
+ ],
+ "tables_affected": [
+  "legal_matters_reviews"
+ ],
+ "walk": [
+  "query_matter_documents",
+  "read_matter_document",
+  "legal_matters_review_create"
+ ],
+ "reference_args": [
+  {
+   "title": "MAUD deal points pack — Halcyon Therapeutics merger agreemen"
+  },
+  {
+   "id": 201
+  },
+  {
+   "legal_matters_id": "legal_matters_001",
+   "reviewer_role": "ma-deal-points-counsel",
+   "outcome": "approved",
+   "rationale": "Reference determination grounded in the required reads."
+  }
+ ],
+ "effects": [
+  {
+   "table": "legal_matters_reviews",
+   "op": "insert"
+  }
+ ],
+ "provenance": {
+  "source_workflow": "maud: maud-deal-points/maud-halcyon-mae-pandemic-disproportionate"
+ },
+ "difficulty_tier": "high",
+ "acceptance_label": "pending_calibration",
+ "expansion": {
+  "pack": "maud-deal-points.json",
+  "slug": "maud-halcyon-mae-pandemic-disproportionate"
+ }
+}

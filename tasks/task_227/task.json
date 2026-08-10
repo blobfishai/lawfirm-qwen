@@ -1,0 +1,78 @@
+{
+ "task_id": "task_227",
+ "outcome_class": "eligible_action",
+ "prompt": "For the indemnification section of the deal-points tracker on the Halden Bay / Orlyn Foods acquisition, we need two numbers from the executed stock purchase agreement: the sellers' aggregate indemnification liability cap and the indemnification basket (threshold) amount. Query the matter documents, identify the execution version of that stock purchase agreement (ignore the letter of intent), and read it in full. Then create two amount-history entries on billing file legal_billing_001, each with changed_by_role set exactly to 'deal_points_analyst': the first with invoice_amount equal to the sellers' indemnity cap stated in the agreement (plain number) and a change_reason identifying it as the indemnity cap; the second with invoice_amount equal to the basket/threshold amount (plain number) and a change_reason identifying it as the basket.",
+ "goal": "Extract the seller indemnification cap and basket amounts from the executed Halden Bay/Orlyn SPA as two amount-history entries.",
+ "required_tools": [
+  "query_matter_documents",
+  "read_matter_document",
+  "legal_billing_amount_history_create"
+ ],
+ "complexity": "high",
+ "method": "eval_anchored_expansion",
+ "steps": [
+  "Locate the input documents for this engagement in the matter folder",
+  "Read every required input document in full",
+  "Derive the graded determinations strictly from the documents",
+  "Record the determinations with the required write tools"
+ ],
+ "relevant_data": [
+  {
+   "table": "matter_documents",
+   "id": 208,
+   "field": "title",
+   "value": "SPA pack — Stock Purchase Agreement (Halden Bay / Orlyn Foods) execution version"
+  }
+ ],
+ "expected_state_changes": [
+  {
+   "table": "legal_billing_amount_history",
+   "field": "(new row)",
+   "note": ">=2 rows with pinned fields"
+  }
+ ],
+ "tables_affected": [
+  "legal_billing_amount_history"
+ ],
+ "walk": [
+  "query_matter_documents",
+  "read_matter_document",
+  "legal_billing_amount_history_create",
+  "legal_billing_amount_history_create"
+ ],
+ "reference_args": [
+  {
+   "title": "SPA pack — Stock Purchase Agreement (Halden Bay / Orlyn Food"
+  },
+  {
+   "id": 208
+  },
+  {
+   "legal_billing_id": "legal_billing_001",
+   "invoice_amount": 7875000,
+   "changed_by_role": "deal_points_analyst",
+   "change_reason": "Sellers' aggregate indemnity cap per Section 9.2 of the executed Halden Bay/Orlyn SPA."
+  },
+  {
+   "legal_billing_id": "legal_billing_001",
+   "invoice_amount": 262500,
+   "changed_by_role": "deal_points_analyst",
+   "change_reason": "Indemnification basket/threshold per Section 9.3 of the executed Halden Bay/Orlyn SPA."
+  }
+ ],
+ "effects": [
+  {
+   "table": "legal_billing_amount_history",
+   "op": "insert"
+  }
+ ],
+ "provenance": {
+  "source_workflow": "biglaw_bench: spa-deal-extraction/spa-extract-cap-basket-orlyn"
+ },
+ "difficulty_tier": "high",
+ "acceptance_label": "pending_calibration",
+ "expansion": {
+  "pack": "spa-deal-extraction.json",
+  "slug": "spa-extract-cap-basket-orlyn"
+ }
+}

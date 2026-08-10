@@ -1,0 +1,71 @@
+{
+ "task_id": "task_228",
+ "outcome_class": "eligible_action",
+ "prompt": "Classify the governing law of the executed stock purchase agreement in the Halden Bay / Orlyn Foods acquisition. Query the matter documents, identify the execution version of that agreement (not the letter of intent), and read it in full. Then record your determination as a matter review on legal_matters_001 with reviewer_role set exactly to 'deal_points_analyst' and outcome set to exactly one slug from this list, whichever matches the agreement's governing-law clause: 'governing_law_new_york', 'governing_law_delaware', 'governing_law_texas', 'governing_law_california'. Give a one-sentence rationale citing the clause.",
+ "goal": "Classify the governing law of the executed Halden Bay/Orlyn SPA using the supplied vocabulary.",
+ "required_tools": [
+  "query_matter_documents",
+  "read_matter_document",
+  "legal_matters_review_create"
+ ],
+ "complexity": "medium",
+ "method": "eval_anchored_expansion",
+ "steps": [
+  "Locate the input documents for this engagement in the matter folder",
+  "Read every required input document in full",
+  "Derive the graded determinations strictly from the documents",
+  "Record the determinations with the required write tools"
+ ],
+ "relevant_data": [
+  {
+   "table": "matter_documents",
+   "id": 208,
+   "field": "title",
+   "value": "SPA pack — Stock Purchase Agreement (Halden Bay / Orlyn Foods) execution version"
+  }
+ ],
+ "expected_state_changes": [
+  {
+   "table": "legal_matters_reviews",
+   "field": "(new row)",
+   "note": ">=1 rows with pinned fields"
+  }
+ ],
+ "tables_affected": [
+  "legal_matters_reviews"
+ ],
+ "walk": [
+  "query_matter_documents",
+  "read_matter_document",
+  "legal_matters_review_create"
+ ],
+ "reference_args": [
+  {
+   "title": "SPA pack — Stock Purchase Agreement (Halden Bay / Orlyn Food"
+  },
+  {
+   "id": 208
+  },
+  {
+   "legal_matters_id": "legal_matters_001",
+   "reviewer_role": "deal_points_analyst",
+   "outcome": "governing_law_new_york",
+   "rationale": "Section 11.4 of the executed agreement selects New York law without regard to choice-of-law rules."
+  }
+ ],
+ "effects": [
+  {
+   "table": "legal_matters_reviews",
+   "op": "insert"
+  }
+ ],
+ "provenance": {
+  "source_workflow": "biglaw_bench: spa-deal-extraction/spa-classify-governing-law-orlyn"
+ },
+ "difficulty_tier": "medium",
+ "acceptance_label": "pending_calibration",
+ "expansion": {
+  "pack": "spa-deal-extraction.json",
+  "slug": "spa-classify-governing-law-orlyn"
+ }
+}

@@ -3,7 +3,7 @@
 Every failure cluster in the measured runs was treated as a suspected harness
 bug until proven otherwise. Three real defects were found; two materially
 changed scores and were fixed + requantified. Everything reported in
-`docs/failure-reports/` is post-audit.
+`reports/` is post-audit.
 
 ## Bug 1 — output-cap truncation masquerading as "emission collapse" (FIXED)
 

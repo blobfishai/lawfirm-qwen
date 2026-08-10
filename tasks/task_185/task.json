@@ -1,0 +1,100 @@
+{
+ "task_id": "task_185",
+ "outcome_class": "eligible_action",
+ "prompt": "You represent Trellis BioWorks (sell-side) on Project Lattice. Before the next negotiation session, the deal team needs a reconciliation of the disclosed litigation and IP matters against the indemnity architecture on the table. First query the matter file to locate, and then read in full, each of: (1) the share purchase agreement Article VIII indemnification provisions, execution draft v4 (deductible, cap, and survival baseline); (2) the second-turn markup of Article VIII from Halberd's outside counsel (tipping basket, raised cap, and special-indemnity ask); (3) the Trellis deal team's privileged approved indemnity positions memo; and (4) the Trellis disclosure schedule covering litigation and intellectual property matters. Then draft a disclosure reconciliation memorandum that: takes each disclosed schedule item in turn (by item number, matter name, and status); states its quantified exposure where the schedule supplies a dollar amount and characterizes the risk where it does not; analyzes how each item would be treated under (a) the v4 deductible-and-cap structure, (b) the Halberd markup including its tipping basket and special indemnity, and (c) the approved-positions fallback; states the aggregate quantified exposure of the pending disclosed matters; and flags which disclosed item the approved positions require excluding from any special indemnity and why. Create the deliverable with draft_matter_document using title exactly trellis-spa-disclosure-reconciliation-memo.docx and doc_type exactly deliverable. Use only dollar amounts that appear in the documents.",
+ "goal": "Map each Schedule 3.14 item through the competing indemnity structures and file the reconciliation memo under the commissioned filename.",
+ "required_tools": [
+  "query_matter_documents",
+  "read_matter_document",
+  "draft_matter_document"
+ ],
+ "complexity": "high",
+ "method": "eval_anchored_expansion",
+ "steps": [
+  "Locate the input documents for this engagement in the matter folder",
+  "Read every required input document in full",
+  "Derive the graded determinations strictly from the documents",
+  "Record the determinations with the required write tools"
+ ],
+ "relevant_data": [
+  {
+   "table": "matter_documents",
+   "id": 158,
+   "field": "title",
+   "value": "deep-drafting pack — SPA (Halberd Holdings / Trellis BioWorks) Article VIII indemnification, execution draft v4"
+  },
+  {
+   "table": "matter_documents",
+   "id": 159,
+   "field": "title",
+   "value": "deep-drafting pack — Wexler Bright second-turn markup of Trellis SPA Article VIII"
+  },
+  {
+   "table": "matter_documents",
+   "id": 160,
+   "field": "title",
+   "value": "deep-drafting pack — Trellis deal team approved indemnity positions memo (privileged)"
+  },
+  {
+   "table": "matter_documents",
+   "id": 161,
+   "field": "title",
+   "value": "deep-drafting pack — Trellis BioWorks Disclosure Schedule 3.14 (litigation and intellectual property)"
+  }
+ ],
+ "expected_state_changes": [
+  {
+   "table": "matter_documents",
+   "field": "(new row)",
+   "note": ">=1 rows with pinned fields"
+  }
+ ],
+ "tables_affected": [
+  "matter_documents"
+ ],
+ "walk": [
+  "query_matter_documents",
+  "read_matter_document",
+  "read_matter_document",
+  "read_matter_document",
+  "read_matter_document",
+  "draft_matter_document"
+ ],
+ "reference_args": [
+  {
+   "title": "deep-drafting pack — SPA (Halberd Holdings / Trellis BioWork"
+  },
+  {
+   "id": 158
+  },
+  {
+   "id": 159
+  },
+  {
+   "id": 160
+  },
+  {
+   "id": 161
+  },
+  {
+   "title": "trellis-spa-disclosure-reconciliation-memo.docx",
+   "doc_type": "deliverable",
+   "body": "PRIVILEGED AND CONFIDENTIAL — DISCLOSURE RECONCILIATION MEMORANDUM (PROJECT LATTICE)\nRE: SCHEDULE 3.14 MATTERS MAPPED AGAINST THE v4 DRAFT, THE HALBERD MARKUP, AND THE APPROVED POSITIONS\n\nItem 1 — TTAB Opposition No. 91-284772 (Lumenor Devices B.V. v. Trellis; TRELLIGEN mark; pending). No damages claimed; exposure is refusal of registration and rebranding cost, unquantified. Under v4: any resulting Losses run through the $400,000 deductible and $12,000,000 (10%) cap. Under the Halberd markup: swept into the uncapped Section 8.2(d) special indemnity outside basket and cap. Under approved positions: eligible for the limited special indemnity (within the $2,500,000 aggregate cap, 24-month survival).\n\nItem 2 — Bexley Clinical Partners LLC demand (pending, pre-litigation): quantified at $1,850,000. Under v4: exceeds the $400,000 deductible, leaving $1,450,000 recoverable within the $12,000,000 cap if liability were established. Under the Halberd markup: first-dollar recovery — the claim alone tips the proposed $250,000 tipping basket, and the special indemnity would make it recoverable outside any cap. Under approved positions: eligible for the limited special indemnity, counting against the $2,500,000 aggregate cap.\n\nItem 3 — OSHA Citation No. 1829445 (resolved; $46,500 penalty paid 17 March 2026). A closed matter with no remaining exposure. The approved positions require that any special indemnity expressly EXCLUDE resolved matters, including this item: covering a settled citation would hand Buyer a costless claim lane and is out of policy. Under v4 it is disclosed and therefore not a rep breach.\n\nAGGREGATE. The pending disclosed matters carry quantified exposure of $1,850,000 (Item 2), plus the unquantified rebranding risk of Item 1. Both fit within the approved $2,500,000 special-indemnity cap, which supports offering the limited rider while rejecting the uncapped ask and the tipping-basket conversion (approved basket floor: $300,000 true deductible; markup ask: $250,000 tipping)."
+  }
+ ],
+ "effects": [
+  {
+   "table": "matter_documents",
+   "op": "insert"
+  }
+ ],
+ "provenance": {
+  "source_workflow": "harvey_lab: deep-drafting/spa-disclosure-reconciliation-memo"
+ },
+ "difficulty_tier": "high",
+ "acceptance_label": "pending_calibration",
+ "expansion": {
+  "pack": "deep-drafting.json",
+  "slug": "spa-disclosure-reconciliation-memo"
+ }
+}

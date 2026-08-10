@@ -106,7 +106,7 @@ const fmSection = Object.entries(modes).map(([eng, m]) => {
     <h3>${esc(m.label)} — score ${m.overallScore} · flaky-21 ${m.flakySetScore} · ${m.failures}/${m.episodes} episodes failed${eng.includes("haiku") ? " · <em>partial run (lane stopped to cap spend)</em>" : ""}</h3>
     <div class="fm-stack">${segs}</div>
     <div class="table-scroll"><table><thead><tr><th>Mode</th><th>Episodes</th><th>Share</th><th>Tasks</th></tr></thead><tbody>${rows}</tbody></table></div>
-    <p class="note">Worst families: ${m.worstPracticeAreas.map((w) => `${esc(w.key)} ${w.score}`).join(" · ")}. Full report: <code>docs/failure-reports/${eng}.md</code></p>
+    <p class="note">Worst families: ${m.worstPracticeAreas.map((w) => `${esc(w.key)} ${w.score}`).join(" · ")}. Full report: <code>reports/${eng}.md</code></p>
   </div>`;
 }).join("\n");
 

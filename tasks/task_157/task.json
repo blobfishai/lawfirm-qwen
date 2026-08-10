@@ -1,0 +1,94 @@
+{
+ "task_id": "task_157",
+ "outcome_class": "eligible_action",
+ "prompt": "Our client engagement with the freight-holding company is tracked as matter legal_matters_001. Review the EXECUTED master services agreement between the analytics vendor and the freight client (execution copy, not any negotiation correspondence) for risk-allocation clauses. Candidate clause categories (CUAD slugs): uncapped_liability, cap_on_liability, liquidated_damages, insurance, warranty_duration. For each category present, file one record with legal_matters_evidence_create for legal_matters_001. Rules: query the document store first to identify the correct document(s), read each listed document in full before filing anything, and file exactly one evidence record per clause category that is actually present in the executed text — set evidence_type to the exact category slug, verbatim from the candidate list. Do NOT file a record for any category that is absent from the executed agreement, even if a draft, term sheet, or email mentions it. Use a short quote or section reference of the supporting clause as content_summary, and any reasonable source_uri.",
+ "goal": "Identify cap_on_liability, uncapped_liability, and insurance as present in the MSA; do not fabricate liquidated_damages or warranty_duration.",
+ "required_tools": [
+  "query_matter_documents",
+  "read_matter_document",
+  "legal_matters_evidence_create"
+ ],
+ "complexity": "medium",
+ "method": "eval_anchored_expansion",
+ "steps": [
+  "Locate the input documents for this engagement in the matter folder",
+  "Read every required input document in full",
+  "Derive the graded determinations strictly from the documents",
+  "Record the determinations with the required write tools"
+ ],
+ "relevant_data": [
+  {
+   "table": "matter_documents",
+   "id": 131,
+   "field": "title",
+   "value": "CUAD pack — Master Services Agreement (Meridian Analytics / Corvus Freight) execution copy"
+  }
+ ],
+ "expected_state_changes": [
+  {
+   "table": "legal_matters_evidence_records",
+   "field": "(new row)",
+   "note": ">=3 rows with pinned fields"
+  }
+ ],
+ "tables_affected": [
+  "legal_matters_evidence_records"
+ ],
+ "walk": [
+  "query_matter_documents",
+  "read_matter_document",
+  "legal_matters_evidence_create",
+  "legal_matters_evidence_create",
+  "legal_matters_evidence_create"
+ ],
+ "reference_args": [
+  {
+   "title": "CUAD pack — Master Services Agreement (Meridian Analytics / "
+  },
+  {
+   "id": 131
+  },
+  {
+   "legal_matters_id": "legal_matters_001",
+   "evidence_type": "uncapped_liability",
+   "source_uri": "matter://legal_matters_001/msa-meridian-corvus-execution",
+   "content_summary": "Section 9: liability cap does not apply to confidentiality breach or IP infringement indemnity; Provider's liability uncapped for those.",
+   "content_digest": "sha256:reference-digest",
+   "owner_role": "associate",
+   "status": "open"
+  },
+  {
+   "legal_matters_id": "legal_matters_001",
+   "evidence_type": "cap_on_liability",
+   "source_uri": "matter://legal_matters_001/msa-meridian-corvus-execution",
+   "content_summary": "Section 9: aggregate liability capped at fees paid or payable in the trailing twelve months.",
+   "content_digest": "sha256:reference-digest",
+   "owner_role": "associate",
+   "status": "open"
+  },
+  {
+   "legal_matters_id": "legal_matters_001",
+   "evidence_type": "insurance",
+   "source_uri": "matter://legal_matters_001/msa-meridian-corvus-execution",
+   "content_summary": "Section 5: Provider must maintain $2M CGL and $5M cyber liability insurance naming Client as additional insured.",
+   "content_digest": "sha256:reference-digest",
+   "owner_role": "associate",
+   "status": "open"
+  }
+ ],
+ "effects": [
+  {
+   "table": "legal_matters_evidence_records",
+   "op": "insert"
+  }
+ ],
+ "provenance": {
+  "source_workflow": "cuad: cuad-clause-extraction/cuad-msa-risk-allocation-review"
+ },
+ "difficulty_tier": "medium",
+ "acceptance_label": "pending_calibration",
+ "expansion": {
+  "pack": "cuad-clause-extraction.json",
+  "slug": "cuad-msa-risk-allocation-review"
+ }
+}

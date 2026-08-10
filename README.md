@@ -26,7 +26,7 @@ Three things live here:
    model, and an adversarial audit that hunted harness bugs before trusting
    any number (three found, quantified, fixed — see
    [`docs/AUDIT.md`](docs/AUDIT.md)). Reports in
-   [`docs/failure-reports/`](docs/failure-reports/); coverage proof in
+   [`reports/`](reports/); coverage proof in
    [`docs/COVERAGE.md`](docs/COVERAGE.md).
 
 ## Architecture
@@ -160,7 +160,7 @@ task pass rate, pass^3 (the reliability metric), flaky-21 boundary scores,
 per-family jagged-intelligence heat maps, per-model failure-mode stacks, cost
 per episode. Every number traces to episode JSONs under `data/leaderboard/`.
 
-Per-model reports in `docs/failure-reports/` classify every failing episode
+Per-model reports in `reports/` classify every failing episode
 from its step trace into the world's failure-mode taxonomy (emission collapse,
 workflow shortcut, deliverable-left-in-chat, wrong graded value, evidence gap,
 fabrication, friction non-recovery, …) — the "what does this model actually
@@ -181,7 +181,7 @@ sim/run-simulation.mjs            one episode (any registry engine)
 sim/run-leaderboard.mjs           models × tasks × episodes, aggregates
 sim/build-failure-report.mjs      failure-mode classifier + per-model reports
 docs/leaderboard/                 build-page.mjs + index.html (the leaderboard)
-docs/failure-reports/             per-model failure-mode reports
+reports/             per-model failure-mode reports
 docs/FAILURE-REPORT.md            the original boundary analysis (deepseek-v4-flash)
 docs/WHY-BEYOND-HARVEY-LAB.md     differentiation report
 data/research/                    29-benchmark legal-eval inventory + AA leaderboard reference

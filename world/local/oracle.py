@@ -38,9 +38,10 @@ def http(base: str, method: str, path: str, body=None, session=None):
 
 
 class OracleSession:
-    def __init__(self, base: str):
+    def __init__(self, base: str, task_id: str | None = None):
         self.base = base
-        self.sid = http(base, "POST", "/sessions", {})["session_id"]
+        self.sid = http(base, "POST", "/sessions",
+                        {"task_id": task_id} if task_id else {})["session_id"]
         self.trace: list[dict] = []
         self._rpc_id = 0
 
@@ -238,7 +239,7 @@ def pinned_update(verifier: dict, tables: set[str]) -> dict | None:
 
 
 def run_task(base, world, task, verifier):
-    sess = OracleSession(base)
+    sess = OracleSession(base, task_id=task.get("task_id"))
     state = {"read_bodies": []}
     tables = {t["name"] for t in world["tables"]}
     pin = pinned_update(verifier or {}, tables)

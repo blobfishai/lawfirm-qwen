@@ -1,0 +1,99 @@
+{
+ "task_id": "task_230",
+ "outcome_class": "eligible_action",
+ "prompt": "The client wants to know which of our two pending acquisitions carries the larger indemnity escrow: the Meridian Grid / Corvess Analytics deal or the Halden Bay / Orlyn Foods deal. Query the matter documents and read in full the execution version of each stock purchase agreement — read the Meridian Grid / Corvess Analytics agreement first, then the Halden Bay / Orlyn Foods agreement. Compare the Indemnity Escrow Amounts stated in the two executed agreements (ignore drafts, the LOI, and the email thread). Then (1) record a matter review on legal_matters_001 with reviewer_role set exactly to 'deal_comparison_analyst' and outcome set to exactly one slug from this list: 'higher_escrow_meridian_corvess' if the Meridian/Corvess agreement has the larger indemnity escrow, 'higher_escrow_halden_orlyn' if the Halden Bay/Orlyn agreement does, or 'escrow_amounts_equal' if they match; and (2) record the larger of the two indemnity escrow amounts as an amount-history entry on billing file legal_billing_001 with invoice_amount set to that exact dollar amount (plain number) and changed_by_role set exactly to 'deal_comparison_analyst'.",
+ "goal": "Compare indemnity escrow amounts across the two executed SPAs, classify which is higher, and record the higher amount.",
+ "required_tools": [
+  "query_matter_documents",
+  "read_matter_document",
+  "legal_matters_review_create",
+  "legal_billing_amount_history_create"
+ ],
+ "complexity": "high",
+ "method": "eval_anchored_expansion",
+ "steps": [
+  "Locate the input documents for this engagement in the matter folder",
+  "Read every required input document in full",
+  "Derive the graded determinations strictly from the documents",
+  "Record the determinations with the required write tools"
+ ],
+ "relevant_data": [
+  {
+   "table": "matter_documents",
+   "id": 207,
+   "field": "title",
+   "value": "SPA pack — Stock Purchase Agreement (Meridian Grid / Corvess Analytics) execution version"
+  },
+  {
+   "table": "matter_documents",
+   "id": 208,
+   "field": "title",
+   "value": "SPA pack — Stock Purchase Agreement (Halden Bay / Orlyn Foods) execution version"
+  }
+ ],
+ "expected_state_changes": [
+  {
+   "table": "legal_matters_reviews",
+   "field": "(new row)",
+   "note": ">=1 rows with pinned fields"
+  },
+  {
+   "table": "legal_billing_amount_history",
+   "field": "(new row)",
+   "note": ">=1 rows with pinned fields"
+  }
+ ],
+ "tables_affected": [
+  "legal_matters_reviews",
+  "legal_billing_amount_history"
+ ],
+ "walk": [
+  "query_matter_documents",
+  "read_matter_document",
+  "read_matter_document",
+  "legal_matters_review_create",
+  "legal_billing_amount_history_create"
+ ],
+ "reference_args": [
+  {
+   "title": "SPA pack — Stock Purchase Agreement (Meridian Grid / Corvess"
+  },
+  {
+   "id": 207
+  },
+  {
+   "id": 208
+  },
+  {
+   "legal_matters_id": "legal_matters_001",
+   "reviewer_role": "deal_comparison_analyst",
+   "outcome": "higher_escrow_meridian_corvess",
+   "rationale": "The Meridian/Corvess SPA establishes a $6,300,000 indemnity escrow versus $4,000,000 under the Halden Bay/Orlyn SPA."
+  },
+  {
+   "legal_billing_id": "legal_billing_001",
+   "invoice_amount": 6300000,
+   "changed_by_role": "deal_comparison_analyst",
+   "change_reason": "Larger of the two indemnity escrow amounts across the executed SPAs (Meridian/Corvess Section 2.2(a))."
+  }
+ ],
+ "effects": [
+  {
+   "table": "legal_matters_reviews",
+   "op": "insert"
+  },
+  {
+   "table": "legal_billing_amount_history",
+   "op": "insert"
+  }
+ ],
+ "provenance": {
+  "source_workflow": "biglaw_bench: spa-deal-extraction/spa-compare-escrow-across-deals"
+ },
+ "difficulty_tier": "high",
+ "acceptance_label": "pending_calibration",
+ "expansion": {
+  "pack": "spa-deal-extraction.json",
+  "slug": "spa-compare-escrow-across-deals"
+ }
+}

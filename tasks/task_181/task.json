@@ -1,0 +1,110 @@
+{
+ "task_id": "task_181",
+ "outcome_class": "eligible_action",
+ "prompt": "You are supporting outside counsel on the Northgale Systems engagement adverse to Corvid Analytics. The general counsel has sent TWO instruction letters about this deliverable — an original engagement instruction letter of 14 July 2026 and a later supplemental instruction letter of 21 July 2026 — and they conflict on how the escalation deliverable must be filed: depending on which instruction is operative, the required filename is either northgale-corvid-msa-escalation-memo.docx or northgale-corvid-msa-board-approval-package.docx. First query the matter file to locate, and then read in full, each of: (1) the Northgale client-form master services agreement (v2 base); (2) the operative Corvid counter-draft markup (current revision); (3) the Northgale commercial contracting playbook, 2026 edition; (4) the general counsel's original engagement instruction letter; and (5) the general counsel's later supplemental instruction letter. Then draft the escalation/approval deliverable in the form the operative instruction requires: executive summary; each out-of-policy Corvid ask compared against the playbook standard position and approved fallback; quantified financial exposure using the dollar figures the documents supply (including the liability-cap value at the standard, proposed, and fallback measurement periods at the stated monthly base fee); the required approvers; the committee timeline; and a clear approval request. Create it with draft_matter_document using doc_type exactly deliverable and title exactly the ONE operative filename that the most recent instruction letter requires — do not file it under the superseded name.",
+ "goal": "Follow the superseding 21 July instruction over the 14 July instruction and file the consolidated board approval package under the operative filename.",
+ "required_tools": [
+  "query_matter_documents",
+  "read_matter_document",
+  "draft_matter_document"
+ ],
+ "complexity": "high",
+ "method": "eval_anchored_expansion",
+ "steps": [
+  "Locate the input documents for this engagement in the matter folder",
+  "Read every required input document in full",
+  "Derive the graded determinations strictly from the documents",
+  "Record the determinations with the required write tools"
+ ],
+ "relevant_data": [
+  {
+   "table": "matter_documents",
+   "id": 152,
+   "field": "title",
+   "value": "deep-drafting pack — MSA (Northgale Systems / Corvid Analytics) v2 client form, execution-ready base"
+  },
+  {
+   "table": "matter_documents",
+   "id": 153,
+   "field": "title",
+   "value": "deep-drafting pack — Corvid Analytics rev B markup of Northgale MSA (operative counter-draft)"
+  },
+  {
+   "table": "matter_documents",
+   "id": 154,
+   "field": "title",
+   "value": "deep-drafting pack — Northgale commercial contracting playbook, 2026 edition"
+  },
+  {
+   "table": "matter_documents",
+   "id": 155,
+   "field": "title",
+   "value": "deep-drafting pack — engagement instruction letter, Northgale GC to Harrow & Vane LLP, 14 July 2026"
+  },
+  {
+   "table": "matter_documents",
+   "id": 156,
+   "field": "title",
+   "value": "deep-drafting pack — supplemental instruction letter, Northgale GC, 21 July 2026"
+  }
+ ],
+ "expected_state_changes": [
+  {
+   "table": "matter_documents",
+   "field": "(new row)",
+   "note": ">=1 rows with pinned fields"
+  }
+ ],
+ "tables_affected": [
+  "matter_documents"
+ ],
+ "walk": [
+  "query_matter_documents",
+  "read_matter_document",
+  "read_matter_document",
+  "read_matter_document",
+  "read_matter_document",
+  "read_matter_document",
+  "draft_matter_document"
+ ],
+ "reference_args": [
+  {
+   "title": "deep-drafting pack — MSA (Northgale Systems / Corvid Analyti"
+  },
+  {
+   "id": 152
+  },
+  {
+   "id": 153
+  },
+  {
+   "id": 154
+  },
+  {
+   "id": 155
+  },
+  {
+   "id": 156
+  },
+  {
+   "title": "northgale-corvid-msa-board-approval-package.docx",
+   "doc_type": "deliverable",
+   "body": "BOARD APPROVAL PACKAGE — CORVID ANALYTICS MSA, OUT-OF-POLICY TERMS (DEAL COMMITTEE, 29 JULY 2026)\n\nEXECUTIVE SUMMARY. Corvid's rev B counter-draft contains four asks that exceed the deal team's delegated authority under the 2026 contracting playbook. Approval is requested from the identified approvers before the counter-turn issues.\n\nOUT-OF-POLICY ASKS VS PLAYBOOK.\n1. Renewal periods (Section 2.2): rev B seeks two (2) year automatic renewal periods. Playbook standard is one (1) year with NO approved fallback; any multi-year period requires CLO approval.\n2. Liability cap (Section 9.1): rev B cuts the cap measurement period from twenty-four (24) to twelve (12) months of fees, below the eighteen (18) month fallback floor. Quantified at the $85,000 monthly base fee: standard 24-month cap $2,040,000; rev B 12-month cap $1,020,000; fallback 18-month cap $1,530,000. The ask reduces recoverable exposure by $1,020,000 versus standard and sits $510,000 below the approved floor. Requires CLO approval.\n3. Carve-out deletion (Section 9.2(c)): rev B deletes the gross negligence / willful misconduct carve-out, which the playbook designates non-negotiable; deletion requires joint CLO and CFO approval. Recommend rejection.\n4. Suspension right (new Section 4.4): suspension after fifteen (15) days past due, without the playbook's required thirty (30) day cure notice; any suspension right requires CFO sign-off.\n\nWITHIN-FALLBACK ITEMS (no approval needed; for information): termination-for-convenience counter at forty-five (45) days; wind-down capped at thirty (30) days limited to documented out-of-pocket and non-cancelable commitments; service-credit cap countered at the fifteen percent (15%) floor against rev B's 10%; late interest held at 1.0% per month.\n\nTIMELINE. The Deal Committee meets 29 July 2026 (moved up from 4 August); the counter-turn is ready to issue on approval.\n\nAPPROVAL REQUEST. The committee is asked to (a) authorize rejection of the renewal-period and carve-out asks, (b) approve or reject the 12-month cap ask (recommendation: reject; counter at the 18-month floor), and (c) note CFO review of any residual suspension-right compromise."
+  }
+ ],
+ "effects": [
+  {
+   "table": "matter_documents",
+   "op": "insert"
+  }
+ ],
+ "provenance": {
+  "source_workflow": "harvey_lab: deep-drafting/msa-board-package-superseding-instruction"
+ },
+ "difficulty_tier": "high",
+ "acceptance_label": "pending_calibration",
+ "expansion": {
+  "pack": "deep-drafting.json",
+  "slug": "msa-board-package-superseding-instruction"
+ }
+}

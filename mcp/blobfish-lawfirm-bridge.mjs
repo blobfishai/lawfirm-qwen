@@ -120,7 +120,10 @@ async function rest(path, opts = {}) {
 }
 
 async function createSession() {
-  const s = await rest("/sessions", { method: "POST", body: "{}" });
+  // Task-aware sessions: with BLOBFISH_TASK_ID the world seeds the session
+  // with that task's seed bundle (documents + core data) over the base world.
+  const body = JSON.stringify(env.BLOBFISH_TASK_ID ? { task_id: env.BLOBFISH_TASK_ID } : {});
+  const s = await rest("/sessions", { method: "POST", body });
   if (!s.ok) throw new Error(`session create ${s.status}: ${s.text.slice(0, 300)}`);
   return s.json.session_id ?? s.json.sessionId ?? null;
 }

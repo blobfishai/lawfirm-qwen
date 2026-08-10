@@ -1,0 +1,71 @@
+{
+ "task_id": "task_173",
+ "outcome_class": "eligible_action",
+ "prompt": "The revised approved fee budget for the Meridian Fabrication engagement must be recorded on the matter's budget history. Query the document index and locate the most recent engagement budget amendment for the Harlow & Trent / Meridian engagement. Read it in full. Compute the revised budget exactly as the amendment directs: the original approved budget, plus the stated percentage increase of that original budget, minus the stated one-time credit. Round to whole dollars. Record the result using legal_matters_amount_history_create for legal_matters_001, with fee_budget set to the revised budget and changed_by_role set to exactly engagement_partner. The credit must be subtracted; do not record the figure before the credit.",
+ "goal": "Compute original budget + 25% increase - one-time credit for the revised fee budget.",
+ "required_tools": [
+  "query_matter_documents",
+  "read_matter_document",
+  "legal_matters_amount_history_create"
+ ],
+ "complexity": "medium",
+ "method": "eval_anchored_expansion",
+ "steps": [
+  "Locate the input documents for this engagement in the matter folder",
+  "Read every required input document in full",
+  "Derive the graded determinations strictly from the documents",
+  "Record the determinations with the required write tools"
+ ],
+ "relevant_data": [
+  {
+   "table": "matter_documents",
+   "id": 143,
+   "field": "title",
+   "value": "damages-computation pack — Engagement Budget Amendment No. 2 (Harlow & Trent LLP / Meridian Fabrication)"
+  }
+ ],
+ "expected_state_changes": [
+  {
+   "table": "legal_matters_amount_history",
+   "field": "(new row)",
+   "note": ">=1 rows with pinned fields"
+  }
+ ],
+ "tables_affected": [
+  "legal_matters_amount_history"
+ ],
+ "walk": [
+  "query_matter_documents",
+  "read_matter_document",
+  "legal_matters_amount_history_create"
+ ],
+ "reference_args": [
+  {
+   "title": "damages-computation pack — Engagement Budget Amendment No. 2"
+  },
+  {
+   "id": 143
+  },
+  {
+   "legal_matters_id": "legal_matters_001",
+   "fee_budget": 581500,
+   "changed_by_role": "engagement_partner",
+   "change_reason": "Amendment No. 2 revision: original budget plus Phase 2 increase less one-time client-relations credit."
+  }
+ ],
+ "effects": [
+  {
+   "table": "legal_matters_amount_history",
+   "op": "insert"
+  }
+ ],
+ "provenance": {
+  "source_workflow": "taxcalcbench: damages-computation/dc-engagement-budget-revision"
+ },
+ "difficulty_tier": "medium",
+ "acceptance_label": "pending_calibration",
+ "expansion": {
+  "pack": "damages-computation.json",
+  "slug": "dc-engagement-budget-revision"
+ }
+}
