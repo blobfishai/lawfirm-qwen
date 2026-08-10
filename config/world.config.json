@@ -116,6 +116,31 @@
   "scoring": {
     "quarantinedTasks": {
       "task_016": "prompt/verifier drift: the prompt names invoice INV-1CU8DF9 (row id 9) but the shipped verifier pins row id 1. Kept and runnable, excluded from headline leaderboard scores."
+    },
+    "domainFidelity": {
+      "note": "ERP-template leakage found by world/expansion/domain-lint.mjs (docs/DOMAIN-AUDIT.md). Hard leak: invoices/employees tables + direct tools + task_016. Soft leak: broad ops agents list leaked tables among targets, implicating the records-research family. Published aggregates measured pre-audit are not rewritten; use --tasks law-native for domain-clean runs.",
+      "leakedTables": [
+        "invoices",
+        "employees"
+      ],
+      "leakedTools": [
+        "query_invoices",
+        "operations_records_agent",
+        "query_employees",
+        "lookup_employee_work_assignment_with_employees",
+        "operations_workflow_agent",
+        "update_invoices_status",
+        "update_employees_active"
+      ],
+      "affectedTasks": [
+        "task_016",
+        "task_075",
+        "task_076",
+        "task_085",
+        "task_086",
+        "task_095",
+        "task_096"
+      ]
     }
   },
   "flake": {

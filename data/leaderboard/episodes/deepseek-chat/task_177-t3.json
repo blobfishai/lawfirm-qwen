@@ -1,0 +1,524 @@
+{
+  "taskId": "task_177",
+  "engine": "deepseek-chat",
+  "model": "deepseek-chat",
+  "mcpMode": "bridge",
+  "passed": true,
+  "reward": 1,
+  "failedConditions": [],
+  "advisoryConditions": [],
+  "assertions": [
+    {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+    },
+    {
+      "name": "reads_before_writes",
+      "passed": true,
+      "details": "reads=7, writes=1, read_first=True"
+    },
+    {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+    },
+    {
+      "name": "required_workflow_path",
+      "passed": true,
+      "details": "completed ordered workflow: query_matter_documents -> read_matter_document -> read_matter_document -> litigation_deadlines_review_create"
+    },
+    {
+      "name": "required_documents_read",
+      "passed": true,
+      "details": "all required input documents were read in full"
+    },
+    {
+      "name": "rows_inserted_into_litigation_deadlines_reviews",
+      "passed": true,
+      "details": "litigation_deadlines_reviews: 20 -> 21 rows (1 new, need >= 1)"
+    },
+    {
+      "name": "litigation_deadlines_reviews_new_row_0_reviewer_role_is_docketing-clerk",
+      "passed": true,
+      "details": "expected a new litigation_deadlines_reviews row with reviewer_role=docketing-clerk; got ['docketing-clerk']"
+    },
+    {
+      "name": "litigation_deadlines_reviews_new_row_1_outcome_is_2026-12-21",
+      "passed": true,
+      "details": "expected a new litigation_deadlines_reviews row with outcome=2026-12-21; got ['2026-12-21']"
+    },
+    {
+      "name": "no_new_litigation_deadlines_reviews_row_with_outcome_2026-12-19",
+      "passed": true,
+      "details": "no fabricated outcome=2026-12-19 row"
+    },
+    {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+    },
+    {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+    },
+    {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+    },
+    {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "33/36 tool calls succeeded"
+    }
+  ],
+  "toolCalls": 36,
+  "turnsUsed": 17,
+  "maxTurns": 50,
+  "usage": {
+    "prompt": 672978,
+    "completion": 11887,
+    "total": 684865
+  },
+  "costUsd": 0.19478,
+  "log": "/Users/samuelchien/dev/lawfirm-qwen/sim/logs/run-2026-08-10T19-38-57-131Z.jsonl",
+  "finishedAt": "2026-08-10T19:40:58.550Z",
+  "steps": [
+    {
+      "turn": 1,
+      "tool": "litigation_cases_list",
+      "args": {},
+      "argBytes": 2,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"cases\", \"count\": 26, \"rows\": [{\"id\": \"litigation_cases_001\", \"title\": \"Summit Operations Litigation Cases\", \"status\": \"Filed\", \"department\": \"Litigation\", \"owner_role\": \"litigation_associate\", \"reviewer_role\": \"litigation_partner\", \"claimed_amount\": 73.51, \"evidence_summary\": \"Litigation Cases approval requires attention\", \"decision_reason\": \"Litigation Cases requires follow-up because the downstream workflow is blocked.\", \"created_at\": \"2026-01-07T04:24:00Z\", \"updated_at\": \"2026-01-06T22:06:00Z\"}, {\"id\": \"litigation_cases_002\", \"title\": \"Ironwood Operations Litigation Cases\", \"stat",
+      "thought": null
+    },
+    {
+      "turn": 1,
+      "tool": "litigation_deadlines_list",
+      "args": {},
+      "argBytes": 2,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"litigation_deadlines\", \"count\": 19, \"rows\": [{\"id\": \"litigation_deadlines_001\", \"title\": \"Riverside Systems Litigation Deadlines\", \"status\": \"Open\", \"department\": \"Docketing\", \"owner_role\": \"docket_clerk\", \"reviewer_role\": \"deadline_partner\", \"deadline_exposure\": 24.68, \"evidence_summary\": \"Litigation Deadlines approval requires attention\", \"decision_reason\": \"Litigation Deadlines requires verification because a policy exception needs review.\", \"created_at\": \"2026-01-07T19:04:00Z\", \"updated_at\": \"2026-01-07T23:20:00Z\"}, {\"id\": \"litigation_deadlines_002\", \"title\": \"Fairview Services ",
+      "thought": null
+    },
+    {
+      "turn": 1,
+      "tool": "query_documents",
+      "args": {
+        "query": "Meridian Grain Talvern"
+      },
+      "argBytes": 35,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"agent_documents\", \"count\": 2, \"rows\": [{\"id\": 1, \"title\": \"Harbor Systems\", \"body\": \"Review unresolved invoices exceptions before the next operating handoff. Record the decision, owner, and evidence used.\", \"updated_at\": \"2026-01-15T09:00:00Z\"}, {\"id\": 2, \"title\": \"Ironwood Services\", \"body\": \"Confirm the business handle, compare the current lifecycle state, apply one scoped action, and verify no collateral rows changed.\", \"updated_at\": \"2026-01-15T09:00:00Z\"}]}",
+      "thought": null
+    },
+    {
+      "turn": 2,
+      "tool": "query_matter_documents",
+      "args": {
+        "title": "Meridian"
+      },
+      "argBytes": 21,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"matter_documents\", \"count\": 23, \"rows\": [{\"id\": 131, \"title\": \"CUAD pack \\u2014 Master Services Agreement (Meridian Analytics / Corvus Freight) execution copy\", \"doc_type\": \"contract\", \"related_shape\": \"cuad-clause-extraction\", \"body\": \"MASTER SERVICES AGREEMENT\\n\\nThis Master Services Agreement (this \\\"Agreement\\\"), dated as of March 14, 2025, is entered into by and between Meridian Analytics LLC, a Delaware limited liability company (\\\"Provider\\\"), and Corvus Freight Holdings,\\u2026[preview]\"}, {\"id\": 135, \"title\": \"CUAD pack \\u2014 Correspondence (Meridian / Corvus) \\u2014 MSA ne",
+      "thought": null
+    },
+    {
+      "turn": 2,
+      "tool": "query_files",
+      "args": {
+        "query": "Meridian"
+      },
+      "argBytes": 21,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"agent_files\", \"count\": 3, \"rows\": [{\"id\": 1, \"filename\": \"invoices_import.tsv\", \"content_type\": \"text/tab-separated-values\", \"content\": \"id\\tinvoice_number\\tpo_id\\tcustomer_id\\tamount_cents\\ttax_cents\\ttotal_cents\\tstatus\\tissued_at\\tdue_date\\tpaid_at\\tinvoice_reviewsid\\tinvoice_reviewstitle\\tinvoice_reviewsstatus\\tinvoice_reviewsdepartment\\tinvoice_reviewsowner_role\\tinvoice_reviewsreviewe\\u2026[preview]\"}, {\"id\": 2, \"filename\": \"employees_import.tsv\", \"content_type\": \"text/tab-separated-values\", \"content\": \"id\\tcasesid\\trole\\temail\\tphone\\twarehouse_id\\thire_date\\tactive\\tcertific",
+      "thought": null
+    },
+    {
+      "turn": 2,
+      "tool": "query_documents",
+      "args": {
+        "query": "rules memo notice"
+      },
+      "argBytes": 30,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"agent_documents\", \"count\": 2, \"rows\": [{\"id\": 1, \"title\": \"Harbor Systems\", \"body\": \"Review unresolved invoices exceptions before the next operating handoff. Record the decision, owner, and evidence used.\", \"updated_at\": \"2026-01-15T09:00:00Z\"}, {\"id\": 2, \"title\": \"Ironwood Services\", \"body\": \"Confirm the business handle, compare the current lifecycle state, apply one scoped action, and verify no collateral rows changed.\", \"updated_at\": \"2026-01-15T09:00:00Z\"}]}",
+      "thought": null
+    },
+    {
+      "turn": 2,
+      "tool": "litigation_deadlines_list",
+      "args": {
+        "status": "Open"
+      },
+      "argBytes": 18,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"litigation_deadlines\", \"count\": 4, \"rows\": [{\"id\": \"litigation_deadlines_001\", \"title\": \"Riverside Systems Litigation Deadlines\", \"status\": \"Open\", \"department\": \"Docketing\", \"owner_role\": \"docket_clerk\", \"reviewer_role\": \"deadline_partner\", \"deadline_exposure\": 24.68, \"evidence_summary\": \"Litigation Deadlines approval requires attention\", \"decision_reason\": \"Litigation Deadlines requires verification because a policy exception needs review.\", \"created_at\": \"2026-01-07T19:04:00Z\", \"updated_at\": \"2026-01-07T23:20:00Z\"}, {\"id\": \"litigation_deadlines_006\", \"title\": \"Northgate Group Lit",
+      "thought": null
+    },
+    {
+      "turn": 3,
+      "tool": "query_matter_documents",
+      "args": {
+        "related_shape": "deadline-computation"
+      },
+      "argBytes": 41,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"matter_documents\", \"count\": 6, \"rows\": [{\"id\": 146, \"title\": \"Deadline pack \\u2014 Consolidated Rules Memo: Computing Time Under the Simulated Rules of Civil Procedure (SRCP 6)\", \"doc_type\": \"rules-memo\", \"related_shape\": \"deadline-computation\", \"body\": \"MEMORANDUM \\u2014 DOCKETING STANDARDS (SIMULATED JURISDICTION)\\n\\nRe: Computing every litigation deadline under SRCP 6 (this firm's controlling method)\\n\\nI. The counting method. (a) Exclude the trigger day: the day of the event that starts the peri\\u2026[preview]\"}, {\"id\": 147, \"title\": \"Deadline pack \\u2014 Affidavit of Service: M",
+      "thought": null
+    },
+    {
+      "turn": 3,
+      "tool": "query_matter_documents",
+      "args": {
+        "title": "Meridian Grain"
+      },
+      "argBytes": 27,
+      "argParseError": false,
+      "ok": false,
+      "observation": "ERROR stale_reference: the referenced record snapshot is stale. Re-read the record and retry with current data.",
+      "thought": null
+    },
+    {
+      "turn": 4,
+      "tool": "read_matter_document",
+      "args": {
+        "id": 146
+      },
+      "argBytes": 11,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"id\": 146, \"title\": \"Deadline pack \\u2014 Consolidated Rules Memo: Computing Time Under the Simulated Rules of Civil Procedure (SRCP 6)\", \"doc_type\": \"rules-memo\", \"related_shape\": \"deadline-computation\", \"body\": \"MEMORANDUM \\u2014 DOCKETING STANDARDS (SIMULATED JURISDICTION)\\n\\nRe: Computing every litigation deadline under SRCP 6 (this firm's controlling method)\\n\\nI. The counting method. (a) Exclude the trigger day: the day of the event that starts the period is never counted. (b) Count every calendar day thereafter, including intermediate Saturdays, Sundays, and court holidays. (c) Rollove",
+      "thought": null
+    },
+    {
+      "turn": 4,
+      "tool": "read_matter_document",
+      "args": {
+        "id": 150
+      },
+      "argBytes": 11,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"id\": 150, \"title\": \"Deadline pack \\u2014 Clerk's Notice: Entry of Judgment November 20, 2026\", \"doc_type\": \"court-notice\", \"related_shape\": \"deadline-computation\", \"body\": \"CLERK'S NOTICE OF ENTRY OF JUDGMENT (SIMULATED)\\n\\nCase No. 26-CV-01847. Judgment on the verdict was ENTERED on the docket on Friday, November 20, 2026. Under the Consolidated Rules Memo, any notice of appeal must be filed within 30 days after entry of judgment, computed by the SRCP 6 method (exclude the entry day; count all calendar days; roll forward from a weekend or court holiday to the next court day; note the Thanks",
+      "thought": null
+    },
+    {
+      "turn": 5,
+      "tool": "operations_records_agent",
+      "args": {
+        "request": "In table cases, find title \"Meridian Grain v. Talvern\" or the case for Meridian Grain Cooperative v. Talvern Logistics Group and return the complete record."
+      },
+      "argBytes": 173,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"request\": \"In table cases, find title \\\"Meridian Grain v. Talvern\\\" or the case for Meridian Grain Cooperative v. Talvern Logistics Group and return the complete record.\", \"matches\": [{\"table\": \"cases\", \"row\": {\"id\": \"litigation_cases_001\", \"title\": \"Summit Operations Litigation Cases\", \"status\": \"Filed\", \"department\": \"Litigation\", \"owner_role\": \"litigation_associate\", \"reviewer_role\": \"litigation_partner\", \"claimed_amount\": 73.51, \"evidence_summary\": \"Litigation Cases approval requires attention\", \"decision_reason\": \"Litigation Cases requires follow-up because the downstream workflow is bl",
+      "thought": null
+    },
+    {
+      "turn": 5,
+      "tool": "query_matter_documents",
+      "args": {
+        "id": 146
+      },
+      "argBytes": 11,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"matter_documents\", \"count\": 1, \"rows\": [{\"id\": 146, \"title\": \"Deadline pack \\u2014 Consolidated Rules Memo: Computing Time Under the Simulated Rules of Civil Procedure (SRCP 6)\", \"doc_type\": \"rules-memo\", \"related_shape\": \"deadline-computation\", \"body\": \"MEMORANDUM \\u2014 DOCKETING STANDARDS (SIMULATED JURISDICTION)\\n\\nRe: Computing every litigation deadline under SRCP 6 (this firm's controlling method)\\n\\nI. The counting method. (a) Exclude the trigger day: the day of the event that starts the peri\\u2026[preview]\"}], \"note\": \"body fields are previews \\u2014 call read_matter_documen",
+      "thought": null
+    },
+    {
+      "turn": 6,
+      "tool": "litigation_dockets_list",
+      "args": {},
+      "argBytes": 2,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"docket_entries\", \"count\": 14, \"rows\": [{\"id\": \"litigation_dockets_001\", \"title\": \"Lakeshore Group Litigation Dockets\", \"status\": \"Opened\", \"department\": \"Docketing\", \"owner_role\": \"docket_coordinator\", \"reviewer_role\": \"docket_supervisor\", \"docket_exposure\": 66.85, \"evidence_summary\": \"Litigation Dockets approval requires attention\", \"decision_reason\": \"Litigation Dockets requires reconciliation because the source record conflicts with the latest update.\", \"created_at\": \"2026-01-05T23:26:00Z\", \"updated_at\": \"2026-01-08T00:46:00Z\"}, {\"id\": \"litigation_dockets_002\", \"title\": \"Summit H",
+      "thought": null
+    },
+    {
+      "turn": 6,
+      "tool": "litigation_filings_list",
+      "args": {},
+      "argBytes": 2,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"court_filings\", \"count\": 17, \"rows\": [{\"id\": \"litigation_filings_001\", \"title\": \"Ironwood Group Litigation Filings\", \"status\": \"Drafted\", \"department\": \"Litigation\", \"owner_role\": \"filing_paralegal\", \"reviewer_role\": \"filing_partner\", \"filing_cost\": 41.59, \"evidence_summary\": \"Litigation Filings handoff requires attention\", \"decision_reason\": \"Litigation Filings requires reconciliation because linked evidence is incomplete.\", \"created_at\": \"2026-01-06T15:06:00Z\", \"updated_at\": \"2026-01-05T19:40:00Z\"}, {\"id\": \"litigation_filings_002\", \"title\": \"Summit Systems Litigation Filings\", \"st",
+      "thought": null
+    },
+    {
+      "turn": 6,
+      "tool": "litigation_deadlines_list",
+      "args": {
+        "limit": 30
+      },
+      "argBytes": 13,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"litigation_deadlines\", \"count\": 19, \"rows\": [{\"id\": \"litigation_deadlines_001\", \"title\": \"Riverside Systems Litigation Deadlines\", \"status\": \"Open\", \"department\": \"Docketing\", \"owner_role\": \"docket_clerk\", \"reviewer_role\": \"deadline_partner\", \"deadline_exposure\": 24.68, \"evidence_summary\": \"Litigation Deadlines approval requires attention\", \"decision_reason\": \"Litigation Deadlines requires verification because a policy exception needs review.\", \"created_at\": \"2026-01-07T19:04:00Z\", \"updated_at\": \"2026-01-07T23:20:00Z\"}, {\"id\": \"litigation_deadlines_002\", \"title\": \"Fairview Services ",
+      "thought": null
+    },
+    {
+      "turn": 7,
+      "tool": "litigation_deadlines_list",
+      "args": {
+        "limit": 50
+      },
+      "argBytes": 13,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"litigation_deadlines\", \"count\": 19, \"rows\": [{\"id\": \"litigation_deadlines_001\", \"title\": \"Riverside Systems Litigation Deadlines\", \"status\": \"Open\", \"department\": \"Docketing\", \"owner_role\": \"docket_clerk\", \"reviewer_role\": \"deadline_partner\", \"deadline_exposure\": 24.68, \"evidence_summary\": \"Litigation Deadlines approval requires attention\", \"decision_reason\": \"Litigation Deadlines requires verification because a policy exception needs review.\", \"created_at\": \"2026-01-07T19:04:00Z\", \"updated_at\": \"2026-01-07T23:20:00Z\"}, {\"id\": \"litigation_deadlines_002\", \"title\": \"Fairview Services ",
+      "thought": null
+    },
+    {
+      "turn": 7,
+      "tool": "litigation_cases_get",
+      "args": {
+        "id": "litigation_cases_001"
+      },
+      "argBytes": 30,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"id\": \"litigation_cases_001\", \"title\": \"Summit Operations Litigation Cases\", \"status\": \"Filed\", \"department\": \"Litigation\", \"owner_role\": \"litigation_associate\", \"reviewer_role\": \"litigation_partner\", \"claimed_amount\": 73.51, \"evidence_summary\": \"Litigation Cases approval requires attention\", \"decision_reason\": \"Litigation Cases requires follow-up because the downstream workflow is blocked.\", \"created_at\": \"2026-01-07T04:24:00Z\", \"updated_at\": \"2026-01-06T22:06:00Z\"}",
+      "thought": null
+    },
+    {
+      "turn": 8,
+      "tool": "litigation_deadlines_list",
+      "args": {
+        "limit": 20
+      },
+      "argBytes": 13,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"litigation_deadlines\", \"count\": 19, \"rows\": [{\"id\": \"litigation_deadlines_001\", \"title\": \"Riverside Systems Litigation Deadlines\", \"status\": \"Open\", \"department\": \"Docketing\", \"owner_role\": \"docket_clerk\", \"reviewer_role\": \"deadline_partner\", \"deadline_exposure\": 24.68, \"evidence_summary\": \"Litigation Deadlines approval requires attention\", \"decision_reason\": \"Litigation Deadlines requires verification because a policy exception needs review.\", \"created_at\": \"2026-01-07T19:04:00Z\", \"updated_at\": \"2026-01-07T23:20:00Z\"}, {\"id\": \"litigation_deadlines_002\", \"title\": \"Fairview Services ",
+      "thought": null
+    },
+    {
+      "turn": 8,
+      "tool": "query_employee_work_assignments",
+      "args": {
+        "business_ref": "26-CV-01847"
+      },
+      "argBytes": 31,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"employee_work_assignments\", \"count\": 0, \"rows\": []}",
+      "thought": null
+    },
+    {
+      "turn": 8,
+      "tool": "query_employee_work_assignments",
+      "args": {
+        "work_item_ref": "notice-of-appeal"
+      },
+      "argBytes": 37,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"employee_work_assignments\", \"count\": 0, \"rows\": []}",
+      "thought": null
+    },
+    {
+      "turn": 9,
+      "tool": "query_employee_work_assignments",
+      "args": {
+        "status": "assigned"
+      },
+      "argBytes": 22,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"employee_work_assignments\", \"count\": 2, \"rows\": [{\"id\": 1, \"employee_id\": 1, \"reviewer_employee_id\": 2, \"department_id\": 1, \"service\": \"salesforce\", \"work_item_ref\": \"salesforce:work-item:0001\", \"assignment_role\": \"support\", \"status\": \"assigned\", \"business_ref\": \"EWA-68776\"}, {\"id\": 10, \"employee_id\": 3, \"reviewer_employee_id\": 4, \"department_id\": 3, \"service\": \"stripe\", \"work_item_ref\": \"stripe:work-item:0010\", \"assignment_role\": \"reviewer\", \"status\": \"assigned\", \"business_ref\": \"EWA-17139\"}]}",
+      "thought": null
+    },
+    {
+      "turn": 9,
+      "tool": "litigation_deadlines_list",
+      "args": {
+        "status": "Escalation Review"
+      },
+      "argBytes": 31,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"litigation_deadlines\", \"count\": 4, \"rows\": [{\"id\": \"litigation_deadlines_003\", \"title\": \"Lakeshore Systems Litigation Deadlines\", \"status\": \"Escalation Review\", \"department\": \"Docketing\", \"owner_role\": \"docket_clerk\", \"reviewer_role\": \"deadline_partner\", \"deadline_exposure\": 46.04, \"evidence_summary\": \"Litigation Deadlines handoff requires attention\", \"decision_reason\": \"Litigation Deadlines requires verification because a policy exception needs review.\", \"created_at\": \"2026-01-07T18:41:00Z\", \"updated_at\": \"2026-01-05T13:12:00Z\"}, {\"id\": \"litigation_deadlines_008\", \"title\": \"Summit ",
+      "thought": null
+    },
+    {
+      "turn": 9,
+      "tool": "litigation_deadlines_list",
+      "args": {
+        "status": "Open"
+      },
+      "argBytes": 18,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"litigation_deadlines\", \"count\": 4, \"rows\": [{\"id\": \"litigation_deadlines_001\", \"title\": \"Riverside Systems Litigation Deadlines\", \"status\": \"Open\", \"department\": \"Docketing\", \"owner_role\": \"docket_clerk\", \"reviewer_role\": \"deadline_partner\", \"deadline_exposure\": 24.68, \"evidence_summary\": \"Litigation Deadlines approval requires attention\", \"decision_reason\": \"Litigation Deadlines requires verification because a policy exception needs review.\", \"created_at\": \"2026-01-07T19:04:00Z\", \"updated_at\": \"2026-01-07T23:20:00Z\"}, {\"id\": \"litigation_deadlines_006\", \"title\": \"Northgate Group Lit",
+      "thought": null
+    },
+    {
+      "turn": 10,
+      "tool": "operations_records_agent",
+      "args": {
+        "request": "In table cases, find the case record for Meridian Grain v. Talvern with the identifier 26-CV-01847 and return the complete record including its id."
+      },
+      "argBytes": 162,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"request\": \"In table cases, find the case record for Meridian Grain v. Talvern with the identifier 26-CV-01847 and return the complete record including its id.\", \"matches\": [{\"table\": \"cases\", \"row\": {\"id\": \"litigation_cases_001\", \"title\": \"Summit Operations Litigation Cases\", \"status\": \"Filed\", \"department\": \"Litigation\", \"owner_role\": \"litigation_associate\", \"reviewer_role\": \"litigation_partner\", \"claimed_amount\": 73.51, \"evidence_summary\": \"Litigation Cases approval requires attention\", \"decision_reason\": \"Litigation Cases requires follow-up because the downstream workflow is blocked.\", \"c",
+      "thought": null
+    },
+    {
+      "turn": 10,
+      "tool": "query_matter_documents",
+      "args": {
+        "doc_type": "court-notice"
+      },
+      "argBytes": 28,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"matter_documents\", \"count\": 1, \"rows\": [{\"id\": 150, \"title\": \"Deadline pack \\u2014 Clerk's Notice: Entry of Judgment November 20, 2026\", \"doc_type\": \"court-notice\", \"related_shape\": \"deadline-computation\", \"body\": \"CLERK'S NOTICE OF ENTRY OF JUDGMENT (SIMULATED)\\n\\nCase No. 26-CV-01847. Judgment on the verdict was ENTERED on the docket on Friday, November 20, 2026. Under the Consolidated Rules Memo, any notice of appeal must be filed within 30 days afte\\u2026[preview]\"}], \"note\": \"body fields are previews \\u2014 call read_matter_document(id) to read a document in full before using i",
+      "thought": null
+    },
+    {
+      "turn": 10,
+      "tool": "litigation_deadlines_get",
+      "args": {
+        "id": "litigation_deadlines_018"
+      },
+      "argBytes": 34,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"id\": \"litigation_deadlines_018\", \"title\": \"Northgate Holdings Litigation Deadlines\", \"status\": \"Escalation Review\", \"department\": \"Docketing\", \"owner_role\": \"docket_clerk\", \"reviewer_role\": \"deadline_partner\", \"deadline_exposure\": 51.5, \"evidence_summary\": \"Litigation Deadlines follow-up requires attention\", \"decision_reason\": \"Litigation Deadlines requires handoff because linked evidence is incomplete.\", \"created_at\": \"2026-01-07T23:44:00Z\", \"updated_at\": \"2026-01-07T01:27:00Z\"}",
+      "thought": null
+    },
+    {
+      "turn": 11,
+      "tool": "litigation_deadlines_list",
+      "args": {
+        "limit": 50
+      },
+      "argBytes": 13,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"litigation_deadlines\", \"count\": 19, \"rows\": [{\"id\": \"litigation_deadlines_001\", \"title\": \"Riverside Systems Litigation Deadlines\", \"status\": \"Open\", \"department\": \"Docketing\", \"owner_role\": \"docket_clerk\", \"reviewer_role\": \"deadline_partner\", \"deadline_exposure\": 24.68, \"evidence_summary\": \"Litigation Deadlines approval requires attention\", \"decision_reason\": \"Litigation Deadlines requires verification because a policy exception needs review.\", \"created_at\": \"2026-01-07T19:04:00Z\", \"updated_at\": \"2026-01-07T23:20:00Z\"}, {\"id\": \"litigation_deadlines_002\", \"title\": \"Fairview Services ",
+      "thought": null
+    },
+    {
+      "turn": 12,
+      "tool": "read_matter_document",
+      "args": {
+        "id": 147
+      },
+      "argBytes": 11,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"id\": 147, \"title\": \"Deadline pack \\u2014 Affidavit of Service: Meridian Grain complaint served by personal delivery June 3, 2026\", \"doc_type\": \"service-record\", \"related_shape\": \"deadline-computation\", \"body\": \"AFFIDAVIT OF SERVICE (SIMULATED)\\n\\nCase: Meridian Grain Cooperative v. Talvern Logistics Group, No. 26-CV-01847 (Simulated Superior Court).\\n\\nI, Dana Whitfield, process server, being duly sworn, state: on Wednesday, June 3, 2026, at 10:42 a.m., I personally delivered the summons and complaint in the above-captioned action to Talvern Logistics Group by handing true copies to its regi",
+      "thought": null
+    },
+    {
+      "turn": 12,
+      "tool": "read_matter_document",
+      "args": {
+        "id": 151
+      },
+      "argBytes": 11,
+      "argParseError": false,
+      "ok": false,
+      "observation": "ERROR rate_limited: upstream service throttled this call. Retry the operation.",
+      "thought": null
+    },
+    {
+      "turn": 13,
+      "tool": "litigation_deadlines_audit_list",
+      "args": {
+        "litigation_deadlines_id": "litigation_deadlines_006"
+      },
+      "argBytes": 55,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"litigation_deadlines_audit_events\", \"count\": 4, \"rows\": [{\"id\": \"litigation_deadlines_audit_event_002\", \"litigation_deadlines_id\": \"litigation_deadlines_006\", \"event_type\": \"reviewed\", \"actor_role\": \"Research Lead\", \"detail\": \"Litigation Deadlines Audit Event handoff documents that the downstream workflow is blocked.\", \"created_at\": \"2026-01-07T03:38:00Z\"}, {\"id\": \"litigation_deadlines_audit_event_007\", \"litigation_deadlines_id\": \"litigation_deadlines_006\", \"event_type\": \"reviewed\", \"actor_role\": \"Engineering Lead\", \"detail\": \"Litigation Deadlines Audit Event handoff documents that ",
+      "thought": null
+    },
+    {
+      "turn": 13,
+      "tool": "litigation_deadlines_audit_list",
+      "args": {
+        "litigation_deadlines_id": "litigation_deadlines_001"
+      },
+      "argBytes": 55,
+      "argParseError": false,
+      "ok": false,
+      "observation": "ERROR rate_limited: upstream service throttled this call. Retry the operation.",
+      "thought": null
+    },
+    {
+      "turn": 14,
+      "tool": "operations_records_agent",
+      "args": {
+        "request": "In table docket_entries, find the docket entry for the Meridian Grain v. Talvern case 26-CV-01847 regarding entry of judgment or notice of appeal and return its complete record with id."
+      },
+      "argBytes": 200,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"request\": \"In table docket_entries, find the docket entry for the Meridian Grain v. Talvern case 26-CV-01847 regarding entry of judgment or notice of appeal and return its complete record with id.\", \"matches\": [{\"table\": \"courts\", \"row\": {\"id\": \"litigation_courts_001\", \"title\": \"Riverside Systems Litigation Courts\", \"status\": \"Identified\", \"department\": \"Docketing\", \"owner_role\": \"court_liaison\", \"reviewer_role\": \"court_operations_manager\", \"filing_fee_budget\": 51.64, \"evidence_summary\": \"Litigation Courts follow-up requires attention\", \"decision_reason\": \"Litigation Courts requires follow-u",
+      "thought": null
+    },
+    {
+      "turn": 14,
+      "tool": "operations_records_agent",
+      "args": {
+        "request": "In table invoice_reviews or litigation deadlines, find the deadline record for the notice of appeal in the Meridian Grain v. Talvern case 26-CV-01847 and return it."
+      },
+      "argBytes": 179,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"request\": \"In table invoice_reviews or litigation deadlines, find the deadline record for the notice of appeal in the Meridian Grain v. Talvern case 26-CV-01847 and return it.\", \"matches\": [{\"table\": \"cases\", \"row\": {\"id\": \"litigation_cases_001\", \"title\": \"Summit Operations Litigation Cases\", \"status\": \"Filed\", \"department\": \"Litigation\", \"owner_role\": \"litigation_associate\", \"reviewer_role\": \"litigation_partner\", \"claimed_amount\": 73.51, \"evidence_summary\": \"Litigation Cases approval requires attention\", \"decision_reason\": \"Litigation Cases requires follow-up because the downstream workflow",
+      "thought": null
+    },
+    {
+      "turn": 15,
+      "tool": "litigation_deadlines_review_create",
+      "args": {
+        "litigation_deadlines_id": "litigation_deadlines_001",
+        "reviewer_role": "docketing-clerk",
+        "outcome": "2026-12-21",
+        "rationale": "Notice of appeal (SRCP 6, period 30 days) computed from the operative trigger: entry of judgment on Friday, November 20, 2026 (the earlier November 17 minute order did not enter judgment). Exclude trigger day; count 30 calendar days to December 20, 2026 (a Sunday), applying the CFR rollover rule to the next court day, December 21, 2026 (Monday, not a weekend or listed court holiday; no mail-service adjustment since the period runs from filing/entry, not service)."
+      },
+      "argBytes": 600,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"status\": \"created\", \"table\": \"litigation_deadlines_reviews\", \"id\": \"litigation_deadlines_review_021\"}",
+      "thought": null
+    },
+    {
+      "turn": 16,
+      "tool": "litigation_deadlines_audit_list",
+      "args": {
+        "litigation_deadlines_id": "litigation_deadlines_001"
+      },
+      "argBytes": 55,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"litigation_deadlines_audit_events\", \"count\": 0, \"rows\": []}",
+      "thought": null
+    },
+    {
+      "turn": 17,
+      "tool": "_final_answer",
+      "ok": true,
+      "thought": null,
+      "observation": "The review record was successfully created (id: litigation_deadlines_review_021).\n\nLet me confirm my final computation summary:\n\n## Task Complete\n\n**Notice of Appeal Deadline — Meridian Grain Cooperative v. Talvern Logistics Group, No. 26-CV-01847**\n\n**Controlling method** (read in full from the Consolidated Rules Memo, SRCP 6, matter doc 146):\n- Exclude the trigger day.\n- Count every calendar day after, including weekends and holidays.\n- Roll forward to the next court day if the final day lands on a weekend/holiday.\n- Mail-service adjustment (+3 days) applies only when the period runs from se"
+    }
+  ]
+}

@@ -58,6 +58,10 @@ function taskIds() {
   if (TASKSET === "all") return all;
   if (TASKSET === "expansion") return world.tasks.filter((t) => t.expansion).map((t) => t.task_id);
   if (TASKSET === "scored") return all.filter((t) => !quarantined.has(t));
+  if (TASKSET === "law-native") {
+    const leaked = new Set(config.scoring?.domainFidelity?.affectedTasks ?? []);
+    return all.filter((t) => !quarantined.has(t) && !leaked.has(t));
+  }
   if (TASKSET === "flaky") return all.filter((t) => flaky.has(t));
   if (TASKSET === "boundary") {
     const keep = new Set(["in_band", "too_hard"]);

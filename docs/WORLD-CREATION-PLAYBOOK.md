@@ -123,11 +123,18 @@ whole-family zero-scores treated as bug-suspects first.
 *Lawfirm status:* triage + classification implemented
 (`sim/run-leaderboard.mjs` 3-episode protocol, `sim/lib/classify-failure.mjs`
 10-mode taxonomy, per-model reports, all-failed-traces evidence page).
-**NEW:** the automated growth loop — the hosted boundary pushes did tier
-escalation server-side; locally we label too-easy tasks but don't yet spawn
-deepened descendants automatically. Spec: `sim/grow-tasks.mjs` — takes a
-too-easy task, emits N escalated variants through the pack format
-(assemble → oracle-admit → re-run), loops until the lineage flakes.
+**Growth loop v1 implemented** (`sim/grow-tasks.mjs`): picks families the
+engine passed 3/3, emits depth-6/8/10 variants (interleaved audit reads +
+pinned writes) as growth packs → `assemble --packs-dir … --out world-grown` →
+oracle-admit → measure. **Round-1 finding (deepseek-chat, 9 grown tasks,
+27/27 episodes passed):** raw depth with an explicitly stated chain does NOT
+move the boundary — long-horizon execution of a spelled-out plan is easy;
+the discriminating levers are the hosted pushes' tier-3+ ones: withheld
+ids/titles (agent must find the record), unstated chains (derive the
+procedure from a policy memo), and derived values (compute, don't copy).
+Growth round 2 should escalate ambiguity, not length. That is exactly the
+"grow until failure" loop doing its job: r1 proved the mechanism and
+eliminated one hypothesis.
 
 ## Packaging — Harbor
 
@@ -140,6 +147,11 @@ harness can run it without this repo: `python3 world/local/export_harbor.py`.
 1. Research is stored, question-driven, and multi-angle — never one-shot.
 2. Every tool mocked from its real docs; every chaos pattern from evidence.
 3. Data fragmented across systems the way the domain actually fragments it.
+   **Domain-fidelity gate:** every table, column, and tool justifies itself
+   against the thesis — a two-tier vocabulary lint (foreign-anywhere infra
+   terms; foreign-in-firm-systems business terms, with client documents
+   exempt) runs at generation time (`world/expansion/domain-lint.mjs`; law
+   run: docs/DOMAIN-AUDIT.md found the ERP invoices/employees remnants).
 4. A task is admitted only if its reference walk executes and its verifier
    passes (oracle gate); verifiers pin answers deterministically.
 5. Failures are audited for harness fault before they are believed.
