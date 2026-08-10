@@ -5,7 +5,7 @@ Materialized from `data/leaderboard/episodes/` (canonical, written by the runner
 
 - `claude-haiku-4-5`: 233 passed / 155 failed
 - `deepseek-chat`: 410 passed / 55 failed
-- `grok-4-5`: 92 passed / 12 failed
+- `grok-4-5`: 157 passed / 16 failed
 - `deepseek-v4-flash-hosted`: 34 passed / 23 failed (historical hosted boundary pushes; NOTE: docs/AUDIT.md reclassified this cohort's dominant failure signature as output-cap truncation, a harness artifact)
 
 Each episode file: full turn-by-turn steps (tool, arguments, argBytes/argParseError, ok,

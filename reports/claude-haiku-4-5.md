@@ -17,7 +17,7 @@ Measured on the lawfirm-qwen world (local runtime, seeded + deterministic verifi
 
 ### workflow_shortcut — 108 episodes (69.7% of failures)
 
-Workflow shortcut — skipped required ordered checkpoints (e.g. drafted from search previews instead of full reads)
+Workflow shortcut — skipped or reordered required checkpoints (e.g. drafted from search previews instead of full reads, or get before list)
 
 Tasks: task_015, task_027, task_028, task_029, task_032, task_033, task_034, task_035, task_037, task_038, task_040, task_042 (+35 more)
 
