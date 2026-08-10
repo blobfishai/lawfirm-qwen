@@ -9,6 +9,12 @@ import json
 import os
 import sqlite3
 
+try:
+    from v3dialects import translate_args, wrap_output
+except ImportError:  # v3 layer optional
+    translate_args = None
+    wrap_output = None
+
 EPOCH = "2026-08-10T12:00:00Z"
 
 
@@ -164,6 +170,7 @@ class V2Runtime:
             for tool in c["tools"]:
                 tool["_system"] = c["system"]
                 tool["_product"] = c["product"]
+                tool["_dialect"] = c.get("dialect")
                 self.tools[tool["name"]] = tool
 
     # ---------------------------------------------------------------- seed
@@ -214,6 +221,13 @@ class V2Runtime:
 
     # ------------------------------------------------------------- execute
     def call(self, conn: sqlite3.Connection, name: str, args: dict) -> tuple[bool, str]:
+        ok, text = self._call_raw(conn, name, args)
+        tool = self.tools.get(name)
+        if tool is not None and tool.get("_dialect") and wrap_output is not None:
+            ok, text = wrap_output(tool["_dialect"], tool, ok, text)
+        return ok, text
+
+    def _call_raw(self, conn: sqlite3.Connection, name: str, args: dict) -> tuple[bool, str]:
         tool = self.tools.get(name)
         if tool is None:
             return False, f"ERROR: unknown tool '{name}'"
@@ -221,6 +235,8 @@ class V2Runtime:
         kind = op["kind"]
         table = op["table"]
         args = args if isinstance(args, dict) else {}
+        if tool.get("_dialect") and translate_args is not None:
+            args = translate_args(tool, args)
         try:
             if kind == "list":
                 return self._list(conn, op, args)

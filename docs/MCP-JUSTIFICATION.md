@@ -1,0 +1,131 @@
+# Why each MCP exists — proof of choice, thesis tie, and real-vs-mock diff
+
+Every mock service justified four ways: (1) **thesis tie** — which stage of the
+world's own thesis it serves; (2) **stored research** — the domain-registry
+workflow items (URLs collected during the discovery sweep) that name this
+system category as where the work happens; (3) **external adoption evidence**
+— market citations gathered 2026-08-10 (three research agents; source URLs
+throughout; claims the agents could not verify are marked); (4) an honest
+**real-vs-mock diff** against the cited API docs.
+
+The world's thesis (verbatim topic from the world document):
+
+> End-to-end law firm operations: **intake → conflict_check → open_matter →
+> research → file → docket → serve_discovery → calendar_deadline →
+> prepare_hearing → bill**
+
+| Thesis stage | Serving MCP |
+|---|---|
+| intake, conflict_check, open_matter | practice-management |
+| research | docket-records (case law, dockets, cite-check) |
+| file, docket, prepare_hearing | docket-records + practice-management (calendar/tasks) |
+| serve_discovery | ediscovery |
+| calendar_deadline | practice-management + workspace calendars |
+| bill | practice-management (bills, trust) + ebilling (LEDES/UTBMS) |
+| document substrate of every stage | dms + workspace |
+
+Two tool generations exist: **v2** (`mcp/v2/contracts/`, internal parameter
+style) and **v3** (`mcp/v3/contracts/`, the deep copy with 1:1 external
+parameter names and real response envelopes — see §Real-vs-mock per system).
+
+---
+
+## 1 · practice-management — mirrors Clio Manage API v4
+
+**Thesis tie:** intake, conflict_check, open_matter, calendar_deadline, bill — 5 of 10 stages; the firm's system of record.
+
+**Stored research (our registry):** `matter-opening`, `client-intake-conflicts-checking`, `engagement-letters-and-fee-agreements` (clio.com guides); `time-capture-prebill-review-and-invoicing` (orionlaw.com); `trust-iolta-accounting-with-three-way-reconciliation` (mycase.com); `settlement-negotiation-tracking`, `deposition-management`, `expert-witness-management`.
+
+**Adoption evidence:** ABA Legal Technology Survey: 43% of solos / 59% of lawyers in 2–9-attorney firms have PM software available ([lawnext.com](https://www.lawnext.com/2024/09/the-shrinking-ownership-of-law-practice-management-technology-part-3-of-4-future-development-and-market-opportunities.html)); the ABA publishes a standing annual Practice Management TechReport ([americanbar.org](https://www.americanbar.org/groups/law_practice/resources/tech-report/2024/2024-practice-management-techreport/)).
+
+**Why Clio as the mirror:** the most open API in the category — public developer portal, REST v4, OAuth, OpenAPI download ([docs.developers.clio.com](https://docs.developers.clio.com/)); competitors are closed or partner-gated (see landscape).
+
+**Real vs mock:** real = **23 documented resource groups** (Matters, Contacts, Activities incl. UTBMS codes, Billing, Trust, Calendars, Tasks, Communications, Court Rules, Custom Fields, Webhooks, …), ~**282 endpoints** per a third-party OpenAPI index ([jentic.com](https://jentic.com/apis/app.clio.com/clio)). Mock = **36 tools over 11 of those groups**, 13 tables, 528 rows; v3 wraps every response in Clio's `{data, meta:{paging,records}}` envelope. Not mocked: OAuth scopes, webhooks, custom fields/actions, Clio Payments, reporting, cursor paging.
+
+## 2 · docket-records — mirrors CourtListener REST API v4
+
+**Thesis tie:** research, file, docket, prepare_hearing.
+
+**Stored research:** `juriscraper-recap-courtlistener` (github.com/freelawproject/juriscraper); `court-e-filing` (uscourts.gov CM/ECF); `appellate-practice-management`; `calendaring-docketing-with-court-rule-deadlines` (docketcalendar.com); eyecite (citation checking) → `citation_lookup`.
+
+**Adoption evidence:** CourtListener serves "over a million people on a good day" ([free.law](https://free.law/projects/courtlistener/)); the RECAP archive holds "almost half a billion PACER-related items" ([courtlistener.com/recap](https://www.courtlistener.com/recap/)); API access is bundled with FLP memberships ([free.law 2026](https://free.law/2026/05/07/api-included-in-memberships/)).
+
+**Why CourtListener as the mirror (verified structural fact):** the commercial research duopoly exposes **no public self-serve APIs** — Westlaw and Lexis both run sales-gated request-access programs ([vaquill.ai](https://www.vaquill.ai/blog/lexisnexis-westlaw-api-alternatives-developers); [dev.lexisnexis.com](https://dev.lexisnexis.com/)) — while CourtListener publishes complete public docs **including an official MCP server** ([wiki.free.law](https://wiki.free.law/c/courtlistener/help/api)). It is the only honest mockable reference in the category.
+
+**Real vs mock:** real = **14 API families** (case law, PACER dockets/entries/recap-documents/parties/attorneys, search, citation-lookup, judges, oral arguments, financial disclosures, alerts+webhooks, tags, visualizations, API-usage). Mock = **13 tools over 7 families**, 7 tables, 289 rows; v3 uses Django-filter params (`court`, `date_filed__gte`, `q`, `text`) and the `{count,next,previous,results}` envelope with `resource_uri` on resources. Not mocked: judges/financial-disclosure/audio corpora, webhooks, bulk data, real search relevance.
+
+## 3 · dms — mirrors iManage Work Universal API
+
+**Thesis tie:** the document substrate; where every stage's deliverables land.
+
+**Stored research:** `document-management-with-versioning-and-ethical-walls` (imanage.com/learn-more/imanage-vs-netdocuments); `closing-binders-transaction-closing-management` (simplyagree.com).
+
+**Adoption evidence:** iManage: "more than one million professionals at 4,000 organizations," ~85% of Global 100 firms, 82% of AmLaw 200 ([imanage.com](https://imanage.com/resources/resource-center/news/imanage-accelerates-into-2025-with-strong-growth-ai-advancements-and-cloud-expansion/)); 2024 ILTA survey as reported: ~47% AmLaw 200 iManage vs ~32% NetDocuments — virtually every big firm runs one of the two ([secondary source](https://www.bigmodeconsulting.com/compare/netdocuments-vs-imanage); raw ILTA is member-gated).
+
+**Real vs mock:** real = REST v2 families (documents/versions/history/relations, workspaces, folders, search, permissions/trustees, classes, users, libraries); full reference is behind iManage's partner portal — best public proxy: the Microsoft connector exposes **48 operations** ([learn.microsoft.com](https://learn.microsoft.com/en-us/connectors/imanagework/)). Mock = **10 tools**, 4 tables, 238 rows, incl. checkout/checkin with 409 lock conflicts; v3 wraps in `{data:{results,total}}`. Not mocked: security/ethical walls, email filing, document classes admin, renditions/OCR.
+
+## 4 · ediscovery — mirrors Relativity REST (Object Manager + Productions)
+
+**Thesis tie:** serve_discovery.
+
+**Stored research:** `discovery-management` (bloomberglaw.com); `tarexp` (github.com/eugene-yang/tarexp); EDRM Enron dataset item.
+
+**Adoption evidence:** Relativity's own page, verbatim: **"Relativity powers 198 of the Am Law 200"** ([relativity.com](https://www.relativity.com/data-solutions/law-firms/)).
+
+**Real vs mock:** real = Object Manager query service (`/Relativity.REST/api/Relativity.Objects/workspace/{id}/object/query`), Production Manager (+ placeholders, data sources, re-production), and dozens more versioned services ([platform.relativity.com](https://platform.relativity.com/RelativityOne/Content/BD_Object_Manager/Object_Manager_service.htm)). Mock = **11 tools**, 5 tables, incl. review coding, privilege log, holds, productions with Bates prefixes; v3 wraps queries in `{Objects:[{ArtifactID,…}], TotalCount}` and takes `length` paging. Not mocked: dtSearch syntax, TAR/analytics, imaging, load files, corpus scale.
+
+## 5 · ebilling — mirrors LEDES 1998B + real UTBMS codes
+
+**Thesis tie:** bill (the client-facing half).
+
+**Stored research:** `outside-counsel-guidelines-compliance-billing` (easylegalbilling.com LEDES-101); `cloc-core-12` (cloc.org — e-billing audit is a core in-house competency the firm's invoices must survive).
+
+**Adoption evidence:** LEDES Oversight Committee: 1998B is "an ASCII, pipe delimited format containing 24 fields … currently the most-widely used ebilling standard in the legal industry in the US" ([ledes.org](https://ledes.org/ledes-98b-format/)); corporate e-billing systems mandate it — e.g. Thomson Reuters Legal Tracker publishes the LEDES file specs firms must follow ([thomsonreuters.com](https://www.thomsonreuters.com/en-us/help/legal-tracker/company/file-specifications/ledes-file-formats)); industry rejection rates run near 30% ([legal.thomsonreuters.com](https://legal.thomsonreuters.com/en/insights/articles/electronic-billing-hidden-costs)).
+
+**Fidelity note:** this system mocks a *standard*, not a vendor — the seeded UTBMS L/A/E codes are the real published sets, and v3 re-keys line items to the real 1998B field names (`LINE_ITEM_TASK_CODE`, `LINE_ITEM_NUMBER_OF_UNITS`, `INVOICE_TOTAL`, …). Not mocked: actual pipe-delimited file serialization, client-side OCG rule engines, 98BI multi-currency.
+
+## 6 · workspace — mirrors Google Workspace APIs
+
+**Thesis tie:** the informal layer of every stage; required for cross-system reconciliation (the email that contradicts the record; the tracker cell that must match the bill). Our own measured failure modes (deliverable-left-in-chat, side-copies) prove agents gravitate here — it must be graded surface, not a blind spot.
+
+**Adoption evidence:** ABA survey: Microsoft 365 second most-used cloud service among lawyers at 59% ([via clio.com](https://www.clio.com/blog/tools-for-lawyers/)); 84% of 700+-attorney firms use M365 Copilot ([law360.com](https://www.law360.com/pulse/articles/2387443/law-firms-embrace-ai-but-full-deployment-remains-rare)). We mirror Google's APIs because they are fully public with documented method counts; the M365 equivalent (Graph) is the segment-share alternative — an honest swap candidate.
+
+**Real vs mock:** real = ~**190 methods** across the four APIs (Sheets ~17, Drive ~58, Gmail ~79, Calendar ~38 — verified on [developers.google.com](https://developers.google.com/workspace/sheets/api/reference/rest) 2026-08-10). Mock = **10 tools**; v3 speaks the real wire shapes: Sheets `{range, majorDimension, values}` with `Sheet1!A1` range syntax, Gmail `q`/`maxResults` and message resources (`payload.headers`), Drive `drive#file` resources, Calendar `calendar#events`/event resources. Not mocked: formulas/A1 semantics, attachments/MIME, permissions/sharing, recurrence.
+
+---
+
+## Competitor landscape — why these six mirrors and not others
+
+Full agent report with per-claim URLs; summary (segment split → chosen mirror):
+
+| Category | Chosen mirror | Main competitors (segment) | Why not them |
+|---|---|---|---|
+| Practice mgmt | **Clio** | MyCase, PracticePanther, Smokeball, Rocket Matter (solo/small); Filevine, Litify (plaintiff); Aderant Expert & Elite 3E (BigLaw ERP duopoly) | Only Clio has an open self-serve API ([docs.developers.clio.com](https://docs.developers.clio.com/)); Aderant/Elite have no public portals; Litify inherits Salesforce's API (a CRM mock, not a legal one) |
+| DMS | **iManage** | NetDocuments (~32% AmLaw 200; public REST + MCP May 2026), SharePoint (generic), Worldox (EOL 2026) | iManage is the AmLaw leader (~47%) and released an MCP server May 14 2026 ([legaltechnology.com](https://legaltechnology.com/imanage-unveils-open-protocol/)); NetDocuments is the credible alternative mirror |
+| Ediscovery | **Relativity** | Everlaw (public API + MCP), DISCO, Logikcull (small), Nuix (gov/forensic), Exterro (in-house) | "198 of the Am Law 200" + the deepest public developer docs ([platform.relativity.com](https://platform.relativity.com/RelativityOne/Content/REST_API/REST_API.htm)) |
+| Research/dockets | **CourtListener** | Westlaw, Lexis (duopoly, **no public APIs**), vLex/Fastcase (partner-gated; Clio-owned since Nov 2025, API openness contested in an antitrust complaint), Docket Alarm (public API, docket-data-shaped) | The only fully documented open surface, with an official MCP server |
+| Court-rules calendaring | (hosted as tasks, not a server — deadline pack) | CalendarRules (Clio-owned; "trigger event + jurisdiction in → dated deadlines out"), LawToolBox, Aderant Milana/CompuLaw | The category is a rules-engine license, not a firm system; our deadline-computation pack replicates its API contract as graded tasks ([help.legalserver.org](https://help.legalserver.org/article/2551-calendarrules-integration)) |
+| E-billing | **LEDES standard** | Client side: Legal Tracker, Onit, SimpleLegal, TyMetrix 360, Brightflag; firm side: every billing system's LEDES export | The interchange layer is file-format-shaped, not API-shaped — mocking the standard is the highest-fidelity choice |
+| CLM | **not mocked — deliberately** | Ironclad, Icertis, Agiloft, DocuSign CLM | Verified finding: CLM buyers are overwhelmingly in-house legal ops, not law firms; adding CLM would be a domain-fidelity violation of exactly the kind this audit removes |
+| Office suite | **Google APIs** | Microsoft 365/Graph (larger legal segment share) | Both public; Google's method families are the cleaner documented mock target; Graph is the acknowledged alternative |
+
+Also verified: the legal-AI agent segment (Harvey, CoCounsel, Lexis+ AI, Legora, Spellbook, Robin AI) exposes **no open APIs** — the integration story is shifting to MCP connectors ([thelegalwire.ai](https://thelegalwire.ai/mcp-the-protocol-thats-redrawing-the-legal-ai-stack/)) — which is precisely the topology this repo builds (one MCP server per firm system).
+
+## Workflow → mock mapping (researched steps → our tools)
+
+Eight workflows documented step-by-step with sources by the workflow agent; each maps onto the mock surface:
+
+1. **Intake → conflicts → engagement → matter opening** ([clio.com](https://www.clio.com/blog/conflict-check-how-to/), Intapp, ABA): `contacts_create/search` (capture + conflict search across parties) → conflicts memo filed via `documents_create` → `communications_create` (non-engagement or engagement letter) → `matters_create` + `tasks_create` (kickoff). *Gap carried forward: a dedicated conflicts-report object.*
+2. **ECF notice → docketing → deadlines → tasks** ([courtalert.com](https://www.courtalert.com/CourtAlertCMECF.asp)): `docket_entries_list`/`docket_alerts_create` (NEF ingestion) → deadline computation = our deadline-computation task pack (CalendarRules contract) → `calendar_entries_create` with rule citations → `tasks_create` ticklers.
+3. **Hold → collection → review → privilege log → production** (EDRM, [Relativity help](https://help.relativity.com/RelativityOne/Content/Solutions/Reviewing_documents_in_Relativity.htm), [Everlaw](https://www.everlaw.com/blog/ediscovery-best-practices/guide-to-legal-holds/)): `holds_create/list` (acknowledgment tracking) → `documents_query` (batches by custodian) → `documents_code` (responsive/privileged layouts) → `privilege_log_create` → `productions_create`.
+4. **Time → prebill → partner review → LEDES → rejection/appeal** ([pointone.com](https://pointone.com/blog/law-firm-pre-bill-review-software), [onit.com](https://www.onit.com/blog/what-is-legal-ebilling/), [CounselLink help](https://cllf.zendesk.com/hc/en-us/articles/39410910113427-Fixing-Rejected-Invoices)): `time_entries_create` (UTBMS-coded) → `bills_create` (prebill) → `time_entries_update`/`bills_update` (review, write-downs, lifecycle) → `invoices_submit` + `invoice_total_check` (LEDES validation) → `appeals_create` (the ~30%-rejection loop).
+5. **Trust/IOLTA three-way reconciliation** ([stephsbooks.com](https://stephsbooks.com/blog/iolta-three-way-reconciliation) et al.): `trust_transactions_create` (deposits/disbursements per client-matter ledger) → `trust_transactions_list` + `trust_balance_get` (bank vs ledger vs client-sum) — the damages-computation task grammar grades the to-the-penny match.
+6. **Due diligence → red-flags memo** ([bloomberglaw.com](https://pro.bloomberglaw.com/brief/due-diligence/), [harvey.ai Vault](https://www.harvey.ai/platform/vault)): DMS `documents_list/search` (data-room triage) → review → `documents_create` (red-flag memo) — the shape of our diligence family + deep-drafting pack.
+7. **Contract markup cycle** ([Robin AI](https://robinai.com/help/review-documents-with-playbook), attorneyatwork.com): `documents_checkout` → markup → `documents_checkin` (new version) → `document_versions_list` (negotiation record) → `gmail_messages_send` (the turn) — the deep-drafting pack grades the playbook-reconciliation half.
+8. **Research memo + cite-check** (law-library guides: [Georgetown](https://guides.ll.georgetown.edu/c.php?g=468955&p=3962391), [Stanford](https://guides.law.stanford.edu/cases/goodlaw)): `opinions_search` (one-good-case expansion) → `opinions_get` → `citation_lookup` (the Shepardize/KeyCite step; unresolved citations must be flagged, never fabricated — our hallucination-trap grammar) → memo via `documents_create`.
+
+What the agent products themselves automate (Harvey Vault bulk review, CoCounsel deposition prep/contract policy compliance, Lexis+ Shepard's-verified drafting, Robin AI playbook redlining — all cited in the agent report) lands on the same five surfaces: research, DMS versions, review coding, drafting, and Word/email — all graded surfaces in this world.
+
+---
+
+*Local sections from the world document, `data/research/domain-registry.json`, and `mcp/v*/contracts/`; external claims from three research runs on 2026-08-10 with per-claim URLs (unverified items marked in the agents' raw reports). v3 fidelity layer: `mcp/v3/build-v3.mjs`, `world/local/v3dialects.py`.*
