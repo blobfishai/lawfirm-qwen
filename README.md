@@ -92,3 +92,31 @@ QWEN_BASE_URL=... QWEN_API_KEY=... npm run flake -- --tasks task_127,task_099
 The shipped failure report was measured against `deepseek-v4-flash`; the flake
 scan reproduces the same protocol against qwen (or any endpoint you point it
 at) so the boundary can be compared across policies.
+
+## Why this is more than Harvey LAB's world
+
+Harvey LAB is a benchmark: task statements graded by rubric. It has no
+executable environment — no database an agent can change, no tools that run,
+no deterministic pass/fail, no way to run a task twice and measure stability.
+
+This repo hosts the SAME task shapes (146 of 156 tasks carry harvey_lab
+provenance, prompt skeletons taken from the pack's own instructions) inside a
+world where they actually execute:
+
+| | Harvey LAB | lawfirm-qwen world |
+|---|---|---|
+| Task shapes | ~26 legal task shapes | same shapes hosted + 10 more surfaces |
+| Environment | none (static prompts) | 82 tables, 2,000+ seeded rows, live SQLite |
+| Input materials | described in prompt | 78 real seeded documents (deal materials, counterparty markups, distractor files, disclosure schedules, correspondence) |
+| Tools | none | 117 executable tools (admitted iff they execute) |
+| Grading | LLM/human rubric | deterministic VCode verifiers, per-assertion verdicts |
+| Difficulty evidence | none | 21 tasks with 3-episode mixed-outcome proof at a model boundary + full traces |
+| Repeatability | n/a | same task re-runs bit-identically (seeded, versioned) |
+
+The boundary evidence is the part a benchmark cannot produce at all: per-task
+flaky proof (docs/FAILURE-REPORT.md) with the exact tool calls, arguments, and
+thoughts of every failing run. Note on completeness: the hosted world carries
+500+ MB of raw episode envelopes; this repo ships the complete world
+definition (all tables/rows, all tools, all tasks and verifiers, scorecard)
+and the full episode traces for every boundary task — the raw envelope bulk
+for non-boundary episodes stays hosted (world id in config).
