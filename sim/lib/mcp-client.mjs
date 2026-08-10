@@ -14,6 +14,7 @@ export class McpClient {
   async start() {
     this.child = spawn(this.command, this.args, {
       cwd: this.opts.cwd,
+      env: this.opts.env ?? process.env,
       stdio: ["pipe", "pipe", "pipe"],
     });
     this.child.on("error", (e) => this.#failAll(e));

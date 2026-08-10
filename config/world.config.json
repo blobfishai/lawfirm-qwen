@@ -6,36 +6,132 @@
     "baseUrlEnv": "QWEN_BASE_URL",
     "apiKeyEnv": "QWEN_API_KEY",
     "model": "qwen3-8b",
+    "contextWindowTokens": 131072,
     "contextGuardRatio": 0.9,
-    "maxCompletionTokens": 4096,
+    "maxCompletionTokens": 8192,
     "maxAgentTurns": 50,
-    "episodesPerTask": 3
+    "episodesPerTask": 3,
+    "pricing": {
+      "inputPerM": 0,
+      "outputPerM": 0
+    }
+  },
+  "models": {
+    "deepseek-chat": {
+      "label": "DeepSeek V3.2 (chat)",
+      "baseUrl": "https://api.deepseek.com/v1",
+      "apiKeyEnv": "DEEPSEEK_API_KEY",
+      "model": "deepseek-chat",
+      "contextWindowTokens": 131072,
+      "maxCompletionTokens": 8192,
+      "pricing": {
+        "inputPerM": 0.27,
+        "outputPerM": 1.1
+      }
+    },
+    "deepseek-reasoner": {
+      "label": "DeepSeek (reasoner)",
+      "baseUrl": "https://api.deepseek.com/v1",
+      "apiKeyEnv": "DEEPSEEK_API_KEY",
+      "model": "deepseek-reasoner",
+      "contextWindowTokens": 131072,
+      "maxCompletionTokens": 16384,
+      "pricing": {
+        "inputPerM": 0.55,
+        "outputPerM": 2.19
+      }
+    },
+    "claude-haiku-4-5": {
+      "label": "Claude Haiku 4.5",
+      "provider": "anthropic-openai-compat",
+      "baseUrl": "https://api.anthropic.com/v1",
+      "apiKeyEnv": "ANTHROPIC_API_KEY",
+      "model": "claude-haiku-4-5",
+      "contextWindowTokens": 200000,
+      "maxCompletionTokens": 8192,
+      "pricing": {
+        "inputPerM": 1,
+        "outputPerM": 5
+      }
+    },
+    "claude-sonnet-4-5": {
+      "label": "Claude Sonnet 4.5",
+      "provider": "anthropic-openai-compat",
+      "baseUrl": "https://api.anthropic.com/v1",
+      "apiKeyEnv": "ANTHROPIC_API_KEY",
+      "model": "claude-sonnet-4-5",
+      "contextWindowTokens": 200000,
+      "maxCompletionTokens": 8192,
+      "pricing": {
+        "inputPerM": 3,
+        "outputPerM": 15
+      }
+    },
+    "qwen3-8b": {
+      "label": "Qwen3-8B (target policy)",
+      "baseUrlEnv": "QWEN_BASE_URL",
+      "apiKeyEnv": "QWEN_API_KEY",
+      "model": "qwen3-8b",
+      "contextWindowTokens": 131072,
+      "maxCompletionTokens": 4096,
+      "pricing": {
+        "inputPerM": 0,
+        "outputPerM": 0
+      }
+    }
   },
   "boundaryReport": {
-    "note": "The failure report shipped in docs/FAILURE-REPORT.md was measured against deepseek-v4-flash (3 episodes/task). qwen3-8b is this repo's target policy; re-run sim/run-flake-scan.mjs to reproduce the boundary against qwen.",
+    "note": "The failure report shipped in docs/FAILURE-REPORT.md was measured against deepseek-v4-flash (3 episodes/task) on the hosted world. The local runtime (world/local/server.py) reproduces the same surface; run sim/run-leaderboard.mjs to measure any registry model.",
     "measuredModel": "deepseek-v4-flash"
   },
   "mcp": {
     "name": "blobfish-lawfirm-bridge",
     "transport": "stdio",
     "command": "node",
-    "args": ["mcp/blobfish-lawfirm-bridge.mjs"]
+    "args": [
+      "mcp/blobfish-lawfirm-bridge.mjs"
+    ]
   },
   "blobfish": {
     "api": "https://blobfish.ai/api/v1",
     "worldId": "sbx_206712ec47f741d3",
+    "hostedStatus": "world_not_found (hosted world no longer resolves; use the local runtime)",
+    "localBase": "http://127.0.0.1:8971",
     "world": "world/blobfish/world.json",
+    "worldFile": "world/blobfish/world.json",
     "quality": "world/blobfish/quality.json"
+  },
+  "scoring": {
+    "quarantinedTasks": {
+      "task_016": "prompt/verifier drift: the prompt names invoice INV-1CU8DF9 (row id 9) but the shipped verifier pins row id 1. Kept and runnable, excluded from headline leaderboard scores."
+    }
   },
   "flake": {
     "trajectories": "data/flake/flaky-trajectories.json",
     "push1Ledger": "data/flake/push1-ledger.json",
     "push2Ledger": "data/flake/push2-ledger.json",
     "provenFlakyTasks": [
-      "task_018", "task_020", "task_022", "task_031", "task_043", "task_047",
-      "task_051", "task_052", "task_086", "task_095",
-      "task_098", "task_099", "task_101", "task_104", "task_112", "task_126",
-      "task_127", "task_133", "task_137", "task_144", "task_151"
+      "task_018",
+      "task_020",
+      "task_022",
+      "task_031",
+      "task_043",
+      "task_047",
+      "task_051",
+      "task_052",
+      "task_086",
+      "task_095",
+      "task_098",
+      "task_099",
+      "task_101",
+      "task_104",
+      "task_112",
+      "task_126",
+      "task_127",
+      "task_133",
+      "task_137",
+      "task_144",
+      "task_151"
     ]
   }
 }

@@ -163,9 +163,9 @@ async function handle(msg) {
           capabilities: { tools: { listChanged: false }, resources: {} },
           serverInfo: SERVER_INFO,
           instructions:
-            `Bridge to blobfish world ${WORLD_ID} ("${UPSTREAM_INFO.world.company ?? "simulated org"}") — a fully synthetic ` +
-            `Salesforce-CRM-style simulation (Morgan Stanley (SIMULATED) scenario; no real entities). ` +
-            `Tools execute against the ${LOCAL ? "locally packaged" : "hosted"} world state. ` +
+            `Bridge to blobfish world ${WORLD_ID} ("${UPSTREAM_INFO.world.company ?? "Eve Litigation (SIMULATED)"}") — a fully synthetic ` +
+            `litigation/corporate law-firm simulation (no real entities, clients, or matters). ` +
+            `Tools execute against the ${LOCAL ? "locally hydrated" : "hosted"} world state. ` +
             `Tools marked HARNESS ONLY are for the evaluation harness, not the agent.`,
         });
       case "notifications/initialized":

@@ -1,5 +1,26 @@
 # Failure Report — Flaky Tasks at the Model Boundary
 
+> **2026-08-10 addendum — the dominant mode was substantially a harness
+> artifact.** Local re-measurement (see `docs/failure-reports/` and
+> `data/leaderboard/`) reproduced the "tool-call emission collapse" signature
+> and then explained it: draft tool calls that fail to parse cluster at
+> p50 ≈ 21.1KB / p90 ≈ 21.8KB of arguments — precisely the ~4096-token
+> completion cap both this repo's original runner and (by configuration) the
+> hosted harness imposed. The model was not emitting empty calls; its JSON was
+> being truncated mid-string at `max_tokens`, parsed as `{}`, and echoed back
+> as "missing 3 required positional arguments". Raising the cap to 8192
+> eliminates the parse failures (deliverable bodies observed up to ~23KB fit
+> comfortably). Of the local failing episodes, the truncation markers appear
+> in a bounded subset (12/138 for deepseek-chat); the remaining failure modes
+> below (workflow shortcut, friction non-recovery) and the newly measured
+> modes (off-task record creation, deliverable-left-in-chat) survive the
+> audit as genuine model behavior. The original push-2 conclusion — "all 12
+> failing episodes were emission collapse" — should therefore be read as
+> "all 12 failing episodes hit the output-cap truncation", which is a
+> statement about the harness, not the model. The flaky-21 task set remains
+> valuable (the tasks are exactly the ones whose deliverables approach the
+> cap), but the *mechanism* claimed below is corrected by this addendum.
+
 **World**: `sbx_206712ec47f741d3` — synthetic litigation/corporate law firm ("eve"), 82 tables · 117 tools · 156 tasks (146 Harvey-LAB-anchored, 8 LegalAgentBench-anchored, 2 graph-walk).
 **Measured model**: `deepseek-v4-flash` (this repo's target policy is qwen — re-run `npm run flake` to reproduce against it).
 **Method**: two boundary pushes (frontier_push jobs `job_2dd32f675a8243ef`, `job_77eef350b369400d`). Each wave generates 10 candidate tasks on the frozen world, runs every admitted task **3 episodes — same model, same prompt** — and classifies per task: *flaky* (own runs mix outcomes), *too easy* (3/3), *too hard* (0/3). Materials escalate per tier (counterparty markups → unannounced distractor files → disclosure schedules → superseded-instruction correspondence). All tasks are kept and labeled; nothing is deleted.

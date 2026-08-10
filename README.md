@@ -5,118 +5,182 @@
 > lineage (the benchmark's task shapes), not any affiliation with Harvey or any
 > law firm.
 
-A Harvey-LAB-anchored simulation world for a litigation/corporate law firm
-(matter intake → conflicts → open matter → research → file → docket →
-discovery → deadlines → hearing → billing, plus document review-and-draft
-deliverable work), generated **via [blobfish.ai](https://blobfish.ai/api-docs)**,
-exposed over **MCP**, and intended to be driven/evaluated with a **qwen** agent
-(`qwen3-8b` by default; any OpenAI-compatible endpoint via env).
+An executable law-firm simulation world (matter intake → conflicts → research →
+file → docket → discovery → deadlines → hearing → billing, plus
+document review-and-draft deliverable work) with **deterministic VCode
+verifiers**, a **multi-model leaderboard**, and **per-model failure-mode
+reports**. Originally generated via [blobfish.ai](https://blobfish.ai/studio);
+now **fully self-hosting** — the entire world runs offline from this repo.
 
-The headline of this repo is not the world — it is the **boundary proof**: 21
-tasks with direct mixed-outcome evidence (same model, same prompt, 3 episodes,
-sometimes passes / sometimes fails) and a per-episode trace corpus explaining
-*why* the model fails when it fails. See
-[`docs/FAILURE-REPORT.md`](docs/FAILURE-REPORT.md).
+Three things live here:
+
+1. **The world** — 74 tables (1,000+ seeded rows), 102 executable tools,
+   **231 tasks** (156 original + 75 eval-anchored expansion), **211 seeded
+   matter documents**, one verifier per task.
+2. **The boundary proof** — 21 tasks with direct mixed-outcome evidence (same
+   model, same prompt, 3 episodes, sometimes passes / sometimes fails) and a
+   per-episode trace corpus explaining *why*. See
+   [`docs/FAILURE-REPORT.md`](docs/FAILURE-REPORT.md).
+3. **Audited model measurements** — models measured as agents in the world,
+   3 episodes/task, deterministic scoring, failure-mode classification per
+   model, and an adversarial audit that hunted harness bugs before trusting
+   any number (three found, quantified, fixed — see
+   [`docs/AUDIT.md`](docs/AUDIT.md)). Reports in
+   [`docs/failure-reports/`](docs/failure-reports/); coverage proof in
+   [`docs/COVERAGE.md`](docs/COVERAGE.md).
 
 ## Architecture
 
 ```
-  qwen (OpenAI-compatible   ┌────────────────────────────────────────────────┐
-  endpoint via env)      ◄──┤                sim/run-simulation.mjs          │
-                            │  agent loop · context guard · task selection   │
-                            └───────────────┬────────────────────────────────┘
-                                            │ MCP (stdio, JSON-RPC)
-                                            ▼
-                            ┌───────────────────────────────────────────────┐
-                            │ mcp/blobfish-lawfirm-bridge.mjs               │
-                            │ stdio ⇄ MCP-over-HTTP proxy                   │
-                            │ + verify_task / reset_session harness tools   │
-                            └───────────────┬───────────────────────────────┘
-                                            │ Mcp-Session-Id
-                                            ▼
-                            ┌───────────────────────────────────────────────┐
-                            │ blobfish.ai hosted world sbx_206712ec47f741d3 │
-                            │ 82 tables · 117 tools · 156 tasks ·           │
-                            │ VCode verifiers · seeded matter documents     │
-                            └───────────────────────────────────────────────┘
+  any OpenAI-compatible      ┌────────────────────────────────────────────────┐
+  model (config/world.       │  sim/run-simulation.mjs   one episode          │
+  config.json registry:   ◄──┤  sim/run-leaderboard.mjs  models × tasks × N   │
+  deepseek, claude, qwen…)   │  sim/build-failure-report.mjs  mode classifier │
+                             └───────────────┬────────────────────────────────┘
+                                             │ MCP (stdio, JSON-RPC)
+                                             ▼
+                             ┌───────────────────────────────────────────────┐
+                             │ mcp/blobfish-lawfirm-bridge.mjs (LOCAL mode)  │
+                             │ + verify_task / reset_session harness tools   │
+                             └───────────────┬───────────────────────────────┘
+                                             │ sessions · /mcp · /verify
+                                             ▼
+                             ┌───────────────────────────────────────────────┐
+                             │ world/local/server.py — local world runtime   │
+                             │ hydrates world/blobfish/world*.json → SQLite  │
+                             │ 102 synthesized tools · VCode verifiers ·     │
+                             │ seeded friction (rate_limited/stale_reference,│
+                             │ ambiguous acks, write cap) — all deterministic│
+                             └───────────────────────────────────────────────┘
 ```
+
+The original hosted world (`sbx_206712ec47f741d3`) no longer resolves on
+blobfish.ai. `world/local/server.py` resurrects it from the complete world
+document shipped in this repo; fidelity is proven by
+`world/local/oracle.py` — **231/231 tasks execute their reference walks and
+pass their shipped verifiers** (`world/local/oracle-expanded-full.json`).
 
 ## The world
 
 | | |
 |---|---|
-| World id | `sbx_206712ec47f741d3` (hosted; snapshot in `world/blobfish/world.json`) |
-| Tables | 82 (matters, dockets, conflicts, evidence records, trust ledger, **matter_documents** with 78 seeded input files: deal materials, counterparty markups, distractor correspondence, disclosure schedules, deal-email threads) |
-| Tools | 117 executable (every tool admitted iff it executes against the live SQLite) |
-| Tasks | 156 — 146 anchored to Harvey LAB task shapes, 8 to LegalAgentBench, 2 graph-walk |
-| Task labels | 36 at-limit · 105 too-easy · 5 too-hard · 10 unlabeled (all kept, none deleted) |
+| World doc | `world/blobfish/world.json` (original 156 tasks) · `world/blobfish/world-expanded.json` (231 tasks) |
+| Tables | 74 (matters, dockets, conflicts, evidence records, billing, **matter_documents** with 211 seeded files: deal materials, counterparty markups, contracts, merger agreements, SPAs, discovery corpora, rule memos, computation exhibits, distractors) |
+| Tools | 102 executable (read/query/create/update/draft families; behavior synthesized deterministically from tool specs; admitted iff the reference walk passes the verifier) |
+| Tasks | 231 — 146 Harvey-LAB-anchored, 8 LegalAgentBench, 2 graph-walk, 75 eval-anchored expansion |
+| Verifiers | 231 VCode programs: per-assertion verdicts, graded reward, anti-hack vetoes (workflow shortcut, fabrication, collateral damage), advisory tool-health |
+| Friction | seeded + deterministic: 3% injected `rate_limited`/`stale_reference`, 15% ambiguous write-acks, per-session write cap |
 | Boundary evidence | 21 proven-flaky tasks, 57 shipped episode traces, 2 push ledgers |
+| Quarantine | `task_016` (prompt/verifier drift) — runnable, excluded from headline scores |
 
-Tasks are **blobfish-generated from the benchmark's own task shapes**: the
-pack's example instruction is the visible prompt skeleton ("Review the attached
-deal materials … prepare an antitrust risk assessment and HSR filing strategy
-memo. Output: antitrust-risk-memo.docx"), and blobfish generates the executable
-envelope — seeded input documents, tools, ordered-workflow verifiers — so the
-same task shape the benchmark grades with rubrics runs and grades
-deterministically here.
+### Eval-anchored expansion (75 tasks, 81 documents)
 
-## Layout
+Each expansion pack ports a public benchmark's *answer-key discipline* into the
+executable world — the prompt states the output vocabulary; the answer comes
+only from reading the seeded documents; the verifier pins it:
 
-```
-config/world.config.json       engine (qwen via env) · world id · flake data map
-mcp/blobfish-lawfirm-bridge.mjs   stdio ⇄ hosted-world MCP proxy + harness tools
-sim/run-simulation.mjs         agent loop against the MCP surface
-sim/run-flake-scan.mjs         N-trial flake scan per task (reproduce the boundary)
-world/blobfish/world.json      world snapshot (trajectories stripped for size)
-world/blobfish/quality.json    scorecard + label distribution + flaky list
-data/flake/flaky-trajectories.json   all episodes for every flaky task (tool calls,
-                                     exact arguments, thoughts, verifier verdicts)
-data/flake/push1-ledger.json   boundary push #1 wave ledger (8 waves, 240 episodes)
-data/flake/push2-ledger.json   boundary push #2 wave ledger (escalation-fix run)
-docs/FAILURE-REPORT.md         the analysis: modes, pass-vs-fail diff, observation
-```
+| Pack | Anchor | What it grades |
+|---|---|---|
+| `cuad-clause-extraction` (10) | CUAD | per-category clause identification over executed contracts (30 real CUAD category slugs); absent-category fabrication traps |
+| `maud-deal-points` (10) | MAUD | deal-point determinations over merger agreements; exact termination-fee amounts pinned; absent-deal-point trap |
+| `spa-deal-extraction` (7) | BigLaw Bench Workflows | SPA price/escrow/cap/basket extraction; superseded-draft distractor traps |
+| `legalbench-rule-application` (14) | LegalBench | hearsay, personal jurisdiction, diversity, UCC v. common law, Abercrombie — rule applied to fact patterns, outcome pinned |
+| `discovery-retrieval` (8) | BigLaw Bench Retrieval | find the smoking-gun documents among near-miss distractors; required reads enforced from the trace |
+| `hallucination-traps` (7) | Stanford HAI audits | the record does **not** contain the answer; only escalation passes; fabricated determinations are veto-failed |
+| `damages-computation` (7) | TaxCalcBench / ConvFinQA | multi-step arithmetic (interest, allocations, caps) with the exact result pinned |
+| `deadline-computation` (6) | court-rule calendaring | SRCP-6-style deadline computation from trigger documents: service vs filing triggers, mail-day ordering, weekend/holiday rollover, chained briefing deadlines, no-trigger abstention — dates pinned exactly |
+| `deep-drafting` (6) | Harvey LAB tier-4 | 4–5 required reads incl. markups, playbooks, disclosure schedules, and a superseding instruction letter |
+
+Packs live in `world/expansion/packs/`; `world/expansion/assemble.mjs` compiles
+them (append-only) into `world-expanded.json`, generating each verifier from
+the same check grammar as the originals. Admission = oracle pass.
 
 ## Run
 
 ```bash
-# 1. Hosted world over MCP (needs a blobfish API key)
-BLOBFISH_API_KEY=... npm run mcp
+# 1. Serve the world locally (no API keys needed)
+npm run world:serve                      # original 156-task world on :8971
+python3 world/local/server.py --port 8972 --world world/blobfish/world-expanded.json
 
-# 2. Drive the agent (any OpenAI-compatible qwen endpoint)
-QWEN_BASE_URL=... QWEN_API_KEY=... npm run sim
+# 2. Prove fidelity (reference walks vs shipped verifiers)
+npm run oracle                           # expect 156/156
+python3 world/local/oracle.py --base http://127.0.0.1:8972 \
+  --world world/blobfish/world-expanded.json          # expect 231/231
 
-# 3. Reproduce the boundary: 3 trials per flaky task
-QWEN_BASE_URL=... QWEN_API_KEY=... npm run flake -- --tasks task_127,task_099
+# 3. One episode with a real model (.env: DEEPSEEK_API_KEY / ANTHROPIC_API_KEY / QWEN_*)
+node sim/run-simulation.mjs --task task_127 --engine deepseek-chat
+
+# 4. The leaderboard (N episodes × tasks × models; resumable)
+node sim/run-leaderboard.mjs --engines deepseek-chat,claude-haiku-4-5 \
+  --tasks scored --episodes 3 --resume
+
+# 5. Failure-mode reports + the leaderboard page
+node sim/build-failure-report.mjs --all
+node docs/leaderboard/build-page.mjs
 ```
 
-The shipped failure report was measured against `deepseek-v4-flash`; the flake
-scan reproduces the same protocol against qwen (or any endpoint you point it
-at) so the boundary can be compared across policies.
+Engines resolve from the `models` registry in `config/world.config.json` —
+adding a model is one JSON entry (any OpenAI-compatible endpoint; qwen3-8b is
+the repo's target policy via `QWEN_BASE_URL`).
 
 ## Why this is more than Harvey LAB's world
 
-Harvey LAB is a benchmark: task statements graded by rubric. It has no
-executable environment — no database an agent can change, no tools that run,
-no deterministic pass/fail, no way to run a task twice and measure stability.
-
-This repo hosts the SAME task shapes (146 of 156 tasks carry harvey_lab
-provenance, prompt skeletons taken from the pack's own instructions) inside a
-world where they actually execute:
+Harvey LAB grades *what an agent wrote* with an LLM judge — the strongest
+rubric corpus in legal AI (~1,660 tasks, ~101K expert criteria), and
+structurally unable to measure what this repo measures: whether the work
+*actually happened* in a system of record, whether it happens *reliably*
+across repeated runs, and *which step* breaks when it doesn't. The full
+argument, grounded in a 29-benchmark survey of the legal-eval field, is in
+[`docs/WHY-BEYOND-HARVEY-LAB.md`](docs/WHY-BEYOND-HARVEY-LAB.md); the survey
+itself is [`data/research/legal-eval-inventory.md`](data/research/legal-eval-inventory.md).
 
 | | Harvey LAB | lawfirm-qwen world |
 |---|---|---|
-| Task shapes | ~26 legal task shapes | same shapes hosted + 10 more surfaces |
-| Environment | none (static prompts) | 82 tables, 2,000+ seeded rows, live SQLite |
-| Input materials | described in prompt | 78 real seeded documents (deal materials, counterparty markups, distractor files, disclosure schedules, correspondence) |
-| Tools | none | 117 executable tools (admitted iff they execute) |
-| Grading | LLM/human rubric | deterministic VCode verifiers, per-assertion verdicts |
-| Difficulty evidence | none | 21 tasks with 3-episode mixed-outcome proof at a model boundary + full traces |
-| Repeatability | n/a | same task re-runs bit-identically (seeded, versioned) |
+| Environment | file sandbox, no state | 74-table live SQLite, 102 executable tools |
+| Grading | LLM judge, all-pass rubric | deterministic VCode, per-assertion, anti-hack vetoes |
+| Repeatability | judge-dependent (same family scores 26.7% / ~7–12% / ~13.3% top all-pass under three harnesses) | bit-identical re-runs, seeded friction |
+| Difficulty evidence | none | 21 boundary-proven flaky tasks with full traces |
+| Failure attribution | missed rubric criteria | exact tool call, arguments, observation per failing step |
+| Answer keys | rubric prose | CUAD/MAUD/LegalBench/TaxCalcBench-anchored pinned values |
+| Runs offline | no (judge API) | yes (stdlib Python + Node) |
 
-The boundary evidence is the part a benchmark cannot produce at all: per-task
-flaky proof (docs/FAILURE-REPORT.md) with the exact tool calls, arguments, and
-thoughts of every failing run. Note on completeness: the hosted world carries
-500+ MB of raw episode envelopes; this repo ships the complete world
-definition (all tables/rows, all tools, all tasks and verifiers, scorecard)
-and the full episode traces for every boundary task — the raw envelope bulk
-for non-boundary episodes stays hosted (world id in config).
+And the honest converse: LAB has expert-written rubrics, human-guided
+documents, prose-quality judgment, and ~8× our task count. The two measure
+different halves of "did the associate do good work."
+
+## Leaderboard & failure modes
+
+`docs/leaderboard/index.html` is the AA-style leaderboard
+(cf. [artificialanalysis.ai/evaluations/harvey-lab-aa](https://artificialanalysis.ai/evaluations/harvey-lab-aa)):
+task pass rate, pass^3 (the reliability metric), flaky-21 boundary scores,
+per-family jagged-intelligence heat maps, per-model failure-mode stacks, cost
+per episode. Every number traces to episode JSONs under `data/leaderboard/`.
+
+Per-model reports in `docs/failure-reports/` classify every failing episode
+from its step trace into the world's failure-mode taxonomy (emission collapse,
+workflow shortcut, deliverable-left-in-chat, wrong graded value, evidence gap,
+fabrication, friction non-recovery, …) — the "what does this model actually
+get wrong" report the leaderboard number summarizes.
+
+## Layout
+
+```
+config/world.config.json          engine + model registry · world paths · quarantine · flake data
+mcp/blobfish-lawfirm-bridge.mjs   stdio ⇄ world-server bridge + harness tools
+world/local/server.py             local world runtime (sessions, tools, verifiers, friction)
+world/local/oracle.py             reference-walk fidelity prover
+world/blobfish/world.json         original world document (complete: tables, rows, tools, tasks, verifiers)
+world/blobfish/world-expanded.json  + 75 eval-anchored tasks, 81 documents
+world/expansion/packs/*.json      content packs (documents + answer-keyed task specs)
+world/expansion/assemble.mjs      pack compiler (tasks + generated verifiers, append-only)
+sim/run-simulation.mjs            one episode (any registry engine)
+sim/run-leaderboard.mjs           models × tasks × episodes, aggregates
+sim/build-failure-report.mjs      failure-mode classifier + per-model reports
+docs/leaderboard/                 build-page.mjs + index.html (the leaderboard)
+docs/failure-reports/             per-model failure-mode reports
+docs/FAILURE-REPORT.md            the original boundary analysis (deepseek-v4-flash)
+docs/WHY-BEYOND-HARVEY-LAB.md     differentiation report
+data/research/                    29-benchmark legal-eval inventory + AA leaderboard reference
+data/flake/                       flaky trajectories + push ledgers (boundary evidence)
+data/leaderboard/                 episodes/ results/ failure-modes/ (measurement data)
+```
