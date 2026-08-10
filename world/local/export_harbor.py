@@ -41,7 +41,7 @@ def sha256_file(path: str) -> str:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--world", default=os.path.join(ROOT, "world", "blobfish", "world-expanded.json"))
+    ap.add_argument("--world", default=os.path.join(ROOT, "world", "blobfish", "world-v3.json"))
     ap.add_argument("--out", default=os.path.join(ROOT, "dist", "harbor"))
     args = ap.parse_args()
 
@@ -61,6 +61,12 @@ def main() -> None:
     shutil.copyfile(os.path.join(HERE, "server.py"), os.path.join(env_dir, "server.py"))
     shutil.copyfile(os.path.join(HERE, "oracle.py"), os.path.join(env_dir, "oracle.py"))
     shutil.copyfile(args.world, os.path.join(env_dir, "world.json"))
+    # v3 real-API contract layer ships with the package
+    contracts_src = os.path.join(ROOT, "mcp", "v3", "contracts")
+    if os.path.isdir(contracts_src):
+        shutil.copytree(contracts_src, os.path.join(env_dir, "contracts"))
+        shutil.copyfile(os.path.join(HERE, "v2runtime.py"), os.path.join(env_dir, "v2runtime.py"))
+        shutil.copyfile(os.path.join(HERE, "v3dialects.py"), os.path.join(env_dir, "v3dialects.py"))
 
     # ---- tasks/tasks.jsonl (instruction + verifier + reference walk) ----
     verifiers = {v["task_id"]: v for v in world.get("verifiers", [])}
@@ -122,7 +128,7 @@ fidelity:
 WORKDIR /app
 COPY . /app
 EXPOSE 8971
-CMD ["python", "/app/environment/server.py", "--port", "8971", "--world", "/app/environment/world.json"]
+CMD ["python", "/app/environment/server.py", "--port", "8971", "--world", "/app/environment/world.json", "--v2-contracts", "/app/environment/contracts"]
 """)
     with open(os.path.join(out, "docker-compose.yml"), "w") as f:
         f.write("""services:
@@ -136,7 +142,7 @@ CMD ["python", "/app/environment/server.py", "--port", "8971", "--world", "/app/
 Self-contained executable law-firm world: {n_tasks} tasks, {len(world["tools"])} tools,
 deterministic VCode verifiers. Everything synthetic.
 
-Run:  python environment/server.py --port 8971 --world environment/world.json
+Run:  python environment/server.py --port 8971 --world environment/world.json --v2-contracts environment/contracts
 Prove: python environment/oracle.py --base http://127.0.0.1:8971 --world environment/world.json
 Or:   docker compose up
 

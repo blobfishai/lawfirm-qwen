@@ -1,0 +1,60 @@
+{
+ "task_id": "task_v3_002",
+ "outcome_class": "eligible_action",
+ "prompt": "Record today's work and move the prebill: (1) get matter 1 to confirm it is open and hourly; (2) create a time entry on matter 1 for user 2, date \"2026-08-10\", 2.5 hours at rate 400, description \"Draft motion to dismiss section II; cite-check\", UTBMS task code exactly \"L240\"; (3) then move bill 3 from draft to state exactly \"awaiting_approval\".",
+ "goal": "Record today's work and move the prebill: (1) get matter 1 to confirm it is open and hourly; (2) create a time",
+ "required_tools": [
+  "matters_get",
+  "time_entries_create",
+  "bills_update"
+ ],
+ "complexity": "medium",
+ "method": "v3_workflow",
+ "walk": [
+  "matters_get",
+  "time_entries_create",
+  "bills_update"
+ ],
+ "reference_args": [
+  {
+   "id": 1
+  },
+  {
+   "matter_id": 1,
+   "user_id": 2,
+   "date": "2026-08-10",
+   "quantity_hours": 2.5,
+   "rate": 400,
+   "description": "Draft motion to dismiss section II; cite-check",
+   "utbms_task_code": "L240"
+  },
+  {
+   "id": 3,
+   "state": "awaiting_approval"
+  }
+ ],
+ "tables_affected": [
+  "pm_time_entries",
+  "pm_bills"
+ ],
+ "effects": [
+  {
+   "table": "pm_time_entries",
+   "op": "insert"
+  },
+  {
+   "table": "pm_bills",
+   "op": "update",
+   "id": 3
+  }
+ ],
+ "provenance": {
+  "source_workflow": "workflow_research: clio-time-and-bill"
+ },
+ "difficulty_tier": "medium",
+ "acceptance_label": "pending_calibration",
+ "v3": {
+  "family": "clio-time-and-bill",
+  "dialect_surface": true
+ }
+}

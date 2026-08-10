@@ -18,7 +18,7 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
-const worldRaw = JSON.parse(readFileSync(join(ROOT, "world", "blobfish", "world-expanded.json"), "utf8"));
+const worldRaw = JSON.parse(readFileSync(join(ROOT, "world", "blobfish", "world-v3.json"), "utf8"));
 const world = worldRaw.world ?? worldRaw;
 
 const counts = { tasks: 0, verifiers: 0, traces: 0, failed: 0 };

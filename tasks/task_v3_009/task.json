@@ -1,0 +1,50 @@
+{
+ "task_id": "task_v3_009",
+ "outcome_class": "eligible_action",
+ "prompt": "Docket monitoring: find the docket for \"Talvern Logistics v. Halcyon Therapeutics\" (search by case name), list its recent entries, and subscribe a new-entry alert on that docket for exactly \"docketing@simulated-firm.example\".",
+ "goal": "Docket monitoring: find the docket for \"Talvern Logistics v. Halcyon Therapeutics\" (search by case name), list",
+ "required_tools": [
+  "dockets_search",
+  "docket_entries_list",
+  "docket_alerts_create"
+ ],
+ "complexity": "medium",
+ "method": "v3_workflow",
+ "walk": [
+  "dockets_search",
+  "docket_entries_list",
+  "docket_alerts_create"
+ ],
+ "reference_args": [
+  {
+   "q": "Talvern Logistics v. Halcyon"
+  },
+  {
+   "docket": 7,
+   "limit": 10
+  },
+  {
+   "docket": 7,
+   "alert_type": "entry",
+   "recipient": "docketing@simulated-firm.example"
+  }
+ ],
+ "tables_affected": [
+  "cl_docket_alerts"
+ ],
+ "effects": [
+  {
+   "table": "cl_docket_alerts",
+   "op": "insert"
+  }
+ ],
+ "provenance": {
+  "source_workflow": "workflow_research: courtlistener-docket-watch"
+ },
+ "difficulty_tier": "medium",
+ "acceptance_label": "pending_calibration",
+ "v3": {
+  "family": "courtlistener-docket-watch",
+  "dialect_surface": true
+ }
+}

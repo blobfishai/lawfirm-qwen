@@ -234,6 +234,75 @@ const TASKS = [
     inserts: [{ table: "pm_communications", pinned: [["type", "EmailCommunication"], ["subject", "Settlement posture — client authority email logged"]] }],
     updates: [],
   },
+  // ---- growth round 2: ambiguity escalation (r1 finding: length is easy;
+  // withheld ids, derived values, and policy scans are the levers) ----
+  {
+    id: "task_v3_011", family: "r2-withheld-id-utbms-audit",
+    prompt: 'Billing compliance audit on matter 10: exactly one time entry on this matter describes deposition preparation ("Prepare deposition outline; review key exhibits") but is not coded to the UTBMS Depositions code. List the matter\'s time entries, identify that entry yourself, and recode it to task code exactly "L330". Change nothing else.',
+    walk: ["time_entries_list", "time_entries_update"],
+    args: [ { matter_id: 10 }, { id: 2, utbms_task_code: "L330" } ],
+    inserts: [],
+    updates: [{ table: "pm_time_entries", id: 2, pinned: [["utbms_task_code", "L330"]] }],
+  },
+  {
+    id: "task_v3_012", family: "r2-derived-prebill",
+    prompt: 'Cut the prebill for matter 5: list its time entries, sum the totals of entries that are billable and not yet billed, and create a draft bill for matter 5 (client_id 16) whose subtotal is exactly that sum, issue date "2026-08-11", due date "2026-09-10". The subtotal must equal the computed sum to the cent.',
+    walk: ["time_entries_list", "bills_create"],
+    args: [
+      { matter_id: 5, billable: 1, billed: 0 },
+      { matter_id: 5, client_id: 16, subtotal: 4730.5, issue_date: "2026-08-11", due_date: "2026-09-10" },
+    ],
+    inserts: [{ table: "pm_bills", pinned: [["subtotal", 4730.5], ["matter_id", 5], ["state", "draft"]] }],
+    updates: [],
+  },
+  {
+    id: "task_v3_013", family: "r2-policy-scan-expenses",
+    prompt: 'Firm expense policy: out-of-town travel expenses (UTBMS code E110) over $1,000 require partner review. Scan the expense entries for E110 charges exceeding $1,000 and file ONE review note per qualifying expense on its matter, authored by user 1, subject exactly "EXPENSE POLICY REVIEW", detail naming the expense id and amount. There are one or more qualifying expenses; find them all yourself.',
+    walk: ["expense_entries_list", "notes_create", "notes_create", "notes_create"],
+    args: [
+      { utbms_expense_code: "E110" },
+      { matter_id: 2, author_user_id: 1, subject: "EXPENSE POLICY REVIEW", detail: "Expense 7 ($1,599.96 E110 travel) exceeds the $1,000 partner-review threshold." },
+      { matter_id: 14, author_user_id: 1, subject: "EXPENSE POLICY REVIEW", detail: "Expense 29 ($1,413.95 E110 travel) exceeds the $1,000 partner-review threshold." },
+      { matter_id: 19, author_user_id: 1, subject: "EXPENSE POLICY REVIEW", detail: "Expense 37 ($2,149.15 E110 travel) exceeds the $1,000 partner-review threshold." },
+    ],
+    inserts: [
+      { table: "pm_notes", pinned: [["subject", "EXPENSE POLICY REVIEW"], ["matter_id", 2]] },
+      { table: "pm_notes", pinned: [["subject", "EXPENSE POLICY REVIEW"], ["matter_id", 14]] },
+      { table: "pm_notes", pinned: [["subject", "EXPENSE POLICY REVIEW"], ["matter_id", 19]] },
+    ],
+    updates: [],
+  },
+  {
+    id: "task_v3_014", family: "r2-withheld-id-docket",
+    prompt: 'Docket intake: our client Meridian Cloud has been sued — find the docket where Meridian Cloud is the DEFENDANT (case name ends "v. Meridian Cloud"), confirm its filing date by getting the docket, and subscribe a new-entry alert on it for exactly "litigation-team@simulated-firm.example". Do not subscribe on any docket where Meridian Cloud is the plaintiff.',
+    walk: ["dockets_search", "dockets_get", "docket_alerts_create"],
+    args: [
+      { q: "v. Meridian Cloud" },
+      { id: 1 },
+      { docket: 1, alert_type: "entry", recipient: "litigation-team@simulated-firm.example" },
+    ],
+    inserts: [{ table: "cl_docket_alerts", pinned: [["docket_id", 1], ["recipient", "litigation-team@simulated-firm.example"]] }],
+    updates: [],
+  },
+  {
+    id: "task_v3_015", family: "r2-trust-sweep-all-matters",
+    prompt: 'Quarterly trust sweep: a client trust ledger must never be negative. Review the trust transactions across matters (list them; compute per-matter balances yourself) and file one alert note per overdrawn matter — authored by user 1, subject exactly "TRUST OVERDRAFT ALERT", on each overdrawn matter, detail stating that matter\'s computed balance. Post no trust transactions. Find every overdrawn matter; miss none.',
+    walk: ["trust_transactions_list", "notes_create", "notes_create", "notes_create", "notes_create"],
+    args: [
+      { limit: 100 },
+      { matter_id: 2, author_user_id: 1, subject: "TRUST OVERDRAFT ALERT", detail: "Matter 2 client ledger computes to -17189.10; freeze disbursements." },
+      { matter_id: 3, author_user_id: 1, subject: "TRUST OVERDRAFT ALERT", detail: "Matter 3 client ledger computes to -45609.65; freeze disbursements." },
+      { matter_id: 10, author_user_id: 1, subject: "TRUST OVERDRAFT ALERT", detail: "Matter 10 client ledger computes to -35699.50; freeze disbursements." },
+      { matter_id: 15, author_user_id: 1, subject: "TRUST OVERDRAFT ALERT", detail: "Matter 15 client ledger computes to -37577.40; freeze disbursements." },
+    ],
+    inserts: [
+      { table: "pm_notes", pinned: [["subject", "TRUST OVERDRAFT ALERT"], ["matter_id", 2]] },
+      { table: "pm_notes", pinned: [["subject", "TRUST OVERDRAFT ALERT"], ["matter_id", 3]] },
+      { table: "pm_notes", pinned: [["subject", "TRUST OVERDRAFT ALERT"], ["matter_id", 10]] },
+      { table: "pm_notes", pinned: [["subject", "TRUST OVERDRAFT ALERT"], ["matter_id", 15]] },
+    ],
+    updates: [],
+  },
 ];
 
 // ---------------------------------------------------------------- assemble

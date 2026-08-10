@@ -8,8 +8,10 @@
 An executable law-firm simulation world (matter intake → conflicts → research →
 file → docket → discovery → deadlines → hearing → billing, plus
 document review-and-draft deliverable work) with **deterministic VCode
-verifiers**, a **multi-model leaderboard**, and **per-model failure-mode
-reports**. Originally generated via [blobfish.ai](https://blobfish.ai/studio);
+verifiers**, **per-product MCP servers mirroring real vendor APIs** (Clio,
+CourtListener, iManage, Relativity, LEDES, Google Workspace dialects — see
+`docs/MCP-JUSTIFICATION.md`), a **multi-model leaderboard**, and **per-model
+failure-mode reports**. Originally generated via [blobfish.ai](https://blobfish.ai/studio);
 now **fully self-hosting** — the entire world runs offline from this repo.
 
 Three things live here:
@@ -68,7 +70,7 @@ pass their shipped verifiers** (`world/local/oracle-expanded-full.json`).
 
 | | |
 |---|---|
-| World doc | `world/blobfish/world.json` (original 156 tasks) · `world/blobfish/world-expanded.json` (231 tasks) |
+| World doc | canonical chain: `world.json` (original 156) → `world-expanded.json` (231, eval packs) → `world-lawnative.json` (230, ERP purge) → **`world-v3.json` (245, + v3 workflow tasks — the canonical world)** |
 | Tables | 74 (matters, dockets, conflicts, evidence records, billing, **matter_documents** with 211 seeded files: deal materials, counterparty markups, contracts, merger agreements, SPAs, discovery corpora, rule memos, computation exhibits, distractors) |
 | Tools | 102 executable (read/query/create/update/draft families; behavior synthesized deterministically from tool specs; admitted iff the reference walk passes the verifier) |
 | Tasks | 231 — 146 Harvey-LAB-anchored, 8 LegalAgentBench, 2 graph-walk, 75 eval-anchored expansion |
