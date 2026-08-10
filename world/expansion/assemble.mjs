@@ -38,9 +38,11 @@ import { fileURLToPath } from "node:url";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, "..", "..");
-const PACKS_DIR = join(HERE, "packs");
-const WORLD_IN = join(ROOT, "world", "blobfish", "world.json");
-const WORLD_OUT = join(ROOT, "world", "blobfish", "world-expanded.json");
+const argv = process.argv.slice(2);
+const opt = (name, dflt) => (argv.includes(name) ? argv[argv.indexOf(name) + 1] : dflt);
+const PACKS_DIR = opt("--packs-dir", join(HERE, "packs"));
+const WORLD_IN = join(ROOT, opt("--in", "world/blobfish/world.json"));
+const WORLD_OUT = join(ROOT, opt("--out", "world/blobfish/world-expanded.json"));
 
 const raw = JSON.parse(readFileSync(WORLD_IN, "utf8"));
 const world = raw.world ?? raw;
@@ -289,11 +291,16 @@ for (const pf of packFiles) {
     });
     if (!creates.length) { report.skipped.push(`${pf}/${spec.slug}: no writes`); continue; }
 
-    const walk = [
+    const walk = spec.walk_override ?? [
       ...(spec.query_first !== false ? ["query_matter_documents"] : []),
       ...readIds.map(() => "read_matter_document"),
       ...creates.map((c) => c.tool),
     ];
+    if (spec.walk_override) {
+      for (const t of spec.walk_override) {
+        if (!toolByName[t]) throw new Error(`${pf}/${spec.slug}: walk_override unknown tool ${t}`);
+      }
+    }
     const taskId = `task_${String(nextTaskNum++).padStart(3, "0")}`;
 
     // group by table; every pinned {field: value} pair is asserted
@@ -356,12 +363,25 @@ for (const pf of packFiles) {
       return args;
     };
 
-    const referenceArgs = [];
-    if (spec.query_first !== false) {
-      referenceArgs.push({ title: (spec.reads?.[0] ?? "").slice(0, 60) || "Expansion" });
+    let referenceArgs = [];
+    if (spec.reference_args_override) {
+      const createByTool = {};
+      for (const c of creates) (createByTool[c.tool] ??= []).push(c);
+      referenceArgs = spec.walk_override.map((toolName, i) => {
+        const raw = spec.reference_args_override[i] ?? {};
+        if (toolByName[toolName]?.type === "write") {
+          const c = (createByTool[toolName] ?? []).shift();
+          return completeArgs(toolByName[toolName], { ...raw, ...(c?.args ?? {}) }, c?.pinned);
+        }
+        return raw;
+      });
+    } else {
+      if (spec.query_first !== false) {
+        referenceArgs.push({ title: (spec.reads?.[0] ?? "").slice(0, 60) || "Expansion" });
+      }
+      for (const id of readIds) referenceArgs.push({ id });
+      for (const c of creates) referenceArgs.push(completeArgs(toolByName[c.tool], c.args, c.pinned));
     }
-    for (const id of readIds) referenceArgs.push({ id });
-    for (const c of creates) referenceArgs.push(completeArgs(toolByName[c.tool], c.args, c.pinned));
 
     world.tasks.push({
       task_id: taskId,
