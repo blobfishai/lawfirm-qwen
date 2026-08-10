@@ -1,0 +1,365 @@
+{
+  "taskId": "task_014",
+  "engine": "grok-4-5",
+  "model": "grok-4.5",
+  "passed": true,
+  "reward": 1,
+  "failedConditions": [],
+  "advisoryConditions": [],
+  "assertions": [
+    {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+    },
+    {
+      "name": "reads_before_writes",
+      "passed": true,
+      "details": "reads=11, writes=1, read_first=True"
+    },
+    {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+    },
+    {
+      "name": "rows_inserted_into_matter_documents",
+      "passed": true,
+      "details": "matter_documents: 130 -> 131 rows"
+    },
+    {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+    },
+    {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+    },
+    {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+    },
+    {
+      "name": "audit_logs_append_only",
+      "passed": true,
+      "details": "audit_logs append-only invariant holds"
+    },
+    {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "21/23 tool calls succeeded"
+    }
+  ],
+  "toolCalls": 23,
+  "turnsUsed": 10,
+  "maxTurns": 50,
+  "usage": {
+    "prompt": 217782,
+    "completion": 5836,
+    "total": 224544
+  },
+  "costUsd": 0.47058,
+  "log": "/Users/samuelchien/dev/lawfirm-qwen/sim/logs/run-2026-08-10T17-23-06-554Z.jsonl",
+  "finishedAt": "2026-08-10T17:25:51.749Z",
+  "steps": [
+    {
+      "turn": 1,
+      "tool": "query_matter_documents",
+      "args": {
+        "title": "Deal materials — employment-labor analyze: Analyze Counterparty Markup of Executive Employment Ag"
+      },
+      "argBytes": 109,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"matter_documents\", \"count\": 1, \"rows\": [{\"id\": 12, \"title\": \"Deal materials \\u2014 employment-labor analyze: Analyze Counterparty Markup of Executive Employment Ag\", \"doc_type\": \"input_materials\", \"related_shape\": \"harvey_lab/employment-labor/analyze-counterparty-markup-of-executive-employment-agreement\", \"body\": \"MATTER FILE 12 \\u2014 EMPLOYMENT LABOR\\nemployment-labor analyze: Analyze Counterparty Markup of Executive Employment Agreement \\u2014 Redline Analysis Memorandum\\n\\n\\nBACKGROUND. The client engagement covers this employment labor matter; the materials i\\u2026[preview]\"}],",
+      "thought": "The user wants me to review a counterparty's redline of an employment agreement against the company draft and referenced guidance materials, and prepare a comprehensive advisory memo. The output shoul..."
+    },
+    {
+      "turn": 2,
+      "tool": "read_matter_document",
+      "args": {
+        "id": 12
+      },
+      "argBytes": 9,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"id\": 12, \"title\": \"Deal materials \\u2014 employment-labor analyze: Analyze Counterparty Markup of Executive Employment Ag\", \"doc_type\": \"input_materials\", \"related_shape\": \"harvey_lab/employment-labor/analyze-counterparty-markup-of-executive-employment-agreement\", \"body\": \"MATTER FILE 12 \\u2014 EMPLOYMENT LABOR\\nemployment-labor analyze: Analyze Counterparty Markup of Executive Employment Agreement \\u2014 Redline Analysis Memorandum\\n\\n\\nBACKGROUND. The client engagement covers this employment labor matter; the materials in this file are the operative record for the requested analysis.\\n\\nKE",
+      "thought": "I need to read the full matter document."
+    },
+    {
+      "turn": 3,
+      "tool": "query_documents",
+      "args": {
+        "query": "employment agreement redline",
+        "limit": 20
+      },
+      "argBytes": 51,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"agent_documents\", \"count\": 2, \"rows\": [{\"id\": 1, \"title\": \"Harbor Systems\", \"body\": \"Review unresolved invoices exceptions before the next operating handoff. Record the decision, owner, and evidence used.\", \"updated_at\": \"2026-01-15T09:00:00Z\"}, {\"id\": 2, \"title\": \"Ironwood Services\", \"body\": \"Confirm the business handle, compare the current lifecycle state, apply one scoped action, and verify no collateral rows changed.\", \"updated_at\": \"2026-01-15T09:00:00Z\"}]}",
+      "thought": "The matter document body is quite generic and doesn't contain the actual employment agreement redline or detailed guidance materials. Let me search for related documents, files, or knowledge that migh..."
+    },
+    {
+      "turn": 3,
+      "tool": "query_files",
+      "args": {
+        "query": "employment",
+        "limit": 20
+      },
+      "argBytes": 33,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"agent_files\", \"count\": 3, \"rows\": [{\"id\": 1, \"filename\": \"invoices_import.tsv\", \"content_type\": \"text/tab-separated-values\", \"content\": \"id\\tinvoice_number\\tpo_id\\tcustomer_id\\tamount_cents\\ttax_cents\\ttotal_cents\\tstatus\\tissued_at\\tdue_date\\tpaid_at\\tinvoice_reviewsid\\tinvoice_reviewstitle\\tinvoice_reviewsstatus\\tinvoice_reviewsdepartment\\tinvoice_reviewsowner_role\\tinvoice_reviewsreviewe\\u2026[preview]\"}, {\"id\": 2, \"filename\": \"employees_import.tsv\", \"content_type\": \"text/tab-separated-values\", \"content\": \"id\\tcasesid\\trole\\temail\\tphone\\twarehouse_id\\thire_date\\tactive\\tcertific",
+      "thought": "The matter document body is quite generic and doesn't contain the actual employment agreement redline or detailed guidance materials. Let me search for related documents, files, or knowledge that migh..."
+    },
+    {
+      "turn": 3,
+      "tool": "search_knowledge",
+      "args": {
+        "query": "employment agreement executive markup",
+        "limit": 20
+      },
+      "argBytes": 60,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"agent_knowledge\", \"query\": \"employment agreement executive markup\", \"rows\": []}",
+      "thought": "The matter document body is quite generic and doesn't contain the actual employment agreement redline or detailed guidance materials. Let me search for related documents, files, or knowledge that migh..."
+    },
+    {
+      "turn": 3,
+      "tool": "query_matter_documents",
+      "args": {
+        "limit": 50
+      },
+      "argBytes": 12,
+      "argParseError": false,
+      "ok": false,
+      "observation": "ERROR rate_limited: upstream service throttled this call. Retry the operation.",
+      "thought": "The matter document body is quite generic and doesn't contain the actual employment agreement redline or detailed guidance materials. Let me search for related documents, files, or knowledge that migh..."
+    },
+    {
+      "turn": 4,
+      "tool": "query_matter_documents",
+      "args": {
+        "doc_type": "input_materials",
+        "limit": 50
+      },
+      "argBytes": 41,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"matter_documents\", \"count\": 26, \"rows\": [{\"id\": 1, \"title\": \"Deal materials \\u2014 antitrust-competition analyze: Analyze Antitrust Risk and HSR Filing Strategy fo\", \"doc_type\": \"input_materials\", \"related_shape\": \"harvey_lab/antitrust-competition/analyze-antitrust-hsr-strategy\", \"body\": \"MATTER FILE 1 \\u2014 ANTITRUST COMPETITION\\nantitrust-competition analyze: Analyze Antitrust Risk and HSR Filing Strategy for PE Acquisition with Horizontal Overlap\\n\\n\\nBACKGROUND. The client engagement covers this antitrust competition matter; the\\u2026[preview]\"}, {\"id\": 2, \"title\": \"Deal materi",
+      "thought": "The matter document body seems quite sparse - it doesn't contain the actual employment agreement or redline. Let me try reading it again more carefully and search for more materials. The related_shape..."
+    },
+    {
+      "turn": 4,
+      "tool": "search_memory",
+      "args": {
+        "query": "employment redline",
+        "limit": 20
+      },
+      "argBytes": 41,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"agent_memories\", \"query\": \"employment redline\", \"rows\": []}",
+      "thought": "The matter document body seems quite sparse - it doesn't contain the actual employment agreement or redline. Let me try reading it again more carefully and search for more materials. The related_shape..."
+    },
+    {
+      "turn": 4,
+      "tool": "query_files",
+      "args": {
+        "query": "agreement",
+        "limit": 20
+      },
+      "argBytes": 32,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"agent_files\", \"count\": 3, \"rows\": [{\"id\": 1, \"filename\": \"invoices_import.tsv\", \"content_type\": \"text/tab-separated-values\", \"content\": \"id\\tinvoice_number\\tpo_id\\tcustomer_id\\tamount_cents\\ttax_cents\\ttotal_cents\\tstatus\\tissued_at\\tdue_date\\tpaid_at\\tinvoice_reviewsid\\tinvoice_reviewstitle\\tinvoice_reviewsstatus\\tinvoice_reviewsdepartment\\tinvoice_reviewsowner_role\\tinvoice_reviewsreviewe\\u2026[preview]\"}, {\"id\": 2, \"filename\": \"employees_import.tsv\", \"content_type\": \"text/tab-separated-values\", \"content\": \"id\\tcasesid\\trole\\temail\\tphone\\twarehouse_id\\thire_date\\tactive\\tcertific",
+      "thought": "The matter document body seems quite sparse - it doesn't contain the actual employment agreement or redline. Let me try reading it again more carefully and search for more materials. The related_shape..."
+    },
+    {
+      "turn": 4,
+      "tool": "search_knowledge",
+      "args": {
+        "query": "executive employment",
+        "limit": 20
+      },
+      "argBytes": 43,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"agent_knowledge\", \"query\": \"executive employment\", \"rows\": []}",
+      "thought": "The matter document body seems quite sparse - it doesn't contain the actual employment agreement or redline. Let me try reading it again more carefully and search for more materials. The related_shape..."
+    },
+    {
+      "turn": 5,
+      "tool": "legal_matters_list",
+      "args": {
+        "limit": 50
+      },
+      "argBytes": 12,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"matters\", \"count\": 28, \"rows\": [{\"id\": \"legal_matters_001\", \"title\": \"Summit Operations Legal Matters\", \"status\": \"Intake\", \"department\": \"Legal\", \"owner_role\": \"associate\", \"reviewer_role\": \"partner\", \"fee_budget\": 39.49, \"evidence_summary\": \"Legal Matters review requires attention\", \"decision_reason\": \"Legal Matters requires verification because a policy exception needs review.\", \"created_at\": \"2026-01-06T05:01:00Z\", \"updated_at\": \"2026-01-07T19:07:00Z\"}, {\"id\": \"legal_matters_002\", \"title\": \"Fairview Group Legal Matters\", \"status\": \"Active\", \"department\": \"Legal\", \"owner_role\": \"",
+      "thought": "The matter document body appears to only have generic placeholder content without the actual employment agreement redline. Let me re-read the full matter document carefully - I already did and it was ..."
+    },
+    {
+      "turn": 5,
+      "tool": "query_matter_documents",
+      "args": {
+        "title": "redline",
+        "limit": 20
+      },
+      "argBytes": 30,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"matter_documents\", \"count\": 1, \"rows\": [{\"id\": 18, \"title\": \"Deal materials \\u2014 insurance analyze: Analyze Counterparty Markup of Reinsurance Treaty \\u2014 Redline R\", \"doc_type\": \"input_materials\", \"related_shape\": \"harvey_lab/insurance/analyze-counterparty-markup-of-reinsurance-treaty\", \"body\": \"MATTER FILE 18 \\u2014 INSURANCE\\ninsurance analyze: Analyze Counterparty Markup of Reinsurance Treaty \\u2014 Redline Review Memorandum\\n\\n\\nBACKGROUND. The client engagement covers this insurance matter; the materials in this file are the operative recor\\u2026[preview]\"}], \"note\": \"body",
+      "thought": "The matter document body appears to only have generic placeholder content without the actual employment agreement redline. Let me re-read the full matter document carefully - I already did and it was ..."
+    },
+    {
+      "turn": 5,
+      "tool": "query_matter_documents",
+      "args": {
+        "doc_type": "memo",
+        "limit": 20
+      },
+      "argBytes": 30,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"matter_documents\", \"count\": 0, \"rows\": []}",
+      "thought": "The matter document body appears to only have generic placeholder content without the actual employment agreement redline. Let me re-read the full matter document carefully - I already did and it was ..."
+    },
+    {
+      "turn": 5,
+      "tool": "search_knowledge",
+      "args": {
+        "query": "redline analysis memorandum employment",
+        "limit": 20
+      },
+      "argBytes": 61,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"agent_knowledge\", \"query\": \"redline analysis memorandum employment\", \"rows\": []}",
+      "thought": "The matter document body appears to only have generic placeholder content without the actual employment agreement redline. Let me re-read the full matter document carefully - I already did and it was ..."
+    },
+    {
+      "turn": 6,
+      "tool": "legal_matters_get",
+      "args": {
+        "id": "legal_matters_012"
+      },
+      "argBytes": 26,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"id\": \"legal_matters_012\", \"title\": \"Summit Systems Legal Matters\", \"status\": \"Active\", \"department\": \"Legal\", \"owner_role\": \"associate\", \"reviewer_role\": \"partner\", \"fee_budget\": 95.39, \"evidence_summary\": \"Legal Matters approval requires attention\", \"decision_reason\": \"Legal Matters requires reconciliation because the ownership handoff is pending.\", \"created_at\": \"2026-01-06T15:59:00Z\", \"updated_at\": \"2026-01-08T11:11:00Z\"}",
+      "thought": "The matter document body seems very generic and doesn't contain the actual employment agreement redline. Let me re-read the full document carefully - maybe I need to look at related shapes or find mor..."
+    },
+    {
+      "turn": 6,
+      "tool": "operations_records_agent",
+      "args": {
+        "request": "In table matters, find title \"Summit Systems Legal Matters\" and return the complete record."
+      },
+      "argBytes": 107,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"request\": \"In table matters, find title \\\"Summit Systems Legal Matters\\\" and return the complete record.\", \"matches\": [{\"table\": \"cases\", \"row\": {\"id\": \"litigation_cases_001\", \"title\": \"Summit Operations Litigation Cases\", \"status\": \"Filed\", \"department\": \"Litigation\", \"owner_role\": \"litigation_associate\", \"reviewer_role\": \"litigation_partner\", \"claimed_amount\": 73.51, \"evidence_summary\": \"Litigation Cases approval requires attention\", \"decision_reason\": \"Litigation Cases requires follow-up because the downstream workflow is blocked.\", \"created_at\": \"2026-01-07T04:24:00Z\", \"updated_at\": \"202",
+      "thought": "The matter document body seems very generic and doesn't contain the actual employment agreement redline. Let me re-read the full document carefully - maybe I need to look at related shapes or find mor..."
+    },
+    {
+      "turn": 6,
+      "tool": "query_matter_documents",
+      "args": {
+        "related_shape": "harvey_lab/employment-labor/analyze-counterparty-markup-of-executive-employment-agreement",
+        "limit": 10
+      },
+      "argBytes": 120,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"matter_documents\", \"count\": 5, \"rows\": [{\"id\": 12, \"title\": \"Deal materials \\u2014 employment-labor analyze: Analyze Counterparty Markup of Executive Employment Ag\", \"doc_type\": \"input_materials\", \"related_shape\": \"harvey_lab/employment-labor/analyze-counterparty-markup-of-executive-employment-agreement\", \"body\": \"MATTER FILE 12 \\u2014 EMPLOYMENT LABOR\\nemployment-labor analyze: Analyze Counterparty Markup of Executive Employment Agreement \\u2014 Redline Analysis Memorandum\\n\\n\\nBACKGROUND. The client engagement covers this employment labor matter; the materials i\\u2026[preview]\"}, ",
+      "thought": "The matter document body seems very generic and doesn't contain the actual employment agreement redline. Let me re-read the full document carefully - maybe I need to look at related shapes or find mor..."
+    },
+    {
+      "turn": 6,
+      "tool": "list_playbooks",
+      "args": {
+        "limit": 20
+      },
+      "argBytes": 12,
+      "argParseError": false,
+      "ok": false,
+      "observation": "ERROR: tool 'list_playbooks' has no synthesized behavior",
+      "thought": "The matter document body seems very generic and doesn't contain the actual employment agreement redline. Let me re-read the full document carefully - maybe I need to look at related shapes or find mor..."
+    },
+    {
+      "turn": 7,
+      "tool": "read_matter_document",
+      "args": {
+        "id": 38
+      },
+      "argBytes": 9,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"id\": 38, \"title\": \"Counterparty markup \\u2014 employment-labor analyze: Analyze Counterparty Markup of Executive Emp\", \"doc_type\": \"counterparty_markup\", \"related_shape\": \"harvey_lab/employment-labor/analyze-counterparty-markup-of-executive-employment-agreement\", \"body\": \"COUNTERPARTY MARKUP \\u2014 EMPLOYMENT LABOR\\n\\nThe counterparty's revision accepts most firm-standard provisions but introduces deviations that must be identified against the base materials:\\n\\n- the indemnification cap is silently reduced and the basket converted from a deductible to a tipping basket;\\n\\n- the definition o",
+      "thought": "I found the related matter documents. I need to read all of them in full (except the distractor which says not to rely on it - but I should still note it). Let me read documents 12 (already read), 38,..."
+    },
+    {
+      "turn": 7,
+      "tool": "read_matter_document",
+      "args": {
+        "id": 90
+      },
+      "argBytes": 9,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"id\": 90, \"title\": \"Schedules and exhibits \\u2014 employment-labor analyze: Analyze Counterparty Markup of Executive Emp\", \"doc_type\": \"schedule_exhibit\", \"related_shape\": \"harvey_lab/employment-labor/analyze-counterparty-markup-of-executive-employment-agreement\", \"body\": \"SCHEDULES AND EXHIBITS \\u2014 EMPLOYMENT LABOR\\n\\nDisclosure schedules qualifying the base materials. Each scheduled exception narrows a representation the counterparty markup also touches; the deliverable must reconcile BOTH sources against the base materials:\\n\\n- Schedule 3.7 discloses two pending regulatory inquiries th",
+      "thought": "I found the related matter documents. I need to read all of them in full (except the distractor which says not to rely on it - but I should still note it). Let me read documents 12 (already read), 38,..."
+    },
+    {
+      "turn": 7,
+      "tool": "read_matter_document",
+      "args": {
+        "id": 116
+      },
+      "argBytes": 10,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"id\": 116, \"title\": \"Deal correspondence \\u2014 employment-labor analyze: Analyze Counterparty Markup of Executive Emp\", \"doc_type\": \"deal_correspondence\", \"related_shape\": \"harvey_lab/employment-labor/analyze-counterparty-markup-of-executive-employment-agreement\", \"body\": \"DEAL TEAM CORRESPONDENCE \\u2014 EMPLOYMENT LABOR\\n\\nPartner email thread on this engagement. The latest message REVISES the analysis priorities: the client will concede the basket conversion but treats any survival-period reduction as a walk-away issue.\\n\\nEarlier messages in the thread state the opposite priority ordering",
+      "thought": "I found the related matter documents. I need to read all of them in full (except the distractor which says not to rely on it - but I should still note it). Let me read documents 12 (already read), 38,..."
+    },
+    {
+      "turn": 8,
+      "tool": "draft_matter_document",
+      "args": {
+        "title": "redline-analysis-memorandum.docx",
+        "doc_type": "deliverable",
+        "body": "REDLINE ANALYSIS MEMORANDUM\nExecutive Employment Agreement — Counterparty Markup Review\n\nTO:      Deal Team / Client\nFROM:    Employment & Labor Counsel\nRE:      Analysis of Counterparty Redline to Company Draft Executive Employment Agreement\nDATE:    [Engagement Date]\nFILE:    Matter File 12 — Employment Labor\nOUTPUT:  redline-analysis-memorandum.docx\n\n================================================================================\nI. EXECUTIVE SUMMARY\n================================================================================\n\nWe have reviewed the counterparty's redline of the company draft Executive Employment Agreement against the base company materials, the disclosure schedules and exhibits, and the controlling deal-team instruction. The markup accepts most firm-standard provisions but introduces three material deviations:\n\n  (1) Indemnification economics — silent reduction of the indemnification cap, and conversion of the indemnification basket from a deductible (true deductible) to a tipping (first-dollar once threshold is crossed) basket;\n\n  (2) Material Adverse Effect (MAE) — new carve-outs for regulatory action of the type already implicated by disclosed pending inquiries; and\n\n  (3) Survival / limitation period — a new limitation period that shortens survival for the core representations, in direct conflict with the survival matrix in Exhibit B.\n\nControlling client instruction (latest partner correspondence): the client will CONCEDE the basket conversion (deductible → tipping), but treats ANY reduction of the survival period for core representations as a WALK-AWAY issue. Earlier messages stating the opposite priority ordering are superseded and must not drive negotiation posture.\n\nPrimary recommendation:\n  • ACCEPT basket conversion (per controlling instruction), subject to confirming the tipping threshold remains at the company-draft level and is not also eroded.\n  • REJECT survival-period reduction outright; restore Exhibit B survival matrix for core representations. Treat as non-negotiable / walk-away.\n  • REJECT or tightly cabin the MAE regulatory-action carve-outs in light of Schedule 3.7 pending inquiries; do not allow the carve-outs to nullify MAE protection precisely where risk has been disclosed.\n  • REJECT silent indemnification-cap reduction; restore company-draft cap and require any cap movement to be express, bilateral, and priced.\n  • Reconcile Schedule 5.2 retained liabilities so indemnification changes do not silently shift those liabilities onto the company.\n\n================================================================================\nII. SCOPE, MATERIALS REVIEWED, AND METHODOLOGY\n================================================================================\n\nA. Engagement Instruction\nReview the counterparty's redline of the attached employment agreement against the company draft and referenced guidance materials, and prepare a comprehensive advisory memorandum (this deliverable).\n\nB. Materials Reviewed (Operative Record)\n  1. Deal materials — base employment-labor matter file (company draft posture; engagement framing).\n  2. Counterparty markup — employment-labor (redline deviations).\n  3. Schedules and exhibits — Schedule 3.7 (pending regulatory inquiries); Schedule 5.2 (retained liabilities); Exhibit B (survival matrix).\n  4. Deal team correspondence — partner email thread; latest message controls analysis priorities.\n  5. Unrelated administrative correspondence misfiled in the matter folder was identified and EXCLUDED from this analysis.\n\nC. Methodology\nFor each counterparty deviation we: (i) state the company-draft baseline; (ii) describe the markup change; (iii) reconcile against schedules/exhibits where they qualify the same topic; (iv) apply the controlling client priority instruction; (v) assess risk and market/employment-agreement practice considerations; and (vi) recommend Accept / Reject / Counter with proposed fallback language posture.\n\nD. Practice Area Lens\nEmployment-labor / executive employment agreement negotiation. Although several markup themes (indemnification basket/cap, MAE, survival) are expressed in M&A-style vocabulary in the deal file, we analyze them as they operate inside an executive employment agreement and related equity/severance/indemnity architecture, including interaction with disclosed regulatory exposure and retained-liability allocations.\n\n================================================================================\nIII. CONTROLLING CLIENT INSTRUCTION AND NEGOTIATION PRIORITIES\n================================================================================\n\nSource: Deal Team Correspondence — Employment Labor (latest partner message controls).\n\n  PRIORITY 1 — WALK-AWAY: Survival-period reduction for core representations.\n    Any shortening of survival relative to Exhibit B is a walk-away issue. Do not trade this point for concessions elsewhere without express client re-authorization.\n\n  PRIORITY 2 — CONCEDE: Basket conversion (deductible → tipping basket).\n    Client will accept conversion of the indemnification basket from a deductible to a tipping basket. Document the concession expressly so it is not bundled with unapproved cap erosion or scope expansion.\n\n  SUPERSEDED: Earlier thread messages that inverted this ordering (i.e., that treated basket as walk-away and survival as flexible) are NOT controlling. This memorandum follows only the latest instruction.\n\nImplied negotiation stack (derived):\n  1. Restore / hold Exhibit B survival for core reps (non-negotiable).\n  2. Hold or restore indemnification cap; separate it from the basket concession.\n  3. Neutralize MAE regulatory carve-outs given Schedule 3.7.\n  4. Prevent silent shift of Schedule 5.2 retained liabilities.\n  5. Implement basket tipping conversion as the priced client concession.\n\n================================================================================\nIV. DEVIATION-BY-DEVIATION ANALYSIS\n================================================================================\n\n--------------------------------------------------------------------------------\nA. INDEMNIFICATION CAP — SILENT REDUCTION\n--------------------------------------------------------------------------------\n\n1. Company-Draft Baseline\n   Company draft sets a defined indemnification cap (firm-standard executive / deal construct) applicable to general indemnifiable losses, subject to customary carve-outs (e.g., fraud, willful misconduct, and any special indemnity items, as drafted).\n\n2. Counterparty Markup\n   The markup silently reduces the indemnification cap. The reduction is not flagged with an express commercial ask or reciprocal consideration; it is embedded as a numeric/definitional edit.\n\n3. Schedule / Exhibit Interaction — Schedule 5.2 (Retained Liabilities)\n   Schedule 5.2 lists retained liabilities. A lower cap, combined with basket and survival edits, would silently increase the company's residual exposure on items that the schedules allocate as counterparty-retained or specially indemnified. Scheduled exceptions control over general statements in the base materials; the markup must not be permitted to override Schedule 5.2 by indirection.\n\n4. Risk Assessment\n   • Economic: Direct reduction in recoverable indemnity dollars.\n   • Process: \"Silent\" edits are high-risk in executive employment packages because cap figures often sit in definitions, annexes, or cross-referenced equity/indemnity side letters and can be missed in page-turn reviews.\n   • Interaction risk: Cap cut + tipping basket + shorter survival compounds into a material reallocation of post-closing / post-termination downside to the company.\n   • Employment-specific: Executive indemnity, advancement, and D&O/contractual indemnity interplay can leave the company funding defense costs while recovery rights are capped below expected loss on Schedule 5.2-type items.\n\n5. Recommendation: REJECT the silent cap reduction.\n   • Restore the company-draft cap in the definitions and any annex.\n   • Require any cap movement to be (a) express in the issues list, (b) bilateral, and (c) paired with visible consideration (purchase price / severance multiple / equity grant sizing / escrow), not buried in the redline.\n   • Add an express statement that nothing in the indemnification article modifies Schedule 5.2 retained-liability allocation.\n   • Fallback (only if commercial pressure requires movement): limited, disclosed cap reduction confined to ordinary-course general reps, with uncapped or higher-capped coverage remaining for fundamental reps, intentional breach, fraud, and Schedule 5.2 retained items — and only after survival is fully restored per Priority 1.\n\n6. Disposition Code: REJECT (non-silent; hold company draft). Separate from basket concession.\n\n--------------------------------------------------------------------------------\nB. INDEMNIFICATION BASKET — DEDUCTIBLE → TIPPING BASKET (CLIENT CONCESSION)\n--------------------------------------------------------------------------------\n\n1. Company-Draft Baseline\n   Basket structured as a true deductible: losses are indemnifiable only above the threshold, and the threshold amount remains for the indemnifying party's account (no first-dollar snap-back).\n\n2. Counterparty Markup\n   Converts the basket from a deductible to a tipping (threshold) basket: once aggregate losses exceed the basket, the indemnifying party is liable from the first dollar.\n\n3. Controlling Instruction\n   Client will CONCEDE this conversion. Implement the concession cleanly.\n\n4. Risk Assessment (even as a concession)\n   • Tipping baskets are more buyer-/indemnified-party favorable once the threshold is crossed; expected indemnity value increases versus a true deductible.\n   • Main residual risk is packaging: counterparties often pair tipping conversion with a higher threshold, a lower cap, or narrower indemnity scope. The file already shows a silent cap cut; we must not allow the basket concession to launder those companion asks.\n   • Confirm the tipping threshold dollar amount remains at the company-draft level unless a separate, approved move is made.\n\n5. Recommendation: ACCEPT basket conversion ONLY on the following conditions.\n   • Express conforming edit: definition of \"Basket\" / \"Indemnification Threshold\" states that upon exceeding the threshold, recoverable losses include amounts from the first dollar (tipping).\n   • Threshold quantum unchanged from company draft unless separately approved.\n   • No companion acceptance of cap reduction, survival cut, or MAE carve-outs \"as part of\" the basket deal.\n   • Drafting hygiene: remove any residual deductible language (\"in excess of the Basket only\") that would conflict with tipping mechanics; align examples and worked illustrations if any appear in schedules.\n   • Record the concession on the issues list as Client Concession #1 to preserve narrative control in later rounds.\n\n6. Disposition Code: ACCEPT (conditional — threshold quantum and no bundled giveaways).\n\n--------------------------------------------------------------------------------\nC. MATERIAL ADVERSE EFFECT — REGULATORY-ACTION CARVE-OUTS\n--------------------------------------------------------------------------------\n\n1. Company-Draft Baseline\n   MAE definition follows firm-standard formulation for the employment/deal construct, without broad carve-outs that would exclude regulatory actions of the kind central to this matter's risk profile.\n\n2. Counterparty Markup\n   Adds carve-outs to the MAE definition for regulatory action \"of exactly the kind at issue in this matter,\" shrinking the circumstances in which an MAE can be asserted.\n\n3. Schedule / Exhibit Interaction — Schedule 3.7 (Pending Regulatory Inquiries)\n   Schedule 3.7 discloses two pending regulatory inquiries that intersect the markup's MAE regulatory carve-outs. If the carve-outs are accepted, disclosed live regulatory risk is effectively removed from MAE protection — the schedules would narrow the representation/disclosure architecture while the definition simultaneously eliminates the principal contractual remedy trigger tied to that risk. Scheduled exceptions control over general base statements; they do not justify definitional nullification of MAE.\n\n4. Risk Assessment\n   • The combination of Schedule 3.7 disclosure + MAE regulatory carve-out is the classic \"disclose and disable\" pattern: the counterparty surfaces the risk on a schedule and then drafts the MAE so that the same risk cannot support an MAE claim, walking right, financing condition, or related employment trigger (e.g., good-reason / constructive termination constructs that reference MAE or company-level impairment, if present in the package).\n   • In an executive employment setting, MAE-linked conditions can affect start-date obligations, equity vesting acceleration predicates, severance multipliers, or contingency language tied to corporate transactions. Blunting MAE on known regulatory exposure undercuts those protections.\n   • Market note: parties commonly carve ordinary-course industry-wide regulatory changes; they do not typically carve pending, company-specific inquiries already scheduled.\n\n5. Recommendation: REJECT the broad regulatory-action carve-outs as marked.\n   • Counter proposal:\n       (a) Limit any regulatory carve-out to changes in law or enforcement policy of general applicability to the industry, expressly excluding company-specific investigations, examinations, subpoenas, Wells notices, CIDs, or actions arising from facts particular to the company or the executive's business unit;\n       (b) Express \"disclosed matters\" savings clause: nothing in the MAE carve-outs limits rights arising from, or the characterization of, matters disclosed on Schedule 3.7 if they worsen beyond the disclosed magnitude (material exacerbation / \"disproportionate impact\" style qualifier);\n       (c) Preserve MAE impact for cumulative or unforeseen escalation of the two scheduled inquiries.\n   • Do not accept a flat carve-out that names or functionally covers the Schedule 3.7 matters.\n   • Align any MAE cross-references in severance, for-cause, good-reason, and equity documents so definitional games in the employment agreement cannot desynchronize the package.\n\n6. Disposition Code: REJECT / COUNTER (narrow general-applicability only; protect Schedule 3.7 pathway).\n\n--------------------------------------------------------------------------------\nD. SURVIVAL / LIMITATION PERIOD — SHORTENING CORE-REPRESENTATION SURVIVAL\n--------------------------------------------------------------------------------\n\n1. Company-Draft Baseline\n   Survival periods for representations and related indemnity claims are set by the survival matrix in Exhibit B (core/fundamental reps at longer survival; general reps at standard survival; fraud/willful misconduct excluded from limitation as drafted).\n\n2. Counterparty Markup\n   Introduces a new limitation period that shortens survival for the core representations, contradicting Exhibit B.\n\n3. Schedule / Exhibit Interaction — Exhibit B (Survival Matrix)\n   Exhibit B is the controlling survival schedule. The markup's limitation-period edit is a direct contradiction, not a clarification. Under the deal-file rule that scheduled exceptions and exhibit matrices control over general statements, Exhibit B prevails unless the parties expressly amend the exhibit.\n\n4. Controlling Instruction — WALK-AWAY\n   Client treats any survival-period reduction as a walk-away issue. This is the single non-negotiable point on the current mandate.\n\n5. Risk Assessment\n   • Shortening core-rep survival truncates the claim window precisely on the highest-value protections (authority, capitalization/equity, compensation representations, restrictive-covenant enforceability baselines, compliance, and similar fundamental items typical to executive agreements).\n   • Combined with a reduced cap and MAE carve-outs, a shorter survival front-loads and then extinguishes the company's post-signing remedies.\n   • Practical claims risk: regulatory and compensation/classification issues often surface outside short windows; Exhibit B's longer core survival is commercially justified by Schedule 3.7 and Schedule 5.2 risk.\n\n6. Recommendation: REJECT in full. Walk-away if counterparty insists.\n   • Restore Exhibit B survival matrix verbatim for core representations.\n   • Strike the new limitation-period language or conform it expressly to Exhibit B (\"notwithstanding anything to the contrary, survival shall be as set forth on Exhibit B\").\n   • Require any future survival discussion to be an express amendment of Exhibit B, not a buried article-level override.\n   • No trade against the basket concession: basket is already the client give; survival is not in play.\n   • If counterpart demands \"symmetry\" optics, offer only non-substantive cleanup (claim-notice mechanics, tolling on pending claims) without shortening durations.\n\n7. Disposition Code: REJECT — WALK-AWAY. No fallback reduction authorized under current instruction.\n\n================================================================================\nV. CROSS-CUTTING RECONCILIATION: MARKUP × SCHEDULES × EXHIBITS\n================================================================================\n\nThe deliverable must treat the markup and the schedules/exhibits as a single negotiated surface. Standing alone, each markup edit is material; together with the schedules they are mutually reinforcing erosions:\n\n  +---------------------------+-------------------------------+----------------------------------+\n  | Markup Deviation          | Schedule / Exhibit Touchpoint | Combined Effect if Accepted      |\n  +---------------------------+-------------------------------+----------------------------------+\n  | MAE regulatory carve-outs | Schedule 3.7 (two pending     | Disclosed regulatory risk removed|\n  |                           | regulatory inquiries)         | from MAE trigger coverage        |\n  +---------------------------+-------------------------------+----------------------------------+\n  | Indemnification cap cut   | Schedule 5.2 (retained        | Retained liabilities silently    |\n  | + basket economics        | liabilities)                  | shifted / recovery truncated     |\n  +---------------------------+-------------------------------+----------------------------------+\n  | Shortened core-rep        | Exhibit B (survival matrix)   | Direct contradiction; claim      |\n  | survival / limitation     |                               | window collapses on core items     |\n  +---------------------------+-------------------------------+----------------------------------+\n\nReconciliation rules applied in this memo:\n  1. Scheduled exceptions control over general base statements — but they do not authorize definitional nullification of remedies.\n  2. Exhibit B controls survival; article-level limitation language may not override it sub silentio.\n  3. Client concession on basket conversion is narrow and does not extend to cap, MAE, or survival.\n  4. Misfiled unrelated administrative correspondence has zero weight.\n\n================================================================================\nVI. EMPLOYMENT-LABOR SPECIFIC CONSIDERATIONS\n================================================================================\n\nBeyond the three redline themes, counsel should confirm package-level consistency typical to executive employment negotiations:\n\n  A. Definitions Sync\n     Ensure \"Cause,\" \"Good Reason,\" \"Change in Control,\" \"MAE,\" \"Competing Business,\" and indemnity definitions match across the employment agreement, any equity award agreements, severance plan/participation letter, and indemnification agreement.\n\n  B. Restrictive Covenants\n     Confirm the markup did not dilute garden leave, non-compete, non-solicit, or confidentiality provisions as a trade for the indemnification/MAE points (none flagged in the operative markup summary, but verify in the full redline page-turn).\n\n  C. Clawback / Compensation Recovery\n     Preserve company-draft clawback and compensation-recovery language; do not allow survival or indemnity edits to impair clawback enforcement windows.\n\n  D. Section 409A / 280G\n     Basket/cap/survival edits are primarily indemnity economics, but if severance or CIC mechanics were touched in the same redline, re-run 409A and 280G analyses before signature.\n\n  E. Advancement and D&O\n     If contractual indemnification of the executive runs in parallel with company-protective indemnity from the counterparty (or residual deal party), ensure cap and survival edits do not create one-way exposure (company advances to executive while recovery rights against counterparty are curtailed).\n\n  F. Regulatory Inquiries (Schedule 3.7)\n     Coordinate with regulatory counsel on whether employment-agreement cooperation, notice, and fee-advancement clauses adequately cover the two pending inquiries without converting the company into an uncapped payor while MAE/indemnity protections are being weakened.\n\n================================================================================\nVII. RECOMMENDED RESPONSE PACKAGE (ISSUES LIST POSTURE)\n================================================================================\n\nIssue 1 — Survival / Limitation Period (Core Reps)\n  Posture:     REJECT — WALK-AWAY\n  Action:      Restore Exhibit B matrix; strike overriding limitation language\n  Authority:   Latest partner instruction\n  Fallback:    None authorized\n\nIssue 2 — Indemnification Cap (Silent Reduction)\n  Posture:     REJECT\n  Action:      Restore company-draft cap; bar silent numeric edits; protect Schedule 5.2\n  Fallback:    Only with express pricing and carve-outs for fundamentals / Schedule 5.2 / fraud\n               (requires separate client approval)\n\nIssue 3 — MAE Regulatory-Action Carve-Outs\n  Posture:     REJECT / COUNTER\n  Action:      Delete company-specific regulatory carve-outs; optional narrow industry-wide\n               change-in-law carve-out with disproportionate-impact and Schedule 3.7 savings\n  Fallback:    General-applicability only; never carve Schedule 3.7 matters\n\nIssue 4 — Basket Conversion (Deductible → Tipping)\n  Posture:     ACCEPT (conditional)\n  Action:      Conform definition to tipping mechanics; hold threshold quantum; do not bundle\n               with Issues 1–3\n  Fallback:    N/A — this is the client concession\n\nProcess Items\n  • Demand a clean composite draft and a redline against company draft v.[X], with all numeric\n    cap/basket/survival figures called out in an issues list (no silent figures).\n  • Amend Exhibit B only by exhibit replacement if survival is ever reopened (not authorized now).\n  • Update Schedule 3.7/5.2 cross-references if MAE or indemnity articles are revised.\n  • Circulate this memorandum's disposition codes to the full deal team before the next markup round.\n\n================================================================================\nVIII. DRAFTING NOTES FOR THE NEXT TURN\n================================================================================\n\n1. Survival override blocker (illustrative posture language):\n   \"Notwithstanding any other provision of this Agreement, the survival periods for the\n    representations, warranties, covenants, and related indemnification claims shall be\n    exclusively as set forth on Exhibit B, and no limitation period stated in Article [●]\n    shall shorten those periods.\"\n\n2. MAE savings for scheduled regulatory matters (illustrative posture language):\n   \"No exception or carve-out in the definition of Material Adverse Effect shall be construed\n    to exclude any company-specific regulatory inquiry, investigation, or proceeding, including\n    the matters disclosed on Schedule 3.7, or any material worsening thereof.\"\n\n3. Schedule 5.2 / cap protection (illustrative posture language):\n   \"For the avoidance of doubt, the Indemnification Cap shall not limit losses in respect of\n    retained liabilities set forth on Schedule 5.2, and nothing in this Article modifies the\n    allocation of such retained liabilities.\"\n\n4. Basket concession (illustrative posture language):\n   \"'Basket' means $[company-draft threshold]. The Indemnifying Party shall have no liability\n    under Section [general indemnity] until the aggregate amount of indemnifiable losses exceeds\n    the Basket, whereupon the Indemnifying Party shall be liable for all such losses including\n    the amount of the Basket (i.e., a tipping basket).\"\n\n(Illustrative language is negotiation posture only; conform to the actual article numbering and defined terms in the company draft before insertion.)\n\n================================================================================\nIX. OPEN ITEMS AND INFORMATION REQUESTS\n================================================================================\n\n  1. Confirm company-draft numeric values for: indemnification cap, basket threshold, and each\n     Exhibit B survival duration (core vs. general vs. fundamental), so the response draft can\n     re-insert precise figures.\n  2. Obtain the full word-processing redline (not only the deviation summary) to verify no\n     additional buried edits to Cause/Good Reason, restrictive covenants, clawback, or equity\n     vesting.\n  3. Regulatory counsel update on status/magnitude of the two Schedule 3.7 inquiries before\n     locking MAE language.\n  4. Benefits/tax confirmation if any severance or CIC provision moved in the same markup round.\n  5. Client re-authorization required before any movement on survival (walk-away) or any cap\n     reduction fallback.\n\n================================================================================\nX. CONCLUSION\n================================================================================\n\nThe counterparty markup is a focused attempt to reallocate residual risk through three coordinated levers—cap, MAE, and survival—while the schedules already surface the very liabilities and regulatory exposures those levers would blunt. Under the controlling partner instruction, we will concede the basket conversion to a tipping basket, and we will not concede any survival-period reduction for core representations (walk-away). We recommend rejecting the silent indemnification-cap reduction and rejecting or tightly cabining the MAE regulatory carve-outs so that Schedule 3.7 and Schedule 5.2 continue to operate as intended.\n\nPlease advise if you would like us to (a) prepare the responsive markup implementing Issues 1–4 above, (b) convert this memorandum into a client-facing issues list, or (c) schedule a counsel call with regulatory and tax specialists on the Schedule 3.7 / 409A touchpoints.\n\nRespectfully submitted,\nEmployment & Labor Counsel\nEve Litigation / Law Firm Company (Simulation)\nMatter File 12 — employment-labor analyze: Analyze Counterparty Markup of Executive Employment Agreement\n\nEND OF MEMORANDUM\n"
+      },
+      "argBytes": 27369,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"status\": \"created\", \"table\": \"matter_documents\", \"id\": 131}",
+      "thought": "I now have a clear picture of the materials:\n"
+    },
+    {
+      "turn": 9,
+      "tool": "read_matter_document",
+      "args": {
+        "id": 131
+      },
+      "argBytes": 10,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"id\": 131, \"title\": \"redline-analysis-memorandum.docx\", \"doc_type\": \"deliverable\", \"related_shape\": null, \"body\": \"REDLINE ANALYSIS MEMORANDUM\\nExecutive Employment Agreement \\u2014 Counterparty Markup Review\\n\\nTO:      Deal Team / Client\\nFROM:    Employment & Labor Counsel\\nRE:      Analysis of Counterparty Redline to Company Draft Executive Employment Agreement\\nDATE:    [Engagement Date]\\nFILE:    Matter File 12 \\u2014 Employment Labor\\nOUTPUT:  redline-analysis-memorandum.docx\\n\\n================================================================================\\nI. EXECUTIVE SUMMARY\\n====",
+      "thought": "The matter document has been created successfully with id 131. Let me verify the document was created properly by reading it back."
+    },
+    {
+      "turn": 10,
+      "tool": "_final_answer",
+      "ok": true,
+      "thought": "The deliverable has been created successfully with the full memorandum body. I should provide a final answer summarizing completion.",
+      "observation": "**Deliverable complete.** Created matter document `redline-analysis-memorandum.docx` (id 131) with the full advisory memo.\n\n**Materials used**\n- Base deal file (Matter File 12)\n- Counterparty markup (id 38)\n- Schedules/exhibits (id 90): Schedule 3.7, Schedule 5.2, Exhibit B\n- Deal correspondence (id 116) — latest partner instruction controls\n- Misfiled distractor (id 64) — excluded\n\n**Memo highlights (dispositions)**\n| Issue | Posture |\n|---|---|\n| Survival cut vs. Exhibit B | **REJECT — walk-away** |\n| Basket deductible → tipping | **ACCEPT** (conditional; client concession) |\n| Silent indemn"
+    }
+  ]
+}
