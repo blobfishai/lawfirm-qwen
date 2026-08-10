@@ -639,7 +639,7 @@ class Session:
 # ---------------------------------------------------------------------------
 
 def make_handler(world: dict, runtime: ToolRuntime, friction: Friction,
-                 initial_state: dict, verifiers: dict):
+                 initial_state: dict, verifiers: dict, v2=None):
     sessions: dict[str, Session] = {}
     tasks_by_id = {t["task_id"]: t for t in world.get("tasks") or []}
     table_defs = {t["name"]: t for t in world["tables"]}
@@ -804,13 +804,30 @@ def make_handler(world: dict, runtime: ToolRuntime, friction: Friction,
             if method == "ping":
                 return rpc({})
             if method == "tools/list":
-                return rpc({"tools": world_tools_mcp})
+                tools = list(world_tools_mcp)
+                if v2 is not None:
+                    tools += v2.mcp_tools()
+                return rpc({"tools": tools})
             if method == "tools/call":
                 sess = self._session()
                 if not sess:
                     return rpc_err(-32000, "missing or unknown session header")
                 name = params.get("name")
                 args = params.get("arguments") or {}
+                if v2 is not None and name in v2.tools:
+                    sess.call_index += 1
+                    sig = friction.fails(name, sess.call_index)
+                    if sig:
+                        return rpc({"content": [{"type": "text",
+                                                 "text": FRICTION_MESSAGES[sig]}],
+                                    "isError": True})
+                    conn = sqlite3.connect(sess.db_path)
+                    try:
+                        ok, text = v2.call(conn, name, args)
+                    finally:
+                        conn.close()
+                    return rpc({"content": [{"type": "text", "text": text}],
+                                "isError": not ok})
                 tool = runtime.tools.get(name)
                 if tool is None:
                     return rpc_err(-32602, f"Unknown tool '{name}'")
@@ -848,12 +865,29 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--port", type=int, default=8971)
     ap.add_argument("--world", default=os.path.join(ROOT, "world", "blobfish", "world.json"))
+    ap.add_argument("--v2-contracts", default=None,
+                    help="dir of per-product tool contracts (mcp/v2/contracts) — "
+                         "adds the real-API-mirrored v2 tool surface")
     args = ap.parse_args()
 
-    set_state_dir(args.world)
+    # v2 gets its OWN state namespace — never share a seed DB between
+    # configurations (see docs/AUDIT.md bug 2).
+    set_state_dir(args.world if not args.v2_contracts
+                  else args.world.replace(".json", "-with-v2.json"))
     world = load_world(args.world)
     print(f"[local-world] loading {args.world} (state: {STATE_DIR})", file=sys.stderr)
     build_seed_db(world)
+    v2 = None
+    if args.v2_contracts:
+        from v2runtime import V2Runtime
+        v2 = V2Runtime(args.v2_contracts)
+        conn = sqlite3.connect(SEED_DB)
+        try:
+            v2.create_and_seed(conn)
+        finally:
+            conn.close()
+        print(f"[local-world] v2 contracts: {len(v2.contracts)} products, "
+              f"{len(v2.tools)} tools, {len(v2.tables)} tables seeded", file=sys.stderr)
     initial_state = snapshot(SEED_DB)
     runtime = ToolRuntime(world)
     friction = Friction(world.get("friction") or {})
@@ -865,7 +899,7 @@ def main():
           f"{len(world['tools'])} tools / {len(world['tasks'])} tasks / "
           f"{len(verifiers)} verifiers", file=sys.stderr)
 
-    handler = make_handler(world, runtime, friction, initial_state, verifiers)
+    handler = make_handler(world, runtime, friction, initial_state, verifiers, v2=v2)
     srv = ThreadingHTTPServer(("127.0.0.1", args.port), handler)
     print(f"[local-world] serving on http://127.0.0.1:{args.port}", file=sys.stderr)
     srv.serve_forever()
