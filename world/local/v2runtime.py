@@ -27,14 +27,20 @@ class Rng:
         self.s = (1103515245 * self.s + 12345) & 0x7FFFFFFF
         return self.s
 
+    def _u(self) -> int:
+        # LCG low bits have tiny periods (mod 2^k cycles); always draw from
+        # the high bits or small-modulus picks degenerate (found live: a
+        # 4-option pick produced the same option 90/90 times).
+        return self.next() >> 15
+
     def int(self, lo: int, hi: int) -> int:
-        return lo + self.next() % (hi - lo + 1)
+        return lo + self._u() % (hi - lo + 1)
 
     def money(self, lo: float, hi: float) -> float:
-        return round(lo + (self.next() % 10_000) / 10_000 * (hi - lo), 2)
+        return round(lo + (self._u() % 10_000) / 10_000 * (hi - lo), 2)
 
     def pick(self, xs):
-        return xs[self.next() % len(xs)]
+        return xs[self._u() % len(xs)]
 
 
 FIRST = ["Mara", "Devlin", "Priya", "Jonas", "Aiko", "Tomas", "Nadia", "Wes",
