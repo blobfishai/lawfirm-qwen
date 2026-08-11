@@ -45,7 +45,14 @@ const REVIEW_SET = [
   ["RS-09", "Operations report — plant utilisation", false],
 ];
 const PRIVILEGED = REVIEW_SET.filter(([, , p]) => p).length;   // 3
-const TOTAL = REVIEW_SET.length;                                // 9
+// COVERAGE is what the job actually scans, which is every document in the
+// matter folder — the review set AND the protocol that sits beside it. Pinning
+// REVIEW_SET.length (9) was wrong: the runtime counts by related_shape, so the
+// job reports 10. Measurement caught it — deepseek recorded 10 three times out
+// of three and was correct each time, while the oracle could not see the
+// contradiction because it writes the pinned value instead of reading the
+// job's result. Derive it from the document list so it cannot drift again.
+const TOTAL = REVIEW_SET.length + 1;                            // + the protocol
 
 const PROTOCOL = "Review protocol — privilege screen over the Cedarline production set";
 
@@ -164,7 +171,8 @@ const tasks = [
       legal_matters_id: mid(16),
       fee_budget: TOTAL,
       changed_by_role: "discovery-counsel",
-      change_reason: `Privilege screen over scope ${SCOPE} scanned ${TOTAL} documents and ` +
+      change_reason: `Privilege screen over scope ${SCOPE} scanned ${TOTAL} documents in the ` +
+        `matter folder (the ${REVIEW_SET.length}-document review set plus the protocol) and ` +
         `flagged ${PRIVILEGED}.`,
     },
     pinned: { fee_budget: TOTAL, changed_by_role: "discovery-counsel" },

@@ -252,7 +252,13 @@ for (const engine of ENGINES) {
   console.log(`\n=== ${engine} ===`);
   const results = await measureEngine(engine, ids);
   const agg = aggregate(engine, ids, results);
-  const outPath = join(RES_DIR, TASKSET === "scored" ? `${engine}.json` : `${engine}@${TASKSET}.json`);
+  // An explicit --tasks list becomes the filename, and 54 ids blow past the
+  // 255-byte limit (ENAMETOOLONG) AFTER every episode has been paid for — the
+  // run is lost at the last step. Use the run label when the set is a long
+  // explicit list, and keep the full list inside the file.
+  const setTag = (TASKSET === "scored") ? null
+    : (TASKSET.length <= 40 ? TASKSET : (LABEL || `set-${TASKSET.split(",").length}tasks`));
+  const outPath = join(RES_DIR, setTag ? `${engine}@${setTag}.json` : `${engine}.json`);
   writeFileSync(outPath, JSON.stringify(agg, null, 1));
   console.log(`${engine}: score ${agg.overall.score} | reward ${agg.overall.meanReward} | flaky-set ${agg.overall.flakySetScore} | $${agg.overall.totalCostUsd}`);
   console.log(`→ ${outPath}`);

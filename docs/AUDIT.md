@@ -157,6 +157,31 @@ breach, so the defect cannot be reintroduced by editing the figures. This is
 the general lesson from `task_251`: an answer key computed from data is safe;
 an answer key computed from data with a silent fallback is not.
 
+## Bug 8 — an answer key that contradicted the world, caught by a MODEL (FIXED)
+
+`async-screen-coverage` asked for the number of documents the privilege screen
+scanned and pinned **9**, the size of the review set. The runtime computes
+coverage by `related_shape`, which is the whole matter folder — the review set
+*and* the protocol document beside it — so the job reports **10**.
+
+DeepSeek recorded 10 in three episodes out of three and was right every time.
+The task was wrong.
+
+The reason this survived the oracle is structural and worth stating: **the
+oracle writes the pinned value; it never reads the job result.** A key that
+disagrees with what the world actually returns is invisible to a reference walk
+that never asks the world. The discrimination sweep could not see it either —
+it perturbs the answer and checks for rejection, which a wrong-but-consistent
+key passes.
+
+Only measurement caught it, and only because the model disagreed. That is the
+argument for measuring even when a task is oracle- and discrimination-proven:
+those two prove the task is *satisfiable* and *bound*, not that it is *correct*.
+
+*Fix:* coverage is derived from the document list (`REVIEW_SET.length + 1`)
+rather than asserted, so it cannot drift from what the runtime counts. Re-run
+after the fix: 3/3.
+
 ## What survived the audit (real model behavior, with evidence)
 
 1. **Side-copy writes (DeepSeek, 34 episodes).** The model files the
