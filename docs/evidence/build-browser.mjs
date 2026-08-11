@@ -20,7 +20,7 @@ import { fileURLToPath } from "node:url";
 import { quarantineReason } from "../../sim/lib/quarantine.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
-const WORLD = join(ROOT, "world", "blobfish", "world-v5.json");
+const WORLD = join(ROOT, "world", "blobfish", "world-v6.json");
 const raw = JSON.parse(readFileSync(WORLD, "utf8"));
 const world = raw.world ?? raw;
 
@@ -81,6 +81,19 @@ const models = existsSync(TR)
 // Verdicts the path-rule correction supersedes (sim/rescore-path-rule.mjs).
 // The path assertion is a pure function of the tool sequence, so these are
 // exact recomputations, not estimates — the browser scores them as passes.
+// Tasks retired for grading nothing (docs/DISCRIMINATION.md). Episodes that
+// measured them are history, not evidence: a pass on a task that also accepts a
+// corrupted payload says nothing about capability, so they are shown and counted
+// but never folded into a rate.
+const retiredTasks = new Set((world.retired_tasks ?? []).map((r) => r.task_id));
+const liveTasks = new Set(world.tasks.map((t) => t.task_id));
+// An episode measuring a task the current world does not contain is history in
+// either case — explicitly retired, or from an older world whose ids are gone.
+const orphanReason = (id) => retiredTasks.has(id)
+  ? "retired for grading nothing — its prompt named its own tool walk and its verifier pinned no value, so a corrupted write payload passed with full reward"
+  : liveTasks.has(id) ? null
+  : "not present in the current world — this episode was recorded against an earlier world whose task ids are gone";
+
 const RESCORE = join(ROOT, "data", "path-rule-rescore.json");
 const flipped = new Set(existsSync(RESCORE)
   ? JSON.parse(readFileSync(RESCORE, "utf8")).flips : []);
@@ -111,6 +124,7 @@ for (const model of models) {
       traces.push({
         file,
         quarantine: quarantineReason(j),
+        retired: orphanReason(j.taskId),
         rescored,
         task: j.taskId, model: j.model ?? model, engine: j.engine ?? model,
         surface: j.mcpMode ?? "", passed: rescored ? true : !!j.passed, reward: j.reward ?? 0,
@@ -132,19 +146,21 @@ traces.sort((a, b) => (a.model + a.task).localeCompare(b.model + b.task));
 // episodes are counted and shown, never folded into a rate.
 const byModel = {};
 for (const t of traces) {
-  const m = (byModel[t.model] ??= { n: 0, pass: 0, cost: 0, tasks: new Set(), q: 0, qPass: 0 });
+  const m = (byModel[t.model] ??= { n: 0, pass: 0, cost: 0, tasks: new Set(), q: 0, qPass: 0, ret: 0 });
   m.cost += t.cost; m.tasks.add(t.task);
+  if (t.retired) { m.ret++; continue; }
   if (t.quarantine) { m.q++; if (t.passed) m.qPass++; continue; }
   m.n++; if (t.passed) m.pass++;
 }
 const modelRows = Object.entries(byModel).map(([m, v]) => ({
   model: m, n: v.n, pass: v.pass, rate: v.n ? (100 * v.pass / v.n) : 0,
-  cost: v.cost, tasks: v.tasks.size, q: v.q, qPass: v.qPass,
-})).sort((a, b) => b.rate - a.rate);
+  cost: v.cost, tasks: v.tasks.size, q: v.q, qPass: v.qPass, ret: v.ret,
+})).sort((a, b) => (b.n ? b.rate : -1) - (a.n ? a.rate : -1));
 const qTotal = traces.filter((t) => t.quarantine).length;
+const retTotal = traces.filter((t) => t.retired).length;
 const qFalsePass = traces.filter((t) => t.quarantine && t.passed).length;
 
-const DATA = { tasks, traces, modelRows, caps, docStore, qTotal, qFalsePass, world: {
+const DATA = { tasks, traces, modelRows, caps, docStore, qTotal, qFalsePass, retTotal, world: {
   version: world.version ?? "", tasks: world.tasks.length,
   tools: world.tools.length, docs: mdRows.length,
 } };
@@ -332,7 +348,8 @@ function taskDetail(t) {
 // ------------------------------------------------------------------ traces
 function traceDetail(r) {
   let h = '<h2>' + esc(r.task) + ' &middot; ' + esc(r.model) + '</h2>' + pills([
-    r.quarantine ? ["QUARANTINED", "wr"]
+    r.retired ? ["RETIRED TASK", "wr"]
+      : r.quarantine ? ["QUARANTINED", "wr"]
       : r.rescored ? ["PASS (verdict corrected)", "ok"]
       : [r.passed ? "PASS" : "FAIL", r.passed ? "ok" : "no"],
     ["reward " + r.reward],
@@ -341,6 +358,13 @@ function traceDetail(r) {
     ["$" + r.cost.toFixed(4)],
     r.surface && ["surface: " + r.surface],
   ]);
+  if (r.retired) {
+    h += '<div style="border-left:4px solid var(--warn);background:var(--card);padding:10px 14px;' +
+      'margin:0 0 12px;font-size:.83rem;color:var(--ink2)"><strong>This task no longer exists.</strong> ' +
+      esc(r.retired) + '. The episode is kept as history; ' +
+      'its recorded result (<em>' + (r.passed ? "pass" : "fail") + '</em>) is excluded from every rate. ' +
+      'See docs/DISCRIMINATION.md.</div>';
+  }
   if (r.rescored) {
     h += '<div style="border-left:4px solid var(--okc);background:var(--card);padding:10px 14px;' +
       'margin:0 0 12px;font-size:.83rem;color:var(--ink2)"><strong>Verdict corrected.</strong> ' +
@@ -433,10 +457,10 @@ function render() {
       anchors.map(a => '<option>' + esc(a) + '</option>').join("") + '</select>');
   } else if (mode === "traces") {
     const models = [...new Set(D.traces.map(t => t.model))].sort();
-    listPane(D.traces.map((t, i) => ({ ...t, _i: i, _q: t.quarantine ? "quarantined" : "clean" })),
+    listPane(D.traces.map((t, i) => ({ ...t, _i: i, _q: t.retired ? "retired" : t.quarantine ? "quarantined" : "clean" })),
       t => t._i,
       t => esc(t.task) + ' <span class="pill ' + (t.quarantine ? "wr" : t.passed ? "ok" : "no") + '">' +
-        (t.quarantine ? "quarantined" : t.rescored ? "pass ✎" : t.passed ? "pass" : "fail") + '</span>',
+        (t.retired ? "retired" : t.quarantine ? "quarantined" : t.rescored ? "pass ✎" : t.passed ? "pass" : "fail") + '</span>',
       t => t.model + " · " + t.calls + " calls · $" + t.cost.toFixed(3) +
         (t.failed.length ? " · " + t.failed.join(", ") : ""),
       selTrace, v => selTrace = v, traceDetail,
@@ -447,6 +471,7 @@ function render() {
       '<option value="false">Failures only</option><option value="true">Passes only</option></select>' +
       '<select data-key="_q"><option value="">All verdicts</option>' +
       '<option value="clean">Self-consistent only</option>' +
+      '<option value="retired">Retired task only</option>' +
       '<option value="quarantined">Quarantined only</option></select>');
   } else {
     view.innerHTML = '<div class="detail" style="max-width:900px">' +
@@ -457,11 +482,13 @@ function render() {
       'docs/TOOL-SURFACE-AB.md.</p><div class="tblwrap"><table>' +
       '<tr><th>Model</th><th class="num">Scored</th><th class="num">Tasks</th>' +
       '<th class="num">Passed</th><th class="num">Rate</th>' +
-      '<th class="num">Quarantined</th><th class="num">Spend</th></tr>' +
+      '<th class="num">Quarantined</th><th class="num">Retired task</th><th class="num">Spend</th></tr>' +
       D.modelRows.map(r => '<tr><td class="mono">' + esc(r.model) + '</td>' +
         '<td class="num">' + r.n + '</td><td class="num">' + r.tasks + '</td>' +
-        '<td class="num">' + r.pass + '</td><td class="num">' + r.rate.toFixed(1) + '</td>' +
+        '<td class="num">' + (r.n ? r.pass : "—") + '</td><td class="num">' +
+        (r.n ? r.rate.toFixed(1) : '<span title="every episode measured a task the current world no longer contains">no evidence</span>') + '</td>' +
         '<td class="num">' + (r.q ? r.q + (r.qPass ? " (" + r.qPass + " scored pass)" : "") : "—") +
+        '</td><td class="num">' + (r.ret || "—") +
         '</td><td class="num">$' + r.cost.toFixed(2) + '</td></tr>').join("") +
       '</table></div>' +
       (D.qTotal ? '<h3>Why episodes are quarantined</h3><p class="sub">' + D.qTotal +

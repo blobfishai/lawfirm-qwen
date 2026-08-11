@@ -33,6 +33,7 @@
  * execute its reference walk; admission is oracle-pass on the expanded world.
  */
 import { readFileSync, writeFileSync, readdirSync, existsSync } from "node:fs";
+import { pathCheckPython } from "./lib/path-check.mjs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -158,16 +159,7 @@ def verify(initial_state, final_state, trace):
     chk("no_shortcut_direct_update", not shortcut,
         "SHORTCUT: wrote without reading first" if shortcut else "inspected data before writing")
 
-    _required_workflow_path = ${JSON.stringify(walk)}
-    _path_cursor = 0
-    for _tool in tools:
-        if _path_cursor < len(_required_workflow_path) and _tool == _required_workflow_path[_path_cursor]:
-            _path_cursor += 1
-    _workflow_complete = _path_cursor == len(_required_workflow_path)
-    _missing_workflow = _required_workflow_path[_path_cursor:]
-    chk("required_workflow_path", _workflow_complete,
-        "completed ordered workflow: " + " -> ".join(_required_workflow_path) if _workflow_complete
-        else "INCOMPLETE WORKFLOW: missing ordered checkpoints " + " -> ".join(_missing_workflow))
+${pathCheckPython(walk, (n) => toolByName[n]?.type === "write")}
 ${readIdChecks}
 ${insertBlocks}
 ${forbiddenBlocks}
@@ -255,7 +247,14 @@ if (!packFiles.length) {
 
 const mdTable = world.tables.find((t) => t.name === "matter_documents");
 let nextDocId = Math.max(...mdTable.sample_rows.map((r) => r.id)) + 1;
-let nextTaskNum = originalTaskCount + 1;
+// Allocate above the HIGHEST existing id, not by count. Counting collides the
+// moment any task has been retired: ids are scattered, so `count + 1` lands on
+// an id that is still in use and the world silently ships duplicates (the
+// oracle then runs one id twice and the verifier lookup picks whichever comes
+// first). Retired ids are never reused, so archived traces stay interpretable.
+let nextTaskNum = 1 + Math.max(0, ...world.tasks
+  .map((t) => Number(/^task_(\d+)$/.exec(t.task_id ?? "")?.[1]))
+  .filter(Number.isFinite));
 
 const report = { packs: [], documentsAdded: 0, tasksAdded: 0, skipped: [] };
 const docIdByTitle = new Map(mdTable.sample_rows.map((r) => [r.title, r.id]));

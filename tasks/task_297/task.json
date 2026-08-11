@@ -1,0 +1,81 @@
+{
+ "task_id": "task_297",
+ "outcome_class": "eligible_action",
+ "prompt": "Merger notification for the acquisition of Northgate Utilities Partners. Read the HSR filing fee schedule and valuation memo and this deal's transaction summary in the matter folder in full, assemble the reportable acquisition value as the memo defines it, look up the fee tier, and record it by calling legal_matters_amount_history_create against legal_matters_021 with fee_budget set to the tier fee and changed_by_role exactly \"antitrust-counsel\". The announced headline price is not the reportable value.",
+ "goal": "Merger notification for the acquisition of Northgate Utilities Partners. Read the HSR filing fee schedule and valuation ",
+ "required_tools": [
+  "query_matter_documents",
+  "read_matter_document",
+  "legal_matters_amount_history_create"
+ ],
+ "complexity": "high",
+ "method": "eval_anchored_expansion",
+ "steps": [
+  "Locate the input documents for this engagement in the matter folder",
+  "Read every required input document in full",
+  "Derive the graded determinations strictly from the documents",
+  "Record the determinations with the required write tools"
+ ],
+ "relevant_data": [
+  {
+   "table": "matter_documents",
+   "id": 295,
+   "field": "title",
+   "value": "HSR filing fee schedule and valuation memo (2026)"
+  },
+  {
+   "table": "matter_documents",
+   "id": 298,
+   "field": "title",
+   "value": "Transaction summary — Acquisition of Northgate Utilities Partners"
+  }
+ ],
+ "expected_state_changes": [
+  {
+   "table": "legal_matters_amount_history",
+   "field": "(new row)",
+   "note": ">=1 rows with pinned fields"
+  }
+ ],
+ "tables_affected": [
+  "legal_matters_amount_history"
+ ],
+ "walk": [
+  "query_matter_documents",
+  "read_matter_document",
+  "read_matter_document",
+  "legal_matters_amount_history_create"
+ ],
+ "reference_args": [
+  {
+   "title": "HSR filing fee schedule and valuation memo (2026)"
+  },
+  {
+   "id": 295
+  },
+  {
+   "id": 298
+  },
+  {
+   "legal_matters_id": "legal_matters_021",
+   "fee_budget": 2335000,
+   "changed_by_role": "antitrust-counsel",
+   "change_reason": "Acquisition value $2,160,000,000.00 = cash $1,640,000,000.00 + assumed debt $520,000,000.00 + max earnout $0.00; target cash not deducted. Tier fee $2,335,000.00."
+  }
+ ],
+ "effects": [
+  {
+   "table": "legal_matters_amount_history",
+   "op": "insert"
+  }
+ ],
+ "provenance": {
+  "source_workflow": "harvey_lab: hsr-merger-notification/hsr-filing-fee-northgate-utilities-partners"
+ },
+ "difficulty_tier": "high",
+ "acceptance_label": "pending_calibration",
+ "expansion": {
+  "pack": "hsr-merger-notification.json",
+  "slug": "hsr-filing-fee-northgate-utilities-partners"
+ }
+}

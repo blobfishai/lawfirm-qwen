@@ -123,6 +123,40 @@ function of the trace's tool sequence, no world state. The 9 corrections are in
 `reports/PATH-RULE-RESCORE.md` and applied in the tasks-and-traces browser.
 DeepSeek moves 88.1 → 89.3 on self-consistent verdicts.
 
+## Bug 6 — the assembler allocated task ids by COUNT, not by maximum (FIXED before shipping)
+
+`assemble.mjs` numbered appended tasks `task_${originalTaskCount + n}`. That is
+correct only while no task has ever been retired. Retiring the 38 recipe tasks
+left the surviving ids scattered — the world still contained `task_233`
+through `task_270` — so the next assembly minted `task_233…task_270` a second
+time and shipped **38 duplicate ids**.
+
+Nothing crashed. The oracle simply ran `task_246` twice (`[1/2] fail`,
+`[2/2] PASS`), the verifier lookup resolved whichever entry came first, and the
+run reported 245/270 with failures attributed to innocent pre-existing tasks.
+The tell was the oracle's own progress counter printing the same id twice — a
+250-line report where the only wrong thing was a bracket.
+
+*Fix:* allocate from `1 + max(existing numeric id)`. Retired ids are never
+reused, so archived traces referencing them stay interpretable. New tasks land
+at `task_271…task_308`; re-assembled world proves **270/270**.
+
+## Bug 7 — a generated scenario that contradicted its own prompt (CAUGHT PRE-SHIP)
+
+The covenant pack computes which financial covenant a borrower breached and
+assigns the remediation owner from that. One generated borrower
+(Cedarline Manufacturing, leverage 2.65x against a 3.50x maximum, coverage
+3.06x against a 2.75x minimum) breached **neither** — but the branch fell
+through to "coverage", so the task would have ordered the agent to open a
+remediation while its own prompt said *"Do not open a remediation for a
+covenant that is not breached."* Exactly the incoherent-task shape that
+produced the `task_251` refusal earlier in this project.
+
+*Fix:* the generator now **throws** rather than emitting a scenario with no
+breach, so the defect cannot be reintroduced by editing the figures. This is
+the general lesson from `task_251`: an answer key computed from data is safe;
+an answer key computed from data with a silent fallback is not.
+
 ## What survived the audit (real model behavior, with evidence)
 
 1. **Side-copy writes (DeepSeek, 34 episodes).** The model files the
