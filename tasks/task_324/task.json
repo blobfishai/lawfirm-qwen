@@ -1,0 +1,92 @@
+{
+ "task_id": "task_324",
+ "outcome_class": "eligible_action",
+ "prompt": "Confirm the coverage of the privilege screen over the Cedarline production set. Read the review protocol in the matter folder in full, submit the screen, poll until the job reports complete, and record how many documents the job actually scanned by calling legal_matters_amount_history_create against legal_matters_016 with fee_budget set to the scanned count and changed_by_role exactly \"discovery-counsel\". Coverage is what the job scanned, not what it flagged.",
+ "goal": "Confirm the coverage of the privilege screen over the Cedarline production set. Read the review protocol in the matter f",
+ "required_tools": [
+  "query_matter_documents",
+  "read_matter_document",
+  "analysis_job_submit",
+  "analysis_job_status",
+  "analysis_job_result",
+  "legal_matters_amount_history_create"
+ ],
+ "complexity": "high",
+ "method": "eval_anchored_expansion",
+ "steps": [
+  "Locate the input documents for this engagement in the matter folder",
+  "Read every required input document in full",
+  "Derive the graded determinations strictly from the documents",
+  "Record the determinations with the required write tools"
+ ],
+ "relevant_data": [
+  {
+   "table": "matter_documents",
+   "id": 342,
+   "field": "title",
+   "value": "Review protocol — privilege screen over the Cedarline production set"
+  }
+ ],
+ "expected_state_changes": [
+  {
+   "table": "legal_matters_amount_history",
+   "field": "(new row)",
+   "note": ">=1 rows with pinned fields"
+  }
+ ],
+ "tables_affected": [
+  "legal_matters_amount_history"
+ ],
+ "walk": [
+  "query_matter_documents",
+  "read_matter_document",
+  "analysis_job_submit",
+  "analysis_job_status",
+  "analysis_job_status",
+  "analysis_job_result",
+  "legal_matters_amount_history_create"
+ ],
+ "reference_args": [
+  {
+   "title": "Review protocol — privilege screen over the Cedarline production set"
+  },
+  {
+   "id": 342
+  },
+  {
+   "analysis_type": "privilege_screen",
+   "scope": "async-privilege-screen",
+   "submitted_by_role": "discovery-counsel"
+  },
+  {
+   "id": 1
+  },
+  {
+   "id": 1
+  },
+  {
+   "id": 1
+  },
+  {
+   "legal_matters_id": "legal_matters_016",
+   "fee_budget": 9,
+   "changed_by_role": "discovery-counsel",
+   "change_reason": "Privilege screen over scope async-privilege-screen scanned 9 documents and flagged 3."
+  }
+ ],
+ "effects": [
+  {
+   "table": "legal_matters_amount_history",
+   "op": "insert"
+  }
+ ],
+ "provenance": {
+  "source_workflow": "workflow_research: async-privilege-screen/async-screen-coverage"
+ },
+ "difficulty_tier": "high",
+ "acceptance_label": "pending_calibration",
+ "expansion": {
+  "pack": "async-privilege-screen.json",
+  "slug": "async-screen-coverage"
+ }
+}

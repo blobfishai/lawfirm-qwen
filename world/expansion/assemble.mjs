@@ -66,10 +66,13 @@ function pyNorm(v) {
   return String(v);
 }
 
-function buildVcode(taskId, task, walk, insertChecks, forbidden, requiredReadIds, taskTables) {
+function buildVcode(taskId, task, walk, insertChecks, forbidden, requiredReadIds, taskTables, sideEffectTables = []) {
   const readTools = [...new Set(walk.filter((w) => toolByName[w]?.type !== "write"))];
   const writeTools = [...new Set(walk.filter((w) => toolByName[w]?.type === "write"))];
-  const createExempt = [...new Set(insertChecks.map((c) => c.table))];
+  // Tables a task legitimately writes as a SIDE EFFECT of a tool it is told to
+  // call — e.g. the async queue's analysis_jobs. Without this the scope guards
+  // veto the task for doing exactly what its own prompt instructed.
+  const createExempt = [...new Set([...insertChecks.map((c) => c.table), ...sideEffectTables])];
 
   const insertBlocks = insertChecks.map((c, i) => {
     const pinLines = (c.pinnedPairs ?? []).map(([f, v], j) => {
@@ -330,7 +333,8 @@ for (const pf of packFiles) {
       return true;
     });
     const vcode = buildVcode(taskId, { ...spec, family: pack.family }, walk,
-      finalChecks, forbidden, readIds.map(String), taskTables);
+      finalChecks, forbidden, readIds.map(String), taskTables,
+      spec.side_effect_tables ?? []);
 
     const ARG_DEFAULTS = {
       content_digest: "sha256:reference-digest", owner_role: "associate",
@@ -366,8 +370,21 @@ for (const pf of packFiles) {
     if (spec.reference_args_override) {
       const createByTool = {};
       for (const c of creates) (createByTool[c.tool] ??= []).push(c);
+      // "@doc:<title>" resolves to the id the assembler assigned that document.
+      // Packs cannot know document ids ahead of assembly, and hardcoding them
+      // breaks the moment another pack lands first.
+      const resolveDocRefs = (o) => Object.fromEntries(Object.entries(o).map(([k, v]) => {
+        if (typeof v === "string" && v.startsWith("@doc:")) {
+          const title = v.slice(5);
+          if (!docIdByTitle.has(title)) {
+            throw new Error(`reference_args_override: @doc unknown document "${title}"`);
+          }
+          return [k, docIdByTitle.get(title)];
+        }
+        return [k, v];
+      }));
       referenceArgs = spec.walk_override.map((toolName, i) => {
-        const raw = spec.reference_args_override[i] ?? {};
+        const raw = resolveDocRefs(spec.reference_args_override[i] ?? {});
         if (toolByName[toolName]?.type === "write") {
           const c = (createByTool[toolName] ?? []).shift();
           return completeArgs(toolByName[toolName], { ...raw, ...(c?.args ?? {}) }, c?.pinned);

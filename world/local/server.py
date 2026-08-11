@@ -290,6 +290,9 @@ class ToolRuntime:
                 return False, self._missing_args_error(name, missing)
 
         try:
+            if name in ("analysis_job_submit", "analysis_job_status",
+                        "analysis_job_result", "analysis_jobs_list"):
+                return self._analysis_queue(conn, name, args)
             if name.endswith("_audit_list"):
                 return self._audit_list(conn, targets[0], params, args)
             if name.endswith("_list") and not is_write:
@@ -411,6 +414,85 @@ class ToolRuntime:
         cur = conn.execute(f'SELECT * FROM "{table}"{wsql} ORDER BY rowid LIMIT ?', (*vals, limit))
         rows = self._rowdicts(cur)
         return True, json.dumps({"table": table, "count": len(rows), "rows": rows}, default=str)
+
+    # ---------------------------------------------------------------- async queue
+    # Real document analysis does not return inside one call; agentic-ops/legal-mcp
+    # models it as submit -> poll -> retrieve. The graded failure mode is answering
+    # before the job is ready, so the result is withheld until it is.
+    QUEUE_POLLS_TO_COMPLETE = 2
+
+    def _analysis_queue(self, conn, name, args):
+        if name == "analysis_job_submit":
+            missing = [p for p in ("analysis_type", "scope", "submitted_by_role")
+                       if not args.get(p)]
+            if missing:
+                return False, self._missing_args_error(name, missing)
+            scope = str(args["scope"])
+            # Findings are computed from world state, not invented: how many
+            # documents in the scope carry the work-product marker.
+            cur = conn.execute(
+                'SELECT body FROM "matter_documents" WHERE "related_shape" = ?', (scope,))
+            bodies = [r[0] or "" for r in cur.fetchall()]
+            findings = sum(1 for b in bodies if "ATTORNEY WORK PRODUCT" in b.upper())
+            cur = conn.execute('SELECT COALESCE(MAX(id), 0) + 1 FROM "analysis_jobs"')
+            jid = cur.fetchone()[0]
+            conn.execute(
+                'INSERT INTO "analysis_jobs" (id, analysis_type, scope, status, poll_count,'
+                ' submitted_by_role, documents_scanned, findings_count)'
+                ' VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+                (jid, args["analysis_type"], scope, "queued", 0,
+                 args["submitted_by_role"], len(bodies), findings))
+            conn.commit()
+            return True, json.dumps({
+                "job_id": jid, "status": "queued", "scope": scope,
+                "analysis_type": args["analysis_type"],
+                "message": ("Job enqueued. It is NOT finished. Poll analysis_job_status(id) "
+                            "until status is 'complete', then call analysis_job_result(id)."),
+            })
+
+        if name == "analysis_jobs_list":
+            cur = conn.execute('SELECT id, analysis_type, scope, status FROM "analysis_jobs"'
+                               ' ORDER BY id')
+            rows = [{"job_id": r[0], "analysis_type": r[1], "scope": r[2], "status": r[3]}
+                    for r in cur.fetchall()]
+            return True, json.dumps({"count": len(rows), "jobs": rows})
+
+        jid = args.get("id")
+        if jid in (None, ""):
+            return False, self._missing_args_error(name, ["id"])
+        cur = conn.execute(
+            'SELECT id, analysis_type, scope, status, poll_count, documents_scanned,'
+            ' findings_count FROM "analysis_jobs" WHERE id = ?', (jid,))
+        row = cur.fetchone()
+        if row is None:
+            return False, f"ERROR: no analysis job with id '{jid}'"
+        _id, atype, scope, status, polls, scanned, findings = row
+
+        if name == "analysis_job_status":
+            polls += 1
+            status = ("running" if polls < self.QUEUE_POLLS_TO_COMPLETE else "complete")
+            conn.execute('UPDATE "analysis_jobs" SET status = ?, poll_count = ? WHERE id = ?',
+                         (status, polls, _id))
+            conn.commit()
+            out = {"job_id": _id, "status": status, "analysis_type": atype, "scope": scope}
+            out["message"] = ("Analysis complete — call analysis_job_result(id) for the findings."
+                              if status == "complete" else
+                              "Still processing. Poll again; the result is not available yet.")
+            return True, json.dumps(out)
+
+        # analysis_job_result
+        if status != "complete":
+            return False, json.dumps({
+                "error": "job_not_complete",
+                "job_id": _id, "status": status,
+                "message": ("The analysis has not finished. Poll analysis_job_status(id) until "
+                            "it reports 'complete'. Do not estimate the findings in the "
+                            "meantime — an invented count is worse than a later one."),
+            })
+        return True, json.dumps({
+            "job_id": _id, "status": "complete", "analysis_type": atype, "scope": scope,
+            "documents_scanned": scanned, "findings_count": findings,
+        })
 
     def _read_record(self, conn, table, rid):
         if rid in (None, ""):

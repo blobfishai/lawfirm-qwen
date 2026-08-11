@@ -18,7 +18,7 @@ const argv = process.argv.slice(2);
 const BASE = (argv.includes("--base") ? argv[argv.indexOf("--base") + 1] : "http://127.0.0.1:8980").replace(/\/$/, "");
 const esc = (s) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-const world = (() => { const r = JSON.parse(readFileSync(join(ROOT, "world", "blobfish", "world-v10.json"), "utf8")); return r.world ?? r; })();
+const world = (() => { const r = JSON.parse(readFileSync(join(ROOT, "world", "blobfish", "world-v12.json"), "utf8")); return r.world ?? r; })();
 const mdRows = world.tables.find((t) => t.name === "matter_documents").sample_rows;
 const docById = new Map(mdRows.map((r) => [r.id, r]));
 

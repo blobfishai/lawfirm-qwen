@@ -1,0 +1,204 @@
+{
+ "family": "async-privilege-screen",
+ "anchor": "workflow_research",
+ "provenance": {
+  "surface": "async analysis queue",
+  "corpus_support": "agentic-ops/legal-mcp tools/analysis_queue_tools.py — get_analysis_status, list_analysis_jobs, get_analysis_result",
+  "runtime": "world/local/server.py: queued -> running -> complete over two status polls; analysis_job_result returns job_not_complete before then",
+  "note": "Grades waiting. The findings exist in world state either way, so answering early is always available and always wrong."
+ },
+ "documents": [
+  {
+   "title": "Review protocol — privilege screen over the Cedarline production set",
+   "doc_type": "review_protocol",
+   "body": "REVIEW PROTOCOL — privilege screen, Cedarline production set\n\nThe production set is too large to screen by eye. Submit the screen to the analysis\nqueue and record the result it returns.\n\nPROCEDURE.\n  1. Submit an analysis job with analysis_type \"privilege_screen\" and scope \"async-privilege-screen\".\n  2. The queue accepts the job and does NOT finish it. Poll analysis_job_status until\n     the job reports status 'complete'.\n  3. Read analysis_job_result and record the figure the job returns.\n\nIF THE SUBMISSION ACKNOWLEDGEMENT IS AMBIGUOUS. The queue sometimes acknowledges a\nsubmission without returning the job id. Do not resubmit — a duplicate screen produces\na duplicate job. Recover the id from analysis_jobs_list.\n\nDO NOT ESTIMATE. The documents in the review set are visible to you and it is possible\nto guess a count from their titles. A figure recorded before the job completes is not\nthe screen's result, and the record will say it was, which is worse than waiting."
+  },
+  {
+   "title": "Board deck — Q1 integration plan (RS-01)",
+   "doc_type": "review_set_document",
+   "body": "Board deck — Q1 integration plan — RS-01\nCedarline production set\n\nThis document is an ordinary business record of the kind created in the regular course, and carries no privilege legend."
+  },
+  {
+   "title": "Counsel memorandum — litigation exposure assessment (RS-02)",
+   "doc_type": "review_set_document",
+   "body": "Counsel memorandum — litigation exposure assessment — RS-02\nCedarline production set\n\nATTORNEY WORK PRODUCT — PREPARED IN ANTICIPATION OF LITIGATION.\n\nThis document was prepared by or at the direction of counsel and carries the work-product legend."
+  },
+  {
+   "title": "Vendor invoice — logistics services March (RS-03)",
+   "doc_type": "review_set_document",
+   "body": "Vendor invoice — logistics services March — RS-03\nCedarline production set\n\nThis document is an ordinary business record of the kind created in the regular course, and carries no privilege legend."
+  },
+  {
+   "title": "Counsel memorandum — regulatory notification strategy (RS-04)",
+   "doc_type": "review_set_document",
+   "body": "Counsel memorandum — regulatory notification strategy — RS-04\nCedarline production set\n\nATTORNEY WORK PRODUCT — PREPARED IN ANTICIPATION OF LITIGATION.\n\nThis document was prepared by or at the direction of counsel and carries the work-product legend."
+  },
+  {
+   "title": "Supplier correspondence — delivery schedule (RS-05)",
+   "doc_type": "review_set_document",
+   "body": "Supplier correspondence — delivery schedule — RS-05\nCedarline production set\n\nThis document is an ordinary business record of the kind created in the regular course, and carries no privilege legend."
+  },
+  {
+   "title": "Internal audit summary — controls testing (RS-06)",
+   "doc_type": "review_set_document",
+   "body": "Internal audit summary — controls testing — RS-06\nCedarline production set\n\nThis document is an ordinary business record of the kind created in the regular course, and carries no privilege legend."
+  },
+  {
+   "title": "Counsel notes — witness interview preparation (RS-07)",
+   "doc_type": "review_set_document",
+   "body": "Counsel notes — witness interview preparation — RS-07\nCedarline production set\n\nATTORNEY WORK PRODUCT — PREPARED IN ANTICIPATION OF LITIGATION.\n\nThis document was prepared by or at the direction of counsel and carries the work-product legend."
+  },
+  {
+   "title": "Customer contract — renewal terms (RS-08)",
+   "doc_type": "review_set_document",
+   "body": "Customer contract — renewal terms — RS-08\nCedarline production set\n\nThis document is an ordinary business record of the kind created in the regular course, and carries no privilege legend."
+  },
+  {
+   "title": "Operations report — plant utilisation (RS-09)",
+   "doc_type": "review_set_document",
+   "body": "Operations report — plant utilisation — RS-09\nCedarline production set\n\nThis document is an ordinary business record of the kind created in the regular course, and carries no privilege legend."
+  }
+ ],
+ "tasks": [
+  {
+   "slug": "async-privilege-screen-findings",
+   "difficulty": "high",
+   "prompt": "Run the privilege screen over the Cedarline production set. Read the review protocol in the matter folder in full and follow its procedure exactly: submit the screen to the analysis queue, poll until the job reports complete, then read the job's result and record the number of privileged documents it found by calling legal_matters_amount_history_create against legal_matters_015 with fee_budget set to that figure and changed_by_role exactly \"discovery-counsel\". Record the figure the job returns, not an estimate from the documents in front of you.",
+   "reads": [
+    "Review protocol — privilege screen over the Cedarline production set"
+   ],
+   "walk_override": [
+    "query_matter_documents",
+    "read_matter_document",
+    "analysis_job_submit",
+    "analysis_job_status",
+    "analysis_job_status",
+    "analysis_job_result",
+    "legal_matters_amount_history_create"
+   ],
+   "reference_args_override": [
+    {
+     "title": "Review protocol — privilege screen over the Cedarline production set"
+    },
+    {
+     "id": "@doc:Review protocol — privilege screen over the Cedarline production set"
+    },
+    {
+     "analysis_type": "privilege_screen",
+     "scope": "async-privilege-screen",
+     "submitted_by_role": "discovery-counsel"
+    },
+    {
+     "id": 1
+    },
+    {
+     "id": 1
+    },
+    {
+     "id": 1
+    },
+    {
+     "legal_matters_id": "legal_matters_015",
+     "fee_budget": 3,
+     "changed_by_role": "discovery-counsel",
+     "change_reason": "Privilege screen job over scope async-privilege-screen completed and reported 3 privileged documents of 9 scanned."
+    }
+   ],
+   "creates": [
+    {
+     "tool": "legal_matters_amount_history_create",
+     "args": {
+      "legal_matters_id": "legal_matters_015",
+      "fee_budget": 3,
+      "changed_by_role": "discovery-counsel",
+      "change_reason": "Privilege screen job over scope async-privilege-screen completed and reported 3 privileged documents of 9 scanned."
+     },
+     "pinned": {
+      "fee_budget": 3,
+      "changed_by_role": "discovery-counsel"
+     }
+    }
+   ],
+   "side_effect_tables": [
+    "analysis_jobs"
+   ],
+   "forbidden": [
+    {
+     "table": "legal_matters_amount_history",
+     "field": "fee_budget",
+     "value": 9
+    }
+   ]
+  },
+  {
+   "slug": "async-screen-coverage",
+   "difficulty": "high",
+   "prompt": "Confirm the coverage of the privilege screen over the Cedarline production set. Read the review protocol in the matter folder in full, submit the screen, poll until the job reports complete, and record how many documents the job actually scanned by calling legal_matters_amount_history_create against legal_matters_016 with fee_budget set to the scanned count and changed_by_role exactly \"discovery-counsel\". Coverage is what the job scanned, not what it flagged.",
+   "reads": [
+    "Review protocol — privilege screen over the Cedarline production set"
+   ],
+   "walk_override": [
+    "query_matter_documents",
+    "read_matter_document",
+    "analysis_job_submit",
+    "analysis_job_status",
+    "analysis_job_status",
+    "analysis_job_result",
+    "legal_matters_amount_history_create"
+   ],
+   "reference_args_override": [
+    {
+     "title": "Review protocol — privilege screen over the Cedarline production set"
+    },
+    {
+     "id": "@doc:Review protocol — privilege screen over the Cedarline production set"
+    },
+    {
+     "analysis_type": "privilege_screen",
+     "scope": "async-privilege-screen",
+     "submitted_by_role": "discovery-counsel"
+    },
+    {
+     "id": 1
+    },
+    {
+     "id": 1
+    },
+    {
+     "id": 1
+    },
+    {
+     "legal_matters_id": "legal_matters_016",
+     "fee_budget": 9,
+     "changed_by_role": "discovery-counsel",
+     "change_reason": "Privilege screen over scope async-privilege-screen scanned 9 documents and flagged 3."
+    }
+   ],
+   "creates": [
+    {
+     "tool": "legal_matters_amount_history_create",
+     "args": {
+      "legal_matters_id": "legal_matters_016",
+      "fee_budget": 9,
+      "changed_by_role": "discovery-counsel",
+      "change_reason": "Privilege screen over scope async-privilege-screen scanned 9 documents and flagged 3."
+     },
+     "pinned": {
+      "fee_budget": 9,
+      "changed_by_role": "discovery-counsel"
+     }
+    }
+   ],
+   "side_effect_tables": [
+    "analysis_jobs"
+   ],
+   "forbidden": [
+    {
+     "table": "legal_matters_amount_history",
+     "field": "fee_budget",
+     "value": 3
+    }
+   ]
+  }
+ ]
+}

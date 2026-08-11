@@ -5,7 +5,7 @@
  * world's stated domain (the "sales world with ERP/GitHub/PagerDuty tools"
  * disease, checked here against the law-firm thesis).
  *
- * Usage: node world/expansion/domain-lint.mjs [--world world/blobfish/world-v10.json]
+ * Usage: node world/expansion/domain-lint.mjs [--world world/blobfish/world-v12.json]
  * Output: docs/DOMAIN-AUDIT.md + data/research/domain-lint.json
  */
 import { readFileSync, writeFileSync } from "node:fs";
@@ -15,7 +15,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const argv = process.argv.slice(2);
 const opt = (name, dflt) => (argv.includes(name) ? argv[argv.indexOf(name) + 1] : dflt);
-const WORLD = join(ROOT, opt("--world", "world/blobfish/world-v10.json"));
+const WORLD = join(ROOT, opt("--world", "world/blobfish/world-v12.json"));
 const raw = JSON.parse(readFileSync(WORLD, "utf8"));
 const world = raw.world ?? raw;
 
