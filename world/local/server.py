@@ -290,6 +290,8 @@ class ToolRuntime:
                 return False, self._missing_args_error(name, missing)
 
         try:
+            if name.startswith("corpus_"):
+                return self._corpus(name, args)
             if name in ("analysis_job_submit", "analysis_job_status",
                         "analysis_job_result", "analysis_jobs_list"):
                 return self._analysis_queue(conn, name, args)
@@ -414,6 +416,134 @@ class ToolRuntime:
         cur = conn.execute(f'SELECT * FROM "{table}"{wsql} ORDER BY rowid LIMIT ?', (*vals, limit))
         rows = self._rowdicts(cur)
         return True, json.dumps({"table": table, "count": len(rows), "rows": rows}, default=str)
+
+    # ------------------------------------------------------------- firm corpus
+    # The C&H corpus is 9,288 files / ~108M tokens and cannot live in the world
+    # document, so it lives on disk and these tools read it. Everything pages and
+    # every response states whether more remains — at this scale "did you see all
+    # of it" is the thing under test, so the world must say so plainly.
+    CORPUS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "corpus", "ch")
+
+    def _corpus_conn(self):
+        db = os.path.join(self.CORPUS_DIR, "index.sqlite")
+        if not os.path.exists(db):
+            return None
+        c = sqlite3.connect(db)
+        c.row_factory = sqlite3.Row
+        return c
+
+    @staticmethod
+    def _page(total, offset, returned):
+        out = {"count": total, "returned": returned, "offset": offset}
+        if offset + returned < total:
+            out["has_more"] = True
+            out["next_offset"] = offset + returned
+            out["paging_note"] = (
+                f"{total} match; {returned} returned from offset {offset}. You have NOT seen "
+                f"every match — call again with offset={offset + returned}.")
+        else:
+            out["has_more"] = False
+        return out
+
+    def _corpus(self, name, args):
+        conn = self._corpus_conn()
+        if conn is None:
+            return False, json.dumps({"error": "corpus_unavailable",
+                                      "message": "the firm corpus index has not been built"})
+        try:
+            limit = max(1, min(int(args.get("limit") or 25), 200))
+            offset = max(0, int(args.get("offset") or 0))
+
+            if name == "corpus_matters_list":
+                where, vals = "", []
+                if args.get("client_id"):
+                    where, vals = " WHERE client_id = ?", [str(args["client_id"])]
+                total = conn.execute(f"SELECT COUNT(*) FROM matters{where}", vals).fetchone()[0]
+                rows = conn.execute(
+                    f"SELECT matter_id, client_id, files, chars FROM matters{where}"
+                    " ORDER BY matter_id LIMIT ? OFFSET ?", (*vals, limit, offset)).fetchall()
+                out = {"matters": [dict(r) for r in rows]}
+                out.update(self._page(total, offset, len(rows)))
+                return True, json.dumps(out)
+
+            if name == "corpus_files_list":
+                clauses, vals = [], []
+                for col, key in (("matter_id", "matter_id"), ("ext", "ext")):
+                    if args.get(key):
+                        clauses.append(f"{col} = ?"); vals.append(str(args[key]))
+                if args.get("folder"):
+                    clauses.append("folder LIKE ?"); vals.append(f"%{args['folder']}%")
+                where = (" WHERE " + " AND ".join(clauses)) if clauses else ""
+                total = conn.execute(f"SELECT COUNT(*) FROM files{where}", vals).fetchone()[0]
+                rows = conn.execute(
+                    f"SELECT matter_id, folder, filename, ext, chars, text_path FROM files{where}"
+                    " ORDER BY id LIMIT ? OFFSET ?", (*vals, limit, offset)).fetchall()
+                out = {"files": [{"path": r["text_path"], "matter_id": r["matter_id"],
+                                  "folder": r["folder"], "filename": r["filename"],
+                                  "ext": r["ext"], "chars": r["chars"]} for r in rows]}
+                out.update(self._page(total, offset, len(rows)))
+                return True, json.dumps(out)
+
+            if name == "corpus_search":
+                q = (args.get("query") or "").strip()
+                if not q:
+                    return False, self._missing_args_error(name, ["query"])
+                clauses, vals = ["chars > 0"], []
+                for col, key in (("matter_id", "matter_id"), ("client_id", "client_id")):
+                    if args.get(key):
+                        clauses.append(f"{col} = ?"); vals.append(str(args[key]))
+                where = " WHERE " + " AND ".join(clauses)
+                cand = conn.execute(
+                    f"SELECT matter_id, folder, filename, text_path FROM files{where} ORDER BY id",
+                    vals).fetchall()
+                needle = q.lower()
+                hits = []
+                for r in cand:
+                    fp = os.path.join(self.CORPUS_DIR, r["text_path"])
+                    try:
+                        with open(fp, "r", errors="replace") as fh:
+                            body = fh.read()
+                    except OSError:
+                        continue
+                    i = body.lower().find(needle)
+                    if i < 0:
+                        continue
+                    hits.append({
+                        "path": r["text_path"], "matter_id": r["matter_id"],
+                        "folder": r["folder"], "filename": r["filename"],
+                        "snippet": body[max(0, i - 120): i + 240].replace("\n", " "),
+                        "hits_in_file": body.lower().count(needle),
+                    })
+                page = hits[offset: offset + limit]
+                out = {"query": q, "results": page}
+                out.update(self._page(len(hits), offset, len(page)))
+                return True, json.dumps(out)
+
+            if name == "corpus_read":
+                path = args.get("path")
+                if not path:
+                    return False, self._missing_args_error(name, ["path"])
+                row = conn.execute(
+                    "SELECT matter_id, filename, chars, text_path, parse_error FROM files"
+                    " WHERE text_path = ? OR filename = ?", (str(path), str(path))).fetchone()
+                if row is None:
+                    return False, json.dumps({"error": "not_found", "path": path})
+                if row["parse_error"]:
+                    return False, json.dumps({"error": "unparsed", "path": path,
+                                              "reason": row["parse_error"]})
+                fp = os.path.join(self.CORPUS_DIR, row["text_path"])
+                with open(fp, "r", errors="replace") as fh:
+                    body = fh.read()
+                chunk = body[offset: offset + max(1, min(int(args.get("limit") or 20000), 100000))]
+                out = {"path": row["text_path"], "matter_id": row["matter_id"],
+                       "filename": row["filename"], "text": chunk}
+                out.update(self._page(len(body), offset, len(chunk)))
+                out["count"] = len(body)   # chars, not files
+                return True, json.dumps(out)
+
+            return False, f"ERROR: unknown corpus tool {name}"
+        finally:
+            conn.close()
 
     # ---------------------------------------------------------------- async queue
     # Real document analysis does not return inside one call; agentic-ops/legal-mcp
