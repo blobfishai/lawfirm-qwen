@@ -150,14 +150,14 @@ const TASKS = [
   },
   {
     id: "task_v3_004", family: "clio-trust-overdraft",
-    prompt: 'Trust compliance sweep: (1) list the trust transactions for matter 3 and (2) get the trust balance for matter 3. The client ledger for a matter must never be negative. If (and only if) the balance is negative, record a note on matter 3 authored by user 1 with subject exactly "TRUST OVERDRAFT ALERT" and a detail stating the computed balance. Do not post any trust transaction.',
+    prompt: 'Trust compliance check: (1) list the trust transactions for matter 10 and (2) get the trust balance for matter 10. A client ledger must never be negative. If (and only if) the balance is negative, record a note on matter 10 authored by user 1 with subject exactly "TRUST OVERDRAFT ALERT" and a detail stating the computed balance. Do not post any trust transaction.',
     walk: ["trust_transactions_list", "trust_balance_get", "notes_create"],
     args: [
-      { matter_id: 3 },
-      { matter_id: 3 },
-      { matter_id: 3, author_user_id: 1, subject: "TRUST OVERDRAFT ALERT", detail: "Client trust ledger for matter 3 computes to -45609.65; freeze disbursements and escalate to the trust accountant." },
+      { matter_id: 10 },
+      { matter_id: 10 },
+      { matter_id: 10, author_user_id: 1, subject: "TRUST OVERDRAFT ALERT", detail: "Client trust ledger for matter 10 computes to -25750.44; freeze disbursements and escalate to the trust accountant." },
     ],
-    inserts: [{ table: "pm_notes", pinned: [["subject", "TRUST OVERDRAFT ALERT"], ["matter_id", 3]] }],
+    inserts: [{ table: "pm_notes", pinned: [["subject", "TRUST OVERDRAFT ALERT"], ["matter_id", 10]] }],
     updates: [],
   },
   {
@@ -286,22 +286,19 @@ const TASKS = [
   },
   {
     id: "task_v3_015", family: "r2-trust-sweep-all-matters",
-    prompt: 'Quarterly trust sweep: a client trust ledger must never be negative. Review the trust transactions across matters (list them; compute per-matter balances yourself) and file one alert note per overdrawn matter — authored by user 1, subject exactly "TRUST OVERDRAFT ALERT", on each overdrawn matter, detail stating that matter\'s computed balance. Post no trust transactions. Find every overdrawn matter; miss none.',
-    walk: ["trust_transactions_list", "notes_create", "notes_create", "notes_create", "notes_create"],
+    prompt: 'Quarterly trust sweep: a client trust ledger must never be negative. Review the trust transactions across ALL matters (list them — mind the default page size — and compute per-matter balances yourself) and file one alert note per overdrawn matter: authored by user 1, subject exactly "TRUST OVERDRAFT ALERT", filed on that overdrawn matter, detail stating that matter\'s computed balance. Post no trust transactions. Find every overdrawn matter; miss none, and do not flag a matter whose ledger is positive.',
+    walk: ["trust_transactions_list", "notes_create", "notes_create"],
     args: [
       { limit: 100 },
-      { matter_id: 2, author_user_id: 1, subject: "TRUST OVERDRAFT ALERT", detail: "Matter 2 client ledger computes to -17189.10; freeze disbursements." },
-      { matter_id: 3, author_user_id: 1, subject: "TRUST OVERDRAFT ALERT", detail: "Matter 3 client ledger computes to -45609.65; freeze disbursements." },
-      { matter_id: 10, author_user_id: 1, subject: "TRUST OVERDRAFT ALERT", detail: "Matter 10 client ledger computes to -35699.50; freeze disbursements." },
-      { matter_id: 15, author_user_id: 1, subject: "TRUST OVERDRAFT ALERT", detail: "Matter 15 client ledger computes to -37577.40; freeze disbursements." },
+      { matter_id: 10, author_user_id: 1, subject: "TRUST OVERDRAFT ALERT", detail: "Matter 10 client ledger computes to -25750.44; freeze disbursements." },
+      { matter_id: 17, author_user_id: 1, subject: "TRUST OVERDRAFT ALERT", detail: "Matter 17 client ledger computes to -42300.06; freeze disbursements." },
     ],
     inserts: [
-      { table: "pm_notes", pinned: [["subject", "TRUST OVERDRAFT ALERT"], ["matter_id", 2]] },
-      { table: "pm_notes", pinned: [["subject", "TRUST OVERDRAFT ALERT"], ["matter_id", 3]] },
       { table: "pm_notes", pinned: [["subject", "TRUST OVERDRAFT ALERT"], ["matter_id", 10]] },
-      { table: "pm_notes", pinned: [["subject", "TRUST OVERDRAFT ALERT"], ["matter_id", 15]] },
+      { table: "pm_notes", pinned: [["subject", "TRUST OVERDRAFT ALERT"], ["matter_id", 17]] },
     ],
     updates: [],
+    forbidden_note: "flagging a positive-balance matter is graded by the pinned matter_ids",
   },
 ];
 

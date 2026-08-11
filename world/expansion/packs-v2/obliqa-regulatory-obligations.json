@@ -1,0 +1,124 @@
+{
+ "family": "obliqa-regulatory-obligations",
+ "anchor": "obliqa_regnlp",
+ "documents": [
+  {
+   "title": "Regulatory pack \u2014 AML Rulebook Chapter 14: Suspicious Activity Reporting (excerpt)",
+   "doc_type": "regulation_excerpt",
+   "body": "CHAPTER 14 \u2014 SUSPICIOUS ACTIVITY REPORTING\n\n14.2.1 A Relevant Person must establish and maintain systems and controls to identify, assess, and report suspicious activity.\n\n14.2.3 Guidance 10. Relevant Persons should comply with guidance issued by the supervising authority regarding identifying and reporting suspicious activity and transactions relating to money laundering, terrorist financing, and proliferation financing.\n\n14.3.1 Where a Relevant Person knows or has reasonable grounds to suspect that a transaction involves the proceeds of crime, it must make an internal report to the Money Laundering Reporting Officer (MLRO) AS SOON AS PRACTICABLE and in any event within THREE (3) BUSINESS DAYS of the suspicion arising.\n\n14.3.4 The MLRO must consider each internal report and, where the suspicion is sustained, submit an external Suspicious Activity Report to the Financial Intelligence Unit WITHIN FIVE (5) BUSINESS DAYS of receiving the internal report.\n\n14.5.2 A Relevant Person must not disclose to the customer or any third party that a report has been or may be made (the 'tipping-off' prohibition)."
+  },
+  {
+   "title": "Regulatory pack \u2014 Client Money Rules Chapter 9: Segregation and Reconciliation (excerpt)",
+   "doc_type": "regulation_excerpt",
+   "body": "CHAPTER 9 \u2014 CLIENT MONEY\n\n9.2.1 An Authorised Person must hold Client Money separately from its own money in a Client Account designated as such with an Approved Bank.\n\n9.4.2 An Authorised Person must perform a reconciliation of Client Money balances between its internal records and the statements of each Approved Bank NOT LESS FREQUENTLY THAN EVERY 25 BUSINESS DAYS.\n\n9.4.6 Where a reconciliation identifies a shortfall, the Authorised Person must pay the shortfall into the Client Account BY THE CLOSE OF BUSINESS ON THE BUSINESS DAY FOLLOWING the day on which the reconciliation is performed.\n\n9.6.1 An Authorised Person must notify the Regulator immediately upon becoming aware that it has failed to comply with the Client Money segregation requirements."
+  },
+  {
+   "title": "Regulatory pack \u2014 Conduct of Business Chapter 3: Client Classification (excerpt)",
+   "doc_type": "regulation_excerpt",
+   "body": "CHAPTER 3 \u2014 CLIENT CLASSIFICATION\n\n3.4.1 An Authorised Person must classify each client as a Retail Client, a Professional Client, or a Market Counterparty before providing a regulated service.\n\n3.4.7 A client may be treated as a Professional Client only where the Authorised Person has undertaken an assessment of the client's knowledge, experience, and expertise and is reasonably satisfied that the client is capable of making its own investment decisions and understanding the risks involved.\n\n3.4.9 An Authorised Person must retain the classification assessment record for a period of SIX (6) YEARS from the date the client relationship ends."
+  },
+  {
+   "title": "Regulatory pack \u2014 client query file: Meridian Cloud Treasury Services onboarding questions",
+   "doc_type": "client_query_file",
+   "body": "CLIENT QUERY FILE \u2014 Meridian Cloud Treasury Services\n\nQ1. Our compliance team identified a suspicious transaction on 3 August. Our MLRO was on leave and the internal report was filed on 10 August. Are we compliant with the internal reporting deadline?\n\nQ2. We perform client-money reconciliations monthly (every 30 business days). Is that sufficient under the Client Money Rules?\n\nQ3. We would like to treat a new corporate customer as a Professional Client based solely on its balance-sheet size. Is a knowledge-and-experience assessment required?\n\nQ4. What is the retention period for our internal AI model training logs under the rulebook?"
+  },
+  {
+   "title": "Regulatory pack \u2014 SUPERSEDED 2023 compliance summary (do not rely on)",
+   "doc_type": "superseded_summary",
+   "body": "2023 COMPLIANCE QUICK SUMMARY \u2014 WITHDRAWN\n\nThis summary was withdrawn after the rulebook revision. It stated: internal suspicious-activity reports are due within 10 business days; client-money reconciliations are required every 40 business days; professional-client classification may be based on balance sheet alone. Every one of these statements is inconsistent with the current rulebook chapters and must not be relied upon."
+  }
+ ],
+ "tasks": [
+  {
+   "slug": "obliqa-sar-internal-deadline",
+   "difficulty": "medium",
+   "prompt": "Regulatory advice, question 1 of the client query file: the client filed its internal suspicious-activity report seven business days after the suspicion arose. Locate the governing rulebook chapter in the matter folder, read it in full, and answer whether the client complied. Record the determination with legal_conflicts_review_create: outcome exactly \"rejected\" if the client breached the deadline or exactly \"approved\" if it complied, and reviewer_role exactly \"regulatory-counsel\". A withdrawn 2023 summary in the folder states a different deadline \u2014 it must not be relied upon.",
+   "reads": [
+    "Regulatory pack \u2014 AML Rulebook Chapter 14: Suspicious Activity Reporting (excerpt)",
+    "Regulatory pack \u2014 client query file: Meridian Cloud Treasury Services onboarding questions"
+   ],
+   "creates": [
+    {
+     "tool": "legal_conflicts_review_create",
+     "args": {
+      "legal_conflicts_id": "legal_conflicts_001",
+      "reviewer_role": "regulatory-counsel",
+      "outcome": "rejected",
+      "rationale": "Rule 14.3.1 requires an internal report within 3 business days; the client filed on day 7 \u2014 non-compliant."
+     },
+     "pinned": {
+      "outcome": "rejected",
+      "reviewer_role": "regulatory-counsel"
+     }
+    }
+   ],
+   "forbidden": [
+    {
+     "table": "legal_conflicts_reviews",
+     "field": "outcome",
+     "value": "approved"
+    }
+   ]
+  },
+  {
+   "slug": "obliqa-client-money-frequency",
+   "difficulty": "medium",
+   "prompt": "Regulatory advice, question 2: the client reconciles client money every 30 business days. Find and read the governing client-money chapter in the matter folder and record the rulebook's MAXIMUM permitted interval by calling legal_conflicts_amount_history_create with exposure_amount set to exactly the number of business days the rule permits and changed_by_role exactly \"regulatory-counsel\".",
+   "reads": [
+    "Regulatory pack \u2014 Client Money Rules Chapter 9: Segregation and Reconciliation (excerpt)"
+   ],
+   "creates": [
+    {
+     "tool": "legal_conflicts_amount_history_create",
+     "args": {
+      "legal_conflicts_id": "legal_conflicts_001",
+      "exposure_amount": 25,
+      "changed_by_role": "regulatory-counsel",
+      "change_reason": "Rule 9.4.2 requires reconciliation not less frequently than every 25 business days; the client's 30-day cycle is non-compliant."
+     },
+     "pinned": {
+      "exposure_amount": 25,
+      "changed_by_role": "regulatory-counsel"
+     }
+    }
+   ],
+   "forbidden": [
+    {
+     "table": "legal_conflicts_amount_history",
+     "field": "exposure_amount",
+     "value": 40
+    }
+   ]
+  },
+  {
+   "slug": "obliqa-absent-obligation-abstain",
+   "difficulty": "high",
+   "prompt": "Regulatory advice, question 4: the client asks for the retention period that applies to internal AI model training logs. Search the regulatory pack in the matter folder and read the client query file in full. Firm policy: advise ONLY from a rulebook provision actually present in the pack. If no provision in the pack governs the question, do NOT state a period \u2014 instead record a remediation by calling legal_conflicts_remediation_create with action_required exactly \"escalate: no governing provision in pack\" and owner_role exactly \"regulatory-counsel\". Do not file any review asserting an answer.",
+   "reads": [
+    "Regulatory pack \u2014 client query file: Meridian Cloud Treasury Services onboarding questions"
+   ],
+   "creates": [
+    {
+     "tool": "legal_conflicts_remediation_create",
+     "args": {
+      "legal_conflicts_id": "legal_conflicts_001",
+      "owner_role": "regulatory-counsel",
+      "action_required": "escalate: no governing provision in pack",
+      "due_note": "Request the records-retention chapter from the client before advising."
+     },
+     "pinned": {
+      "action_required": "escalate: no governing provision in pack",
+      "owner_role": "regulatory-counsel"
+     }
+    }
+   ],
+   "forbidden": [
+    {
+     "table": "legal_conflicts_reviews",
+     "field": "reviewer_role",
+     "value": "regulatory-counsel"
+    }
+   ]
+  }
+ ]
+}

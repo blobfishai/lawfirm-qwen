@@ -1,0 +1,656 @@
+<meta charset="utf-8">
+<title>lawfirm-qwen — Realism proof: live tools + seeded documents</title>
+<style>
+  :root { --paper:#f9f9f7; --card:#fff; --ink:#1c2128; --ink2:#57606d; --mut:#8a919c;
+    --line:#e4e5e1; --accent:#33415e; --ok:#008300; --bad:#e34948; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --paper:#16161a; --card:#1e1e23; --ink:#eceae2; --ink2:#b9bcc4; --mut:#868c96;
+    --line:#2e2e34; --accent:#9fb2d8; --ok:#4cae4c; --bad:#e66767; } }
+  :root[data-theme="dark"] { --paper:#16161a; --card:#1e1e23; --ink:#eceae2; --ink2:#b9bcc4;
+    --mut:#868c96; --line:#2e2e34; --accent:#9fb2d8; --ok:#4cae4c; --bad:#e66767; }
+  *{box-sizing:border-box} body{background:var(--paper);color:var(--ink);margin:0;
+    font:15px/1.5 system-ui,-apple-system,sans-serif}
+  .wrap{max-width:1060px;margin:0 auto;padding:36px 22px 80px}
+  h1,h2,h3{font-family:Georgia,serif;text-wrap:balance}
+  h1{font-size:1.75rem;margin:0 0 6px} h2{font-size:1.25rem;margin:38px 0 4px}
+  h3{font-size:1rem;margin:0 0 2px}
+  .eyebrow{text-transform:uppercase;letter-spacing:.14em;font-size:.7rem;color:var(--mut);font-weight:600;margin-bottom:8px}
+  .note{color:var(--ink2);font-size:.87rem;max-width:82ch}
+  .stats{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0}
+  .stat{background:var(--card);border:1px solid var(--line);padding:10px 16px}
+  .stat b{display:block;font-size:1.3rem;font-family:Georgia,serif;font-variant-numeric:tabular-nums}
+  .stat span{color:var(--mut);font-size:.7rem;text-transform:uppercase;letter-spacing:.1em}
+  .scene{background:var(--card);border:1px solid var(--line);padding:16px 18px;margin-top:16px}
+  .persona{color:var(--accent);font-size:.82rem;font-weight:600}
+  .story{color:var(--ink2);font-size:.85rem;margin:4px 0 10px;max-width:80ch}
+  .call{border-left:3px solid var(--line);padding:4px 0 4px 12px;margin:10px 0}
+  .call.err{border-left-color:var(--bad)}
+  .req{font-family:ui-monospace,Menlo,monospace;font-size:.78rem;font-weight:600}
+  .req .args{font-weight:400;color:var(--ink2)}
+  .badge{font-size:.66rem;padding:1px 6px;border-radius:9px;border:1px solid var(--ok);color:var(--ok);margin-left:6px}
+  .badge.e{border-color:var(--bad);color:var(--bad)}
+  pre{background:var(--paper);border:1px solid var(--line);padding:8px 10px;margin:6px 0 0;
+    font-size:.72rem;overflow-x:auto;white-space:pre-wrap;word-break:break-word;color:var(--ink2)}
+  details{margin-top:10px} summary{cursor:pointer;font-size:.82rem;color:var(--accent)}
+  .doc{background:var(--card);border:1px solid var(--line);padding:14px 16px;margin-top:10px}
+  .doc h3{font-size:.92rem} .doc .meta{color:var(--mut);font-size:.72rem;margin-bottom:6px}
+  .doc pre{font-size:.74rem;max-height:320px;overflow-y:auto}
+  code{font-family:ui-monospace,Menlo,monospace;font-size:.85em}
+</style>
+<div class="wrap">
+  <div class="eyebrow">lawfirm-qwen · realism proof · captured live 2026-08-11 02:07 UTC</div>
+  <h1>The tools and the documents, actually working</h1>
+  <p class="note">Every request and response below was captured from the running world during this
+  page's build — one scene per firm system, each a task a real person does. The seeded documents at
+  the bottom are the same rows the tools return and the verifiers grade against. Simulation only:
+  all matters, parties, and figures are synthetic.</p>
+  <div class="stats">
+    <div class="stat"><b>91</b><span>tools served</span></div>
+    <div class="stat"><b>179</b><span>advertised over MCP</span></div>
+    <div class="stat"><b>70</b><span>SQL tables</span></div>
+    <div class="stat"><b>255</b><span>tasks in world</span></div>
+    <div class="stat"><b>242</b><span>seeded documents</span></div>
+    <div class="stat"><b>23</b><span>live calls on this page</span></div>
+  </div>
+
+  <h2>Live scenes</h2>
+  
+  <div class="scene">
+    <h3>practice-management (Clio-mirrored)</h3>
+    <div class="persona">Billing partner, Monday prebill review</div>
+    <div class="story">Pull the matter, record today's work with a UTBMS code, and move the prebill forward — the same three calls a billing partner makes every week.</div>
+    
+      <div class="call ">
+        <div class="req">matters_get<span class="args">({"id":1})</span><span class="badge">200</span></div>
+        <pre>{
+ "data": {
+  "id": 1,
+  "number": "00695-Talvern",
+  "display_name": "Ironwood Ops Privacy Matter",
+  "client_id": 6,
+  "status": "open",
+  "practice_area_id": 2,
+  "responsible_attorney_id": 4,
+  "originating_attorney_id": 12,
+  "billing_method": "hourly",
+  "open_date": "2026-10-24",
+  "close_date": null,
+  "description": "Securities engagement for Summit Holdings; scope per engagement letter.",
+  "updated_at": "2026-06-02"
+ }
+}</pre>
+      </div>
+      <div class="call ">
+        <div class="req">time_entries_create<span class="args">({"matter_id":1,"user_id":2,"date":"2026-08-11","quantity_hours":1.8,"rate":425,"description":"Review counterparty markup; call with client re fallback positions","utbms_task_code":"L120"})</span><span class="badge">200</span></div>
+        <pre>{
+ "data": {
+  "id": 161,
+  "created": "pm_time_entries",
+  "billable": 1,
+  "billed": 0,
+  "matter_id": 1,
+  "user_id": 2,
+  "date": "2026-08-11",
+  "quantity_hours": 1.8,
+  "rate": 425,
+  "description": "Review counterparty markup; call with client re fallback positions",
+  "utbms_task_code": "L120",
+  "total": 765,
+  "created_at": "2026-08-10T12:00:00Z"
+ }
+}</pre>
+      </div>
+      <div class="call ">
+        <div class="req">bills_list<span class="args">({"state":"draft","limit":2})</span><span class="badge">200</span></div>
+        <pre>{
+ "data": [
+  {
+   "id": 3,
+   "number": "INV-36024",
+   "matter_id": 21,
+   "client_id": 6,
+   "state": "draft",
+   "issue_date": "2026-08-25",
+   "due_date": "2026-09-19",
+   "subtotal": 79886.14,
+   "tax": 0,
+   "total": 79886.14,
+   "balance": 79886.14,
+   "created_at": "2026-07-01"
+  },
+  {
+   "id": 9,
+   "number": "INV-15123",
+   "matter_id": 1,
+   "client_id": 36,
+   "state": "draft",
+   "issue_date": "2026-06-13",
+   "due_date": "2026-08-27",
+   "subtotal": 5408,
+   "tax": 0,
+   "total": 5408,
+   "balance": 5408,
+   "created_at": "2026-08-16"
+  }
+ ],
+ "meta": {
+  "paging": {},
+  "records": 2
+ }
+}</pre>
+      </div>
+  </div>
+  <div class="scene">
+    <h3>practice-management — trust accounting</h3>
+    <div class="persona">Trust accountant, month-end three-way reconciliation</div>
+    <div class="story">The client ledger must never go negative. Matter 3 is healthy (funded, then spent); matter 10 is one of two deliberately overdrawn ledgers the compliance-sweep task must find. Deposits are positive, disbursements negative, and every memo matches its transaction kind — a post-seed coherence pass enforces that a trust account is funded before it is spent.</div>
+    
+      <div class="call ">
+        <div class="req">trust_transactions_list<span class="args">({"matter_id":3})</span><span class="badge">200</span></div>
+        <pre>{
+ "data": [
+  {
+   "id": 6,
+   "matter_id": 3,
+   "client_id": 40,
+   "kind": "deposit",
+   "amount": 1921.26,
+   "date": "2026-08-17",
+   "memo": "Retainer deposit per engagement letter",
+   "cleared": 0,
+   "created_at": "2026-07-21"
+  }
+ ],
+ "meta": {
+  "paging": {},
+  "records": 1
+ }
+}</pre>
+      </div>
+      <div class="call ">
+        <div class="req">trust_balance_get<span class="args">({"matter_id":3})</span><span class="badge">200</span></div>
+        <pre>{
+ "data": {
+  "aggregate": "sum",
+  "field": "amount",
+  "value": 1921.26,
+  "rows_considered": 1
+ }
+}</pre>
+      </div>
+      <div class="call ">
+        <div class="req">trust_transactions_list<span class="args">({"matter_id":10})</span><span class="badge">200</span></div>
+        <pre>{
+ "data": [
+  {
+   "id": 4,
+   "matter_id": 10,
+   "client_id": 19,
+   "kind": "deposit",
+   "amount": 5722.32,
+   "date": "2026-04-21",
+   "memo": "Replenishment deposit per fee agreement",
+   "cleared": 1,
+   "created_at": "2026-04-11"
+  },
+  {
+   "id": 24,
+   "matter_id": 10,
+   "client_id": 12,
+   "kind": "earned_fee_transfer",
+   "amount": -42917.4,
+   "date": "2026-06-16",
+   "memo": "Earned fees transferred to operating per invoice",
+   "cleared": 1,
+   "created_at": "2026-08-11"
+  },
+  {
+   "id": 25,
+   "matter_id": 10,
+   "client_id": 37,
+   "kind": "deposit",
+   "amount": 5722.32,
+   "date": "2026-07-19",
+   "memo": "Retainer deposit per engagement letter",
+   "cleared": 1,
+   "created_at": "2026-06-05"
+  },
+  {
+   "id": 26,
+   "matter_id": 10,
+   "client_id": 4,
+   "kind": "deposit",
+   "amount": 5722.32,
+   "date": "2026-08-06",
+   "memo": "Retainer deposit per engagement letter",
+   "cleared": 1,
+   "created_at": "2026-04-27"
+  }
+ ],
+ "meta": {
+  "paging": {},
+  "records": 4
+ }
+}</pre>
+      </div>
+      <div class="call ">
+        <div class="req">trust_balance_get<span class="args">({"matter_id":10})</span><span class="badge">200</span></div>
+        <pre>{
+ "data": {
+  "aggregate": "sum",
+  "field": "amount",
+  "value": -25750.44,
+  "rows_considered": 4
+ }
+}</pre>
+      </div>
+  </div>
+  <div class="scene">
+    <h3>docket-records (CourtListener-mirrored)</h3>
+    <div class="persona">Associate cite-checking a brief</div>
+    <div class="story">One citation resolves, one does not. The tool returns an honest empty result rather than inventing an opinion — the property that makes hallucination gradeable.</div>
+    
+      <div class="call ">
+        <div class="req">citation_lookup<span class="args">({"text":"821 Sim. 3d 926"})</span><span class="badge">200</span></div>
+        <pre>{
+ "count": 1,
+ "next": null,
+ "previous": null,
+ "results": [
+  {
+   "id": 1,
+   "case_name": "Meridian Cloud v. Silverline Data",
+   "court_id": "simsup",
+   "date_filed": "2023-11-04",
+   "citation": "821 Sim. 3d 926",
+   "precedential_status": "Published",
+   "snippet": "…the court holds that the parties' agreement controls and the motion is ",
+   "plain_text": "This document is synthetic simulation content. It sets out the parties' positions, the operative facts as pleaded, and the relief requested, with numbered paragraphs and defined terms used consistently throughout. This document is synthetic simulation content. It sets out the parties' positions, the operative facts as pleaded, and the relief requested, with numbered paragraphs and defined terms used consistently throughout. This document is synthetic simulation content. It sets out the parties' positions, the operative facts as pleaded, and the relief requested, with numbered paragraphs and defined terms used consistently throughout. This document is synthetic simulation content. It sets out the parties' positions, the operative facts as pleaded, and the relief requested, with numbered paragraphs and defined terms used consistently throughout. This document is synthetic simulation content. It sets out the parties' positions, the operative facts as pleaded, and the relief requested, with numbered paragraphs and defin
+…[1,449 chars total]</pre>
+      </div>
+      <div class="call ">
+        <div class="req">citation_lookup<span class="args">({"text":"999 Sim. 9d 999"})</span><span class="badge">200</span></div>
+        <pre>{
+ "count": 0,
+ "next": null,
+ "previous": null,
+ "results": []
+}</pre>
+      </div>
+      <div class="call ">
+        <div class="req">dockets_search<span class="args">({"q":"Talvern"})</span><span class="badge">200</span></div>
+        <pre>{
+ "count": 2,
+ "next": null,
+ "previous": null,
+ "results": [
+  {
+   "id": 7,
+   "docket_number": "2:25-cv-9156",
+   "case_name": "Talvern Logistics v. Halcyon Therapeutics",
+   "court_id": "simd",
+   "date_filed": "2026-11-11",
+   "date_terminated": null,
+   "nature_of_suit": "Employment",
+   "assigned_to": "Hon. Devlin Whitfield",
+   "cause": "35:271 Patent Infringement",
+   "jury_demand": "None"
+  },
+  {
+   "id": 12,
+   "docket_number": "7:22-cv-1649",
+   "case_name": "Talvern Logistics v. Bluewater Components",
+   "court_id": "simca9",
+   "date_filed": "2025-06-22",
+   "date_terminated": null,
+   "nature_of_suit": "Securities",
+   "assigned_to": "Hon. Dana Ellery",
+   "cause": "28:1332 Diversity",
+   "jury_demand": "Plaintiff"
+  }
+ ]
+}</pre>
+      </div>
+  </div>
+  <div class="scene">
+    <h3>ediscovery (Relativity-mirrored)</h3>
+    <div class="persona">Review attorney working a privilege batch</div>
+    <div class="story">Query the batch, open the document's extracted text, code it. Note the Relativity-native envelope: Objects / TotalCount / ArtifactID.</div>
+    
+      <div class="call ">
+        <div class="req">documents_query<span class="args">({"workspace_id":3,"privileged":"yes","length":3})</span><span class="badge">200</span></div>
+        <pre>{
+ "Objects": [
+  {
+   "ArtifactID": 21,
+   "workspace_id": 3,
+   "control_number": "TAL146258",
+   "custodian": "Devlin Holt",
+   "doc_date": "2026-05-22",
+   "subject": "Fee arrangement",
+   "extracted_text": "This document is synthetic simulation content. It sets out the parties' positions, the operative facts as pleaded, and the relief requested, with numbered paragraphs and defined terms used consistently throughout. This document is synthetic…[preview — use the get tool for full text]",
+   "responsive": "yes",
+   "privileged": "yes",
+   "reviewed_by": null
+  },
+  {
+   "ArtifactID": 81,
+   "workspace_id": 3,
+   "control_number": "DEF108148",
+   "custodian": "Celine Reyes",
+   "doc_date": "2024-08-04",
+   "subject": "Discovery dispute",
+   "extracted_text": "This document is synthetic simulation content. It sets out the parties' positions, the operative facts as pleaded, and the relief requested, with numbered paragraphs and defined terms used consistently throughout. This document is synthetic…[preview — use the get tool for full text]",
+   "responsive": "undetermined",
+   "privileged": "yes",
+   "reviewed_by": null
+  }
+ ],
+ "TotalCount": 2,
+ "CurrentStartIndex": 0
+}</pre>
+      </div>
+      <div class="call ">
+        <div class="req">review_documents_get<span class="args">({"id":2})</span><span class="badge">200</span></div>
+        <pre>{
+ "ArtifactID": 2,
+ "workspace_id": 3,
+ "control_number": "MER108261",
+ "custodian": "Felix Vasquez",
+ "doc_date": "2026-05-15",
+ "subject": "Scheduling",
+ "extracted_text": "This document is synthetic simulation content. It sets out the parties' positions, the operative facts as pleaded, and the relief requested, with numbered paragraphs and defined terms used consistently throughout. This document is synthetic simulation content. It sets out the parties' positions, the operative facts as pleaded, and the relief requested, with numbered paragraphs and defined terms used consistently throughout. This document is synthetic simulation content. It sets out the parties' positions, the operative facts as pleaded, and the relief requested, with numbered paragraphs and defined terms used consistently throughout. This document is synthetic simulation content. It sets out the parties' positions, the operative facts as pleaded, and the relief requested, with numbered paragraphs and defined terms used consistently throughout. This document is synthetic simulation content. It sets out the parties' positions, the operative facts as pleaded, and the relief requested, with numbered paragraphs and defined terms used consistently throughout. ",
+ "responsive": "yes",
+ "privileged": "no",
+ "reviewed_by": null
+}</pre>
+      </div>
+  </div>
+  <div class="scene">
+    <h3>ebilling (LEDES 1998B)</h3>
+    <div class="persona">E-billing coordinator before submission</div>
+    <div class="story">The line items come back keyed by the real LEDES 1998B field names, and the reconciliation exposes a genuine header-vs-lines mismatch seeded into invoice 2.</div>
+    
+      <div class="call ">
+        <div class="req">invoice_lines_list<span class="args">({"invoice_id":2,"limit":3})</span><span class="badge">200</span></div>
+        <pre>{
+ "count": 3,
+ "lines": [
+  {
+   "LINE_ITEM_NUMBER": 17,
+   "INVOICE_ID": 2,
+   "LINE_ITEM_DATE": "2026-05-10",
+   "TIMEKEEPER_NAME": "Wes Kessler",
+   "LINE_ITEM_TASK_CODE": "L330",
+   "LINE_ITEM_ACTIVITY_CODE": "A103",
+   "LINE_ITEM_NUMBER_OF_UNITS": 7.74,
+   "LINE_ITEM_UNIT_COST": 607.65,
+   "LINE_ITEM_TOTAL": 4703.21,
+   "LINE_ITEM_DESCRIPTION": "Analyze discovery responses; prepare deficiency letter"
+  },
+  {
+   "LINE_ITEM_NUMBER": 25,
+   "INVOICE_ID": 2,
+   "LINE_ITEM_DATE": "2026-07-14",
+   "TIMEKEEPER_NAME": "Aiko Ellery",
+   "LINE_ITEM_TASK_CODE": "L330",
+   "LINE_ITEM_ACTIVITY_CODE": "A102",
+   "LINE_ITEM_NUMBER_OF_UNITS": 8.16,
+   "LINE_ITEM_UNIT_COST": 258.16,
+   "LINE_ITEM_TOTAL": 2106.59,
+   "LINE_ITEM_DESCRIPTION": "Review disclosure schedules against data room index"
+  },
+  {
+   "LINE_ITEM_NUMBER": 32,
+   "INVOICE_ID": 2,
+   "LINE_ITEM_DATE": "2026-07-03",
+   "TIMEKEEPER_NAME": "Tomas Lindqvist",
+   "LINE_ITEM_TASK_CODE": "L450",
+   "LINE_ITEM_ACTIVITY_CODE": "A103",
+   "LINE_ITEM_NUMBER_OF_UNITS": 2.93,
+   "LINE_ITEM_UNIT_COST": 414.67,
+   "LINE_ITEM_TOTAL": 1214.98,
+   "LINE_ITEM_DESCRIPTION": "Review and revise draft agreement; correspondence with opposing counsel"
+  }
+ ]
+}</pre>
+      </div>
+      <div class="call ">
+        <div class="req">invoice_total_check<span class="args">({"invoice_id":2})</span><span class="badge">200</span></div>
+        <pre>{
+ "aggregate": "sum",
+ "field": "amount",
+ "value": 15224.06,
+ "rows_considered": 9
+}</pre>
+      </div>
+      <div class="call ">
+        <div class="req">invoices_get<span class="args">({"id":2})</span><span class="badge">200</span></div>
+        <pre>{
+ "INVOICE_ID": 2,
+ "INVOICE_NUMBER": "INV-37157",
+ "LAW_FIRM_MATTER_ID": "00220-Halcyon",
+ "CLIENT_MATTER_ID": "00524-Fairview",
+ "BILLING_START_DATE": "2026-05-06",
+ "BILLING_END_DATE": "2026-06-05",
+ "INVOICE_TOTAL": 55362.24,
+ "INVOICE_STATUS": "appealed",
+ "VALIDATION_ERRORS": null,
+ "SUBMITTED_AT": "2026-07-06"
+}</pre>
+      </div>
+  </div>
+  <div class="scene">
+    <h3>dms (iManage-mirrored)</h3>
+    <div class="persona">Associate taking a document out to revise it</div>
+    <div class="story">Checkout locks the document; a second person's checkout is refused with a 409, exactly like a real DMS.</div>
+    
+      <div class="call ">
+        <div class="req">documents_get<span class="args">({"id":5})</span><span class="badge">200</span></div>
+        <pre>{
+ "data": {
+  "id": 5,
+  "folder_id": 16,
+  "workspace_id": 1,
+  "name": "Settlement Model — Fairview Works",
+  "doc_class": "NOTE",
+  "author": "Priya Lindqvist",
+  "edit_date": "2026-03-10",
+  "checked_out_by": null,
+  "latest_version": 1,
+  "body": "This document is synthetic simulation content. It sets out the parties' positions, the operative facts as pleaded, and the relief requested, with numbered paragraphs and defined terms used consistently throughout. This document is synthetic simulation content. It sets out the parties' positions, the operative facts as pleaded, and the relief requested, with numbered paragraphs and defined terms used consistently throughout. This document is synthetic simulation content. It sets out the parties' positions, the operative facts as pleaded, and the relief requested, with numbered paragraphs and defined terms used consistently throughout. "
+ }
+}</pre>
+      </div>
+      <div class="call ">
+        <div class="req">documents_checkout<span class="args">({"id":5,"checked_out_by":"aiko.tanaka"})</span><span class="badge">200</span></div>
+        <pre>{
+ "data": {
+  "id": 5,
+  "updated": "dm_documents",
+  "fields": [
+   "checked_out_by"
+  ]
+ }
+}</pre>
+      </div>
+      <div class="call err">
+        <div class="req">documents_checkout<span class="args">({"id":5,"checked_out_by":"someone.else"})</span><span class="badge e">error</span></div>
+        <pre>ERROR 409: already checked out (by aiko.tanaka)</pre>
+      </div>
+  </div>
+  <div class="scene">
+    <h3>workspace (Google-mirrored)</h3>
+    <div class="persona">Paralegal building a chronology from email</div>
+    <div class="story">Gmail-native shapes: a message list with resultSizeEstimate, then a full message resource with payload.headers.</div>
+    
+      <div class="call ">
+        <div class="req">gmail_messages_list<span class="args">({"q":"Settlement","maxResults":3})</span><span class="badge">200</span></div>
+        <pre>{
+ "messages": [
+  {
+   "id": "1",
+   "threadId": "1"
+  },
+  {
+   "id": "2",
+   "threadId": "11"
+  },
+  {
+   "id": "9",
+   "threadId": "8"
+  }
+ ],
+ "resultSizeEstimate": 3
+}</pre>
+      </div>
+      <div class="call ">
+        <div class="req">gmail_messages_get<span class="args">({"id":9})</span><span class="badge">200</span></div>
+        <pre>{
+ "id": "9",
+ "threadId": "8",
+ "labelIds": [
+  "SENT"
+ ],
+ "snippet": "Draft motion section; cite-check; conference with team",
+ "internalDate": "2026-08-12",
+ "payload": {
+  "headers": [
+   {
+    "name": "From",
+    "value": "devlin.novak@simulated-firm.example"
+   },
+   {
+    "name": "To",
+    "value": "omar.marchetti@simulated-firm.example"
+   },
+   {
+    "name": "Subject",
+    "value": "Settlement posture"
+   },
+   {
+    "name": "Date",
+    "value": "2026-08-12"
+   }
+  ],
+  "body": {
+   "data": "Draft motion section; cite-check; conference with team"
+  }
+ }
+}</pre>
+      </div>
+  </div>
+  <div class="scene">
+    <h3>seeded document corpus</h3>
+    <div class="persona">Associate opening the matter folder</div>
+    <div class="story">The documents the tasks grade against are full legal drafting, not lorem — a precedent clause from the ACORD-anchored library and a regulatory chapter from the ObliQA-anchored pack.</div>
+    
+      <div class="call ">
+        <div class="req">query_matter_documents<span class="args">({"title":"Clause library — CL-105","limit":2})</span><span class="badge">200</span></div>
+        <pre>{
+ "table": "matter_documents",
+ "count": 1,
+ "rows": [
+  {
+   "id": 216,
+   "title": "Clause library — CL-105 Limitation of Liability with uncapped carve-outs",
+   "doc_type": "precedent_clause",
+   "related_shape": "acord-clause-retrieval",
+   "body": "PRECEDENT CLAUSE CL-105\nCategory: Limitation of Liability with uncapped carve-outs\nLibrary slug: limitation_of_liability_uncapped_carveout\nApproved by: Contracts KM Committee\n\nLIMITATION OF LIABILITY. The limitations in this Section shall n…[preview]"
+  }
+ ],
+ "note": "body fields are previews — call read_matter_document(id) to read a document in full before using it"
+}</pre>
+      </div>
+      <div class="call ">
+        <div class="req">read_matter_document<span class="args">({"id":216})</span><span class="badge">200</span></div>
+        <pre>{
+ "id": 216,
+ "title": "Clause library — CL-105 Limitation of Liability with uncapped carve-outs",
+ "doc_type": "precedent_clause",
+ "related_shape": "acord-clause-retrieval",
+ "body": "PRECEDENT CLAUSE CL-105\nCategory: Limitation of Liability with uncapped carve-outs\nLibrary slug: limitation_of_liability_uncapped_carveout\nApproved by: Contracts KM Committee\n\nLIMITATION OF LIABILITY. The limitations in this Section shall not apply to (a) a party's indemnification obligations for third-party intellectual-property claims, (b) breach of confidentiality, (c) gross negligence or willful misconduct, or (d) a party's payment obligations, each of which shall be uncapped.\n\nUse note: this is firm-approved precedent language; deviations require playbook escalation."
+}</pre>
+      </div>
+      <div class="call ">
+        <div class="req">read_matter_document<span class="args">({"id":238})</span><span class="badge">200</span></div>
+        <pre>{
+ "id": 238,
+ "title": "Regulatory pack — AML Rulebook Chapter 14: Suspicious Activity Reporting (excerpt)",
+ "doc_type": "regulation_excerpt",
+ "related_shape": "obliqa-regulatory-obligations",
+ "body": "CHAPTER 14 — SUSPICIOUS ACTIVITY REPORTING\n\n14.2.1 A Relevant Person must establish and maintain systems and controls to identify, assess, and report suspicious activity.\n\n14.2.3 Guidance 10. Relevant Persons should comply with guidance issued by the supervising authority regarding identifying and reporting suspicious activity and transactions relating to money laundering, terrorist financing, and proliferation financing.\n\n14.3.1 Where a Relevant Person knows or has reasonable grounds to suspect that a transaction involves the proceeds of crime, it must make an internal report to the Money Laundering Reporting Officer (MLRO) AS SOON AS PRACTICABLE and in any event within THREE (3) BUSINESS DAYS of the suspicion arising.\n\n14.3.4 The MLRO must consider each internal report and, where the suspicion is sustained, submit an external Suspicious Activity Report to the Financial Intelligence Unit WITHIN FIVE (5) BUSINESS DAYS of receiving the internal report.\n\n14.5.2 A Relevant Person must not disclose to the customer or any third party that a report has been or may be made (the 'tipping-off' prohibition)."
+}</pre>
+      </div>
+  </div>
+
+  <h2>Seeded documents, in full</h2>
+  <p class="note">Four of the 242 seeded matter documents, verbatim — a precedent clause
+  (ACORD-anchored library), a regulatory chapter (ObliQA-anchored), the entity-selection guidance whose
+  decision rule a task must apply, and the court-rules memo behind the deadline-computation pack.</p>
+  
+  <div class="doc">
+    <h3>Clause library — CL-105 Limitation of Liability with uncapped carve-outs</h3>
+    <div class="meta">matter_documents id 216 · doc_type <code>precedent_clause</code> · 578 chars · family <code>acord-clause-retrieval</code></div>
+    <pre>PRECEDENT CLAUSE CL-105
+Category: Limitation of Liability with uncapped carve-outs
+Library slug: limitation_of_liability_uncapped_carveout
+Approved by: Contracts KM Committee
+
+LIMITATION OF LIABILITY. The limitations in this Section shall not apply to (a) a party's indemnification obligations for third-party intellectual-property claims, (b) breach of confidentiality, (c) gross negligence or willful misconduct, or (d) a party's payment obligations, each of which shall be uncapped.
+
+Use note: this is firm-approved precedent language; deviations require playbook escalation.</pre>
+  </div>
+  <div class="doc">
+    <h3>Regulatory pack — AML Rulebook Chapter 14: Suspicious Activity Reporting (excerpt)</h3>
+    <div class="meta">matter_documents id 238 · doc_type <code>regulation_excerpt</code> · 1,115 chars · family <code>obliqa-regulatory-obligations</code></div>
+    <pre>CHAPTER 14 — SUSPICIOUS ACTIVITY REPORTING
+
+14.2.1 A Relevant Person must establish and maintain systems and controls to identify, assess, and report suspicious activity.
+
+14.2.3 Guidance 10. Relevant Persons should comply with guidance issued by the supervising authority regarding identifying and reporting suspicious activity and transactions relating to money laundering, terrorist financing, and proliferation financing.
+
+14.3.1 Where a Relevant Person knows or has reasonable grounds to suspect that a transaction involves the proceeds of crime, it must make an internal report to the Money Laundering Reporting Officer (MLRO) AS SOON AS PRACTICABLE and in any event within THREE (3) BUSINESS DAYS of the suspicion arising.
+
+14.3.4 The MLRO must consider each internal report and, where the suspicion is sustained, submit an external Suspicious Activity Report to the Financial Intelligence Unit WITHIN FIVE (5) BUSINESS DAYS of receiving the internal report.
+
+14.5.2 A Relevant Person must not disclose to the customer or any third party that a report has been or may be made (the 'tipping-off' prohibition).</pre>
+  </div>
+  <div class="doc">
+    <h3>Formation pack — Firm entity-selection guidance memo</h3>
+    <div class="meta">matter_documents id 235 · doc_type <code>guidance_memo</code> · 992 chars · family <code>lawflow-entity-formation</code></div>
+    <pre>ENTITY SELECTION GUIDANCE (firm standard)
+
+Step 1 — Identify the client's financing plan. Where the client anticipates institutional venture financing, the Delaware C-Corporation is the presumptive recommendation: institutional investors typically require a Delaware C-Corp for preferred-stock issuance and 83(b)/QSBS treatment.
+
+Step 2 — Where the client anticipates NO outside institutional financing and prioritizes pass-through taxation and operational informality, the LLC is the presumptive recommendation.
+
+Step 3 — The S-Corporation election is unavailable where the client anticipates institutional investors, because entity shareholders and multiple classes of stock are prohibited.
+
+Step 4 — Convertible-into-corporation LLCs are disfavored by the firm: conversion at financing triggers avoidable tax and diligence cost.
+
+Decision rule: institutional financing anticipated within 24 months =&gt; recommend delaware_c_corp, regardless of the client's stated preference for informality.</pre>
+  </div>
+  <div class="doc">
+    <h3>Deadline pack — Consolidated Rules Memo: Computing Time Under the Simulated Rules of Civil Procedure (SRCP 6)</h3>
+    <div class="meta">matter_documents id 146 · doc_type <code>rules-memo</code> · 2,063 chars · family <code>deadline-computation</code></div>
+    <pre>MEMORANDUM — DOCKETING STANDARDS (SIMULATED JURISDICTION)
+
+Re: Computing every litigation deadline under SRCP 6 (this firm's controlling method)
+
+I. The counting method. (a) Exclude the trigger day: the day of the event that starts the period is never counted. (b) Count every calendar day thereafter, including intermediate Saturdays, Sundays, and court holidays. (c) Rollover: if the last day of the period lands on a Saturday, Sunday, or court holiday, the period runs to the next day that is not a weekend day or court holiday. (d) Service adjustment: when a deadline runs from SERVICE (not filing) and service was made by mail, add 3 calendar days AFTER the period would otherwise expire; apply the rollover rule of (c) after adding the 3 days, not before.
+
+II. Court holidays in this jurisdiction for 2026 (exhaustive list for computation): January 1 (New Year), January 19 (Civil Rights Day), May 25 (Memorial Day), July 3 (observed Independence Day), September 7 (Labor Day), November 26 (Thanksgiving), December 25 (Christmas).
+
+III. Periods that matter here. (1) Answer to a complaint: 21 days after service of the summons and complaint. (2) Opposition to a motion: 14 days after the motion is FILED. (3) Reply in support of a motion: 7 days after the opposition is filed. (4) Notice of appeal: 30 days after entry of judgment. (5) Rule 68-style offer of judgment: acceptance within 14 days after service of the offer.
+
+IV. Weekday calendar anchors for 2026 (verified): June 1 is a Monday; July 1 is a Wednesday; August 1 is a Saturday; September 1 is a Tuesday; October 1 is a Thursday.
+
+V. Firm rule. Every computed date is recorded in the deadlines register as a review record whose outcome field contains ONLY the final date in YYYY-MM-DD form. A computation that ignores the rollover rule or the mail-service adjustment is a docketing error chargeable to the responsible attorney.
+
+This memo controls over any older docketing chart. The superseded 2024 chart (which used a count-the-trigger-day method and a 5-day mail adjustment) must not be used.</pre>
+  </div>
+
+  <footer class="note" style="margin-top:36px">Transcript JSON: <code>data/research/realism-transcript.json</code> ·
+  regenerate: <code>node docs/evidence/build-realism-demo.mjs</code></footer>
+</div>

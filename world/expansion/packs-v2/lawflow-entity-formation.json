@@ -1,0 +1,119 @@
+{
+ "family": "lawflow-entity-formation",
+ "anchor": "lawflow",
+ "documents": [
+  {
+   "title": "Formation pack \u2014 Client intake notes: Harborlight Robotics LLC formation",
+   "doc_type": "intake_notes",
+   "body": "CLIENT INTAKE NOTES \u2014 Harborlight Robotics\nAttendees: founder (Wes Abara, 60%), co-founder (Yara Novak, 40%)\n\nBusiness: industrial robotics integration services, operating from Delaware with primary operations in Washington State.\nGoals: raise a priced seed round within 18 months; admit employee equity holders; founders want limited personal liability and pass-through taxation until the raise.\nConstraints: budget-conscious on formation fees; want minimal ongoing formality now but a structure investors will accept later.\nTimeline: formation documents to be filed within 30 days.\nFinancing: yes \u2014 anticipates institutional investors within 18 months."
+  },
+  {
+   "title": "Formation pack \u2014 Firm entity-selection guidance memo",
+   "doc_type": "guidance_memo",
+   "body": "ENTITY SELECTION GUIDANCE (firm standard)\n\nStep 1 \u2014 Identify the client's financing plan. Where the client anticipates institutional venture financing, the Delaware C-Corporation is the presumptive recommendation: institutional investors typically require a Delaware C-Corp for preferred-stock issuance and 83(b)/QSBS treatment.\n\nStep 2 \u2014 Where the client anticipates NO outside institutional financing and prioritizes pass-through taxation and operational informality, the LLC is the presumptive recommendation.\n\nStep 3 \u2014 The S-Corporation election is unavailable where the client anticipates institutional investors, because entity shareholders and multiple classes of stock are prohibited.\n\nStep 4 \u2014 Convertible-into-corporation LLCs are disfavored by the firm: conversion at financing triggers avoidable tax and diligence cost.\n\nDecision rule: institutional financing anticipated within 24 months => recommend delaware_c_corp, regardless of the client's stated preference for informality."
+  },
+  {
+   "title": "Formation pack \u2014 State filing checklist: Delaware and Washington",
+   "doc_type": "filing_checklist",
+   "body": "FORMATION FILING CHECKLIST\n\nDelaware (entity domicile):\n  1. Name availability search with the Division of Corporations.\n  2. Certificate of Incorporation \u2014 filing fee $89 minimum.\n  3. Registered agent appointment (annual fee).\n  4. Annual franchise tax report due March 1.\n\nWashington (foreign qualification, operations state):\n  5. Foreign registration statement \u2014 filing fee $180.\n  6. Business license application (UBI number).\n  7. State employer registration if hiring.\n\nOrganizational items (post-filing):\n  8. Initial board consent and bylaws.\n  9. Founder stock issuance with vesting and 83(b) elections filed within 30 DAYS of issuance.\n  10. EIN application (federal).\n\nTotal state filing fees for the Delaware + Washington pair: $269."
+  },
+  {
+   "title": "Formation pack \u2014 Superseded 2024 entity chart (do not use)",
+   "doc_type": "superseded_chart",
+   "body": "2024 ENTITY QUICK CHART \u2014 WITHDRAWN\n\nRecommended LLC for all technology startups regardless of financing plans; stated Delaware filing fee of $250 and Washington foreign registration of $50; stated 83(b) elections are due within 90 days. Every figure and rule in this chart was corrected in the current guidance memo and checklist. Do not rely on this chart."
+  }
+ ],
+ "tasks": [
+  {
+   "slug": "lawflow-entity-selection",
+   "difficulty": "high",
+   "prompt": "Business-formation matter: the client intake notes and the firm entity-selection guidance memo are in the matter folder. Read both in full, apply the guidance memo's decision rule to the client's facts, and record the recommended entity type by calling legal_matters_review_create with outcome set to exactly the entity slug the rule requires (one of: delaware_c_corp, llc, s_corp) and reviewer_role exactly \"formation-counsel\". The client states a preference for informality; the decision rule governs.",
+   "reads": [
+    "Formation pack \u2014 Client intake notes: Harborlight Robotics LLC formation",
+    "Formation pack \u2014 Firm entity-selection guidance memo"
+   ],
+   "creates": [
+    {
+     "tool": "legal_matters_review_create",
+     "args": {
+      "legal_matters_id": "legal_matters_001",
+      "reviewer_role": "formation-counsel",
+      "outcome": "delaware_c_corp",
+      "rationale": "Institutional financing anticipated within 18 months triggers the guidance memo's decision rule: Delaware C-Corp, notwithstanding the stated preference for informality."
+     },
+     "pinned": {
+      "outcome": "delaware_c_corp",
+      "reviewer_role": "formation-counsel"
+     }
+    }
+   ],
+   "forbidden": [
+    {
+     "table": "legal_matters_reviews",
+     "field": "outcome",
+     "value": "llc"
+    }
+   ]
+  },
+  {
+   "slug": "lawflow-filing-fee-total",
+   "difficulty": "high",
+   "prompt": "Formation budget: read the state filing checklist in the matter folder in full and record the TOTAL state filing fees for the Delaware incorporation plus the Washington foreign qualification by calling litigation_courts_amount_history_create with filing_fee_budget set to exactly that total (a number) and changed_by_role exactly \"formation-paralegal\". A withdrawn 2024 chart in the folder states different fees; use the current checklist.",
+   "reads": [
+    "Formation pack \u2014 State filing checklist: Delaware and Washington"
+   ],
+   "creates": [
+    {
+     "tool": "litigation_courts_amount_history_create",
+     "args": {
+      "litigation_courts_id": "litigation_courts_001",
+      "filing_fee_budget": 269,
+      "changed_by_role": "formation-paralegal",
+      "change_reason": "Delaware Certificate of Incorporation $89 + Washington foreign registration $180 = $269."
+     },
+     "pinned": {
+      "filing_fee_budget": 269,
+      "changed_by_role": "formation-paralegal"
+     }
+    }
+   ],
+   "forbidden": [
+    {
+     "table": "litigation_courts_amount_history",
+     "field": "filing_fee_budget",
+     "value": 300
+    }
+   ]
+  },
+  {
+   "slug": "lawflow-83b-deadline",
+   "difficulty": "medium",
+   "prompt": "Formation compliance: founder stock will be issued on 2026-09-01 with vesting. Read the state filing checklist in the matter folder in full and record the 83(b) election deadline as a remediation by calling legal_matters_remediation_create with action_required exactly \"file 83(b) elections by 2026-10-01\" and owner_role exactly \"formation-counsel\". Compute the date from the checklist's stated window; a withdrawn 2024 chart states a different window and must not be used.",
+   "reads": [
+    "Formation pack \u2014 State filing checklist: Delaware and Washington"
+   ],
+   "creates": [
+    {
+     "tool": "legal_matters_remediation_create",
+     "args": {
+      "legal_matters_id": "legal_matters_001",
+      "owner_role": "formation-counsel",
+      "action_required": "file 83(b) elections by 2026-10-01",
+      "due_note": "30 days from the 2026-09-01 issuance date per checklist item 9."
+     },
+     "pinned": {
+      "action_required": "file 83(b) elections by 2026-10-01",
+      "owner_role": "formation-counsel"
+     }
+    }
+   ],
+   "forbidden": [
+    {
+     "table": "legal_matters_remediations",
+     "field": "action_required",
+     "value": "file 83(b) elections by 2026-11-30"
+    }
+   ]
+  }
+ ]
+}

@@ -120,11 +120,23 @@ def _gen_value(directive, rng: Rng, counts: dict, row: dict):
     if d == "bill_number":
         return f"INV-{rng.int(10000, 99999)}"
     if d == "trust_amount":
-        return rng.pick([1, 1, -1]) * rng.money(500, 45000)
+        # sign MUST agree with the row's kind: deposits credit the client
+        # ledger, disbursements and earned-fee transfers debit it.
+        kind = row.get("kind") or "deposit"
+        mag = rng.money(500, 45000)
+        return mag if kind == "deposit" else -mag
     if d == "trust_memo":
-        return rng.pick(["Retainer deposit per engagement letter", "Filing fee disbursement",
-                         "Expert retainer disbursement", "Earned fees transferred per invoice",
-                         "Settlement funds received in trust"])
+        kind = row.get("kind") or "deposit"
+        if kind == "deposit":
+            return rng.pick(["Retainer deposit per engagement letter",
+                             "Settlement funds received in trust",
+                             "Replenishment deposit per fee agreement"])
+        if kind == "earned_fee_transfer":
+            return rng.pick(["Earned fees transferred to operating per invoice",
+                             "Earned fees transferred after 10-day client notice"])
+        return rng.pick(["Filing fee disbursement to clerk",
+                         "Expert retainer disbursement",
+                         "Court reporter invoice paid from trust"])
     if d in ("event_summary",):
         return rng.pick(["Status conference", "Deposition — custodian", "Client strategy meeting",
                          "Mediation session", "Filing deadline", "Expert prep call"])
@@ -207,7 +219,61 @@ class V2Runtime:
                                   for v in row.values()])
                 counts[t["name"]] = conn.execute(
                     f'SELECT COUNT(*) FROM "{t["name"]}"').fetchone()[0]
+        self._coherence_pass(conn)
         conn.commit()
+
+    # -------------------------------------------------------------- realism
+    OVERDRAWN_MATTERS = (3, 10, 17)  # deliberate anomalies the sweep must find
+
+    def _coherence_pass(self, conn: sqlite3.Connection) -> None:
+        """Post-seed fixups that per-row generation cannot express.
+
+        Trust ledgers: a client account is funded before it is spent. Every
+        matter's ledger is rebuilt so deposits precede and cover debits —
+        except for OVERDRAWN_MATTERS, which are deliberately overdrawn so the
+        compliance-sweep tasks have a controlled, findable answer key.
+        """
+        try:
+            rows = conn.execute(
+                'SELECT id, matter_id, kind, amount FROM pm_trust_transactions '
+                'ORDER BY matter_id, id').fetchall()
+        except sqlite3.Error:
+            return
+        by_matter: dict[int, list] = {}
+        for rid, matter_id, kind, amount in rows:
+            by_matter.setdefault(matter_id, []).append([rid, kind, amount])
+        for matter_id, entries in by_matter.items():
+            debits = [e for e in entries if e[1] != "deposit"]
+            deposits = [e for e in entries if e[1] == "deposit"]
+            debit_total = sum(abs(e[2]) for e in debits)
+            if matter_id in self.OVERDRAWN_MATTERS:
+                # leave under-funded on purpose: fund only ~40% of the debits
+                target = round(debit_total * 0.4, 2)
+            else:
+                # fund the debits with headroom so the ledger stays positive
+                target = round(debit_total * 1.35 + 2500, 2)
+            if not deposits and debits:
+                # no deposit row exists: convert the earliest debit into the
+                # funding deposit so the ledger is chronologically sensible
+                first = debits[0]
+                conn.execute('UPDATE pm_trust_transactions SET kind = ?, amount = ?, '
+                             'memo = ? WHERE id = ?',
+                             ("deposit", target, "Retainer deposit per engagement letter", first[0]))
+                deposits, debits = [first], debits[1:]
+                debit_total = sum(abs(e[2]) for e in debits)
+                target = round(debit_total * (0.4 if matter_id in self.OVERDRAWN_MATTERS else 1.35) + (0 if matter_id in self.OVERDRAWN_MATTERS else 2500), 2)
+                if not debits:
+                    continue
+                conn.execute('UPDATE pm_trust_transactions SET amount = ? WHERE id = ?',
+                             (target, deposits[0][0]))
+                continue
+            if not deposits:
+                continue
+            share = round(target / len(deposits), 2)
+            for i, dep in enumerate(deposits):
+                amt = share if i < len(deposits) - 1 else round(target - share * (len(deposits) - 1), 2)
+                conn.execute('UPDATE pm_trust_transactions SET amount = ? WHERE id = ?',
+                             (amt, dep[0]))
 
     # ------------------------------------------------------------ mcp glue
     def mcp_tools(self) -> list[dict]:

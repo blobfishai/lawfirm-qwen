@@ -1,0 +1,436 @@
+{
+ "base": "http://127.0.0.1:8980",
+ "captured_at": "2026-08-11T02:07:34.366Z",
+ "health": {
+  "ok": true,
+  "world_id": "sbx_206712ec47f741d3",
+  "tables": 70,
+  "tools": 91,
+  "tasks": 255,
+  "sessions": 1
+ },
+ "transcript": [
+  {
+   "system": "practice-management (Clio-mirrored)",
+   "persona": "Billing partner, Monday prebill review",
+   "story": "Pull the matter, record today's work with a UTBMS code, and move the prebill forward — the same three calls a billing partner makes every week.",
+   "steps": [
+    [
+     "matters_get",
+     {
+      "id": 1
+     }
+    ],
+    [
+     "time_entries_create",
+     {
+      "matter_id": 1,
+      "user_id": 2,
+      "date": "2026-08-11",
+      "quantity_hours": 1.8,
+      "rate": 425,
+      "description": "Review counterparty markup; call with client re fallback positions",
+      "utbms_task_code": "L120"
+     }
+    ],
+    [
+     "bills_list",
+     {
+      "state": "draft",
+      "limit": 2
+     }
+    ]
+   ],
+   "calls": [
+    {
+     "tool": "matters_get",
+     "args": {
+      "id": 1
+     },
+     "ok": true,
+     "response": "{\"data\": {\"id\": 1, \"number\": \"00695-Talvern\", \"display_name\": \"Ironwood Ops Privacy Matter\", \"client_id\": 6, \"status\": \"open\", \"practice_area_id\": 2, \"responsible_attorney_id\": 4, \"originating_attorney_id\": 12, \"billing_method\": \"hourly\", \"open_date\": \"2026-10-24\", \"close_date\": null, \"description\": \"Securities engagement for Summit Holdings; scope per engagement letter.\", \"updated_at\": \"2026-06-02\"}}"
+    },
+    {
+     "tool": "time_entries_create",
+     "args": {
+      "matter_id": 1,
+      "user_id": 2,
+      "date": "2026-08-11",
+      "quantity_hours": 1.8,
+      "rate": 425,
+      "description": "Review counterparty markup; call with client re fallback positions",
+      "utbms_task_code": "L120"
+     },
+     "ok": true,
+     "response": "{\"data\": {\"id\": 161, \"created\": \"pm_time_entries\", \"billable\": 1, \"billed\": 0, \"matter_id\": 1, \"user_id\": 2, \"date\": \"2026-08-11\", \"quantity_hours\": 1.8, \"rate\": 425, \"description\": \"Review counterparty markup; call with client re fallback positions\", \"utbms_task_code\": \"L120\", \"total\": 765.0, \"created_at\": \"2026-08-10T12:00:00Z\"}}"
+    },
+    {
+     "tool": "bills_list",
+     "args": {
+      "state": "draft",
+      "limit": 2
+     },
+     "ok": true,
+     "response": "{\"data\": [{\"id\": 3, \"number\": \"INV-36024\", \"matter_id\": 21, \"client_id\": 6, \"state\": \"draft\", \"issue_date\": \"2026-08-25\", \"due_date\": \"2026-09-19\", \"subtotal\": 79886.14, \"tax\": 0.0, \"total\": 79886.14, \"balance\": 79886.14, \"created_at\": \"2026-07-01\"}, {\"id\": 9, \"number\": \"INV-15123\", \"matter_id\": 1, \"client_id\": 36, \"state\": \"draft\", \"issue_date\": \"2026-06-13\", \"due_date\": \"2026-08-27\", \"subtotal\": 5408.0, \"tax\": 0.0, \"total\": 5408.0, \"balance\": 5408.0, \"created_at\": \"2026-08-16\"}], \"meta\": {\"paging\": {}, \"records\": 2}}"
+    }
+   ]
+  },
+  {
+   "system": "practice-management — trust accounting",
+   "persona": "Trust accountant, month-end three-way reconciliation",
+   "story": "The client ledger must never go negative. Matter 3 is healthy (funded, then spent); matter 10 is one of two deliberately overdrawn ledgers the compliance-sweep task must find. Deposits are positive, disbursements negative, and every memo matches its transaction kind — a post-seed coherence pass enforces that a trust account is funded before it is spent.",
+   "steps": [
+    [
+     "trust_transactions_list",
+     {
+      "matter_id": 3
+     }
+    ],
+    [
+     "trust_balance_get",
+     {
+      "matter_id": 3
+     }
+    ],
+    [
+     "trust_transactions_list",
+     {
+      "matter_id": 10
+     }
+    ],
+    [
+     "trust_balance_get",
+     {
+      "matter_id": 10
+     }
+    ]
+   ],
+   "calls": [
+    {
+     "tool": "trust_transactions_list",
+     "args": {
+      "matter_id": 3
+     },
+     "ok": true,
+     "response": "{\"data\": [{\"id\": 6, \"matter_id\": 3, \"client_id\": 40, \"kind\": \"deposit\", \"amount\": 1921.26, \"date\": \"2026-08-17\", \"memo\": \"Retainer deposit per engagement letter\", \"cleared\": 0, \"created_at\": \"2026-07-21\"}], \"meta\": {\"paging\": {}, \"records\": 1}}"
+    },
+    {
+     "tool": "trust_balance_get",
+     "args": {
+      "matter_id": 3
+     },
+     "ok": true,
+     "response": "{\"data\": {\"aggregate\": \"sum\", \"field\": \"amount\", \"value\": 1921.26, \"rows_considered\": 1}}"
+    },
+    {
+     "tool": "trust_transactions_list",
+     "args": {
+      "matter_id": 10
+     },
+     "ok": true,
+     "response": "{\"data\": [{\"id\": 4, \"matter_id\": 10, \"client_id\": 19, \"kind\": \"deposit\", \"amount\": 5722.32, \"date\": \"2026-04-21\", \"memo\": \"Replenishment deposit per fee agreement\", \"cleared\": 1, \"created_at\": \"2026-04-11\"}, {\"id\": 24, \"matter_id\": 10, \"client_id\": 12, \"kind\": \"earned_fee_transfer\", \"amount\": -42917.4, \"date\": \"2026-06-16\", \"memo\": \"Earned fees transferred to operating per invoice\", \"cleared\": 1, \"created_at\": \"2026-08-11\"}, {\"id\": 25, \"matter_id\": 10, \"client_id\": 37, \"kind\": \"deposit\", \"amount\": 5722.32, \"date\": \"2026-07-19\", \"memo\": \"Retainer deposit per engagement letter\", \"cleared\": 1, \"created_at\": \"2026-06-05\"}, {\"id\": 26, \"matter_id\": 10, \"client_id\": 4, \"kind\": \"deposit\", \"amount\": 5722.32, \"date\": \"2026-08-06\", \"memo\": \"Retainer deposit per engagement letter\", \"cleared\": 1, \"created_at\": \"2026-04-27\"}], \"meta\": {\"paging\": {}, \"records\": 4}}"
+    },
+    {
+     "tool": "trust_balance_get",
+     "args": {
+      "matter_id": 10
+     },
+     "ok": true,
+     "response": "{\"data\": {\"aggregate\": \"sum\", \"field\": \"amount\", \"value\": -25750.44, \"rows_considered\": 4}}"
+    }
+   ]
+  },
+  {
+   "system": "docket-records (CourtListener-mirrored)",
+   "persona": "Associate cite-checking a brief",
+   "story": "One citation resolves, one does not. The tool returns an honest empty result rather than inventing an opinion — the property that makes hallucination gradeable.",
+   "steps": [
+    [
+     "citation_lookup",
+     {
+      "text": "821 Sim. 3d 926"
+     }
+    ],
+    [
+     "citation_lookup",
+     {
+      "text": "999 Sim. 9d 999"
+     }
+    ],
+    [
+     "dockets_search",
+     {
+      "q": "Talvern"
+     }
+    ]
+   ],
+   "calls": [
+    {
+     "tool": "citation_lookup",
+     "args": {
+      "text": "821 Sim. 3d 926"
+     },
+     "ok": true,
+     "response": "{\"count\": 1, \"next\": null, \"previous\": null, \"results\": [{\"id\": 1, \"case_name\": \"Meridian Cloud v. Silverline Data\", \"court_id\": \"simsup\", \"date_filed\": \"2023-11-04\", \"citation\": \"821 Sim. 3d 926\", \"precedential_status\": \"Published\", \"snippet\": \"\\u2026the court holds that the parties' agreement controls and the motion is \", \"plain_text\": \"This document is synthetic simulation content. It sets out the parties' positions, the operative facts as pleaded, and the relief requested, with numbered paragraphs and defined terms used consistently throughout. This document is synthetic simulation content. It sets out the parties' positions, the operative facts as pleaded, and the relief requested, with numbered paragraphs and defined terms used consistently throughout. This document is synthetic simulation content. It sets out the parties' positions, the operative facts as pleaded, and the relief requested, with numbered paragraphs and defined terms used consistently throughout. This document is synthetic simulation content. It sets out the parties' positions, the operative facts as pleaded, and the relief requested, with numbered paragraphs and defined terms used consistently throughout. This document is synthetic simulation content. It sets out the parties' positions, the operative facts as pleaded, and the relief requested, with numbered paragraphs and defined terms used consistently throughout. \"}]}"
+    },
+    {
+     "tool": "citation_lookup",
+     "args": {
+      "text": "999 Sim. 9d 999"
+     },
+     "ok": true,
+     "response": "{\"count\": 0, \"next\": null, \"previous\": null, \"results\": []}"
+    },
+    {
+     "tool": "dockets_search",
+     "args": {
+      "q": "Talvern"
+     },
+     "ok": true,
+     "response": "{\"count\": 2, \"next\": null, \"previous\": null, \"results\": [{\"id\": 7, \"docket_number\": \"2:25-cv-9156\", \"case_name\": \"Talvern Logistics v. Halcyon Therapeutics\", \"court_id\": \"simd\", \"date_filed\": \"2026-11-11\", \"date_terminated\": null, \"nature_of_suit\": \"Employment\", \"assigned_to\": \"Hon. Devlin Whitfield\", \"cause\": \"35:271 Patent Infringement\", \"jury_demand\": \"None\"}, {\"id\": 12, \"docket_number\": \"7:22-cv-1649\", \"case_name\": \"Talvern Logistics v. Bluewater Components\", \"court_id\": \"simca9\", \"date_filed\": \"2025-06-22\", \"date_terminated\": null, \"nature_of_suit\": \"Securities\", \"assigned_to\": \"Hon. Dana Ellery\", \"cause\": \"28:1332 Diversity\", \"jury_demand\": \"Plaintiff\"}]}"
+    }
+   ]
+  },
+  {
+   "system": "ediscovery (Relativity-mirrored)",
+   "persona": "Review attorney working a privilege batch",
+   "story": "Query the batch, open the document's extracted text, code it. Note the Relativity-native envelope: Objects / TotalCount / ArtifactID.",
+   "steps": [
+    [
+     "documents_query",
+     {
+      "workspace_id": 3,
+      "privileged": "yes",
+      "length": 3
+     }
+    ],
+    [
+     "review_documents_get",
+     {
+      "id": 2
+     }
+    ]
+   ],
+   "calls": [
+    {
+     "tool": "documents_query",
+     "args": {
+      "workspace_id": 3,
+      "privileged": "yes",
+      "length": 3
+     },
+     "ok": true,
+     "response": "{\"Objects\": [{\"ArtifactID\": 21, \"workspace_id\": 3, \"control_number\": \"TAL146258\", \"custodian\": \"Devlin Holt\", \"doc_date\": \"2026-05-22\", \"subject\": \"Fee arrangement\", \"extracted_text\": \"This document is synthetic simulation content. It sets out the parties' positions, the operative facts as pleaded, and the relief requested, with numbered paragraphs and defined terms used consistently throughout. This document is synthetic\\u2026[preview \\u2014 use the get tool for full text]\", \"responsive\": \"yes\", \"privileged\": \"yes\", \"reviewed_by\": null}, {\"ArtifactID\": 81, \"workspace_id\": 3, \"control_number\": \"DEF108148\", \"custodian\": \"Celine Reyes\", \"doc_date\": \"2024-08-04\", \"subject\": \"Discovery dispute\", \"extracted_text\": \"This document is synthetic simulation content. It sets out the parties' positions, the operative facts as pleaded, and the relief requested, with numbered paragraphs and defined terms used consistently throughout. This document is synthetic\\u2026[preview \\u2014 use the get tool for full text]\", \"responsive\": \"undetermined\", \"privileged\": \"yes\", \"reviewed_by\": null}], \"TotalCount\": 2, \"CurrentStartIndex\": 0}"
+    },
+    {
+     "tool": "review_documents_get",
+     "args": {
+      "id": 2
+     },
+     "ok": true,
+     "response": "{\"ArtifactID\": 2, \"workspace_id\": 3, \"control_number\": \"MER108261\", \"custodian\": \"Felix Vasquez\", \"doc_date\": \"2026-05-15\", \"subject\": \"Scheduling\", \"extracted_text\": \"This document is synthetic simulation content. It sets out the parties' positions, the operative facts as pleaded, and the relief requested, with numbered paragraphs and defined terms used consistently throughout. This document is synthetic simulation content. It sets out the parties' positions, the operative facts as pleaded, and the relief requested, with numbered paragraphs and defined terms used consistently throughout. This document is synthetic simulation content. It sets out the parties' positions, the operative facts as pleaded, and the relief requested, with numbered paragraphs and defined terms used consistently throughout. This document is synthetic simulation content. It sets out the parties' positions, the operative facts as pleaded, and the relief requested, with numbered paragraphs and defined terms used consistently throughout. This document is synthetic simulation content. It sets out the parties' positions, the operative facts as pleaded, and the relief requested, with numbered paragraphs and defined terms used consistently throughout. \", \"responsive\": \"yes\", \"privileged\": \"no\", \"reviewed_by\": null}"
+    }
+   ]
+  },
+  {
+   "system": "ebilling (LEDES 1998B)",
+   "persona": "E-billing coordinator before submission",
+   "story": "The line items come back keyed by the real LEDES 1998B field names, and the reconciliation exposes a genuine header-vs-lines mismatch seeded into invoice 2.",
+   "steps": [
+    [
+     "invoice_lines_list",
+     {
+      "invoice_id": 2,
+      "limit": 3
+     }
+    ],
+    [
+     "invoice_total_check",
+     {
+      "invoice_id": 2
+     }
+    ],
+    [
+     "invoices_get",
+     {
+      "id": 2
+     }
+    ]
+   ],
+   "calls": [
+    {
+     "tool": "invoice_lines_list",
+     "args": {
+      "invoice_id": 2,
+      "limit": 3
+     },
+     "ok": true,
+     "response": "{\"count\": 3, \"lines\": [{\"LINE_ITEM_NUMBER\": 17, \"INVOICE_ID\": 2, \"LINE_ITEM_DATE\": \"2026-05-10\", \"TIMEKEEPER_NAME\": \"Wes Kessler\", \"LINE_ITEM_TASK_CODE\": \"L330\", \"LINE_ITEM_ACTIVITY_CODE\": \"A103\", \"LINE_ITEM_NUMBER_OF_UNITS\": 7.74, \"LINE_ITEM_UNIT_COST\": 607.65, \"LINE_ITEM_TOTAL\": 4703.21, \"LINE_ITEM_DESCRIPTION\": \"Analyze discovery responses; prepare deficiency letter\"}, {\"LINE_ITEM_NUMBER\": 25, \"INVOICE_ID\": 2, \"LINE_ITEM_DATE\": \"2026-07-14\", \"TIMEKEEPER_NAME\": \"Aiko Ellery\", \"LINE_ITEM_TASK_CODE\": \"L330\", \"LINE_ITEM_ACTIVITY_CODE\": \"A102\", \"LINE_ITEM_NUMBER_OF_UNITS\": 8.16, \"LINE_ITEM_UNIT_COST\": 258.16, \"LINE_ITEM_TOTAL\": 2106.59, \"LINE_ITEM_DESCRIPTION\": \"Review disclosure schedules against data room index\"}, {\"LINE_ITEM_NUMBER\": 32, \"INVOICE_ID\": 2, \"LINE_ITEM_DATE\": \"2026-07-03\", \"TIMEKEEPER_NAME\": \"Tomas Lindqvist\", \"LINE_ITEM_TASK_CODE\": \"L450\", \"LINE_ITEM_ACTIVITY_CODE\": \"A103\", \"LINE_ITEM_NUMBER_OF_UNITS\": 2.93, \"LINE_ITEM_UNIT_COST\": 414.67, \"LINE_ITEM_TOTAL\": 1214.98, \"LINE_ITEM_DESCRIPTION\": \"Review and revise draft agreement; correspondence with opposing counsel\"}]}"
+    },
+    {
+     "tool": "invoice_total_check",
+     "args": {
+      "invoice_id": 2
+     },
+     "ok": true,
+     "response": "{\"aggregate\": \"sum\", \"field\": \"amount\", \"value\": 15224.06, \"rows_considered\": 9}"
+    },
+    {
+     "tool": "invoices_get",
+     "args": {
+      "id": 2
+     },
+     "ok": true,
+     "response": "{\"INVOICE_ID\": 2, \"INVOICE_NUMBER\": \"INV-37157\", \"LAW_FIRM_MATTER_ID\": \"00220-Halcyon\", \"CLIENT_MATTER_ID\": \"00524-Fairview\", \"BILLING_START_DATE\": \"2026-05-06\", \"BILLING_END_DATE\": \"2026-06-05\", \"INVOICE_TOTAL\": 55362.24, \"INVOICE_STATUS\": \"appealed\", \"VALIDATION_ERRORS\": null, \"SUBMITTED_AT\": \"2026-07-06\"}"
+    }
+   ]
+  },
+  {
+   "system": "dms (iManage-mirrored)",
+   "persona": "Associate taking a document out to revise it",
+   "story": "Checkout locks the document; a second person's checkout is refused with a 409, exactly like a real DMS.",
+   "steps": [
+    [
+     "documents_get",
+     {
+      "id": 5
+     }
+    ],
+    [
+     "documents_checkout",
+     {
+      "id": 5,
+      "checked_out_by": "aiko.tanaka"
+     }
+    ],
+    [
+     "documents_checkout",
+     {
+      "id": 5,
+      "checked_out_by": "someone.else"
+     }
+    ]
+   ],
+   "calls": [
+    {
+     "tool": "documents_get",
+     "args": {
+      "id": 5
+     },
+     "ok": true,
+     "response": "{\"data\": {\"id\": 5, \"folder_id\": 16, \"workspace_id\": 1, \"name\": \"Settlement Model \\u2014 Fairview Works\", \"doc_class\": \"NOTE\", \"author\": \"Priya Lindqvist\", \"edit_date\": \"2026-03-10\", \"checked_out_by\": null, \"latest_version\": 1, \"body\": \"This document is synthetic simulation content. It sets out the parties' positions, the operative facts as pleaded, and the relief requested, with numbered paragraphs and defined terms used consistently throughout. This document is synthetic simulation content. It sets out the parties' positions, the operative facts as pleaded, and the relief requested, with numbered paragraphs and defined terms used consistently throughout. This document is synthetic simulation content. It sets out the parties' positions, the operative facts as pleaded, and the relief requested, with numbered paragraphs and defined terms used consistently throughout. \"}}"
+    },
+    {
+     "tool": "documents_checkout",
+     "args": {
+      "id": 5,
+      "checked_out_by": "aiko.tanaka"
+     },
+     "ok": true,
+     "response": "{\"data\": {\"id\": 5, \"updated\": \"dm_documents\", \"fields\": [\"checked_out_by\"]}}"
+    },
+    {
+     "tool": "documents_checkout",
+     "args": {
+      "id": 5,
+      "checked_out_by": "someone.else"
+     },
+     "ok": false,
+     "response": "ERROR 409: already checked out (by aiko.tanaka)"
+    }
+   ]
+  },
+  {
+   "system": "workspace (Google-mirrored)",
+   "persona": "Paralegal building a chronology from email",
+   "story": "Gmail-native shapes: a message list with resultSizeEstimate, then a full message resource with payload.headers.",
+   "steps": [
+    [
+     "gmail_messages_list",
+     {
+      "q": "Settlement",
+      "maxResults": 3
+     }
+    ],
+    [
+     "gmail_messages_get",
+     {
+      "id": 9
+     }
+    ]
+   ],
+   "calls": [
+    {
+     "tool": "gmail_messages_list",
+     "args": {
+      "q": "Settlement",
+      "maxResults": 3
+     },
+     "ok": true,
+     "response": "{\"messages\": [{\"id\": \"1\", \"threadId\": \"1\"}, {\"id\": \"2\", \"threadId\": \"11\"}, {\"id\": \"9\", \"threadId\": \"8\"}], \"resultSizeEstimate\": 3}"
+    },
+    {
+     "tool": "gmail_messages_get",
+     "args": {
+      "id": 9
+     },
+     "ok": true,
+     "response": "{\"id\": \"9\", \"threadId\": \"8\", \"labelIds\": [\"SENT\"], \"snippet\": \"Draft motion section; cite-check; conference with team\", \"internalDate\": \"2026-08-12\", \"payload\": {\"headers\": [{\"name\": \"From\", \"value\": \"devlin.novak@simulated-firm.example\"}, {\"name\": \"To\", \"value\": \"omar.marchetti@simulated-firm.example\"}, {\"name\": \"Subject\", \"value\": \"Settlement posture\"}, {\"name\": \"Date\", \"value\": \"2026-08-12\"}], \"body\": {\"data\": \"Draft motion section; cite-check; conference with team\"}}}"
+    }
+   ]
+  },
+  {
+   "system": "seeded document corpus",
+   "persona": "Associate opening the matter folder",
+   "story": "The documents the tasks grade against are full legal drafting, not lorem — a precedent clause from the ACORD-anchored library and a regulatory chapter from the ObliQA-anchored pack.",
+   "steps": [
+    [
+     "query_matter_documents",
+     {
+      "title": "Clause library — CL-105",
+      "limit": 2
+     }
+    ],
+    [
+     "read_matter_document",
+     {
+      "id": 216
+     }
+    ],
+    [
+     "read_matter_document",
+     {
+      "id": 238
+     }
+    ]
+   ],
+   "calls": [
+    {
+     "tool": "query_matter_documents",
+     "args": {
+      "title": "Clause library — CL-105",
+      "limit": 2
+     },
+     "ok": true,
+     "response": "{\"table\": \"matter_documents\", \"count\": 1, \"rows\": [{\"id\": 216, \"title\": \"Clause library \\u2014 CL-105 Limitation of Liability with uncapped carve-outs\", \"doc_type\": \"precedent_clause\", \"related_shape\": \"acord-clause-retrieval\", \"body\": \"PRECEDENT CLAUSE CL-105\\nCategory: Limitation of Liability with uncapped carve-outs\\nLibrary slug: limitation_of_liability_uncapped_carveout\\nApproved by: Contracts KM Committee\\n\\nLIMITATION OF LIABILITY. The limitations in this Section shall n\\u2026[preview]\"}], \"note\": \"body fields are previews \\u2014 call read_matter_document(id) to read a document in full before using it\"}"
+    },
+    {
+     "tool": "read_matter_document",
+     "args": {
+      "id": 216
+     },
+     "ok": true,
+     "response": "{\"id\": 216, \"title\": \"Clause library \\u2014 CL-105 Limitation of Liability with uncapped carve-outs\", \"doc_type\": \"precedent_clause\", \"related_shape\": \"acord-clause-retrieval\", \"body\": \"PRECEDENT CLAUSE CL-105\\nCategory: Limitation of Liability with uncapped carve-outs\\nLibrary slug: limitation_of_liability_uncapped_carveout\\nApproved by: Contracts KM Committee\\n\\nLIMITATION OF LIABILITY. The limitations in this Section shall not apply to (a) a party's indemnification obligations for third-party intellectual-property claims, (b) breach of confidentiality, (c) gross negligence or willful misconduct, or (d) a party's payment obligations, each of which shall be uncapped.\\n\\nUse note: this is firm-approved precedent language; deviations require playbook escalation.\"}"
+    },
+    {
+     "tool": "read_matter_document",
+     "args": {
+      "id": 238
+     },
+     "ok": true,
+     "response": "{\"id\": 238, \"title\": \"Regulatory pack \\u2014 AML Rulebook Chapter 14: Suspicious Activity Reporting (excerpt)\", \"doc_type\": \"regulation_excerpt\", \"related_shape\": \"obliqa-regulatory-obligations\", \"body\": \"CHAPTER 14 \\u2014 SUSPICIOUS ACTIVITY REPORTING\\n\\n14.2.1 A Relevant Person must establish and maintain systems and controls to identify, assess, and report suspicious activity.\\n\\n14.2.3 Guidance 10. Relevant Persons should comply with guidance issued by the supervising authority regarding identifying and reporting suspicious activity and transactions relating to money laundering, terrorist financing, and proliferation financing.\\n\\n14.3.1 Where a Relevant Person knows or has reasonable grounds to suspect that a transaction involves the proceeds of crime, it must make an internal report to the Money Laundering Reporting Officer (MLRO) AS SOON AS PRACTICABLE and in any event within THREE (3) BUSINESS DAYS of the suspicion arising.\\n\\n14.3.4 The MLRO must consider each internal report and, where the suspicion is sustained, submit an external Suspicious Activity Report to the Financial Intelligence Unit WITHIN FIVE (5) BUSINESS DAYS of receiving the internal report.\\n\\n14.5.2 A Relevant Person must not disclose to the customer or any third party that a report has been or may be made (the 'tipping-off' prohibition).\"}"
+    }
+   ]
+  }
+ ]
+}
