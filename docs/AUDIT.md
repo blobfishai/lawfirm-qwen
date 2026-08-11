@@ -88,6 +88,41 @@ listed in `reports/QUARANTINE.md`. Excluding them moves Haiku from 60.1 over
 up, because most contaminated verdicts failed the workflow-path check anyway;
 the honest statement is that Haiku's true rate is unmeasured until a re-run.
 
+## Bug 5 — `required_workflow_path` graded the reference solution's browsing order (FIXED; 9 verdicts corrected)
+
+The check matched the declared checkpoint list as a strictly ordered
+subsequence, which enforced ordering among the **read** checkpoints. That
+ordering carries no legal or procedural meaning. A path of
+
+    legal_matters_list -> legal_matters_get -> legal_matters_evidence_create
+
+failed an agent that already had the matter id, fetched it directly, then
+listed for context: identical evidence, identical write, zero reward. Eight
+archived episodes fail on exactly that pattern, and a ninth
+(`task_v3_006-t3`) only because seeded rate-limiting threw a 429 and its
+successful retry landed after the next read — the world punishing correct
+friction recovery.
+
+*Fix* (`world/expansion/fix-path-ordering.mjs`, 217 + 15 verifiers rewritten):
+every checkpoint must still succeed, declared repeats still require that many
+successful calls, writes must occur in declared relative order, and every read
+must occur before the write it justifies. Reads are unordered among themselves.
+`reads_before_writes` and `no_shortcut_direct_update` are untouched and carry
+the read-then-write discipline independently.
+
+*Verified* three ways: the oracle still admits **270/270**; probes on both
+verifier shapes behave correctly — reads in any order pass, write-before-reads
+fails, write-without-reads fails, a missing read fails, and 2-of-3 required
+writes fails (repeat counting intact); and an offline replay over all 296
+archived failures flips exactly the 9 read-ordering artifacts, leaving 145 path
+failures standing — including `task_086-t3`, whose delegation ran *after* its
+write.
+
+Unlike Bug 4, this one is exactly recomputable: the path assertion is a pure
+function of the trace's tool sequence, no world state. The 9 corrections are in
+`reports/PATH-RULE-RESCORE.md` and applied in the tasks-and-traces browser.
+DeepSeek moves 88.1 → 89.3 on self-consistent verdicts.
+
 ## What survived the audit (real model behavior, with evidence)
 
 1. **Side-copy writes (DeepSeek, 34 episodes).** The model files the

@@ -78,6 +78,13 @@ const models = existsSync(TR)
   ? readdirSync(TR).filter((d) => statSync(join(TR, d)).isDirectory())
   : [];
 
+// Verdicts the path-rule correction supersedes (sim/rescore-path-rule.mjs).
+// The path assertion is a pure function of the tool sequence, so these are
+// exact recomputations, not estimates — the browser scores them as passes.
+const RESCORE = join(ROOT, "data", "path-rule-rescore.json");
+const flipped = new Set(existsSync(RESCORE)
+  ? JSON.parse(readFileSync(RESCORE, "utf8")).flips : []);
+
 const traces = [];
 for (const model of models) {
   for (const bucket of ["passed", "failed"]) {
@@ -99,11 +106,14 @@ for (const model of models) {
           final: !!s.final || (!s.tool && !s.name),
         };
       });
+      const file = `traces/${model}/${bucket}/${f}`;
+      const rescored = flipped.has(file);
       traces.push({
-        file: `traces/${model}/${bucket}/${f}`,
+        file,
         quarantine: quarantineReason(j),
+        rescored,
         task: j.taskId, model: j.model ?? model, engine: j.engine ?? model,
-        surface: j.mcpMode ?? "", passed: !!j.passed, reward: j.reward ?? 0,
+        surface: j.mcpMode ?? "", passed: rescored ? true : !!j.passed, reward: j.reward ?? 0,
         calls: j.toolCalls ?? steps.length, turns: j.turnsUsed ?? null,
         maxTurns: j.maxTurns ?? null, cost: j.costUsd ?? 0,
         failed: j.failedConditions ?? [],
@@ -322,13 +332,23 @@ function taskDetail(t) {
 // ------------------------------------------------------------------ traces
 function traceDetail(r) {
   let h = '<h2>' + esc(r.task) + ' &middot; ' + esc(r.model) + '</h2>' + pills([
-    r.quarantine ? ["QUARANTINED", "wr"] : [r.passed ? "PASS" : "FAIL", r.passed ? "ok" : "no"],
+    r.quarantine ? ["QUARANTINED", "wr"]
+      : r.rescored ? ["PASS (verdict corrected)", "ok"]
+      : [r.passed ? "PASS" : "FAIL", r.passed ? "ok" : "no"],
     ["reward " + r.reward],
     [r.calls + " tool calls"],
     r.turns != null ? [r.turns + "/" + r.maxTurns + " turns"] : null,
     ["$" + r.cost.toFixed(4)],
     r.surface && ["surface: " + r.surface],
   ]);
+  if (r.rescored) {
+    h += '<div style="border-left:4px solid var(--okc);background:var(--card);padding:10px 14px;' +
+      'margin:0 0 12px;font-size:.83rem;color:var(--ink2)"><strong>Verdict corrected.</strong> ' +
+      'This episode is recorded on disk as a failure on <code>required_workflow_path</code>, but it ' +
+      'completed every checkpoint — only the order of two <em>reads</em> differed from the reference ' +
+      'walk, which the rule no longer grades. The path assertion is a pure function of the tool ' +
+      'sequence, so this is an exact recomputation, not an estimate. See reports/PATH-RULE-RESCORE.md.</div>';
+  }
   if (r.quarantine) {
     h += '<div style="border-left:4px solid var(--warn);background:var(--card);padding:10px 14px;' +
       'margin:0 0 12px;font-size:.83rem;color:var(--ink2)"><strong>This verdict is not evidence.</strong> ' +
@@ -416,7 +436,7 @@ function render() {
     listPane(D.traces.map((t, i) => ({ ...t, _i: i, _q: t.quarantine ? "quarantined" : "clean" })),
       t => t._i,
       t => esc(t.task) + ' <span class="pill ' + (t.quarantine ? "wr" : t.passed ? "ok" : "no") + '">' +
-        (t.quarantine ? "quarantined" : t.passed ? "pass" : "fail") + '</span>',
+        (t.quarantine ? "quarantined" : t.rescored ? "pass ✎" : t.passed ? "pass" : "fail") + '</span>',
       t => t.model + " · " + t.calls + " calls · $" + t.cost.toFixed(3) +
         (t.failed.length ? " · " + t.failed.join(", ") : ""),
       selTrace, v => selTrace = v, traceDetail,

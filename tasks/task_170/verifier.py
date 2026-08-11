@@ -52,12 +52,49 @@ def verify(initial_state, final_state, trace):
         "SHORTCUT: wrote without reading first" if shortcut else "inspected data before writing")
 
     _required_workflow_path = ["query_matter_documents","read_matter_document","litigation_deadlines_amount_history_create"]
-    _path_cursor = 0
-    for _tool in tools:
-        if _path_cursor < len(_required_workflow_path) and _tool == _required_workflow_path[_path_cursor]:
-            _path_cursor += 1
-    _workflow_complete = _path_cursor == len(_required_workflow_path)
-    _missing_workflow = _required_workflow_path[_path_cursor:]
+    _path_is_write = [False,False,True]
+    # Ordering is graded where it carries meaning: writes in declared order,
+    # and every read before the write it justifies. Reads are unordered among
+    # themselves — the reference walk's browsing order is not a requirement.
+    _pos = {}
+    for _i, _t in enumerate(tools):
+        _pos.setdefault(_t, []).append(_i)
+    _missing_workflow = [t for t in _required_workflow_path if t not in _pos]
+    _wpos = {}
+    if not _missing_workflow:
+        _cursor = -1
+        for _i, _t in enumerate(_required_workflow_path):
+            if not _path_is_write[_i]:
+                continue
+            _nxt = None
+            for _x in _pos[_t]:
+                if _x > _cursor:
+                    _nxt = _x
+                    break
+            if _nxt is None:
+                _missing_workflow.append(_t)
+                break
+            _wpos[_i] = _nxt
+            _cursor = _nxt
+    if not _missing_workflow:
+        _need, _due = {}, {}
+        for _i, _t in enumerate(_required_workflow_path):
+            if _path_is_write[_i]:
+                continue
+            _need[_t] = _need.get(_t, 0) + 1
+            _d = None
+            for _k in range(_i + 1, len(_required_workflow_path)):
+                if _path_is_write[_k] and _k in _wpos:
+                    _d = _wpos[_k]
+                    break
+            if _d is not None:
+                _due[_t] = _d if _t not in _due else min(_due[_t], _d)
+        for _t, _n in _need.items():
+            _d = _due.get(_t)
+            _seen = [_x for _x in _pos.get(_t, []) if _d is None or _x < _d]
+            if len(_seen) < _n:
+                _missing_workflow.append(_t)
+    _workflow_complete = not _missing_workflow
     chk("required_workflow_path", _workflow_complete,
         "completed ordered workflow: " + " -> ".join(_required_workflow_path) if _workflow_complete
         else "INCOMPLETE WORKFLOW: missing ordered checkpoints " + " -> ".join(_missing_workflow))

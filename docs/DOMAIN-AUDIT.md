@@ -5,21 +5,12 @@ sales domain) checked against THIS world. Lint: `node world/expansion/domain-lin
 (word-boundary scan of tables, columns, sample values, tools, and task prompts against
 an out-of-domain vocabulary for a law firm).
 
-**Flagged: 2 tables · 7 tools · 0 task prompts · 7 tasks touching a leaked surface.**
+**Flagged: 0 tables · 0 tools · 0 task prompts · 0 tasks touching a leaked surface.**
 
 | Asset | Kind | Foreign terms | Evidence |
 |---|---|---|---|
-| employees | table | warehouse | description ("…All warehouse and operations staff…") |
-| invoices | table | shipment, po_id | description ("…Billing invoices generated after shipment…") |
-| lookup_employee_work_assignment_with_employees | tool | targets-leaked-table | target_tables ("…employees…") |
-| operations_records_agent | tool | targets-leaked-table | target_tables ("…employees,invoices…") |
-| operations_workflow_agent | tool | targets-leaked-table | target_tables ("…employees,invoices…") |
-| query_employees | tool | targets-leaked-table | target_tables ("…employees…") |
-| query_invoices | tool | po_id | params ("…"id":"INTEGER","invoice_number":"TEXT","po_id":"INTEGER","customer_id":"INTEGER","amount_cents":"INT…") |
-| update_employees_active | tool | targets-leaked-table | target_tables ("…employees…") |
-| update_invoices_status | tool | targets-leaked-table | target_tables ("…invoices…") |
 
-Affected tasks: task_016, task_075, task_076, task_085, task_086, task_095, task_096
+Affected tasks: none
 
 ## Handling (verifier-safe)
 
