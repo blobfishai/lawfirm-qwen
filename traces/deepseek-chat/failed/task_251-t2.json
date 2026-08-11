@@ -1,0 +1,729 @@
+{
+  "taskId": "task_251",
+  "engine": "deepseek-chat",
+  "model": "deepseek-chat",
+  "mcpMode": "bridge",
+  "passed": false,
+  "reward": 0,
+  "failedConditions": [
+    "state_changed",
+    "required_workflow_path",
+    "rows_inserted_into_legal_matters_amount_history",
+    "legal_matters_amount_history_new_row_0_fee_budget_is_269.0",
+    "legal_matters_amount_history_new_row_1_changed_by_role_is_formation-paralegal"
+  ],
+  "advisoryConditions": [],
+  "assertions": [
+    {
+      "name": "state_changed",
+      "passed": false,
+      "details": "NO state change — agent did nothing"
+    },
+    {
+      "name": "reads_before_writes",
+      "passed": true,
+      "details": "reads=13, writes=0, read_first=True"
+    },
+    {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+    },
+    {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints legal_matters_amount_history_create"
+    },
+    {
+      "name": "required_documents_read",
+      "passed": true,
+      "details": "all required input documents were read in full"
+    },
+    {
+      "name": "rows_inserted_into_legal_matters_amount_history",
+      "passed": false,
+      "details": "legal_matters_amount_history: 15 -> 15 rows (0 new, need >= 1)"
+    },
+    {
+      "name": "legal_matters_amount_history_new_row_0_fee_budget_is_269.0",
+      "passed": false,
+      "details": "expected a new legal_matters_amount_history row with fee_budget=269.0; got []"
+    },
+    {
+      "name": "legal_matters_amount_history_new_row_1_changed_by_role_is_formation-paralegal",
+      "passed": false,
+      "details": "expected a new legal_matters_amount_history row with changed_by_role=formation-paralegal; got []"
+    },
+    {
+      "name": "no_new_legal_matters_amount_history_row_with_fee_budget_300",
+      "passed": true,
+      "details": "no fabricated fee_budget=300 row"
+    },
+    {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+    },
+    {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+    },
+    {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+    },
+    {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "45/53 tool calls succeeded"
+    }
+  ],
+  "toolCalls": 53,
+  "turnsUsed": 33,
+  "maxTurns": 50,
+  "usage": {
+    "prompt": 1289218,
+    "completion": 36039,
+    "total": 1325257
+  },
+  "costUsd": 0.38773,
+  "log": "/Users/samuelchien/dev/lawfirm-qwen/sim/logs/run-2026-08-11T02-19-58-447Z.jsonl",
+  "finishedAt": "2026-08-11T02:25:29.508Z",
+  "steps": [
+    {
+      "turn": 1,
+      "tool": "query_documents",
+      "args": {
+        "query": "state filing checklist"
+      },
+      "argBytes": 35,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"agent_documents\", \"count\": 2, \"rows\": [{\"id\": 1, \"title\": \"Harbor Systems\", \"body\": \"Review unresolved invoices exceptions before the next operating handoff. Record the decision, owner, and evidence used.\", \"updated_at\": \"2026-01-15T09:00:00Z\"}, {\"id\": 2, \"title\": \"Ironwood Services\", \"body\": \"Confirm the business handle, compare the current lifecycle state, apply one scoped action, and verify no collateral rows changed.\", \"updated_at\": \"2026-01-15T09:00:00Z\"}]}",
+      "thought": null
+    },
+    {
+      "turn": 1,
+      "tool": "query_documents",
+      "args": {
+        "query": "formation"
+      },
+      "argBytes": 22,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"agent_documents\", \"count\": 2, \"rows\": [{\"id\": 1, \"title\": \"Harbor Systems\", \"body\": \"Review unresolved invoices exceptions before the next operating handoff. Record the decision, owner, and evidence used.\", \"updated_at\": \"2026-01-15T09:00:00Z\"}, {\"id\": 2, \"title\": \"Ironwood Services\", \"body\": \"Confirm the business handle, compare the current lifecycle state, apply one scoped action, and verify no collateral rows changed.\", \"updated_at\": \"2026-01-15T09:00:00Z\"}]}",
+      "thought": null
+    },
+    {
+      "turn": 1,
+      "tool": "legal_matters_list",
+      "args": {},
+      "argBytes": 2,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"matters\", \"count\": 28, \"rows\": [{\"id\": \"legal_matters_001\", \"title\": \"Summit Operations Legal Matters\", \"status\": \"Intake\", \"department\": \"Legal\", \"owner_role\": \"associate\", \"reviewer_role\": \"partner\", \"fee_budget\": 39.49, \"evidence_summary\": \"Legal Matters review requires attention\", \"decision_reason\": \"Legal Matters requires verification because a policy exception needs review.\", \"created_at\": \"2026-01-06T05:01:00Z\", \"updated_at\": \"2026-01-07T19:07:00Z\"}, {\"id\": \"legal_matters_002\", \"title\": \"Fairview Group Legal Matters\", \"status\": \"Active\", \"department\": \"Legal\", \"owner_role\": \"",
+      "thought": null
+    },
+    {
+      "turn": 2,
+      "tool": "query_files",
+      "args": {
+        "query": "state filing"
+      },
+      "argBytes": 25,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"agent_files\", \"count\": 1, \"rows\": [{\"id\": 3, \"filename\": \"departments_import.tsv\", \"content_type\": \"text/tab-separated-values\", \"content\": \"id\\tdepartment_code\\tcasesreviewer_role\\tfocus\\theadcount\\tannual_budget\\n1\\tDEP-82598\\tMichael Johnson\\tInspection\\t\\t96.29\\n2\\tDEP-94506\\tPriya Patel\\tPrecision\\t2\\t100.59\\n3\\tDEP-18232\\tSarah Kim\\t\\t1\\t13.55\\n4\\tDEP-15632\\tThomas Lee\\tAssembly\\t4\\t38.15\\n5\\tDEP-37917\\t\\u2026[preview]\"}]}",
+      "thought": null
+    },
+    {
+      "turn": 2,
+      "tool": "query_files",
+      "args": {
+        "query": "formation"
+      },
+      "argBytes": 22,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"agent_files\", \"count\": 1, \"rows\": [{\"id\": 3, \"filename\": \"departments_import.tsv\", \"content_type\": \"text/tab-separated-values\", \"content\": \"id\\tdepartment_code\\tcasesreviewer_role\\tfocus\\theadcount\\tannual_budget\\n1\\tDEP-82598\\tMichael Johnson\\tInspection\\t\\t96.29\\n2\\tDEP-94506\\tPriya Patel\\tPrecision\\t2\\t100.59\\n3\\tDEP-18232\\tSarah Kim\\t\\t1\\t13.55\\n4\\tDEP-15632\\tThomas Lee\\tAssembly\\t4\\t38.15\\n5\\tDEP-37917\\t\\u2026[preview]\"}]}",
+      "thought": null
+    },
+    {
+      "turn": 2,
+      "tool": "query_matter_documents",
+      "args": {},
+      "argBytes": 2,
+      "argParseError": false,
+      "ok": false,
+      "observation": "ERROR rate_limited: upstream service throttled this call. Retry the operation.",
+      "thought": null
+    },
+    {
+      "turn": 2,
+      "tool": "query_documents",
+      "args": {
+        "query": "checklist"
+      },
+      "argBytes": 22,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"agent_documents\", \"count\": 2, \"rows\": [{\"id\": 1, \"title\": \"Harbor Systems\", \"body\": \"Review unresolved invoices exceptions before the next operating handoff. Record the decision, owner, and evidence used.\", \"updated_at\": \"2026-01-15T09:00:00Z\"}, {\"id\": 2, \"title\": \"Ironwood Services\", \"body\": \"Confirm the business handle, compare the current lifecycle state, apply one scoped action, and verify no collateral rows changed.\", \"updated_at\": \"2026-01-15T09:00:00Z\"}]}",
+      "thought": null
+    },
+    {
+      "turn": 3,
+      "tool": "query_matter_documents",
+      "args": {},
+      "argBytes": 2,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"matter_documents\", \"count\": 25, \"rows\": [{\"id\": 1, \"title\": \"Deal materials \\u2014 antitrust-competition analyze: Analyze Antitrust Risk and HSR Filing Strategy fo\", \"doc_type\": \"input_materials\", \"related_shape\": \"harvey_lab/antitrust-competition/analyze-antitrust-hsr-strategy\", \"body\": \"MATTER FILE 1 \\u2014 ANTITRUST COMPETITION\\nantitrust-competition analyze: Analyze Antitrust Risk and HSR Filing Strategy for PE Acquisition with Horizontal Overlap\\n\\n\\nBACKGROUND. The client engagement covers this antitrust competition matter; the\\u2026[preview]\"}, {\"id\": 2, \"title\": \"Deal materi",
+      "thought": null
+    },
+    {
+      "turn": 4,
+      "tool": "query_matter_documents",
+      "args": {
+        "query": "state filing checklist"
+      },
+      "argBytes": 35,
+      "argParseError": false,
+      "ok": false,
+      "observation": "ERROR stale_reference: the referenced record snapshot is stale. Re-read the record and retry with current data.",
+      "thought": null
+    },
+    {
+      "turn": 4,
+      "tool": "query_matter_documents",
+      "args": {
+        "query": "Delaware incorporation Washington"
+      },
+      "argBytes": 46,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"matter_documents\", \"count\": 25, \"rows\": [{\"id\": 1, \"title\": \"Deal materials \\u2014 antitrust-competition analyze: Analyze Antitrust Risk and HSR Filing Strategy fo\", \"doc_type\": \"input_materials\", \"related_shape\": \"harvey_lab/antitrust-competition/analyze-antitrust-hsr-strategy\", \"body\": \"MATTER FILE 1 \\u2014 ANTITRUST COMPETITION\\nantitrust-competition analyze: Analyze Antitrust Risk and HSR Filing Strategy for PE Acquisition with Horizontal Overlap\\n\\n\\nBACKGROUND. The client engagement covers this antitrust competition matter; the\\u2026[preview]\"}, {\"id\": 2, \"title\": \"Deal materi",
+      "thought": null
+    },
+    {
+      "turn": 5,
+      "tool": "query_files",
+      "args": {
+        "query": "filing"
+      },
+      "argBytes": 19,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"agent_files\", \"count\": 1, \"rows\": [{\"id\": 3, \"filename\": \"departments_import.tsv\", \"content_type\": \"text/tab-separated-values\", \"content\": \"id\\tdepartment_code\\tcasesreviewer_role\\tfocus\\theadcount\\tannual_budget\\n1\\tDEP-82598\\tMichael Johnson\\tInspection\\t\\t96.29\\n2\\tDEP-94506\\tPriya Patel\\tPrecision\\t2\\t100.59\\n3\\tDEP-18232\\tSarah Kim\\t\\t1\\t13.55\\n4\\tDEP-15632\\tThomas Lee\\tAssembly\\t4\\t38.15\\n5\\tDEP-37917\\t\\u2026[preview]\"}]}",
+      "thought": null
+    },
+    {
+      "turn": 5,
+      "tool": "query_files",
+      "args": {
+        "query": "checklist"
+      },
+      "argBytes": 22,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"agent_files\", \"count\": 1, \"rows\": [{\"id\": 3, \"filename\": \"departments_import.tsv\", \"content_type\": \"text/tab-separated-values\", \"content\": \"id\\tdepartment_code\\tcasesreviewer_role\\tfocus\\theadcount\\tannual_budget\\n1\\tDEP-82598\\tMichael Johnson\\tInspection\\t\\t96.29\\n2\\tDEP-94506\\tPriya Patel\\tPrecision\\t2\\t100.59\\n3\\tDEP-18232\\tSarah Kim\\t\\t1\\t13.55\\n4\\tDEP-15632\\tThomas Lee\\tAssembly\\t4\\t38.15\\n5\\tDEP-37917\\t\\u2026[preview]\"}]}",
+      "thought": null
+    },
+    {
+      "turn": 5,
+      "tool": "query_files",
+      "args": {
+        "query": "incorporation"
+      },
+      "argBytes": 26,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"agent_files\", \"count\": 1, \"rows\": [{\"id\": 3, \"filename\": \"departments_import.tsv\", \"content_type\": \"text/tab-separated-values\", \"content\": \"id\\tdepartment_code\\tcasesreviewer_role\\tfocus\\theadcount\\tannual_budget\\n1\\tDEP-82598\\tMichael Johnson\\tInspection\\t\\t96.29\\n2\\tDEP-94506\\tPriya Patel\\tPrecision\\t2\\t100.59\\n3\\tDEP-18232\\tSarah Kim\\t\\t1\\t13.55\\n4\\tDEP-15632\\tThomas Lee\\tAssembly\\t4\\t38.15\\n5\\tDEP-37917\\t\\u2026[preview]\"}]}",
+      "thought": null
+    },
+    {
+      "turn": 5,
+      "tool": "query_files",
+      "args": {
+        "query": "Delaware"
+      },
+      "argBytes": 21,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"agent_files\", \"count\": 1, \"rows\": [{\"id\": 3, \"filename\": \"departments_import.tsv\", \"content_type\": \"text/tab-separated-values\", \"content\": \"id\\tdepartment_code\\tcasesreviewer_role\\tfocus\\theadcount\\tannual_budget\\n1\\tDEP-82598\\tMichael Johnson\\tInspection\\t\\t96.29\\n2\\tDEP-94506\\tPriya Patel\\tPrecision\\t2\\t100.59\\n3\\tDEP-18232\\tSarah Kim\\t\\t1\\t13.55\\n4\\tDEP-15632\\tThomas Lee\\tAssembly\\t4\\t38.15\\n5\\tDEP-37917\\t\\u2026[preview]\"}]}",
+      "thought": null
+    },
+    {
+      "turn": 6,
+      "tool": "query_matter_documents",
+      "args": {
+        "title": "state filing"
+      },
+      "argBytes": 25,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"matter_documents\", \"count\": 1, \"rows\": [{\"id\": 236, \"title\": \"Formation pack \\u2014 State filing checklist: Delaware and Washington\", \"doc_type\": \"filing_checklist\", \"related_shape\": \"lawflow-entity-formation\", \"body\": \"FORMATION FILING CHECKLIST\\n\\nDelaware (entity domicile):\\n  1. Name availability search with the Division of Corporations.\\n  2. Certificate of Incorporation \\u2014 filing fee $89 minimum.\\n  3. Registered agent appointment (annual fee).\\n  4. Annual\\u2026[preview]\"}], \"note\": \"body fields are previews \\u2014 call read_matter_document(id) to read a document in full ",
+      "thought": null
+    },
+    {
+      "turn": 6,
+      "tool": "query_matter_documents",
+      "args": {
+        "title": "checklist"
+      },
+      "argBytes": 22,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"matter_documents\", \"count\": 2, \"rows\": [{\"id\": 17, \"title\": \"Deal materials \\u2014 immigration review: Compare Draft EB-1A Petition Against Filing Checklist \\u2014 Gap \", \"doc_type\": \"input_materials\", \"related_shape\": \"harvey_lab/immigration/compare-draft-eb\", \"body\": \"MATTER FILE 17 \\u2014 IMMIGRATION\\nimmigration review: Compare Draft EB-1A Petition Against Filing Checklist \\u2014 Gap Analysis Memorandum\\n\\n\\nBACKGROUND. The client engagement covers this immigration matter; the materials in this file are the operativ\\u2026[preview]\"}, {\"id\": 236, \"title\": \"Formation pack \\u2014 S",
+      "thought": null
+    },
+    {
+      "turn": 7,
+      "tool": "read_matter_document",
+      "args": {
+        "id": 236
+      },
+      "argBytes": 11,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"id\": 236, \"title\": \"Formation pack \\u2014 State filing checklist: Delaware and Washington\", \"doc_type\": \"filing_checklist\", \"related_shape\": \"lawflow-entity-formation\", \"body\": \"FORMATION FILING CHECKLIST\\n\\nDelaware (entity domicile):\\n  1. Name availability search with the Division of Corporations.\\n  2. Certificate of Incorporation \\u2014 filing fee $89 minimum.\\n  3. Registered agent appointment (annual fee).\\n  4. Annual franchise tax report due March 1.\\n\\nWashington (foreign qualification, operations state):\\n  5. Foreign registration statement \\u2014 filing fee $180.\\n  6. Business l",
+      "thought": null
+    },
+    {
+      "turn": 8,
+      "tool": "legal_matters_list",
+      "args": {
+        "limit": 30
+      },
+      "argBytes": 13,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"matters\", \"count\": 28, \"rows\": [{\"id\": \"legal_matters_001\", \"title\": \"Summit Operations Legal Matters\", \"status\": \"Intake\", \"department\": \"Legal\", \"owner_role\": \"associate\", \"reviewer_role\": \"partner\", \"fee_budget\": 39.49, \"evidence_summary\": \"Legal Matters review requires attention\", \"decision_reason\": \"Legal Matters requires verification because a policy exception needs review.\", \"created_at\": \"2026-01-06T05:01:00Z\", \"updated_at\": \"2026-01-07T19:07:00Z\"}, {\"id\": \"legal_matters_002\", \"title\": \"Fairview Group Legal Matters\", \"status\": \"Active\", \"department\": \"Legal\", \"owner_role\": \"",
+      "thought": null
+    },
+    {
+      "turn": 9,
+      "tool": "operations_records_agent",
+      "args": {
+        "request": "In table legal_matters (matters), find the matter associated with the entity formation / Delaware incorporation and Washington foreign qualification for the \"Formation pack - State filing checklist\" (related_shape lawflow-entity-formation, matter_document id 236). Return the complete matter record including its primary key id and fee_budget."
+      },
+      "argBytes": 360,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"request\": \"In table legal_matters (matters), find the matter associated with the entity formation / Delaware incorporation and Washington foreign qualification for the \\\"Formation pack - State filing checklist\\\" (related_shape lawflow-entity-formation, matter_document id 236). Return the complete matter record i\", \"matches\": [{\"table\": \"conflict_cases\", \"row\": {\"id\": \"legal_conflicts_007\", \"title\": \"Summit Partners Legal Conflicts\", \"status\": \"Investigating\", \"department\": \"Risk\", \"owner_role\": \"conflicts_analyst\", \"reviewer_role\": \"risk_partner\", \"exposure_amount\": 6.51, \"evidence_summary\":",
+      "thought": null
+    },
+    {
+      "turn": 9,
+      "tool": "query_matter_documents",
+      "args": {
+        "doc_type": "filing_checklist"
+      },
+      "argBytes": 32,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"matter_documents\", \"count\": 1, \"rows\": [{\"id\": 236, \"title\": \"Formation pack \\u2014 State filing checklist: Delaware and Washington\", \"doc_type\": \"filing_checklist\", \"related_shape\": \"lawflow-entity-formation\", \"body\": \"FORMATION FILING CHECKLIST\\n\\nDelaware (entity domicile):\\n  1. Name availability search with the Division of Corporations.\\n  2. Certificate of Incorporation \\u2014 filing fee $89 minimum.\\n  3. Registered agent appointment (annual fee).\\n  4. Annual\\u2026[preview]\"}], \"note\": \"body fields are previews \\u2014 call read_matter_document(id) to read a document in full ",
+      "thought": null
+    },
+    {
+      "turn": 10,
+      "tool": "legal_matters_list",
+      "args": {
+        "limit": 50
+      },
+      "argBytes": 13,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"matters\", \"count\": 28, \"rows\": [{\"id\": \"legal_matters_001\", \"title\": \"Summit Operations Legal Matters\", \"status\": \"Intake\", \"department\": \"Legal\", \"owner_role\": \"associate\", \"reviewer_role\": \"partner\", \"fee_budget\": 39.49, \"evidence_summary\": \"Legal Matters review requires attention\", \"decision_reason\": \"Legal Matters requires verification because a policy exception needs review.\", \"created_at\": \"2026-01-06T05:01:00Z\", \"updated_at\": \"2026-01-07T19:07:00Z\"}, {\"id\": \"legal_matters_002\", \"title\": \"Fairview Group Legal Matters\", \"status\": \"Active\", \"department\": \"Legal\", \"owner_role\": \"",
+      "thought": null
+    },
+    {
+      "turn": 11,
+      "tool": "operations_records_agent",
+      "args": {
+        "request": "Which legal matter record (in table matters / legal_matters, ids legal_matters_XXX) contains the evidence document titled \"Formation pack — State filing checklist: Delaware and Washington\" (the filing_checklist matter document)? Return the legal matter id and its full record so I know which matter to book the state filing fee budget against."
+      },
+      "argBytes": 360,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"request\": \"Which legal matter record (in table matters / legal_matters, ids legal_matters_XXX) contains the evidence document titled \\\"Formation pack \\u2014 State filing checklist: Delaware and Washington\\\" (the filing_checklist matter document)? Return the legal matter id and its full record so I know which matter t\", \"matches\": [{\"table\": \"conflict_cases\", \"row\": {\"id\": \"legal_conflicts_001\", \"title\": \"Fairview Services Legal Conflicts\", \"status\": \"Screening\", \"department\": \"Risk\", \"owner_role\": \"conflicts_analyst\", \"reviewer_role\": \"risk_partner\", \"exposure_amount\": 32.09, \"evidence_summa",
+      "thought": null
+    },
+    {
+      "turn": 12,
+      "tool": "query_matter_documents",
+      "args": {
+        "related_shape": "lawflow-entity-formation"
+      },
+      "argBytes": 45,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"matter_documents\", \"count\": 4, \"rows\": [{\"id\": 234, \"title\": \"Formation pack \\u2014 Client intake notes: Harborlight Robotics LLC formation\", \"doc_type\": \"intake_notes\", \"related_shape\": \"lawflow-entity-formation\", \"body\": \"CLIENT INTAKE NOTES \\u2014 Harborlight Robotics\\nAttendees: founder (Wes Abara, 60%), co-founder (Yara Novak, 40%)\\n\\nBusiness: industrial robotics integration services, operating from Delaware with primary operations in Washington State.\\nGoals: ra\\u2026[preview]\"}, {\"id\": 235, \"title\": \"Formation pack \\u2014 Firm entity-selection guidance memo\", \"doc_type\": \"gu",
+      "thought": null
+    },
+    {
+      "turn": 13,
+      "tool": "read_matter_document",
+      "args": {
+        "id": 234
+      },
+      "argBytes": 11,
+      "argParseError": false,
+      "ok": false,
+      "observation": "ERROR stale_reference: the referenced record snapshot is stale. Re-read the record and retry with current data.",
+      "thought": null
+    },
+    {
+      "turn": 13,
+      "tool": "read_matter_document",
+      "args": {
+        "id": 235
+      },
+      "argBytes": 11,
+      "argParseError": false,
+      "ok": false,
+      "observation": "ERROR rate_limited: upstream service throttled this call. Retry the operation.",
+      "thought": null
+    },
+    {
+      "turn": 14,
+      "tool": "read_matter_document",
+      "args": {
+        "id": 234
+      },
+      "argBytes": 11,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"id\": 234, \"title\": \"Formation pack \\u2014 Client intake notes: Harborlight Robotics LLC formation\", \"doc_type\": \"intake_notes\", \"related_shape\": \"lawflow-entity-formation\", \"body\": \"CLIENT INTAKE NOTES \\u2014 Harborlight Robotics\\nAttendees: founder (Wes Abara, 60%), co-founder (Yara Novak, 40%)\\n\\nBusiness: industrial robotics integration services, operating from Delaware with primary operations in Washington State.\\nGoals: raise a priced seed round within 18 months; admit employee equity holders; founders want limited personal liability and pass-through taxation until the raise.\\nConstrain",
+      "thought": null
+    },
+    {
+      "turn": 14,
+      "tool": "read_matter_document",
+      "args": {
+        "id": 235
+      },
+      "argBytes": 11,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"id\": 235, \"title\": \"Formation pack \\u2014 Firm entity-selection guidance memo\", \"doc_type\": \"guidance_memo\", \"related_shape\": \"lawflow-entity-formation\", \"body\": \"ENTITY SELECTION GUIDANCE (firm standard)\\n\\nStep 1 \\u2014 Identify the client's financing plan. Where the client anticipates institutional venture financing, the Delaware C-Corporation is the presumptive recommendation: institutional investors typically require a Delaware C-Corp for preferred-stock issuance and 83(b)/QSBS treatment.\\n\\nStep 2 \\u2014 Where the client anticipates NO outside institutional financing and prioritizes pa",
+      "thought": null
+    },
+    {
+      "turn": 15,
+      "tool": "operations_records_agent",
+      "args": {
+        "request": "In table matters (legal_matters), find the legal matter for the client \"Harborlight Robotics\" entity formation matter (the Delaware incorporation / Washington foreign qualification). Return the legal matter id (legal_matters_XXX), its title, and its fee_budget field."
+      },
+      "argBytes": 284,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"request\": \"In table matters (legal_matters), find the legal matter for the client \\\"Harborlight Robotics\\\" entity formation matter (the Delaware incorporation / Washington foreign qualification). Return the legal matter id (legal_matters_XXX), its title, and its fee_budget field.\", \"matches\": [{\"table\": \"conflict_cases\", \"row\": {\"id\": \"legal_conflicts_001\", \"title\": \"Fairview Services Legal Conflicts\", \"status\": \"Screening\", \"department\": \"Risk\", \"owner_role\": \"conflicts_analyst\", \"reviewer_role\": \"risk_partner\", \"exposure_amount\": 32.09, \"evidence_summary\": \"Legal Conflicts follow-up requir",
+      "thought": null
+    },
+    {
+      "turn": 16,
+      "tool": "legal_matters_list",
+      "args": {
+        "status": "Intake"
+      },
+      "argBytes": 20,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"matters\", \"count\": 4, \"rows\": [{\"id\": \"legal_matters_001\", \"title\": \"Summit Operations Legal Matters\", \"status\": \"Intake\", \"department\": \"Legal\", \"owner_role\": \"associate\", \"reviewer_role\": \"partner\", \"fee_budget\": 39.49, \"evidence_summary\": \"Legal Matters review requires attention\", \"decision_reason\": \"Legal Matters requires verification because a policy exception needs review.\", \"created_at\": \"2026-01-06T05:01:00Z\", \"updated_at\": \"2026-01-07T19:07:00Z\"}, {\"id\": \"legal_matters_006\", \"title\": \"Riverside Services Legal Matters\", \"status\": \"Intake\", \"department\": \"Legal\", \"owner_role\"",
+      "thought": null
+    },
+    {
+      "turn": 16,
+      "tool": "legal_matters_list",
+      "args": {
+        "status": "Active"
+      },
+      "argBytes": 20,
+      "argParseError": false,
+      "ok": false,
+      "observation": "ERROR rate_limited: upstream service throttled this call. Retry the operation.",
+      "thought": null
+    },
+    {
+      "turn": 17,
+      "tool": "legal_matters_list",
+      "args": {
+        "status": "Engaged"
+      },
+      "argBytes": 21,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"matters\", \"count\": 3, \"rows\": [{\"id\": \"legal_matters_004\", \"title\": \"Ironwood Holdings Legal Matters\", \"status\": \"Engaged\", \"department\": \"Legal\", \"owner_role\": \"associate\", \"reviewer_role\": \"partner\", \"fee_budget\": 28.45, \"evidence_summary\": \"Legal Matters approval requires attention\", \"decision_reason\": \"Legal Matters requires reconciliation because the downstream workflow is blocked.\", \"created_at\": \"2026-01-07T18:54:00Z\", \"updated_at\": \"2026-01-07T09:55:00Z\"}, {\"id\": \"legal_matters_009\", \"title\": \"Northgate Operations Legal Matters\", \"status\": \"Engaged\", \"department\": \"Legal\", \"",
+      "thought": null
+    },
+    {
+      "turn": 18,
+      "tool": "legal_matters_list",
+      "args": {
+        "status": "Partner Review"
+      },
+      "argBytes": 28,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"matters\", \"count\": 4, \"rows\": [{\"id\": \"legal_matters_003\", \"title\": \"Fairview Services Legal Matters\", \"status\": \"Partner Review\", \"department\": \"Legal\", \"owner_role\": \"associate\", \"reviewer_role\": \"partner\", \"fee_budget\": 72.94, \"evidence_summary\": \"Legal Matters follow-up requires attention\", \"decision_reason\": \"Legal Matters requires handoff because linked evidence is incomplete.\", \"created_at\": \"2026-01-07T22:00:00Z\", \"updated_at\": \"2026-01-07T03:13:00Z\"}, {\"id\": \"legal_matters_008\", \"title\": \"Summit Group Legal Matters\", \"status\": \"Partner Review\", \"department\": \"Legal\", \"owner",
+      "thought": null
+    },
+    {
+      "turn": 18,
+      "tool": "legal_matters_list",
+      "args": {
+        "status": "Declined"
+      },
+      "argBytes": 22,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"matters\", \"count\": 3, \"rows\": [{\"id\": \"legal_matters_005\", \"title\": \"Fairview Systems Legal Matters\", \"status\": \"Declined\", \"department\": \"Legal\", \"owner_role\": \"associate\", \"reviewer_role\": \"partner\", \"fee_budget\": 15.23, \"evidence_summary\": \"Legal Matters follow-up requires attention\", \"decision_reason\": \"Legal Matters requires approval because the source record conflicts with the latest update.\", \"created_at\": \"2026-01-06T05:09:00Z\", \"updated_at\": \"2026-01-06T01:58:00Z\"}, {\"id\": \"legal_matters_010\", \"title\": \"Fairview Services Legal Matters\", \"status\": \"Declined\", \"department\": \"",
+      "thought": null
+    },
+    {
+      "turn": 19,
+      "tool": "query_matter_documents",
+      "args": {
+        "title": "Harborlight"
+      },
+      "argBytes": 24,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"matter_documents\", \"count\": 1, \"rows\": [{\"id\": 234, \"title\": \"Formation pack \\u2014 Client intake notes: Harborlight Robotics LLC formation\", \"doc_type\": \"intake_notes\", \"related_shape\": \"lawflow-entity-formation\", \"body\": \"CLIENT INTAKE NOTES \\u2014 Harborlight Robotics\\nAttendees: founder (Wes Abara, 60%), co-founder (Yara Novak, 40%)\\n\\nBusiness: industrial robotics integration services, operating from Delaware with primary operations in Washington State.\\nGoals: ra\\u2026[preview]\"}], \"note\": \"body fields are previews \\u2014 call read_matter_document(id) to read a document in ful",
+      "thought": null
+    },
+    {
+      "turn": 20,
+      "tool": "query_matter_documents",
+      "args": {
+        "limit": 50
+      },
+      "argBytes": 13,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"matter_documents\", \"count\": 50, \"rows\": [{\"id\": 1, \"title\": \"Deal materials \\u2014 antitrust-competition analyze: Analyze Antitrust Risk and HSR Filing Strategy fo\", \"doc_type\": \"input_materials\", \"related_shape\": \"harvey_lab/antitrust-competition/analyze-antitrust-hsr-strategy\", \"body\": \"MATTER FILE 1 \\u2014 ANTITRUST COMPETITION\\nantitrust-competition analyze: Analyze Antitrust Risk and HSR Filing Strategy for PE Acquisition with Horizontal Overlap\\n\\n\\nBACKGROUND. The client engagement covers this antitrust competition matter; the\\u2026[preview]\"}, {\"id\": 2, \"title\": \"Deal materi",
+      "thought": null
+    },
+    {
+      "turn": 21,
+      "tool": "litigation_cases_list",
+      "args": {},
+      "argBytes": 2,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"cases\", \"count\": 26, \"rows\": [{\"id\": \"litigation_cases_001\", \"title\": \"Summit Operations Litigation Cases\", \"status\": \"Filed\", \"department\": \"Litigation\", \"owner_role\": \"litigation_associate\", \"reviewer_role\": \"litigation_partner\", \"claimed_amount\": 73.51, \"evidence_summary\": \"Litigation Cases approval requires attention\", \"decision_reason\": \"Litigation Cases requires follow-up because the downstream workflow is blocked.\", \"created_at\": \"2026-01-07T04:24:00Z\", \"updated_at\": \"2026-01-06T22:06:00Z\"}, {\"id\": \"litigation_cases_002\", \"title\": \"Ironwood Operations Litigation Cases\", \"stat",
+      "thought": null
+    },
+    {
+      "turn": 21,
+      "tool": "legal_matters_get",
+      "args": {
+        "id": "legal_matters_001"
+      },
+      "argBytes": 27,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"id\": \"legal_matters_001\", \"title\": \"Summit Operations Legal Matters\", \"status\": \"Intake\", \"department\": \"Legal\", \"owner_role\": \"associate\", \"reviewer_role\": \"partner\", \"fee_budget\": 39.49, \"evidence_summary\": \"Legal Matters review requires attention\", \"decision_reason\": \"Legal Matters requires verification because a policy exception needs review.\", \"created_at\": \"2026-01-06T05:01:00Z\", \"updated_at\": \"2026-01-07T19:07:00Z\"}",
+      "thought": null
+    },
+    {
+      "turn": 22,
+      "tool": "read_matter_document",
+      "args": {
+        "id": 237
+      },
+      "argBytes": 11,
+      "argParseError": false,
+      "ok": false,
+      "observation": "ERROR rate_limited: upstream service throttled this call. Retry the operation.",
+      "thought": null
+    },
+    {
+      "turn": 23,
+      "tool": "read_matter_document",
+      "args": {
+        "id": 237
+      },
+      "argBytes": 11,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"id\": 237, \"title\": \"Formation pack \\u2014 Superseded 2024 entity chart (do not use)\", \"doc_type\": \"superseded_chart\", \"related_shape\": \"lawflow-entity-formation\", \"body\": \"2024 ENTITY QUICK CHART \\u2014 WITHDRAWN\\n\\nRecommended LLC for all technology startups regardless of financing plans; stated Delaware filing fee of $250 and Washington foreign registration of $50; stated 83(b) elections are due within 90 days. Every figure and rule in this chart was corrected in the current guidance memo and checklist. Do not rely on this chart.\"}",
+      "thought": null
+    },
+    {
+      "turn": 24,
+      "tool": "operations_records_agent",
+      "args": {
+        "request": "List all records in the legal_matters table (matters). For each, give the id (legal_matters_XXX) and the title. I'm looking for the matter for the entity formation client \"Harborlight Robotics\" (Delaware incorporation + Washington foreign qualification)."
+      },
+      "argBytes": 271,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"request\": \"List all records in the legal_matters table (matters). For each, give the id (legal_matters_XXX) and the title. I'm looking for the matter for the entity formation client \\\"Harborlight Robotics\\\" (Delaware incorporation + Washington foreign qualification).\", \"matches\": [{\"table\": \"discovery_requests\", \"row\": {\"id\": \"litigation_discovery_001\", \"title\": \"Summit Operations Litigation Discovery\", \"status\": \"Requested\", \"department\": \"Litigation Support\", \"owner_role\": \"discovery_specialist\", \"reviewer_role\": \"discovery_counsel\", \"production_cost\": 3.72, \"evidence_summary\": \"Litigation",
+      "thought": null
+    },
+    {
+      "turn": 25,
+      "tool": "query_documents",
+      "args": {
+        "query": "formation fee budget Delaware Washington"
+      },
+      "argBytes": 53,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"agent_documents\", \"count\": 2, \"rows\": [{\"id\": 1, \"title\": \"Harbor Systems\", \"body\": \"Review unresolved invoices exceptions before the next operating handoff. Record the decision, owner, and evidence used.\", \"updated_at\": \"2026-01-15T09:00:00Z\"}, {\"id\": 2, \"title\": \"Ironwood Services\", \"body\": \"Confirm the business handle, compare the current lifecycle state, apply one scoped action, and verify no collateral rows changed.\", \"updated_at\": \"2026-01-15T09:00:00Z\"}]}",
+      "thought": null
+    },
+    {
+      "turn": 25,
+      "tool": "query_documents",
+      "args": {
+        "limit": 30
+      },
+      "argBytes": 13,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"agent_documents\", \"count\": 2, \"rows\": [{\"id\": 1, \"title\": \"Harbor Systems\", \"body\": \"Review unresolved invoices exceptions before the next operating handoff. Record the decision, owner, and evidence used.\", \"updated_at\": \"2026-01-15T09:00:00Z\"}, {\"id\": 2, \"title\": \"Ironwood Services\", \"body\": \"Confirm the business handle, compare the current lifecycle state, apply one scoped action, and verify no collateral rows changed.\", \"updated_at\": \"2026-01-15T09:00:00Z\"}]}",
+      "thought": null
+    },
+    {
+      "turn": 26,
+      "tool": "legal_matters_list",
+      "args": {
+        "limit": 60
+      },
+      "argBytes": 13,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"matters\", \"count\": 28, \"rows\": [{\"id\": \"legal_matters_001\", \"title\": \"Summit Operations Legal Matters\", \"status\": \"Intake\", \"department\": \"Legal\", \"owner_role\": \"associate\", \"reviewer_role\": \"partner\", \"fee_budget\": 39.49, \"evidence_summary\": \"Legal Matters review requires attention\", \"decision_reason\": \"Legal Matters requires verification because a policy exception needs review.\", \"created_at\": \"2026-01-06T05:01:00Z\", \"updated_at\": \"2026-01-07T19:07:00Z\"}, {\"id\": \"legal_matters_002\", \"title\": \"Fairview Group Legal Matters\", \"status\": \"Active\", \"department\": \"Legal\", \"owner_role\": \"",
+      "thought": null
+    },
+    {
+      "turn": 27,
+      "tool": "operations_records_agent",
+      "args": {
+        "request": "Find any record in the system (legal_matters, conflict_cases, or the entity-formation evidence) that identifies the legal matter for the \"Harborlight Robotics\" entity formation matter. I need the legal_matters primary key id (legal_matters_XXX). Search specifically for the client name \"Harborlight Robotics\" or \"Harborlight\"."
+      },
+      "argBytes": 347,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"request\": \"Find any record in the system (legal_matters, conflict_cases, or the entity-formation evidence) that identifies the legal matter for the \\\"Harborlight Robotics\\\" entity formation matter. I need the legal_matters primary key id (legal_matters_XXX). Search specifically for the client name \\\"Harborlight R\", \"matches\": [{\"table\": \"cases\", \"row\": {\"id\": \"litigation_cases_003\", \"title\": \"Northgate Systems Litigation Cases\", \"status\": \"Discovery\", \"department\": \"Litigation\", \"owner_role\": \"litigation_associate\", \"reviewer_role\": \"litigation_partner\", \"claimed_amount\": 86.33, \"evidence_su",
+      "thought": null
+    },
+    {
+      "turn": 28,
+      "tool": "query_matter_documents",
+      "args": {
+        "body": "Harborlight"
+      },
+      "argBytes": 23,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"matter_documents\", \"count\": 1, \"rows\": [{\"id\": 234, \"title\": \"Formation pack \\u2014 Client intake notes: Harborlight Robotics LLC formation\", \"doc_type\": \"intake_notes\", \"related_shape\": \"lawflow-entity-formation\", \"body\": \"CLIENT INTAKE NOTES \\u2014 Harborlight Robotics\\nAttendees: founder (Wes Abara, 60%), co-founder (Yara Novak, 40%)\\n\\nBusiness: industrial robotics integration services, operating from Delaware with primary operations in Washington State.\\nGoals: ra\\u2026[preview]\"}], \"note\": \"body fields are previews \\u2014 call read_matter_document(id) to read a document in ful",
+      "thought": null
+    },
+    {
+      "turn": 29,
+      "tool": "legal_conflicts_list",
+      "args": {},
+      "argBytes": 2,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"conflict_cases\", \"count\": 13, \"rows\": [{\"id\": \"legal_conflicts_001\", \"title\": \"Fairview Services Legal Conflicts\", \"status\": \"Screening\", \"department\": \"Risk\", \"owner_role\": \"conflicts_analyst\", \"reviewer_role\": \"risk_partner\", \"exposure_amount\": 32.09, \"evidence_summary\": \"Legal Conflicts follow-up requires attention\", \"decision_reason\": \"Legal Conflicts requires reconciliation because a policy exception needs review.\", \"created_at\": \"2026-01-06T01:44:00Z\", \"updated_at\": \"2026-01-06T21:08:00Z\"}, {\"id\": \"legal_conflicts_002\", \"title\": \"Riverside Operations Legal Conflicts\", \"status\"",
+      "thought": null
+    },
+    {
+      "turn": 30,
+      "tool": "operations_records_agent",
+      "args": {
+        "request": "Resolve the legal matter record (in table matters, ids legal_matters_XXX) that owns the matter-document evidence \"Formation pack — State filing checklist\" (matter_document id 236, doc_type filing_checklist, related_shape lawflow-entity-formation). Report the legal_matters primary key id only."
+      },
+      "argBytes": 310,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"request\": \"Resolve the legal matter record (in table matters, ids legal_matters_XXX) that owns the matter-document evidence \\\"Formation pack \\u2014 State filing checklist\\\" (matter_document id 236, doc_type filing_checklist, related_shape lawflow-entity-formation). Report the legal_matters primary key id only.\", \"matches\": [{\"table\": \"conflict_cases\", \"row\": {\"id\": \"legal_conflicts_001\", \"title\": \"Fairview Services Legal Conflicts\", \"status\": \"Screening\", \"department\": \"Risk\", \"owner_role\": \"conflicts_analyst\", \"reviewer_role\": \"risk_partner\", \"exposure_amount\": 32.09, \"evidence_summary\": \"L",
+      "thought": null
+    },
+    {
+      "turn": 31,
+      "tool": "query_calendar_events",
+      "args": {
+        "query": "formation"
+      },
+      "argBytes": 22,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"agent_events\", \"count\": 2, \"rows\": [{\"id\": 1, \"title\": \"Fairview Works\", \"event_date\": \"2026-01-20\", \"created_at\": \"2026-01-15T09:00:00Z\"}, {\"id\": 2, \"title\": \"Ironwood Associates\", \"event_date\": \"2026-01-22\", \"created_at\": \"2026-01-15T09:00:00Z\"}]}",
+      "thought": null
+    },
+    {
+      "turn": 31,
+      "tool": "query_files",
+      "args": {
+        "query": ".tsv"
+      },
+      "argBytes": 17,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"agent_files\", \"count\": 1, \"rows\": [{\"id\": 3, \"filename\": \"departments_import.tsv\", \"content_type\": \"text/tab-separated-values\", \"content\": \"id\\tdepartment_code\\tcasesreviewer_role\\tfocus\\theadcount\\tannual_budget\\n1\\tDEP-82598\\tMichael Johnson\\tInspection\\t\\t96.29\\n2\\tDEP-94506\\tPriya Patel\\tPrecision\\t2\\t100.59\\n3\\tDEP-18232\\tSarah Kim\\t\\t1\\t13.55\\n4\\tDEP-15632\\tThomas Lee\\tAssembly\\t4\\t38.15\\n5\\tDEP-37917\\t\\u2026[preview]\"}]}",
+      "thought": null
+    },
+    {
+      "turn": 31,
+      "tool": "read_file",
+      "args": {
+        "filename": "departments_import.tsv"
+      },
+      "argBytes": 38,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"id\": 3, \"filename\": \"departments_import.tsv\", \"content_type\": \"text/tab-separated-values\", \"content\": \"id\\tdepartment_code\\tcasesreviewer_role\\tfocus\\theadcount\\tannual_budget\\n1\\tDEP-82598\\tMichael Johnson\\tInspection\\t\\t96.29\\n2\\tDEP-94506\\tPriya Patel\\tPrecision\\t2\\t100.59\\n3\\tDEP-18232\\tSarah Kim\\t\\t1\\t13.55\\n4\\tDEP-15632\\tThomas Lee\\tAssembly\\t4\\t38.15\\n5\\tDEP-37917\\tAlex Chen\\t\\t\\t10.25\"}",
+      "thought": null
+    },
+    {
+      "turn": 32,
+      "tool": "legal_matters_get",
+      "args": {
+        "id": "legal_matters_019"
+      },
+      "argBytes": 27,
+      "argParseError": false,
+      "ok": false,
+      "observation": "ERROR: no matters record with id 'legal_matters_019'",
+      "thought": null
+    },
+    {
+      "turn": 32,
+      "tool": "legal_matters_get",
+      "args": {
+        "id": "legal_matters_020"
+      },
+      "argBytes": 27,
+      "argParseError": false,
+      "ok": false,
+      "observation": "ERROR: no matters record with id 'legal_matters_020'",
+      "thought": null
+    },
+    {
+      "turn": 32,
+      "tool": "legal_matters_get",
+      "args": {
+        "id": "legal_matters_002-ALT1"
+      },
+      "argBytes": 32,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"id\": \"legal_matters_002-ALT1\", \"title\": \"Fairview Group Legal Matters\", \"status\": \"Active (archived)\", \"department\": \"Legal\", \"owner_role\": \"associate\", \"reviewer_role\": \"partner\", \"fee_budget\": 87.43, \"evidence_summary\": \"Legal Matters review requires attention\", \"decision_reason\": \"Legal Matters requires verification because linked evidence is incomplete.\", \"created_at\": \"2026-01-06T18:57:00Z\", \"updated_at\": \"2026-01-07T23:15:00Z\"}",
+      "thought": null
+    },
+    {
+      "turn": 33,
+      "tool": "_final_answer",
+      "ok": true,
+      "thought": null,
+      "observation": "So there are only the 18 base legal matter records (plus ALT archived/duplicate variants). None is specifically titled for the Harborlight formation. \n\nGiven this, the relevant legal matter for \"THIS MATTER\" must be one of these 18 generic matters that the formation evidence belongs to. But which one?\n\nLet me reconsider the whole scenario. Given the formation is a distinct matter (entity formation for Harborlight Robotics), and the legal matters in the `legal_matters` table are the operative matters table... Actually, wait. Maybe the relevant matter to book against is one of the existing legal"
+    }
+  ]
+}

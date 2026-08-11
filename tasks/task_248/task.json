@@ -1,0 +1,74 @@
+{
+ "task_id": "task_248",
+ "outcome_class": "eligible_action",
+ "prompt": "Precedent selection with a fine distinction: the client wants a term that ENDS automatically unless the customer affirmatively gives notice to renew (not a clause that auto-renews unless someone opts out). Two similar renewal clauses exist in the library. Read the one that matches the requirement in full and record it with legal_matters_evidence_create: evidence_type exactly its library slug, source_uri exactly \"clause-library://selected\".",
+ "goal": "Precedent selection with a fine distinction: the client wants a term that ENDS automatically unless the customer affirma",
+ "required_tools": [
+  "query_matter_documents",
+  "read_matter_document",
+  "legal_matters_evidence_create"
+ ],
+ "complexity": "high",
+ "method": "eval_anchored_expansion",
+ "steps": [
+  "Locate the input documents for this engagement in the matter folder",
+  "Read every required input document in full",
+  "Derive the graded determinations strictly from the documents",
+  "Record the determinations with the required write tools"
+ ],
+ "relevant_data": [
+  {
+   "table": "matter_documents",
+   "id": 225,
+   "field": "title",
+   "value": "Clause library — CL-114 Renewal clause that requires notice to renew"
+  }
+ ],
+ "expected_state_changes": [
+  {
+   "table": "legal_matters_evidence_records",
+   "field": "(new row)",
+   "note": ">=1 rows with pinned fields"
+  }
+ ],
+ "tables_affected": [
+  "legal_matters_evidence_records"
+ ],
+ "walk": [
+  "query_matter_documents",
+  "read_matter_document",
+  "legal_matters_evidence_create"
+ ],
+ "reference_args": [
+  {
+   "title": "Clause library — CL-114 Renewal clause that requires notice "
+  },
+  {
+   "id": 225
+  },
+  {
+   "legal_matters_id": "legal_matters_001",
+   "evidence_type": "renewal_notice_required",
+   "source_uri": "clause-library://selected",
+   "content_summary": "CL-114 selected: renews only on affirmative 30-day notice; otherwise expires.",
+   "content_digest": "sha256:reference-digest",
+   "owner_role": "associate",
+   "status": "open"
+  }
+ ],
+ "effects": [
+  {
+   "table": "legal_matters_evidence_records",
+   "op": "insert"
+  }
+ ],
+ "provenance": {
+  "source_workflow": "acord: acord-clause-retrieval/acord-renewal-notice-distinction"
+ },
+ "difficulty_tier": "high",
+ "acceptance_label": "pending_calibration",
+ "expansion": {
+  "pack": "acord-clause-retrieval.json",
+  "slug": "acord-renewal-notice-distinction"
+ }
+}

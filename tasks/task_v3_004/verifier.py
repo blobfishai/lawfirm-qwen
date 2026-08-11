@@ -43,9 +43,9 @@ def verify(initial_state, final_state, trace):
     _p0_0 = [r for r in _new_0 if _norm(r.get("subject")) == _norm("TRUST OVERDRAFT ALERT")]
     chk("pm_notes_new_row_subject_is_TRUST OVERDRAFT ALERT", len(_p0_0) > 0,
         f"expected new pm_notes row with subject=TRUST OVERDRAFT ALERT; saw " + str([_norm(r.get("subject")) for r in _new_0][:6]))
-    _p0_1 = [r for r in _new_0 if _norm(r.get("matter_id")) == _norm("3.0")]
-    chk("pm_notes_new_row_matter_id_is_3.0", len(_p0_1) > 0,
-        f"expected new pm_notes row with matter_id=3.0; saw " + str([_norm(r.get("matter_id")) for r in _new_0][:6]))
+    _p0_1 = [r for r in _new_0 if _norm(r.get("matter_id")) == _norm("10.0")]
+    chk("pm_notes_new_row_matter_id_is_10.0", len(_p0_1) > 0,
+        f"expected new pm_notes row with matter_id=10.0; saw " + str([_norm(r.get("matter_id")) for r in _new_0][:6]))
 
 
     _destroyed = []

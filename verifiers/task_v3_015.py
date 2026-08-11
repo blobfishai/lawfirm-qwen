@@ -1,5 +1,5 @@
 """VCode verifier for task_v3_015 (v3 workflow: r2-trust-sweep-all-matters)
-Walk: trust_transactions_list -> notes_create -> notes_create -> notes_create -> notes_create
+Walk: trust_transactions_list -> notes_create -> notes_create
 Grades v3 product tables (real-API-mirrored surfaces)."""
 
 def _ids(rows):
@@ -26,7 +26,7 @@ def verify(initial_state, final_state, trace):
     chk("state_changed", initial_state != final_state,
         "world state changed" if initial_state != final_state else "NO state change")
 
-    _path = ["trust_transactions_list","notes_create","notes_create","notes_create","notes_create"]
+    _path = ["trust_transactions_list","notes_create","notes_create"]
     _cur = 0
     for _t in tools:
         if _cur < len(_path) and _t == _path[_cur]:
@@ -43,9 +43,9 @@ def verify(initial_state, final_state, trace):
     _p0_0 = [r for r in _new_0 if _norm(r.get("subject")) == _norm("TRUST OVERDRAFT ALERT")]
     chk("pm_notes_new_row_subject_is_TRUST OVERDRAFT ALERT", len(_p0_0) > 0,
         f"expected new pm_notes row with subject=TRUST OVERDRAFT ALERT; saw " + str([_norm(r.get("subject")) for r in _new_0][:6]))
-    _p0_1 = [r for r in _new_0 if _norm(r.get("matter_id")) == _norm("2.0")]
-    chk("pm_notes_new_row_matter_id_is_2.0", len(_p0_1) > 0,
-        f"expected new pm_notes row with matter_id=2.0; saw " + str([_norm(r.get("matter_id")) for r in _new_0][:6]))
+    _p0_1 = [r for r in _new_0 if _norm(r.get("matter_id")) == _norm("10.0")]
+    chk("pm_notes_new_row_matter_id_is_10.0", len(_p0_1) > 0,
+        f"expected new pm_notes row with matter_id=10.0; saw " + str([_norm(r.get("matter_id")) for r in _new_0][:6]))
 
     _bi_1 = _ids(initial_state.get("pm_notes", []))
     _af_1 = final_state.get("pm_notes", [])
@@ -55,33 +55,9 @@ def verify(initial_state, final_state, trace):
     _p1_0 = [r for r in _new_1 if _norm(r.get("subject")) == _norm("TRUST OVERDRAFT ALERT")]
     chk("pm_notes_new_row_subject_is_TRUST OVERDRAFT ALERT", len(_p1_0) > 0,
         f"expected new pm_notes row with subject=TRUST OVERDRAFT ALERT; saw " + str([_norm(r.get("subject")) for r in _new_1][:6]))
-    _p1_1 = [r for r in _new_1 if _norm(r.get("matter_id")) == _norm("3.0")]
-    chk("pm_notes_new_row_matter_id_is_3.0", len(_p1_1) > 0,
-        f"expected new pm_notes row with matter_id=3.0; saw " + str([_norm(r.get("matter_id")) for r in _new_1][:6]))
-
-    _bi_2 = _ids(initial_state.get("pm_notes", []))
-    _af_2 = final_state.get("pm_notes", [])
-    _new_2 = [r for r in _af_2 if str(r.get("id")) not in _bi_2]
-    chk("rows_inserted_into_pm_notes", len(_new_2) >= 1,
-        f"pm_notes: {len(_bi_2)} -> {len(_af_2)} rows")
-    _p2_0 = [r for r in _new_2 if _norm(r.get("subject")) == _norm("TRUST OVERDRAFT ALERT")]
-    chk("pm_notes_new_row_subject_is_TRUST OVERDRAFT ALERT", len(_p2_0) > 0,
-        f"expected new pm_notes row with subject=TRUST OVERDRAFT ALERT; saw " + str([_norm(r.get("subject")) for r in _new_2][:6]))
-    _p2_1 = [r for r in _new_2 if _norm(r.get("matter_id")) == _norm("10.0")]
-    chk("pm_notes_new_row_matter_id_is_10.0", len(_p2_1) > 0,
-        f"expected new pm_notes row with matter_id=10.0; saw " + str([_norm(r.get("matter_id")) for r in _new_2][:6]))
-
-    _bi_3 = _ids(initial_state.get("pm_notes", []))
-    _af_3 = final_state.get("pm_notes", [])
-    _new_3 = [r for r in _af_3 if str(r.get("id")) not in _bi_3]
-    chk("rows_inserted_into_pm_notes", len(_new_3) >= 1,
-        f"pm_notes: {len(_bi_3)} -> {len(_af_3)} rows")
-    _p3_0 = [r for r in _new_3 if _norm(r.get("subject")) == _norm("TRUST OVERDRAFT ALERT")]
-    chk("pm_notes_new_row_subject_is_TRUST OVERDRAFT ALERT", len(_p3_0) > 0,
-        f"expected new pm_notes row with subject=TRUST OVERDRAFT ALERT; saw " + str([_norm(r.get("subject")) for r in _new_3][:6]))
-    _p3_1 = [r for r in _new_3 if _norm(r.get("matter_id")) == _norm("15.0")]
-    chk("pm_notes_new_row_matter_id_is_15.0", len(_p3_1) > 0,
-        f"expected new pm_notes row with matter_id=15.0; saw " + str([_norm(r.get("matter_id")) for r in _new_3][:6]))
+    _p1_1 = [r for r in _new_1 if _norm(r.get("matter_id")) == _norm("17.0")]
+    chk("pm_notes_new_row_matter_id_is_17.0", len(_p1_1) > 0,
+        f"expected new pm_notes row with matter_id=17.0; saw " + str([_norm(r.get("matter_id")) for r in _new_1][:6]))
 
 
     _destroyed = []

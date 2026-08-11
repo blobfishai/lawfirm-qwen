@@ -41,7 +41,7 @@ def sha256_file(path: str) -> str:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--world", default=os.path.join(ROOT, "world", "blobfish", "world-v3.json"))
+    ap.add_argument("--world", default=os.path.join(ROOT, "world", "blobfish", "world-v4.json"))
     ap.add_argument("--out", default=os.path.join(ROOT, "dist", "harbor"))
     args = ap.parse_args()
 
