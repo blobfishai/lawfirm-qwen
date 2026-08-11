@@ -19,7 +19,7 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
-const W = (() => { const r = JSON.parse(readFileSync(join(ROOT, "world/blobfish/world-v7.json"), "utf8")); return r.world ?? r; })();
+const W = (() => { const r = JSON.parse(readFileSync(join(ROOT, "world/blobfish/world-v8.json"), "utf8")); return r.world ?? r; })();
 const TYPE = Object.fromEntries(W.tools.map((t) => [t.name, t.type]));
 const WRITEISH = /(_create|_update|_submit|_delete|_checkin|_checkout|_upload|_post|_send|_file)$/;
 const isWrite = (n) => TYPE[n] ? TYPE[n] === "write" : WRITEISH.test(n);

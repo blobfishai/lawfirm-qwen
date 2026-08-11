@@ -437,6 +437,20 @@ class ToolRuntime:
         columns come back as previews — use the read tool for full bodies."""
         limit = int(args.get("limit") or 25)
         cols = self._columns(table)
+        # An unsupported filter used to be dropped in silence, so
+        # query_matter_documents(query="covenant") returned the WHOLE corpus and
+        # read as a filtered result. Real APIs reject the parameter; so do we,
+        # naming what is supported so the agent can recover in one call.
+        supported = {p["name"] for p in params if p["name"] in cols} | {"limit", "offset"}
+        unknown = [k for k in args if k not in supported and args.get(k) not in (None, "")]
+        if unknown:
+            return (False, json.dumps({
+                "error": "unknown_filter",
+                "message": (f"{table}: no such filter {sorted(unknown)}. "
+                            f"Supported filters: {sorted(supported)}. "
+                            "The call was NOT executed — re-issue it with a supported filter."),
+                "supported_filters": sorted(supported),
+            }))
         where, vals = [], []
         for p in params:
             n = p["name"]
@@ -449,7 +463,17 @@ class ToolRuntime:
                 where.append(f'"{n}" LIKE ?')
                 vals.append(f"%{args[n]}%")
         wsql = (" WHERE " + " AND ".join(where)) if where else ""
-        cur = conn.execute(f'SELECT * FROM "{table}"{wsql} ORDER BY rowid LIMIT ?', (*vals, limit))
+        # Honest paging. `count` used to report the number of rows RETURNED, so a
+        # 321-document corpus answered "count: 25" and the agent had no signal that
+        # anything was withheld — a wire-format lie, and one that makes
+        # enumerate-everything tasks ungradeable. Report the true match total,
+        # accept an offset, and say plainly whether more remain.
+        offset = max(0, int(args.get("offset") or 0))
+        total = conn.execute(
+            f'SELECT COUNT(*) FROM "{table}"{wsql}', tuple(vals)).fetchone()[0]
+        cur = conn.execute(
+            f'SELECT * FROM "{table}"{wsql} ORDER BY rowid LIMIT ? OFFSET ?',
+            (*vals, limit, offset))
         rows = self._rowdicts(cur)
         preview_note = False
         for r in rows:
@@ -457,7 +481,17 @@ class ToolRuntime:
                 if isinstance(v, str) and len(v) > PREVIEW_CHARS:
                     r[k] = v[:PREVIEW_CHARS] + "…[preview]"
                     preview_note = True
-        out = {"table": table, "count": len(rows), "rows": rows}
+        returned = len(rows)
+        out = {"table": table, "count": total, "returned": returned,
+               "offset": offset, "limit": limit, "rows": rows}
+        if offset + returned < total:
+            out["has_more"] = True
+            out["next_offset"] = offset + returned
+            out["paging_note"] = (
+                f"{total} rows match; {returned} returned starting at offset {offset}. "
+                f"Call again with offset={offset + returned} (or a larger limit) for the rest.")
+        else:
+            out["has_more"] = False
         if preview_note and table == "matter_documents":
             out["note"] = (
                 "body fields are previews — call read_matter_document(id) "
@@ -666,6 +700,14 @@ def make_handler(world: dict, runtime: ToolRuntime, friction: Friction,
         hint = t.get("input_format")
         if hint:
             desc = f"{desc} Input: {str(hint)[:180]}"
+        # Read tools page. Advertise it, or the agent cannot reach past the first
+        # page even though the runtime honours offset.
+        if t.get("type") == "read" and t["name"].split("_")[0] in ("query", "search", "list"):
+            props.setdefault("limit", {"type": "integer"})
+            props["offset"] = {"type": "integer"}
+            desc += (" Paged: the response carries `count` (total matching), `returned`, "
+                     "`has_more` and `next_offset`. When has_more is true you have NOT seen "
+                     "every match — page with offset or raise limit.")
         world_tools_mcp.append({
             "name": t["name"],
             "description": desc,
