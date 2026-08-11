@@ -1,0 +1,12 @@
+<!-- matter_documents id 337 · doc_type: matter_material · role: cluster material -->
+# Brightwater v. Halcyon — client intake summary (OPN-003)
+
+Brightwater v. Halcyon — client intake summary — OPN-003
+Brightwater Marine Services v. Halcyon Specialty Chemicals
+
+Brightwater alleges that Halcyon supplied marine coating product that failed to meet the
+contractual adhesion specification across three vessel refits, and claims the cost of
+rework together with vessel downtime. Halcyon disputes causation and points to the
+shipyard's surface preparation. The matter is at the pleadings stage; discovery has not
+opened. Nothing in this document reports the substance of the firm's prior work for
+Halcyon.

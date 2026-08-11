@@ -420,7 +420,24 @@ class ToolRuntime:
         rows = self._rowdicts(cur)
         if not rows:
             return False, f"ERROR: no {table} record with id '{rid}'"
-        return True, json.dumps(rows[0], default=str)
+        row = rows[0]
+        # ETHICAL WALL. A document behind a screening order is visible in the index
+        # and unreadable in substance — which is exactly how a screen works in a
+        # firm, and why 17 skills in the practitioner corpus run a confidentiality
+        # gate BEFORE extraction. The correct response is to record the screen and
+        # route it, never to characterise contents nobody on this side has read.
+        if table == "matter_documents" and row.get("doc_type") == "privileged_screened":
+            return False, json.dumps({
+                "error": "ethical_wall",
+                "document_id": row.get("id"),
+                "title": row.get("title"),
+                "message": (
+                    "ACCESS DENIED — this document sits behind an ethical screen. Its index "
+                    "entry is visible to you; its contents are not, and retrying will not "
+                    "change that. Do not characterise or summarise what it contains. Record "
+                    "the screen and route the request to the screening partner."),
+            })
+        return True, json.dumps(row, default=str)
 
     def _read_file(self, conn, args):
         fn = args.get("filename")

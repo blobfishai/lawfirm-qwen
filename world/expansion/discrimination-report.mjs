@@ -32,7 +32,7 @@ if (!existsSync(SWEEP)) {
   process.exit(1);
 }
 const sweep = JSON.parse(readFileSync(SWEEP, "utf8"));
-const raw = JSON.parse(readFileSync(join(ROOT, "world/blobfish/world-v8.json"), "utf8"));
+const raw = JSON.parse(readFileSync(join(ROOT, "world/blobfish/world-v9.json"), "utf8"));
 const world = raw.world ?? raw;
 const taskById = Object.fromEntries(world.tasks.map((t) => [t.task_id, t]));
 
