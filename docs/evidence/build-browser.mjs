@@ -20,7 +20,7 @@ import { fileURLToPath } from "node:url";
 import { quarantineReason } from "../../sim/lib/quarantine.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
-const WORLD = join(ROOT, "world", "blobfish", "world-v9.json");
+const WORLD = join(ROOT, "world", "blobfish", "world-v10.json");
 const raw = JSON.parse(readFileSync(WORLD, "utf8"));
 const world = raw.world ?? raw;
 
