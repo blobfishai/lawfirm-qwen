@@ -1,0 +1,37 @@
+# Parity audit — how much of the downloaded corpus do we host?
+
+`HOSTED` means we read the benchmark's own task definitions and/or documents out of
+`research/repos/` and run them: their data, their ground truth. `INSPIRED` means we wrote
+tasks in that benchmark's shape from our own knowledge — defensible content, but **not**
+coverage of that benchmark, and it is not counted as such here.
+
+| Benchmark | Task definitions available | Hosted | Parity |
+|---|---|---|---|
+| harvey-labs (practice + contracts) | 1,760 | 1 | 0.1% |
+| harvey-labs firm-knowledge (C&H) | 250 | 250 | 100.0% |
+| LegalBench | 162 | 0 | 0.0% |
+| CUAD | 1 | 0 | 0.0% |
+| MAUD | 1 | 0 | 0.0% |
+| ACORD | 1 | 0 | 0.0% |
+| ObliQA | 1 | 0 | 0.0% |
+| LawFlow | 1 | 0 | 0.0% |
+| LawBench | 1 | 0 | 0.0% |
+| lex-glue | 1 | 0 | 0.0% |
+| **total** | **2,179** | **251** | **11.5%** |
+
+## Our own tasks, by provenance
+
+| Source | Tasks |
+|---|---|
+| hosted (generator reads research/repos/) | 4 |
+| inspired (authored from knowledge) | 152 |
+| original world / graph-walk | 132 |
+| **world total** | **288** |
+
+## What this corrects
+
+`docs/COVERAGE.md` reports 24 covered / 17 partial / 0 hostable-gap against a registry of
+101 items. That registry is a list of URLs and descriptions; the verdicts were reached by
+reading abstracts, not by running the benchmarks' own tasks. It measures *whether the world
+could express a shape*, which is a real question, but it is not parity and should never
+have been read as parity. This file measures parity.

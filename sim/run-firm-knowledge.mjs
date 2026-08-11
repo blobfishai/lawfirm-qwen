@@ -42,6 +42,8 @@ const BASE = opt("--local-base", "http://localhost:8791");
 const LIMIT = Number(opt("--limit", "5"));
 const MAX_TURNS = Number(opt("--max-turns", "60"));
 const ONLY = opt("--tasks", "");
+const CONC = Math.max(1, Number(opt("--concurrency", "1")));
+const GRADING = opt("--grading", "");   // deterministic | mixed
 const OUT_DIR = join(ROOT, "data", "firm-knowledge", ENGINE_ID);
 
 // ---- engine ---------------------------------------------------------------
@@ -156,6 +158,7 @@ function grade(task, answer) {
 // ---- main -----------------------------------------------------------------
 const bank = JSON.parse(readFileSync(join(ROOT, "world/blobfish/firm-knowledge-tasks.json"), "utf8"));
 let list = bank.taskList.filter((t) => t.grading !== "judge_only");
+if (GRADING) list = list.filter((t) => t.grading === GRADING);
 if (ONLY) { const want = new Set(ONLY.split(",")); list = list.filter((t) => want.has(t.task_id)); }
 else list = list.slice(0, LIMIT);
 
@@ -168,25 +171,44 @@ mkdirSync(OUT_DIR, { recursive: true });
 console.log(`firm-knowledge: ${list.length} tasks on ${ENGINE_ID}, ${tools.length} corpus tools, max ${MAX_TURNS} turns\n`);
 
 const results = [];
-for (const [i, task] of list.entries()) {
-  const t0 = Date.now();
-  const ep = await runEpisode(task, tools);
-  const g = grade(task, ep.answer ?? "");
-  const secs = (Date.now() - t0) / 1000;
-  const rec = { task_id: task.task_id, title: task.title, grading: task.grading,
-                ...g, turns: ep.turns, tool_calls: ep.steps.length,
-                saw_has_more: ep.sawHasMore, stopped_with_more: ep.stoppedWithMore,
-                turn_exhausted: !!ep.turnExhausted, seconds: Math.round(secs),
-                usage: ep.usage, error: ep.error };
-  results.push(rec);
-  writeFileSync(join(OUT_DIR, `${task.task_id}.json`), JSON.stringify({ ...rec, answer: ep.answer, steps: ep.steps }, null, 1));
-  console.log(`[${i + 1}/${list.length}] ${task.task_id} ${task.title.slice(0, 46).padEnd(46)} ` +
-    `recall ${g.recall === null ? "—" : (100 * g.recall).toFixed(0).padStart(3)} ` +
-    `prec ${g.precision === null ? "—" : (100 * g.precision).toFixed(0).padStart(3)} ` +
-    `all-pass ${g.all_pass ? "Y" : "n"} ` +
-    `| ${g.hit}/${g.expected} matters, +${g.over_included} extra ` +
-    `| ${ep.steps.length} calls ${Math.round(secs)}s${ep.stoppedWithMore ? " STOPPED-WITH-MORE" : ""}`);
+let done = 0, spentTokens = 0;
+// Episodes are independent — each opens its own session — so they run
+// concurrently. Wall clock at concurrency 1 is ~14h for the full set.
+async function worker(queue) {
+  for (;;) {
+    const item = queue.shift();
+    if (!item) return;
+    const [i, task] = item;
+    const t0 = Date.now();
+    let ep;
+    try { ep = await runEpisode(task, tools); }
+    catch (e) { ep = { error: String(e).slice(0, 160), steps: [], usage: {} }; }
+    const g = grade(task, ep.answer ?? "");
+    const secs = (Date.now() - t0) / 1000;
+    const rec = { task_id: task.task_id, title: task.title, grading: task.grading,
+                  ...g, turns: ep.turns, tool_calls: ep.steps.length,
+                  saw_has_more: ep.sawHasMore, stopped_with_more: ep.stoppedWithMore,
+                  turn_exhausted: !!ep.turnExhausted, seconds: Math.round(secs),
+                  usage: ep.usage, error: ep.error };
+    results.push(rec);
+    spentTokens += (ep.usage?.prompt_tokens ?? 0) + (ep.usage?.completion_tokens ?? 0);
+    writeFileSync(join(OUT_DIR, `${task.task_id}.json`),
+      JSON.stringify({ ...rec, answer: ep.answer, steps: ep.steps }, null, 1));
+    done++;
+    console.log(`[${String(done).padStart(3)}/${list.length}] ${task.task_id} ` +
+      `${String(task.title).slice(0, 42).padEnd(42)} ` +
+      `recall ${g.recall === null ? " —" : (100 * g.recall).toFixed(0).padStart(3)} ` +
+      `prec ${g.precision === null ? " —" : (100 * g.precision).toFixed(0).padStart(3)} ` +
+      `${g.all_pass ? "PASS" : "    "} ` +
+      `| ${g.hit}/${g.expected} +${g.over_included} ` +
+      `| ${String(ep.steps.length).padStart(3)}c ${String(Math.round(secs)).padStart(3)}s ` +
+      `| $${(spentTokens / 1e6 * 0.5).toFixed(2)}` +
+      `${ep.turnExhausted ? " EXHAUSTED" : ep.stoppedWithMore ? " STOPPED-MORE" : ""}`);
+  }
 }
+const queue = [...list.entries()];
+await Promise.all(Array.from({ length: Math.min(CONC, queue.length) }, () => worker(queue)));
+results.sort((a, b) => a.task_id.localeCompare(b.task_id));
 
 const n = results.length;
 const avg = (f) => results.map(f).filter((x) => x !== null && x !== undefined).reduce((a, b) => a + b, 0) / n;
