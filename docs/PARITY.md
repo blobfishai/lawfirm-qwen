@@ -10,14 +10,14 @@ coverage of that benchmark, and it is not counted as such here.
 | harvey-labs (practice + contracts) | 1,760 | 0 | 0.0% |
 | harvey-labs firm-knowledge (C&H) | 250 | 250 | 100.0% |
 | LegalBench | 162 | 160 | 98.8% |
-| CUAD | 1 | 0 | 0.0% |
-| MAUD | 1 | 0 | 0.0% |
+| MAUD | 92 | 92 | 100.0% |
+| CUAD | 41 | 41 | 100.0% |
 | ACORD | 1 | 0 | 0.0% |
 | ObliQA | 1 | 0 | 0.0% |
 | LawFlow | 1 | 0 | 0.0% |
 | LawBench | 1 | 0 | 0.0% |
 | lex-glue | 1 | 0 | 0.0% |
-| **total** | **2,179** | **410** | **18.8%** |
+| **total** | **2,310** | **543** | **23.5%** |
 
 ## Our own tasks, by provenance
 

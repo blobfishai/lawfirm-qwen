@@ -43,8 +43,10 @@ const SOURCES = [
   { name: "LegalBench", repo: "HazyResearch@legalbench",
     count: (d) => existsSync(join(d, "tasks")) ? readdirSync(join(d, "tasks"))
       .filter((x) => statSync(join(d, "tasks", x)).isDirectory()).length : 0 },
-  { name: "CUAD", repo: "TheAtticusProject@cuad", count: () => 1 },
-  { name: "MAUD", repo: "TheAtticusProject@maud", count: () => 1 },
+  { name: "CUAD", repo: "TheAtticusProject@cuad",
+    count: () => 41 },   // 41 expert clause categories
+  { name: "MAUD", repo: "TheAtticusProject@maud",
+    count: () => 92 },   // 92 distinct deal-point questions in the test split
   { name: "ACORD", repo: "TheAtticusProject@acord", count: () => 1 },
   { name: "ObliQA", repo: "RegNLP@ObliQADataset", count: () => 1 },
   { name: "LawFlow", repo: "minnesotanlp@LawFlow", count: () => 1 },
@@ -117,7 +119,7 @@ if (existsSync(BUNDLES)) {
   for (const f of readdirSync(BUNDLES).filter((x) => x.endsWith(".json"))) {
     const b = JSON.parse(readFileSync(join(BUNDLES, f), "utf8"));
     const runnable = b.grading?.kind === "judge" ? 0 : (b.tasks ?? []).length;
-    const label = { legalbench: "LegalBench",
+    const label = { legalbench: "LegalBench", cuad: "CUAD", maud: "MAUD",
                     "harvey-firm-knowledge": "harvey-labs firm-knowledge (C&H)",
                     "harvey-practice": "harvey-labs (practice + contracts)" }[b.meta?.id];
     if (label) BUNDLE_HOSTED[label] = runnable;
