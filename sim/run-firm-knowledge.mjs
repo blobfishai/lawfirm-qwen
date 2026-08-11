@@ -231,7 +231,7 @@ async function worker(queue) {
       JSON.stringify({ ...rec, answer: ep.answer, steps: ep.steps }, null, 1));
     done++;
     console.log(`[${String(done).padStart(3)}/${list.length}] ${task.task_id} ` +
-      `${String(task.title).slice(0, 42).padEnd(42)} ` +
+      `${String(task.title ?? task.kind ?? task.task_id).slice(0, 42).padEnd(42)} ` +
       `recall ${g.recall === null ? " —" : (100 * g.recall).toFixed(0).padStart(3)} ` +
       `prec ${g.precision === null ? " —" : (100 * g.precision).toFixed(0).padStart(3)} ` +
       `${g.all_pass ? "PASS" : "    "} ` +

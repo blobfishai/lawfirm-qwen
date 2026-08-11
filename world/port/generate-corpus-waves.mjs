@@ -37,6 +37,7 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
 
+
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const CORPUS = join(ROOT, "world", "corpus", "ch");
 const argv = process.argv.slice(2);
@@ -108,8 +109,35 @@ const TERMS = existsSync(MINED)
   "management fee", "carried interest", "maintenance covenant", "incurrence covenant",
 ];
 console.log(`vocabulary: ${TERMS.length} terms ${existsSync(MINED) ? "(mined from corpus)" : "(hand-written fallback)"}`);
-const FOLDERS = ["Diligence", "Closing", "Internal", "Consents", "Analyses & Memos",
-                 "Correspondence", "Signature Pages", "Disclosure Schedules"];
+/**
+ * Real folder taxonomy, read from index.sqlite.
+ *
+ * The first version matched folder names against the FLATTENED filenames in
+ * world/corpus/ch/text/, which drop the folder path entirely — so structural
+ * generation produced 11 tasks out of 518 and most of those by accident. The
+ * folder is a column in the index; use it.
+ */
+const folderByMatter = new Map();   // matter -> Set(folder)
+let FOLDERS = ["Diligence", "Closing", "Correspondence", "Engagement",
+               "Transaction Documents", "Pleadings", "Financing", "Discovery"];
+try {
+  const { DatabaseSync } = require("node:sqlite");
+  const db = new DatabaseSync(join(CORPUS, "index.sqlite"));
+  for (const r of db.prepare("SELECT matter_id, folder FROM files WHERE folder <> ''").all()) {
+    const top = String(r.folder).split("/")[0].trim();
+    if (!top) continue;
+    if (!folderByMatter.has(r.matter_id)) folderByMatter.set(r.matter_id, new Set());
+    folderByMatter.get(r.matter_id).add(top);
+  }
+  const counts = {};
+  for (const set of folderByMatter.values()) for (const f of set) counts[f] = (counts[f] ?? 0) + 1;
+  FOLDERS = Object.entries(counts)
+    .filter(([, n]) => n >= 8 && n <= matters.size * 0.8)
+    .sort((a, b) => b[1] - a[1]).slice(0, 16).map(([f]) => f);
+  console.log(`folders: ${FOLDERS.length} from the index (${folderByMatter.size} matters mapped)`);
+} catch (e) {
+  console.log(`folders: falling back to the hard-coded list (${String(e).slice(0, 60)})`);
+}
 
 const rng = (seed) => () => (seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
 const rand = rng(WAVE * 7919);
@@ -179,14 +207,11 @@ for (const term of sample(TERMS, PER_KIND)) {
 for (const [f1, f2] of sample(FOLDERS, PER_KIND * 2).reduce((acc, t, i, arr) =>
   (i % 2 ? acc : [...acc, [t, arr[i + 1]]]), []).slice(0, PER_KIND)) {
   if (!f1 || !f2) continue;
-  const has = (m, f) => (matters.get(m) ?? []).some(() => false) || false;
-  // folder is encoded in the index, not the flattened text filename; use the index
   const out = [];
   for (const m of matters.keys()) {
-    const names = (matters.get(m) ?? []).map((x) => x.file.toLowerCase());
-    const h1 = names.some((n) => n.includes(f1.toLowerCase().split(" ")[0]));
-    const h2 = names.some((n) => n.includes(f2.toLowerCase().split(" ")[0]));
-    if (h1 && !h2) out.push(m);
+    const set = folderByMatter.get(m);
+    if (!set) continue;
+    if (set.has(f1) && !set.has(f2)) out.push(m);
   }
   if (out.length < 2 || out.length > 40) continue;
   add("structural", {
