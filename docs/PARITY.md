@@ -7,9 +7,9 @@ coverage of that benchmark, and it is not counted as such here.
 
 | Benchmark | Task definitions available | Hosted | Parity |
 |---|---|---|---|
-| harvey-labs (practice + contracts) | 1,760 | 1 | 0.1% |
+| harvey-labs (practice + contracts) | 1,760 | 0 | 0.0% |
 | harvey-labs firm-knowledge (C&H) | 250 | 250 | 100.0% |
-| LegalBench | 162 | 0 | 0.0% |
+| LegalBench | 162 | 160 | 98.8% |
 | CUAD | 1 | 0 | 0.0% |
 | MAUD | 1 | 0 | 0.0% |
 | ACORD | 1 | 0 | 0.0% |
@@ -17,7 +17,7 @@ coverage of that benchmark, and it is not counted as such here.
 | LawFlow | 1 | 0 | 0.0% |
 | LawBench | 1 | 0 | 0.0% |
 | lex-glue | 1 | 0 | 0.0% |
-| **total** | **2,179** | **251** | **11.5%** |
+| **total** | **2,179** | **410** | **18.8%** |
 
 ## Our own tasks, by provenance
 

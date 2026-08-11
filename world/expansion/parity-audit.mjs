@@ -107,12 +107,29 @@ for (const t of world.tasks) {
 const fkPath = join(ROOT, "world/blobfish/firm-knowledge-tasks.json");
 const fk = existsSync(fkPath) ? JSON.parse(readFileSync(fkPath, "utf8")).tasks : 0;
 
+// world/port/bundles/*.json are written by world/port/port.mjs. A source counts
+// as hosted only for tasks we can actually RUN and GRADE, so judge-only bundles
+// contribute 0 until a judge exists — claiming otherwise is the error this file
+// was written to prevent.
+const BUNDLES = join(ROOT, "world", "port", "bundles");
+const BUNDLE_HOSTED = {};
+if (existsSync(BUNDLES)) {
+  for (const f of readdirSync(BUNDLES).filter((x) => x.endsWith(".json"))) {
+    const b = JSON.parse(readFileSync(join(BUNDLES, f), "utf8"));
+    const runnable = b.grading?.kind === "judge" ? 0 : (b.tasks ?? []).length;
+    const label = { legalbench: "LegalBench",
+                    "harvey-firm-knowledge": "harvey-labs firm-knowledge (C&H)",
+                    "harvey-practice": "harvey-labs (practice + contracts)" }[b.meta?.id];
+    if (label) BUNDLE_HOSTED[label] = runnable;
+  }
+}
+
 const rows = SOURCES.map((s) => {
   const d = join(REPOS, s.repo);
   const available = existsSync(d) ? s.count(d) : 0;
-  const hostedN = s.name.includes("firm-knowledge") ? fk
-    : s.name.startsWith("harvey-labs (") ? 1   // packs-lab: one contracts task, documents verbatim
-    : 0;
+  // Hosted counts come from the PORT BUNDLES — the pipeline's own output — so
+  // this scoreboard cannot drift from what was actually ported.
+  const hostedN = BUNDLE_HOSTED[s.name] ?? 0;
   return { ...s, available, hosted: hostedN,
            parity: available ? hostedN / available : 0 };
 });
