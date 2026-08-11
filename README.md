@@ -16,24 +16,39 @@ now **fully self-hosting** — the entire world runs offline from this repo.
 
 Three things live here:
 
-1. **The world** — canonical `world-v6.json`: **270 tasks**, **311 seeded
+1. **The world** — canonical `world-v7.json`: **274 tasks**, **321 seeded
    matter documents**, 70 tables + 38 product tables, **179 tools** across two
    generations (91 legacy + 88 v3 mirroring real vendor APIs), one verifier
-   per task, **270/270 oracle-proven**. Every runnable eval and workflow in the
-   101-item domain registry is hosted — **zero hostable gaps remain**
-   ([`docs/COVERAGE.md`](docs/COVERAGE.md)).
+   per task, **274/274 oracle-proven**, 0 domain-lint flags. Every runnable
+   eval and workflow in the 101-item domain registry is hosted — **zero
+   hostable gaps remain** ([`docs/COVERAGE.md`](docs/COVERAGE.md)).
 
    Admission takes two proofs, not one. The oracle proves each task is
-   *satisfiable*; a discrimination sweep proves it *rejects wrong behavior* —
-   four adversarial episodes per task (no-op, text-only, blind-write, and the
-   reference walk with a corrupted payload). All 270 reject the three
-   behavioral modes; **151 also reject a wrong answer**, and of the 119 that
-   cannot, 110 are prose deliverables where no exact string exists to pin
+   *satisfiable*; a **discrimination sweep** proves it *rejects wrong
+   behavior* — four adversarial episodes per task (no-op, text-only,
+   blind-write, and the reference walk with a corrupted payload). Every task
+   rejects the three behavioral modes
    ([`docs/DISCRIMINATION.md`](docs/DISCRIMINATION.md)). That sweep retired 38
    tasks whose prompt named its own tool walk and whose verifier pinned
    nothing — replaced one-for-one by `packs-v4`, which grades a covenant
    breach, a claim's priority, a damages computation, an HSR fee tier and an
    arbitral institution against documents that carry the facts.
+
+   **Harvey LAB tasks run here.** `world/expansion/packs-lab/` hosts LAB task
+   content directly: the documents are extracted **verbatim** from the real
+   `.docx`/`.xlsx`/`.eml` bytes by `research/lab_extract.py` (10/10 parsed,
+   ~193k characters), and the questions are re-cut to the determinate
+   decisions the source rubric already asserts, so they grade without an LLM
+   judge. What is lost is prose quality; what is gained is a checkable answer
+   key — all four LAB-derived tasks pass the oracle and reject all four
+   adversarial modes. Provenance (repo, commit, source task, license) travels
+   in the pack.
+
+   The domain corpus that grounds this is **46 cloned repos** under
+   `research/repos/` (manifest: `research/repos-manifest.tsv`), with the
+   question-driven research in [`research/QUESTIONS.md`](research/QUESTIONS.md)
+   and the framing in [`research/THESIS.md`](research/THESIS.md).
+
 2. **The boundary proof** — 21 tasks with direct mixed-outcome evidence (same
    model, same prompt, 3 episodes, sometimes passes / sometimes fails) and a
    per-episode trace corpus explaining *why*. See

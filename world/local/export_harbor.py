@@ -12,7 +12,7 @@ hosted world; here tool behavior is implemented by the bundled runtime
 the 231/231 oracle fidelity pass). tools/tool_manifest.json therefore maps
 every tool to the runtime with its schema + an integrity digest of the spec.
 
-Usage: python3 world/local/export_harbor.py [--world world/blobfish/world-v6.json]
+Usage: python3 world/local/export_harbor.py [--world world/blobfish/world-v7.json]
                                             [--out dist/harbor]
 """
 from __future__ import annotations
@@ -41,7 +41,7 @@ def sha256_file(path: str) -> str:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--world", default=os.path.join(ROOT, "world", "blobfish", "world-v6.json"))
+    ap.add_argument("--world", default=os.path.join(ROOT, "world", "blobfish", "world-v7.json"))
     ap.add_argument("--out", default=os.path.join(ROOT, "dist", "harbor"))
     args = ap.parse_args()
 
