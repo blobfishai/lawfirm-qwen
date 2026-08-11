@@ -91,7 +91,15 @@ const mattersWith = (term) => {
 
 // Terms drawn from the domain, not from inspecting answers — the point is that
 // we do NOT know the answer until the corpus is scanned.
-const TERMS = [
+// Mined from the corpus when available (world/port/mine-corpus-terms.mjs): 400
+// legally-salient phrases that discriminate, versus the 24 written by hand
+// below. The hand list stays as the fallback so the generator still runs on a
+// fresh checkout, but it was the reason six waves produced only 106 distinct
+// questions — the vocabulary, not the generators, was the ceiling.
+const MINED = join(ROOT, "world", "port", "corpus-terms.json");
+const TERMS = existsSync(MINED)
+  ? JSON.parse(readFileSync(MINED, "utf8")).terms.map((t) => t.term)
+  : [
   "second request", "material adverse effect", "indemnification", "escrow",
   "non-compete", "change of control", "earn-out", "springing lien",
   "most favored nation", "liquidated damages", "force majeure", "arbitration",
@@ -99,6 +107,7 @@ const TERMS = [
   "exclusivity", "right of first refusal", "tag-along", "drag-along",
   "management fee", "carried interest", "maintenance covenant", "incurrence covenant",
 ];
+console.log(`vocabulary: ${TERMS.length} terms ${existsSync(MINED) ? "(mined from corpus)" : "(hand-written fallback)"}`);
 const FOLDERS = ["Diligence", "Closing", "Internal", "Consents", "Analyses & Memos",
                  "Correspondence", "Signature Pages", "Disclosure Schedules"];
 
