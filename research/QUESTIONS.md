@@ -39,8 +39,8 @@ hypothesis, and is labelled as one.
 
 | # | Question | Status |
 |---|---|---|
-| C1 | What are the task families, taken from evals and from automation repos rather than invented? | [partial](answers/C1-task-families.md) |
-| C2 | For each family: what are the **input documents**, and what does the agent have to extract from them? | open |
+| C1 | What are the task families, taken from evals and from automation repos rather than invented? | [answered](answers/C1-task-families.md) |
+| C2 | For each family: what are the **input documents**, and what does the agent have to extract from them? | [answered](answers/C2-input-documents.md) |
 | C3 | What is "done"? What does the firm check before a deliverable leaves the building? | [answered](answers/C3-definition-of-done.md) |
 | C4 | What are the variations within a family — what makes one instance harder than another? | [answered](answers/C4-task-variations.md) |
 
@@ -48,8 +48,8 @@ hypothesis, and is labelled as one.
 
 | # | Question | Status |
 |---|---|---|
-| D1 | Which products does this domain actually run on, and who are the competitors in each category? | open |
-| D2 | For each product: what does its real API/MCP surface look like — endpoints, envelopes, auth, pagination? | open |
+| D1 | Which products does this domain actually run on, and who are the competitors in each category? | [partial](answers/D-systems-and-tools.md) — corpus refuted the competitor list; needs vendor API docs |
+| D2 | For each product: what does its real API/MCP surface look like — endpoints, envelopes, auth, pagination? | [answered](answers/D-systems-and-tools.md) |
 | D3 | Where does the same fact live in more than one system, and what makes them disagree? | open |
 | D4 | What does a GitHub workflow of someone *actually using* these APIs look like — call order, error handling, retries? | open |
 
