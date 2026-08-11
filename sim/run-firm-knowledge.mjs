@@ -156,7 +156,10 @@ function grade(task, answer) {
 }
 
 // ---- main -----------------------------------------------------------------
-const bank = JSON.parse(readFileSync(join(ROOT, "world/blobfish/firm-knowledge-tasks.json"), "utf8"));
+// --bank lets the same runner grade any matter-id-keyed set: Harvey's 250 and
+// the generated corpus waves share an answer shape, so they share a grader.
+const BANK = opt("--bank", "world/blobfish/firm-knowledge-tasks.json");
+const bank = JSON.parse(readFileSync(join(ROOT, BANK), "utf8"));
 let list = bank.taskList.filter((t) => t.grading !== "judge_only");
 if (GRADING) list = list.filter((t) => t.grading === GRADING);
 if (ONLY) { const want = new Set(ONLY.split(",")); list = list.filter((t) => want.has(t.task_id)); }
