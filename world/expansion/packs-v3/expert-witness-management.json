@@ -1,0 +1,84 @@
+{
+ "family": "expert-witness-management",
+ "anchor": "frcp_26a2_workflow",
+ "documents": [
+  {
+   "title": "Expert pack \u2014 Scheduling order excerpt: Meridian Grain v. Talvern",
+   "doc_type": "court_order",
+   "body": "SCHEDULING ORDER (excerpt)\n\n3. TRIAL. This matter is set for jury trial commencing MONDAY, MARCH 1, 2027.\n\n4. EXPERT DISCLOSURES. Absent a stipulation approved by the Court, disclosures under Rule 26(a)(2) shall be made:\n   (a) for the party bearing the burden of proof on an issue: AT LEAST 90 DAYS BEFORE TRIAL;\n   (b) solely to contradict or rebut evidence on the same subject: WITHIN 30 DAYS AFTER the other party's disclosure.\n\n5. No extension of the expert-disclosure dates will be granted absent a showing of good cause filed before the deadline."
+  },
+  {
+   "title": "Expert pack \u2014 Retained expert file: Dr. Priya Okafor (grain storage engineering)",
+   "doc_type": "expert_file",
+   "body": "RETAINED EXPERT FILE \u2014 Dr. Priya Okafor, Ph.D., P.E.\nRetained: 2026-06-02 \u00b7 Rate: $650/hr \u00b7 Subject: grain storage climate control and spoilage causation.\n\nDisclosure package contents received from the expert:\n  [x] Written report signed by the witness\n  [x] Complete statement of all opinions and the basis and reasons for them\n  [x] Facts or data considered by the witness\n  [x] Exhibits used to summarize or support the opinions\n  [ ] Qualifications, including a list of all publications authored in the previous 10 YEARS \u2014 NOT PROVIDED\n  [x] List of all other cases in which the witness testified as an expert at trial or by deposition during the previous 4 years\n  [x] Statement of compensation to be paid\n\nParalegal note: the publications list is outstanding as of today; the expert's assistant says it will follow."
+  },
+  {
+   "title": "Expert pack \u2014 Rule 26(a)(2)(B) completeness checklist",
+   "doc_type": "checklist",
+   "body": "RULE 26(a)(2)(B) DISCLOSURE COMPLETENESS CHECKLIST\n\nA retained expert's written report MUST contain all six elements:\n  1. a complete statement of all opinions and the basis and reasons for them;\n  2. the facts or data considered by the witness;\n  3. any exhibits used to summarize or support them;\n  4. the witness's qualifications, INCLUDING a list of all publications authored in the previous 10 years;\n  5. a list of all other cases in which the witness testified as an expert at trial or by deposition during the previous 4 years;\n  6. a statement of the compensation to be paid.\n\nA package missing ANY element is INCOMPLETE and must not be served. Vocabulary for the completeness determination (use exactly): complete | incomplete"
+  }
+ ],
+ "tasks": [
+  {
+   "slug": "expert-disclosure-completeness",
+   "difficulty": "medium",
+   "prompt": "Expert disclosure review: read the retained expert file and the Rule 26(a)(2)(B) completeness checklist in the matter folder in full, then record whether the disclosure package may be served by calling litigation_discovery_review_create with outcome exactly \"complete\" or exactly \"incomplete\" and reviewer_role exactly \"litigation-associate\".",
+   "reads": [
+    "Expert pack \u2014 Retained expert file: Dr. Priya Okafor (grain storage engineering)",
+    "Expert pack \u2014 Rule 26(a)(2)(B) completeness checklist"
+   ],
+   "creates": [
+    {
+     "tool": "litigation_discovery_review_create",
+     "args": {
+      "litigation_discovery_id": "litigation_discovery_001",
+      "reviewer_role": "litigation-associate",
+      "outcome": "incomplete",
+      "rationale": "Element 4 is missing: the 10-year publications list has not been provided, so the package is incomplete and must not be served."
+     },
+     "pinned": {
+      "outcome": "incomplete",
+      "reviewer_role": "litigation-associate"
+     }
+    }
+   ],
+   "forbidden": [
+    {
+     "table": "litigation_discovery_reviews",
+     "field": "outcome",
+     "value": "complete"
+    }
+   ]
+  },
+  {
+   "slug": "expert-disclosure-deadline",
+   "difficulty": "high",
+   "prompt": "Calendar the affirmative expert-disclosure deadline. Read the scheduling order excerpt in the matter folder in full. Our client bears the burden of proof on causation. Compute the disclosure date from the trial date using the order's rule and record it by calling litigation_deadlines_review_create with outcome set to ONLY the date in YYYY-MM-DD form and reviewer_role exactly \"docketing-clerk\".",
+   "reads": [
+    "Expert pack \u2014 Scheduling order excerpt: Meridian Grain v. Talvern"
+   ],
+   "creates": [
+    {
+     "tool": "litigation_deadlines_review_create",
+     "args": {
+      "litigation_deadlines_id": "litigation_deadlines_001",
+      "reviewer_role": "docketing-clerk",
+      "outcome": "2026-12-01",
+      "rationale": "90 days before the March 1, 2027 trial date is December 1, 2026."
+     },
+     "pinned": {
+      "outcome": "2026-12-01",
+      "reviewer_role": "docketing-clerk"
+     }
+    }
+   ],
+   "forbidden": [
+    {
+     "table": "litigation_deadlines_reviews",
+     "field": "outcome",
+     "value": "2026-11-31"
+    }
+   ]
+  }
+ ]
+}

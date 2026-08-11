@@ -1,0 +1,80 @@
+{
+ "family": "settlement-authority",
+ "anchor": "settlement_workflow",
+ "documents": [
+  {
+   "title": "Settlement pack \u2014 Client settlement authority letter",
+   "doc_type": "authority_letter",
+   "body": "SETTLEMENT AUTHORITY \u2014 Meridian Grain Cooperative\n\nThe Board authorises outside counsel to settle the Talvern matter for a total cash payment TO the Cooperative of not less than $1,900,000, and further authorises counsel to accept a structured settlement only if the present value is not less than that figure.\n\nCounsel has NO authority to accept any offer below $1,900,000 without a further Board resolution. This authority expires 2026-12-31."
+  },
+  {
+   "title": "Settlement pack \u2014 Offer ledger: demands and offers to date",
+   "doc_type": "offer_ledger",
+   "body": "SETTLEMENT LEDGER \u2014 Meridian Grain v. Talvern\n\n2026-05-14 \u00b7 Plaintiff demand \u00b7 $4,200,000 \u00b7 rejected by defendant\n2026-06-02 \u00b7 Defendant offer \u00b7 $950,000 \u00b7 rejected by plaintiff\n2026-06-30 \u00b7 Plaintiff demand \u00b7 $3,100,000 \u00b7 rejected by defendant\n2026-07-21 \u00b7 Defendant offer \u00b7 $1,650,000 \u00b7 rejected by plaintiff\n2026-08-06 \u00b7 Defendant offer \u00b7 $1,875,000 \u00b7 OPEN \u2014 response due 2026-08-20\n\nMediator's note: the defendant has signalled it will not move above $1.9M."
+  }
+ ],
+ "tasks": [
+  {
+   "slug": "settlement-authority-check",
+   "difficulty": "high",
+   "prompt": "Settlement decision: read the client authority letter and the offer ledger in the matter folder in full. Determine whether counsel may accept the currently OPEN offer without returning to the client. Record the determination by calling litigation_cases_review_create with outcome exactly \"accept_within_authority\" if acceptable, or exactly \"escalate_outside_authority\" if it is not, and reviewer_role exactly \"lead-counsel\".",
+   "reads": [
+    "Settlement pack \u2014 Client settlement authority letter",
+    "Settlement pack \u2014 Offer ledger: demands and offers to date"
+   ],
+   "creates": [
+    {
+     "tool": "litigation_cases_review_create",
+     "args": {
+      "litigation_cases_id": "litigation_cases_001",
+      "reviewer_role": "lead-counsel",
+      "outcome": "escalate_outside_authority",
+      "rationale": "The open offer is $1,875,000, below the $1,900,000 floor; counsel has no authority to accept without a further Board resolution."
+     },
+     "pinned": {
+      "outcome": "escalate_outside_authority",
+      "reviewer_role": "lead-counsel"
+     }
+    }
+   ],
+   "forbidden": [
+    {
+     "table": "litigation_cases_reviews",
+     "field": "outcome",
+     "value": "accept_within_authority"
+    }
+   ]
+  },
+  {
+   "slug": "settlement-gap-figure",
+   "difficulty": "medium",
+   "prompt": "Record the shortfall between the client's authority floor and the current OPEN offer. Read the authority letter and the offer ledger in the matter folder in full and call litigation_cases_amount_history_create with claimed_amount set to exactly the shortfall (a number) and changed_by_role exactly \"lead-counsel\".",
+   "reads": [
+    "Settlement pack \u2014 Client settlement authority letter",
+    "Settlement pack \u2014 Offer ledger: demands and offers to date"
+   ],
+   "creates": [
+    {
+     "tool": "litigation_cases_amount_history_create",
+     "args": {
+      "litigation_cases_id": "litigation_cases_001",
+      "claimed_amount": 25000,
+      "changed_by_role": "lead-counsel",
+      "change_reason": "$1,900,000 authority floor less the $1,875,000 open offer = $25,000 shortfall."
+     },
+     "pinned": {
+      "claimed_amount": 25000,
+      "changed_by_role": "lead-counsel"
+     }
+    }
+   ],
+   "forbidden": [
+    {
+     "table": "litigation_cases_amount_history",
+     "field": "claimed_amount",
+     "value": 225000
+    }
+   ]
+  }
+ ]
+}

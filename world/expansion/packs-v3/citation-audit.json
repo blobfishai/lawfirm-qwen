@@ -1,0 +1,55 @@
+{
+ "family": "citation-audit",
+ "anchor": "legalcitebench",
+ "documents": [
+  {
+   "title": "Cite pack \u2014 Citation registry (firm-verified authorities)",
+   "doc_type": "citation_registry",
+   "body": "VERIFIED CITATION REGISTRY (authorities confirmed against the reporter)\n\n821 Sim. 3d 926 \u2014 Bluewater Components v. Talvern Logistics \u2014 VERIFIED, good law.\n493 Sim. 2d 715 \u2014 Ironwood Ops v. Meridian Cloud \u2014 VERIFIED, good law.\n604 Sim. 3d 210 \u2014 Summit Holdings v. Argent Motors \u2014 VERIFIED but SUPERSEDED IN PART by statute on the damages issue; do not cite for damages.\n712 Sim. 2d 88 \u2014 Fairview Works v. Corvess Analytics \u2014 VERIFIED, good law.\n\nAny citation not appearing in this registry has NOT been verified and must not be relied upon in a filing."
+  },
+  {
+   "title": "Cite pack \u2014 Draft brief citation table (for audit)",
+   "doc_type": "brief_cite_table",
+   "body": "TABLE OF AUTHORITIES \u2014 draft opposition brief (for cite-check)\n\n1. 821 Sim. 3d 926 \u2014 cited at 4, 11 (for the contract-interpretation standard)\n2. 604 Sim. 3d 210 \u2014 cited at 17 (FOR THE DAMAGES MEASURE)\n3. 950 Sim. 4d 1180 \u2014 cited at 19 (for the notice requirement)\n4. 712 Sim. 2d 88 \u2014 cited at 22 (for the waiver argument)\n\nDrafting associate note: citation 3 came from a research memo I no longer have; I could not locate it in the reporter."
+  },
+  {
+   "title": "Cite pack \u2014 Cite-check policy",
+   "doc_type": "policy",
+   "body": "CITE-CHECK POLICY\n\nEvery authority in a filing must be checked against the verified citation registry before filing.\n\nA citation is UNSAFE and must be pulled from the brief if EITHER (a) it does not appear in the registry at all, OR (b) it appears in the registry but is superseded for the proposition it is cited for.\n\nRecord the audit outcome as a count of unsafe citations. Do not attempt to verify an absent citation from memory \u2014 an unlocatable citation is unsafe by definition."
+  }
+ ],
+ "tasks": [
+  {
+   "slug": "cite-audit-count",
+   "difficulty": "high",
+   "prompt": "Cite-check the draft brief: read the citation registry, the brief's table of authorities, and the cite-check policy in the matter folder in full. Apply the policy and record the NUMBER of unsafe citations by calling litigation_filings_amount_history_create with filing_cost set to exactly that count (a number) and changed_by_role exactly \"cite-checker\". Do not verify any citation from memory.",
+   "reads": [
+    "Cite pack \u2014 Citation registry (firm-verified authorities)",
+    "Cite pack \u2014 Draft brief citation table (for audit)",
+    "Cite pack \u2014 Cite-check policy"
+   ],
+   "creates": [
+    {
+     "tool": "litigation_filings_amount_history_create",
+     "args": {
+      "litigation_filings_id": "litigation_filings_001",
+      "filing_cost": 2,
+      "changed_by_role": "cite-checker",
+      "change_reason": "950 Sim. 4d 1180 is absent from the registry; 604 Sim. 3d 210 is superseded for the damages proposition it is cited for. Two unsafe citations."
+     },
+     "pinned": {
+      "filing_cost": 2,
+      "changed_by_role": "cite-checker"
+     }
+    }
+   ],
+   "forbidden": [
+    {
+     "table": "litigation_filings_amount_history",
+     "field": "filing_cost",
+     "value": 1
+    }
+   ]
+  }
+ ]
+}

@@ -16,9 +16,12 @@ now **fully self-hosting** — the entire world runs offline from this repo.
 
 Three things live here:
 
-1. **The world** — 74 tables (1,000+ seeded rows), 102 executable tools,
-   **231 tasks** (156 original + 75 eval-anchored expansion), **211 seeded
-   matter documents**, one verifier per task.
+1. **The world** — canonical `world-v5.json`: **270 tasks**, **267 seeded
+   matter documents**, 70 tables + 38 product tables, **179 tools** across two
+   generations (91 legacy + 88 v3 mirroring real vendor APIs), one verifier
+   per task, **270/270 oracle-proven**. Every runnable eval and workflow in the
+   101-item domain registry is hosted — **zero hostable gaps remain**
+   ([`docs/COVERAGE.md`](docs/COVERAGE.md)).
 2. **The boundary proof** — 21 tasks with direct mixed-outcome evidence (same
    model, same prompt, 3 episodes, sometimes passes / sometimes fails) and a
    per-episode trace corpus explaining *why*. See

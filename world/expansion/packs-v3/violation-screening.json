@@ -1,0 +1,67 @@
+{
+ "family": "violation-screening",
+ "anchor": "legallens",
+ "documents": [
+  {
+   "title": "Violation pack \u2014 Employee complaint intake summary",
+   "doc_type": "complaint_intake",
+   "body": "INTAKE SUMMARY \u2014 prospective employment matter\n\nComplainant: former quality-assurance technician at Argent Motors, employed 2023-04 to 2026-05.\n\nFacts as stated: The complainant reported to the state safety regulator on 2026-04-02 that the plant was falsifying brake-test records. She informed her supervisor of the report on 2026-04-05. She was placed on unpaid administrative leave on 2026-04-19 and terminated on 2026-05-11. The stated reason for termination was 'restructuring'; her position was filled by an external hire on 2026-06-08.\n\nShe also states that during employment she was routinely required to work through unpaid 30-minute meal breaks, roughly three times per week."
+  },
+  {
+   "title": "Violation pack \u2014 Firm claim-screening matrix",
+   "doc_type": "screening_matrix",
+   "body": "CLAIM-SCREENING MATRIX (firm standard)\n\nCategory slugs (use exactly one per identified claim):\n  retaliation_whistleblower \u2014 adverse action following a protected report to a regulator, with temporal proximity.\n  wage_hour_meal_break \u2014 unpaid work during statutorily required meal periods.\n  discrimination_protected_class \u2014 adverse action because of a protected characteristic.\n  wrongful_termination_public_policy \u2014 termination contravening a clearly mandated public policy.\n  defamation \u2014 publication of a false statement of fact causing reputational harm.\n\nScreening rule: file one evidence record per claim category SUPPORTED by the intake facts. Do NOT file a category the facts do not support \u2014 an unsupported claim category is a screening error."
+  }
+ ],
+ "tasks": [
+  {
+   "slug": "violation-claim-screening",
+   "difficulty": "high",
+   "prompt": "Claim screening: read the employee complaint intake summary and the firm claim-screening matrix in the matter folder in full. File one legal_matters_evidence_create record per claim category SUPPORTED by the intake facts, with evidence_type set to exactly the category slug from the matrix and source_uri exactly \"intake://screened\". File no category the facts do not support.",
+   "reads": [
+    "Violation pack \u2014 Employee complaint intake summary",
+    "Violation pack \u2014 Firm claim-screening matrix"
+   ],
+   "creates": [
+    {
+     "tool": "legal_matters_evidence_create",
+     "args": {
+      "legal_matters_id": "legal_matters_001",
+      "evidence_type": "retaliation_whistleblower",
+      "source_uri": "intake://screened",
+      "content_summary": "Regulator report 2026-04-02, supervisor informed 04-05, leave 04-19, termination 05-11 \u2014 temporal proximity supports retaliation."
+     },
+     "pinned": {
+      "evidence_type": "retaliation_whistleblower",
+      "source_uri": "intake://screened"
+     }
+    },
+    {
+     "tool": "legal_matters_evidence_create",
+     "args": {
+      "legal_matters_id": "legal_matters_001",
+      "evidence_type": "wage_hour_meal_break",
+      "source_uri": "intake://screened",
+      "content_summary": "Routine unpaid work through 30-minute meal periods, ~3x weekly."
+     },
+     "pinned": {
+      "evidence_type": "wage_hour_meal_break",
+      "source_uri": "intake://screened"
+     }
+    }
+   ],
+   "forbidden": [
+    {
+     "table": "legal_matters_evidence_records",
+     "field": "evidence_type",
+     "value": "discrimination_protected_class"
+    },
+    {
+     "table": "legal_matters_evidence_records",
+     "field": "evidence_type",
+     "value": "defamation"
+    }
+   ]
+  }
+ ]
+}

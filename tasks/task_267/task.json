@@ -1,0 +1,71 @@
+{
+ "task_id": "task_267",
+ "outcome_class": "eligible_action",
+ "prompt": "Record the beneficial-ownership threshold that the firm's CURRENT AML policy applies. Read the policy memo in the matter folder in full and call legal_conflicts_amount_history_create with exposure_amount set to exactly that percentage as a number and changed_by_role exactly \"aml-officer\". A withdrawn chart in the folder states a different threshold.",
+ "goal": "Record the beneficial-ownership threshold that the firm's CURRENT AML policy applies. Read the policy memo in the matter",
+ "required_tools": [
+  "query_matter_documents",
+  "read_matter_document",
+  "legal_conflicts_amount_history_create"
+ ],
+ "complexity": "medium",
+ "method": "eval_anchored_expansion",
+ "steps": [
+  "Locate the input documents for this engagement in the matter folder",
+  "Read every required input document in full",
+  "Derive the graded determinations strictly from the documents",
+  "Record the determinations with the required write tools"
+ ],
+ "relevant_data": [
+  {
+   "table": "matter_documents",
+   "id": 262,
+   "field": "title",
+   "value": "Screening pack — Firm AML policy: acceptance decision rules"
+  }
+ ],
+ "expected_state_changes": [
+  {
+   "table": "legal_conflicts_amount_history",
+   "field": "(new row)",
+   "note": ">=1 rows with pinned fields"
+  }
+ ],
+ "tables_affected": [
+  "legal_conflicts_amount_history"
+ ],
+ "walk": [
+  "query_matter_documents",
+  "read_matter_document",
+  "legal_conflicts_amount_history_create"
+ ],
+ "reference_args": [
+  {
+   "title": "Screening pack — Firm AML policy: acceptance decision rules"
+  },
+  {
+   "id": 262
+  },
+  {
+   "legal_conflicts_id": "legal_conflicts_001",
+   "exposure_amount": 25,
+   "changed_by_role": "aml-officer",
+   "change_reason": "Policy Rule 1 sets the beneficial-ownership identification threshold at 25%."
+  }
+ ],
+ "effects": [
+  {
+   "table": "legal_conflicts_amount_history",
+   "op": "insert"
+  }
+ ],
+ "provenance": {
+  "source_workflow": "kyc_aml_workflow: kyc-aml-screening/kyc-ubo-threshold"
+ },
+ "difficulty_tier": "medium",
+ "acceptance_label": "pending_calibration",
+ "expansion": {
+  "pack": "kyc-aml-screening.json",
+  "slug": "kyc-ubo-threshold"
+ }
+}

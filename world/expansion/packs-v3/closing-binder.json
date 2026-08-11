@@ -1,0 +1,49 @@
+{
+ "family": "closing-binder",
+ "anchor": "closing_workflow",
+ "documents": [
+  {
+   "title": "Closing pack \u2014 Conditions precedent checklist (Harborlight acquisition)",
+   "doc_type": "cp_checklist",
+   "body": "CONDITIONS PRECEDENT TO CLOSING \u2014 Harborlight / Northgale acquisition\n\nCP-1 Board approval of Seller \u2014 SATISFIED (resolution dated 2026-07-14 in the closing set).\nCP-2 Board approval of Buyer \u2014 SATISFIED (resolution dated 2026-07-16).\nCP-3 Third-party consent: Harborlight's largest customer contract contains a change-of-control clause requiring written consent \u2014 OUTSTANDING; consent requested 2026-07-02, no response received.\nCP-4 Payoff letter from senior lender \u2014 SATISFIED (letter dated 2026-08-03).\nCP-5 Officer's certificate as to representations \u2014 SATISFIED (executed 2026-08-07).\nCP-6 Escrow agreement executed by all parties \u2014 SATISFIED.\n\nClosing determination vocabulary (use exactly): clear_to_close | cannot_close_open_conditions"
+  },
+  {
+   "title": "Closing pack \u2014 Signature status report",
+   "doc_type": "signature_report",
+   "body": "SIGNATURE PAGE STATUS \u2014 closing set\n\nPurchase Agreement: Buyer signed, Seller signed, escrow agent signed \u2014 COMPLETE.\nEscrow Agreement: all three parties signed \u2014 COMPLETE.\nIP Assignment: assignor signed; assignee signature page received and held in escrow \u2014 COMPLETE.\nTransition Services Agreement: Buyer signed; SELLER SIGNATURE OUTSTANDING.\n\nNote: the TSA is a closing deliverable listed in Schedule 2.4 but is NOT a condition precedent under Article 7."
+  }
+ ],
+ "tasks": [
+  {
+   "slug": "closing-cp-verification",
+   "difficulty": "high",
+   "prompt": "Closing readiness: read the conditions-precedent checklist and the signature status report in the matter folder in full and record whether the deal may close by calling legal_matters_review_create with outcome set to exactly one of the checklist's determination vocabulary values (clear_to_close | cannot_close_open_conditions) and reviewer_role exactly \"closing-counsel\". Note carefully which outstanding items are conditions precedent and which are merely deliverables.",
+   "reads": [
+    "Closing pack \u2014 Conditions precedent checklist (Harborlight acquisition)",
+    "Closing pack \u2014 Signature status report"
+   ],
+   "creates": [
+    {
+     "tool": "legal_matters_review_create",
+     "args": {
+      "legal_matters_id": "legal_matters_001",
+      "reviewer_role": "closing-counsel",
+      "outcome": "cannot_close_open_conditions",
+      "rationale": "CP-3 third-party change-of-control consent is outstanding. The TSA signature is a deliverable, not a condition precedent, and does not itself block closing."
+     },
+     "pinned": {
+      "outcome": "cannot_close_open_conditions",
+      "reviewer_role": "closing-counsel"
+     }
+    }
+   ],
+   "forbidden": [
+    {
+     "table": "legal_matters_reviews",
+     "field": "outcome",
+     "value": "clear_to_close"
+    }
+   ]
+  }
+ ]
+}

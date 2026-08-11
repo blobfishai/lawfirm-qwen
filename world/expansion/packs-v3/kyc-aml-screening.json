@@ -1,0 +1,95 @@
+{
+ "family": "kyc-aml-screening",
+ "anchor": "kyc_aml_workflow",
+ "documents": [
+  {
+   "title": "Screening pack \u2014 Client file: Corvess Analytics Holdings onboarding",
+   "doc_type": "client_file",
+   "body": "CLIENT ONBOARDING FILE \u2014 Corvess Analytics Holdings Ltd\n\nProposed client: Corvess Analytics Holdings Ltd (Jersey).\nUltimate beneficial owners disclosed by the client:\n  1. Wes Abara \u2014 55% \u2014 passport verified, residence: Washington State, USA.\n  2. Talvern Nominees Ltd \u2014 45% \u2014 a corporate holder; the client has NOT provided the natural persons behind this entity.\nProposed engagement: cross-border data-licensing advisory, estimated fees $340,000.\nSource of funds stated: operating revenue.\nRisk factors noted by intake: Jersey incorporation, an undisclosed corporate ownership layer, and a politically exposed person question flagged below."
+  },
+  {
+   "title": "Screening pack \u2014 Sanctions and PEP screening results (run 2026-08-05)",
+   "doc_type": "screening_results",
+   "body": "SCREENING RESULTS \u2014 run 2026-08-05 against consolidated lists\n\nSubject: Wes Abara\n  Sanctions lists: NO MATCH.\n  PEP status: NO MATCH.\n  Adverse media: NO MATCH.\n\nSubject: Talvern Nominees Ltd\n  Sanctions lists: NO MATCH.\n  PEP status: NOT SCREENABLE \u2014 screening a corporate nominee does not discharge the beneficial-ownership requirement; the natural persons behind the nominee were not provided and therefore were not screened.\n  Adverse media: NO MATCH.\n\nSubject: Corvess Analytics Holdings Ltd (entity)\n  Sanctions lists: NO MATCH.\n\nScreening analyst note: the file cannot be cleared while a 45% ownership layer remains unidentified."
+  },
+  {
+   "title": "Screening pack \u2014 Firm AML policy: acceptance decision rules",
+   "doc_type": "policy_memo",
+   "body": "AML CLIENT-ACCEPTANCE POLICY (firm standard)\n\nRule 1. A file may be CLEARED only when every beneficial owner holding 25% or more has been identified as a natural person AND screened with no match.\n\nRule 2. Where a holder of 25% or more is a corporate nominee whose natural persons have not been provided, the file must be placed on HOLD pending beneficial-ownership resolution. It must not be cleared and it must not be declined on that basis alone.\n\nRule 3. A file must be DECLINED where any identified party returns a sanctions match, or where the client refuses to provide beneficial-ownership information after two documented requests.\n\nRule 4. Enhanced due diligence applies to any file with a PEP match or a high-risk jurisdiction; EDD alone does not prevent clearance.\n\nDecision vocabulary (use exactly): cleared | hold_beneficial_ownership | declined"
+  },
+  {
+   "title": "Screening pack \u2014 Superseded 2024 acceptance chart (do not use)",
+   "doc_type": "superseded_chart",
+   "body": "2024 AML QUICK CHART \u2014 WITHDRAWN\n\nStated that corporate nominees may be accepted on the strength of the nominee's own screening, that the beneficial-ownership threshold is 50%, and that Jersey is a prohibited jurisdiction requiring automatic decline. All three statements were corrected in the current policy memo. Do not rely on this chart."
+  }
+ ],
+ "tasks": [
+  {
+   "slug": "kyc-acceptance-decision",
+   "difficulty": "high",
+   "prompt": "Client-acceptance decision: read the onboarding file, the screening results, and the firm AML policy memo in the matter folder in full. Apply the policy's decision rules and record the acceptance decision by calling legal_conflicts_review_create with outcome set to exactly one of the policy's decision vocabulary values (cleared | hold_beneficial_ownership | declined) and reviewer_role exactly \"aml-officer\". A withdrawn 2024 chart is also in the folder; the current policy memo governs.",
+   "reads": [
+    "Screening pack \u2014 Client file: Corvess Analytics Holdings onboarding",
+    "Screening pack \u2014 Sanctions and PEP screening results (run 2026-08-05)",
+    "Screening pack \u2014 Firm AML policy: acceptance decision rules"
+   ],
+   "creates": [
+    {
+     "tool": "legal_conflicts_review_create",
+     "args": {
+      "legal_conflicts_id": "legal_conflicts_001",
+      "reviewer_role": "aml-officer",
+      "outcome": "hold_beneficial_ownership",
+      "rationale": "Talvern Nominees holds 45% (>25%) as a corporate nominee with natural persons unidentified: Rule 2 requires HOLD, not clearance and not decline."
+     },
+     "pinned": {
+      "outcome": "hold_beneficial_ownership",
+      "reviewer_role": "aml-officer"
+     }
+    }
+   ],
+   "forbidden": [
+    {
+     "table": "legal_conflicts_reviews",
+     "field": "outcome",
+     "value": "declined"
+    },
+    {
+     "table": "legal_conflicts_reviews",
+     "field": "outcome",
+     "value": "cleared"
+    }
+   ]
+  },
+  {
+   "slug": "kyc-ubo-threshold",
+   "difficulty": "medium",
+   "prompt": "Record the beneficial-ownership threshold that the firm's CURRENT AML policy applies. Read the policy memo in the matter folder in full and call legal_conflicts_amount_history_create with exposure_amount set to exactly that percentage as a number and changed_by_role exactly \"aml-officer\". A withdrawn chart in the folder states a different threshold.",
+   "reads": [
+    "Screening pack \u2014 Firm AML policy: acceptance decision rules"
+   ],
+   "creates": [
+    {
+     "tool": "legal_conflicts_amount_history_create",
+     "args": {
+      "legal_conflicts_id": "legal_conflicts_001",
+      "exposure_amount": 25,
+      "changed_by_role": "aml-officer",
+      "change_reason": "Policy Rule 1 sets the beneficial-ownership identification threshold at 25%."
+     },
+     "pinned": {
+      "exposure_amount": 25,
+      "changed_by_role": "aml-officer"
+     }
+    }
+   ],
+   "forbidden": [
+    {
+     "table": "legal_conflicts_amount_history",
+     "field": "exposure_amount",
+     "value": 50
+    }
+   ]
+  }
+ ]
+}

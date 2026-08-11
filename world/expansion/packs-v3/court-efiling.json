@@ -1,0 +1,54 @@
+{
+ "family": "court-efiling",
+ "anchor": "cmecf_workflow",
+ "documents": [
+  {
+   "title": "Filing pack \u2014 Local Rules excerpt: electronic filing and redaction",
+   "doc_type": "local_rules",
+   "body": "LOCAL RULES (excerpt)\n\nLR 5.2 REDACTION. A party filing any document containing the following must redact: full social-security numbers (leave last four digits), full birth dates (leave year), minors' names (leave initials), and full financial-account numbers (leave last four digits). The filer, not the Clerk, bears responsibility for redaction.\n\nLR 7.1 PAGE LIMITS. A brief in support of or in opposition to a dispositive motion shall not exceed 25 PAGES exclusive of caption, signature block, and certificate of service. Leave to exceed must be sought before filing.\n\nLR 5.4 FILING WINDOW. A document is timely if filed by 11:59 p.m. local time on the due date. A document filed after that time is docketed as of the NEXT BUSINESS DAY.\n\nFiling determination vocabulary (use exactly): file_as_is | redact_before_filing | seek_leave_before_filing"
+  },
+  {
+   "title": "Filing pack \u2014 Draft brief for filing: opposition to motion to dismiss",
+   "doc_type": "draft_filing",
+   "body": "DRAFT FOR FILING \u2014 OPPOSITION TO DEFENDANT'S MOTION TO DISMISS\nMatter: Meridian Grain Cooperative v. Talvern Logistics\nDocument statistics: 22 pages of argument, plus caption (1 page), signature block, and certificate of service.\n\nContent note from the drafting associate: Exhibit C to the opposition reproduces the plaintiff's bank statement showing account number 4471-8890-2213-9964 in full, and paragraph 41 recites the date of birth of the plaintiff's warehouse manager (14 March 1979) in full.\n\nThe brief is otherwise final and approved by the supervising partner."
+  }
+ ],
+ "tasks": [
+  {
+   "slug": "efile-redaction-gate",
+   "difficulty": "high",
+   "prompt": "Pre-filing check: read the local rules excerpt and the draft brief in the matter folder in full, then record the filing determination by calling litigation_filings_review_create with outcome set to exactly one of the local rules' determination vocabulary values (file_as_is | redact_before_filing | seek_leave_before_filing) and reviewer_role exactly \"filing-clerk\". Apply every rule in the excerpt, not just the page limit.",
+   "reads": [
+    "Filing pack \u2014 Local Rules excerpt: electronic filing and redaction",
+    "Filing pack \u2014 Draft brief for filing: opposition to motion to dismiss"
+   ],
+   "creates": [
+    {
+     "tool": "litigation_filings_review_create",
+     "args": {
+      "litigation_filings_id": "litigation_filings_001",
+      "reviewer_role": "filing-clerk",
+      "outcome": "redact_before_filing",
+      "rationale": "22 pages is within the 25-page limit, so no leave is needed; but Exhibit C shows a full account number and para. 41 a full birth date, so LR 5.2 redaction is required before filing."
+     },
+     "pinned": {
+      "outcome": "redact_before_filing",
+      "reviewer_role": "filing-clerk"
+     }
+    }
+   ],
+   "forbidden": [
+    {
+     "table": "litigation_filings_reviews",
+     "field": "outcome",
+     "value": "file_as_is"
+    },
+    {
+     "table": "litigation_filings_reviews",
+     "field": "outcome",
+     "value": "seek_leave_before_filing"
+    }
+   ]
+  }
+ ]
+}

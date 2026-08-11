@@ -1,0 +1,91 @@
+{
+ "task_id": "task_257",
+ "outcome_class": "eligible_action",
+ "prompt": "Cite-check the draft brief: read the citation registry, the brief's table of authorities, and the cite-check policy in the matter folder in full. Apply the policy and record the NUMBER of unsafe citations by calling litigation_filings_amount_history_create with filing_cost set to exactly that count (a number) and changed_by_role exactly \"cite-checker\". Do not verify any citation from memory.",
+ "goal": "Cite-check the draft brief: read the citation registry, the brief's table of authorities, and the cite-check policy in t",
+ "required_tools": [
+  "query_matter_documents",
+  "read_matter_document",
+  "litigation_filings_amount_history_create"
+ ],
+ "complexity": "high",
+ "method": "eval_anchored_expansion",
+ "steps": [
+  "Locate the input documents for this engagement in the matter folder",
+  "Read every required input document in full",
+  "Derive the graded determinations strictly from the documents",
+  "Record the determinations with the required write tools"
+ ],
+ "relevant_data": [
+  {
+   "table": "matter_documents",
+   "id": 245,
+   "field": "title",
+   "value": "Cite pack — Citation registry (firm-verified authorities)"
+  },
+  {
+   "table": "matter_documents",
+   "id": 246,
+   "field": "title",
+   "value": "Cite pack — Draft brief citation table (for audit)"
+  },
+  {
+   "table": "matter_documents",
+   "id": 247,
+   "field": "title",
+   "value": "Cite pack — Cite-check policy"
+  }
+ ],
+ "expected_state_changes": [
+  {
+   "table": "litigation_filings_amount_history",
+   "field": "(new row)",
+   "note": ">=1 rows with pinned fields"
+  }
+ ],
+ "tables_affected": [
+  "litigation_filings_amount_history"
+ ],
+ "walk": [
+  "query_matter_documents",
+  "read_matter_document",
+  "read_matter_document",
+  "read_matter_document",
+  "litigation_filings_amount_history_create"
+ ],
+ "reference_args": [
+  {
+   "title": "Cite pack — Citation registry (firm-verified authorities)"
+  },
+  {
+   "id": 245
+  },
+  {
+   "id": 246
+  },
+  {
+   "id": 247
+  },
+  {
+   "litigation_filings_id": "litigation_filings_001",
+   "filing_cost": 2,
+   "changed_by_role": "cite-checker",
+   "change_reason": "950 Sim. 4d 1180 is absent from the registry; 604 Sim. 3d 210 is superseded for the damages proposition it is cited for. Two unsafe citations."
+  }
+ ],
+ "effects": [
+  {
+   "table": "litigation_filings_amount_history",
+   "op": "insert"
+  }
+ ],
+ "provenance": {
+  "source_workflow": "legalcitebench: citation-audit/cite-audit-count"
+ },
+ "difficulty_tier": "high",
+ "acceptance_label": "pending_calibration",
+ "expansion": {
+  "pack": "citation-audit.json",
+  "slug": "cite-audit-count"
+ }
+}

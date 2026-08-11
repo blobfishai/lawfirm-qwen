@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Catalog builder — materializes browsable per-file folders from the
- * canonical sources (world-expanded.json, data/leaderboard/episodes/,
+ * canonical sources (world-v5.json, data/leaderboard/episodes/,
  * data/flake/flaky-trajectories.json). Idempotent: wipes and rebuilds.
  *
  *   tasks/       task_001.json … one file per task definition
@@ -18,7 +18,7 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
-const worldRaw = JSON.parse(readFileSync(join(ROOT, "world", "blobfish", "world-v4.json"), "utf8"));
+const worldRaw = JSON.parse(readFileSync(join(ROOT, "world", "blobfish", "world-v5.json"), "utf8"));
 const world = worldRaw.world ?? worldRaw;
 
 const counts = { tasks: 0, verifiers: 0, traces: 0, failed: 0 };
@@ -65,7 +65,7 @@ for (const t of world.tasks) {
 }
 writeFileSync(join(TASKS, "README.md"),
   `# tasks/ — one folder per task: definition, verifier, and its own seed bundle\n\n` +
-  `Materialized from \`world/blobfish/world-expanded.json\` by \`node sim/build-catalog.mjs\`\n` +
+  `Materialized from \`world/blobfish/world-v5.json\` by \`node sim/build-catalog.mjs\`\n` +
   `(seed bundles derived by \`world/expansion/derive-task-seeds.mjs\`). Do not edit directly.\n\n` +
   `\`\`\`\ntasks/task_NNN/\n  task.json                 the task definition (prompt, walk, provenance, labels)\n` +
   `  verifier.py               the shipped VCode verifier, verbatim\n` +

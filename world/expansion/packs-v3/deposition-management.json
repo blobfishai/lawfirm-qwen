@@ -1,0 +1,85 @@
+{
+ "family": "deposition-management",
+ "anchor": "deposition_workflow",
+ "documents": [
+  {
+   "title": "Deposition pack \u2014 Scheduling order excerpt: discovery cutoff",
+   "doc_type": "court_order",
+   "body": "SCHEDULING ORDER (excerpt)\n\n2. FACT DISCOVERY. All fact discovery, INCLUDING depositions, shall be COMPLETED by FRIDAY, OCTOBER 30, 2026. 'Completed' means the deposition has been taken, not merely noticed.\n\n2.1 A deposition notice served on a party must be served at least 14 DAYS before the deposition date.\n\n2.2 A non-party witness may be compelled only by SUBPOENA under Rule 45; a notice alone has no effect on a non-party.\n\n2.3 No deposition may be scheduled after the fact-discovery cutoff absent a stipulation approved by the Court."
+  },
+  {
+   "title": "Deposition pack \u2014 Witness list with party status",
+   "doc_type": "witness_list",
+   "body": "WITNESS LIST FOR DEPOSITION \u2014 Meridian Grain v. Talvern\n\n1. R. Calloway \u2014 Talvern Logistics VP Operations \u2014 PARTY witness (officer of the defendant).\n2. Dr. Priya Okafor \u2014 retained expert (our side).\n3. J. Ellery \u2014 former Talvern dispatcher, now employed by an unrelated company \u2014 NON-PARTY.\n4. Silo Complex 4 records custodian, Talvern \u2014 PARTY witness (employee of the defendant).\n\nCompulsion vocabulary (use exactly): notice_of_deposition | rule_45_subpoena"
+  },
+  {
+   "title": "Deposition pack \u2014 Availability memo",
+   "doc_type": "availability_memo",
+   "body": "AVAILABILITY MEMO\n\nJ. Ellery is available on: 2026-10-12, 2026-10-19, and 2026-11-06.\nCounsel for the defendant is available on all three dates.\nOur trial team is available on all three dates.\n\nNote from the paralegal: the client would prefer the latest possible date to allow document review to finish."
+  }
+ ],
+ "tasks": [
+  {
+   "slug": "depo-compulsion-instrument",
+   "difficulty": "medium",
+   "prompt": "Deposition planning: read the scheduling order excerpt and the witness list in the matter folder in full. For witness J. Ellery, record the correct compulsion instrument by calling litigation_hearings_review_create with outcome set to exactly one of the witness list's compulsion vocabulary values (notice_of_deposition | rule_45_subpoena) and reviewer_role exactly \"litigation-paralegal\".",
+   "reads": [
+    "Deposition pack \u2014 Scheduling order excerpt: discovery cutoff",
+    "Deposition pack \u2014 Witness list with party status"
+   ],
+   "creates": [
+    {
+     "tool": "litigation_hearings_review_create",
+     "args": {
+      "litigation_hearings_id": "litigation_hearings_001",
+      "reviewer_role": "litigation-paralegal",
+      "outcome": "rule_45_subpoena",
+      "rationale": "J. Ellery is a non-party (former employee, now elsewhere); under paragraph 2.2 a notice has no effect and a Rule 45 subpoena is required."
+     },
+     "pinned": {
+      "outcome": "rule_45_subpoena",
+      "reviewer_role": "litigation-paralegal"
+     }
+    }
+   ],
+   "forbidden": [
+    {
+     "table": "litigation_hearings_reviews",
+     "field": "outcome",
+     "value": "notice_of_deposition"
+    }
+   ]
+  },
+  {
+   "slug": "depo-date-against-cutoff",
+   "difficulty": "high",
+   "prompt": "Schedule the Ellery deposition. Read the scheduling order excerpt and the availability memo in the matter folder in full. Choose the LATEST available date that still complies with the order, and record it by calling litigation_hearings_amount_history_create is NOT correct \u2014 instead call litigation_deadlines_review_create with outcome set to ONLY that date in YYYY-MM-DD form and reviewer_role exactly \"litigation-paralegal\". The client prefers the latest date, but the order governs.",
+   "reads": [
+    "Deposition pack \u2014 Scheduling order excerpt: discovery cutoff",
+    "Deposition pack \u2014 Availability memo"
+   ],
+   "creates": [
+    {
+     "tool": "litigation_deadlines_review_create",
+     "args": {
+      "litigation_deadlines_id": "litigation_deadlines_001",
+      "reviewer_role": "litigation-paralegal",
+      "outcome": "2026-10-19",
+      "rationale": "2026-11-06 falls after the October 30 fact-discovery cutoff and is unavailable absent a court-approved stipulation; the latest compliant date is October 19, 2026."
+     },
+     "pinned": {
+      "outcome": "2026-10-19",
+      "reviewer_role": "litigation-paralegal"
+     }
+    }
+   ],
+   "forbidden": [
+    {
+     "table": "litigation_deadlines_reviews",
+     "field": "outcome",
+     "value": "2026-11-06"
+    }
+   ]
+  }
+ ]
+}

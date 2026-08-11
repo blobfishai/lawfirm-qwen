@@ -1,0 +1,79 @@
+{
+ "family": "engagement-letters",
+ "anchor": "engagement_workflow",
+ "documents": [
+  {
+   "title": "Engagement pack \u2014 Prospective engagement facts: Northgale Industries",
+   "doc_type": "engagement_facts",
+   "body": "PROSPECTIVE ENGAGEMENT \u2014 Northgale Industries\n\nScope requested: defense of a commercial contract dispute, expected 14-month duration, estimated fees $610,000.\nClient request: Northgale asks for a CONTINGENCY arrangement (25% of any amount saved versus the plaintiff's demand).\nClient status: existing client of the firm on two other matters, both current on fees.\nMatter type: defense of a money claim (no recovery to the client; the client is the defendant).\nConflicts: cleared 2026-08-04."
+  },
+  {
+   "title": "Engagement pack \u2014 Firm fee-arrangement policy",
+   "doc_type": "fee_policy",
+   "body": "FEE ARRANGEMENT POLICY (firm standard)\n\nRule A. Contingency arrangements are permitted ONLY where the client stands to RECEIVE a recovery. A pure defense engagement produces no recovery to the client, so a percentage-of-savings contingency is not permitted; the firm treats it as an unenforceable and ethically improper fee in this jurisdiction.\n\nRule B. Where a client requests an impermissible arrangement, counsel must offer the nearest permissible alternative rather than declining the engagement: for defense matters, an hourly arrangement with a blended rate, or a flat fee per phase.\n\nRule C. Any engagement over $500,000 estimated fees requires a written engagement letter countersigned by the client before work begins.\n\nFee vocabulary (use exactly): hourly | flat_fee_per_phase | contingency"
+  }
+ ],
+ "tasks": [
+  {
+   "slug": "engagement-fee-arrangement",
+   "difficulty": "high",
+   "prompt": "Engagement terms: read the prospective engagement facts and the firm fee-arrangement policy in the matter folder in full. The client has requested a contingency. Record the fee arrangement the firm may actually offer by calling legal_billing_review_create with outcome set to exactly one of the policy's fee vocabulary values (hourly | flat_fee_per_phase | contingency) and reviewer_role exactly \"engagement-partner\". Rule B tells you what to do when the request is impermissible.",
+   "reads": [
+    "Engagement pack \u2014 Prospective engagement facts: Northgale Industries",
+    "Engagement pack \u2014 Firm fee-arrangement policy"
+   ],
+   "creates": [
+    {
+     "tool": "legal_billing_review_create",
+     "args": {
+      "legal_billing_id": "legal_billing_001",
+      "reviewer_role": "engagement-partner",
+      "outcome": "hourly",
+      "rationale": "A defense engagement produces no recovery, so Rule A bars the requested contingency; Rule B directs the nearest permissible alternative \u2014 an hourly blended-rate arrangement."
+     },
+     "pinned": {
+      "outcome": "hourly",
+      "reviewer_role": "engagement-partner"
+     }
+    }
+   ],
+   "forbidden": [
+    {
+     "table": "legal_billing_reviews",
+     "field": "outcome",
+     "value": "contingency"
+    }
+   ]
+  },
+  {
+   "slug": "engagement-letter-threshold",
+   "difficulty": "medium",
+   "prompt": "Record the countersigned-engagement-letter threshold that applies to this engagement. Read the firm fee-arrangement policy in the matter folder in full and call legal_billing_amount_history_create with invoice_amount set to exactly the policy threshold (a number) and changed_by_role exactly \"engagement-partner\".",
+   "reads": [
+    "Engagement pack \u2014 Firm fee-arrangement policy"
+   ],
+   "creates": [
+    {
+     "tool": "legal_billing_amount_history_create",
+     "args": {
+      "legal_billing_id": "legal_billing_001",
+      "invoice_amount": 500000,
+      "changed_by_role": "engagement-partner",
+      "change_reason": "Rule C requires a countersigned engagement letter above $500,000 estimated fees; this engagement is estimated at $610,000."
+     },
+     "pinned": {
+      "invoice_amount": 500000,
+      "changed_by_role": "engagement-partner"
+     }
+    }
+   ],
+   "forbidden": [
+    {
+     "table": "legal_billing_amount_history",
+     "field": "invoice_amount",
+     "value": 610000
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,94 @@
+{
+ "task_id": "task_270",
+ "outcome_class": "eligible_action",
+ "prompt": "Claim screening: read the employee complaint intake summary and the firm claim-screening matrix in the matter folder in full. File one legal_matters_evidence_create record per claim category SUPPORTED by the intake facts, with evidence_type set to exactly the category slug from the matrix and source_uri exactly \"intake://screened\". File no category the facts do not support.",
+ "goal": "Claim screening: read the employee complaint intake summary and the firm claim-screening matrix in the matter folder in ",
+ "required_tools": [
+  "query_matter_documents",
+  "read_matter_document",
+  "legal_matters_evidence_create"
+ ],
+ "complexity": "high",
+ "method": "eval_anchored_expansion",
+ "steps": [
+  "Locate the input documents for this engagement in the matter folder",
+  "Read every required input document in full",
+  "Derive the graded determinations strictly from the documents",
+  "Record the determinations with the required write tools"
+ ],
+ "relevant_data": [
+  {
+   "table": "matter_documents",
+   "id": 266,
+   "field": "title",
+   "value": "Violation pack — Employee complaint intake summary"
+  },
+  {
+   "table": "matter_documents",
+   "id": 267,
+   "field": "title",
+   "value": "Violation pack — Firm claim-screening matrix"
+  }
+ ],
+ "expected_state_changes": [
+  {
+   "table": "legal_matters_evidence_records",
+   "field": "(new row)",
+   "note": ">=2 rows with pinned fields"
+  }
+ ],
+ "tables_affected": [
+  "legal_matters_evidence_records"
+ ],
+ "walk": [
+  "query_matter_documents",
+  "read_matter_document",
+  "read_matter_document",
+  "legal_matters_evidence_create",
+  "legal_matters_evidence_create"
+ ],
+ "reference_args": [
+  {
+   "title": "Violation pack — Employee complaint intake summary"
+  },
+  {
+   "id": 266
+  },
+  {
+   "id": 267
+  },
+  {
+   "legal_matters_id": "legal_matters_001",
+   "evidence_type": "retaliation_whistleblower",
+   "source_uri": "intake://screened",
+   "content_summary": "Regulator report 2026-04-02, supervisor informed 04-05, leave 04-19, termination 05-11 — temporal proximity supports retaliation.",
+   "content_digest": "sha256:reference-digest",
+   "owner_role": "associate",
+   "status": "open"
+  },
+  {
+   "legal_matters_id": "legal_matters_001",
+   "evidence_type": "wage_hour_meal_break",
+   "source_uri": "intake://screened",
+   "content_summary": "Routine unpaid work through 30-minute meal periods, ~3x weekly.",
+   "content_digest": "sha256:reference-digest",
+   "owner_role": "associate",
+   "status": "open"
+  }
+ ],
+ "effects": [
+  {
+   "table": "legal_matters_evidence_records",
+   "op": "insert"
+  }
+ ],
+ "provenance": {
+  "source_workflow": "legallens: violation-screening/violation-claim-screening"
+ },
+ "difficulty_tier": "high",
+ "acceptance_label": "pending_calibration",
+ "expansion": {
+  "pack": "violation-screening.json",
+  "slug": "violation-claim-screening"
+ }
+}
