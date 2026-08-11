@@ -26,8 +26,11 @@ Three things live here:
    Admission takes two proofs, not one. The oracle proves each task is
    *satisfiable*; a **discrimination sweep** proves it *rejects wrong
    behavior* — four adversarial episodes per task (no-op, text-only,
-   blind-write, and the reference walk with a corrupted payload). Every task
-   rejects the three behavioral modes
+   blind-write, and the reference walk with a corrupted payload). **All
+   274 reject the three behavioral modes; 155 also reject a wrong answer**,
+   and of the 119 that cannot, 110 are prose deliverables where no exact
+   string exists to pin. Zero broken keys, zero broken guards — every
+   verifier that claims an answer key enforces it
    ([`docs/DISCRIMINATION.md`](docs/DISCRIMINATION.md)). That sweep retired 38
    tasks whose prompt named its own tool walk and whose verifier pinned
    nothing — replaced one-for-one by `packs-v4`, which grades a covenant

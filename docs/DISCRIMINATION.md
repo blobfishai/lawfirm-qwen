@@ -15,11 +15,11 @@ world and records whether the verifier rejects each:
 | `blind_write` | every write checkpoint, no reads — the shortcut mode |
 | `wrong_value` | the full reference walk, terminal write payload corrupted (ids preserved) |
 
-## Result over 270 tasks
+## Result over 274 tasks
 
 | Verdict | Tasks | Meaning |
 |---|---|---|
-| discriminating | 151 | rejects all four |
+| discriminating | 155 | rejects all four |
 | no-answer-key | 119 | rejects the three behavioral modes; has no pinned-value assertion, so a corrupted payload cannot be caught **by construction** |
 | key-inconclusive | 0 | the corrupted write was rejected by the tool itself (enum/constraint), so the episode proves nothing about the key |
 | **BROKEN-KEY** | 0 | claims an answer key, yet a corrupted write still passes — a defect |
@@ -35,7 +35,7 @@ the fix is to pin the value in the verifier rather than to drop the task.
 
 | Anchor | Tasks | No answer key |
 |---|---|---|
-| harvey_lab | 152 | 116 |
+| harvey_lab | 156 | 116 |
 | biglaw_bench | 15 | 0 |
 | workflow_research | 15 | 2 |
 | legalbench | 14 | 0 |
