@@ -13,7 +13,8 @@
  *
  * Run: node sim/build-catalog.mjs
  */
-import { readFileSync, writeFileSync, readdirSync, mkdirSync, rmSync, existsSync, copyFileSync } from "node:fs";
+import { readFileSync, writeFileSync, readdirSync, mkdirSync, rmSync, existsSync, copyFileSync, statSync } from "node:fs";
+import { quarantineReason } from "./lib/quarantine.mjs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -157,6 +158,51 @@ writeFileSync(join(REPORTS, "README.md"),
   `flaky-21 boundary score, every failing episode classified into the failure-mode taxonomy\n` +
   `(sim/lib/classify-failure.mjs), worst practice areas/shapes, verifier-condition totals, and an\n` +
   `exemplar trace per mode. The audit separating model failures from harness bugs is docs/AUDIT.md.\n`);
+
+// ------------------------------------------------------- quarantine manifest
+// Verdicts that disagree with themselves are listed here and excluded from
+// every headline number by the consumers (docs/evidence/build-browser.mjs).
+{
+  const rows = [];
+  for (const model of readdirSync(TRACES).filter((d) =>
+      statSync(join(TRACES, d)).isDirectory())) {
+    for (const bucket of ["passed", "failed"]) {
+      const dir = join(TRACES, model, bucket);
+      if (!existsSync(dir)) continue;
+      for (const f of readdirSync(dir).filter((x) => x.endsWith(".json"))) {
+        const j = JSON.parse(readFileSync(join(dir, f), "utf8"));
+        const why = quarantineReason(j);
+        if (why) rows.push({ model, bucket, file: `traces/${model}/${bucket}/${f}`,
+          task: j.taskId, recorded: j.passed ? "pass" : "fail", why });
+      }
+    }
+  }
+  const byModel = {};
+  for (const r of rows) (byModel[r.model] ??= []).push(r);
+  const out = ["# Quarantined verdicts — archived episodes that are not evidence", "",
+    `${rows.length} of the archived episodes carry a verdict that contradicts itself: the verifier's`,
+    "own `reads_before_writes` assertion reports `writes=0` while its `state_changed` /",
+    "`rows_inserted_into_*` assertions credit a state change. They were scored before the runtime",
+    "captured its verification baseline *after* applying each task's seed bundle, so rows the seed",
+    "inserted were attributed to the agent.", "",
+    `**${rows.filter((r) => r.recorded === "pass").length} of them were recorded as passes** — that is`,
+    "false credit, and those episodes are excluded from every rate rather than counted.", "",
+    "The runtime is fixed (`baseline_for()` snapshots the session database after seeding) and verified:",
+    "an empty episode on task_038 now fails `state_changed` with \"NO state change — agent did nothing\"",
+    "and `rows_inserted_into_matter_documents` with `267 -> 267 rows`. These traces predate that fix.",
+    "",
+    "Traces record steps and verdicts but **not world state**, so they cannot be re-scored offline.",
+    "A valid verdict requires re-running the episode.", "",
+    "| Model | Episodes | Recorded as pass |", "|---|---|---|"];
+  for (const [m, rs] of Object.entries(byModel).sort((a, b) => b[1].length - a[1].length)) {
+    out.push(`| ${m} | ${rs.length} | ${rs.filter((r) => r.recorded === "pass").length} |`);
+  }
+  out.push("", "## Affected episodes", "", "| Episode | Task | Recorded |", "|---|---|---|");
+  for (const r of rows) out.push(`| \`${r.file}\` | ${r.task} | ${r.recorded} |`);
+  writeFileSync(join(REPORTS, "QUARANTINE.md"), out.join("\n") + "\n");
+  console.log(`quarantine: ${rows.length} verdicts flagged ` +
+    `(${rows.filter((r) => r.recorded === "pass").length} recorded as passes) -> reports/QUARANTINE.md`);
+}
 
 console.log(`catalog: ${counts.tasks} tasks · ${counts.verifiers} verifiers · ` +
   `${counts.traces} traces (${counts.failed} failed) · reports/ ready`);

@@ -57,6 +57,37 @@ corrects the grading, not that second-order exposure.
 verifier pins row id 1. A correct agent fails; a wrong one passes. Kept
 runnable, excluded from scored sets (`config.scoring.quarantinedTasks`).
 
+## Bug 4 — verification baseline captured before per-task seeding (FIXED; 107 archived verdicts quarantined)
+
+Per-task seed bundles are upserted into a session at creation. Before the fix
+the verifier's `initial_state` was the **base-world** snapshot, taken before
+that seeding — so rows the seed bundle inserted were credited to the agent.
+`state_changed` and `rows_inserted_into_<table>` then passed on work no agent
+did.
+
+Found by reading traces rather than by a test: `task_098-t1` (Haiku) is
+recorded as **passed with reward 1.0** having called only
+`query_matter_documents` and `read_matter_document` — it never filed the
+deliverable. Its own verdict gives it away, `reads_before_writes` reporting
+`writes=0` beside `rows_inserted_into_matter_documents: 130 -> 205 rows`.
+That self-contradiction is the detector (`sim/lib/quarantine.mjs`) — it needs
+no tool-type table and no name regex, both of which mislabel delegation
+surfaces like `operations_records_agent` (declared `read`, inserts rows).
+
+*Fix:* `baseline_for()` snapshots the session database **after** seeding.
+*Verified:* an empty episode on `task_038` now fails `state_changed`
+("NO state change — agent did nothing") and `rows_inserted_into_matter_documents`
+(`267 -> 267 rows`).
+
+*Impact on archived evidence:* 107 verdicts (101 Haiku, 4 DeepSeek, 2
+dual-surface), **34 of them recorded as passes**. Traces store steps and
+verdicts but not world state, so they cannot be re-scored offline — a valid
+verdict requires re-running. Until then they are excluded from every rate and
+listed in `reports/QUARANTINE.md`. Excluding them moves Haiku from 60.1 over
+388 episodes to **69.3 over the 287 self-consistent ones** — the direction is
+up, because most contaminated verdicts failed the workflow-path check anyway;
+the honest statement is that Haiku's true rate is unmeasured until a re-run.
+
 ## What survived the audit (real model behavior, with evidence)
 
 1. **Side-copy writes (DeepSeek, 34 episodes).** The model files the

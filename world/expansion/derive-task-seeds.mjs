@@ -19,14 +19,18 @@
  * no-op on the full base world today but lets future tasks ship data without
  * touching global tables.
  *
- * Run: node world/expansion/derive-task-seeds.mjs   (rewrites world-expanded.json)
+ * Run: node world/expansion/derive-task-seeds.mjs [--world world/blobfish/world-v5.json]
+ * (rewrites the world in place). Defaults to the CANONICAL world — keep this in
+ * step with config; a stale default silently leaves the newest packs unseeded.
  */
 import { readFileSync, writeFileSync } from "node:fs";
-import { join, dirname } from "node:path";
+import { join, dirname, isAbsolute } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
-const WORLD = join(ROOT, "world", "blobfish", "world-expanded.json");
+const argv = process.argv.slice(2);
+const wArg = argv.includes("--world") ? argv[argv.indexOf("--world") + 1] : "world/blobfish/world-v5.json";
+const WORLD = isAbsolute(wArg) ? wArg : join(ROOT, wArg);
 const raw = JSON.parse(readFileSync(WORLD, "utf8"));
 const world = raw.world ?? raw;
 
