@@ -19,7 +19,7 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
-const worldRaw = JSON.parse(readFileSync(join(ROOT, "world", "blobfish", "world-v12.json"), "utf8"));
+const worldRaw = JSON.parse(readFileSync(join(ROOT, "world", "blobfish", "world-v13.json"), "utf8"));
 const world = worldRaw.world ?? worldRaw;
 const REG_PATH = join(ROOT, "data", "research", "domain-registry.json");
 const registry = existsSync(REG_PATH) ? JSON.parse(readFileSync(REG_PATH, "utf8")) : { items: [] };

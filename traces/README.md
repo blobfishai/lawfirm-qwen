@@ -4,7 +4,7 @@ Materialized from `data/leaderboard/episodes/` (canonical, written by the runner
 `data/flake/flaky-trajectories.json` (historical hosted pushes) by `node sim/build-catalog.mjs`.
 
 - `claude-haiku-4-5`: 233 passed / 155 failed
-- `deepseek-chat`: 693 passed / 84 failed
+- `deepseek-chat`: 846 passed / 99 failed
 - `deepseek-chat@dual-surface`: 13 passed / 17 failed
 - `grok-4-5`: 160 passed / 17 failed
 - `deepseek-v4-flash-hosted`: 34 passed / 23 failed (historical hosted boundary pushes; NOTE: docs/AUDIT.md reclassified this cohort's dominant failure signature as output-cap truncation, a harness artifact)

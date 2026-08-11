@@ -16,10 +16,10 @@ now **fully self-hosting** — the entire world runs offline from this repo.
 
 Three things live here:
 
-1. **The world** — canonical `world-v12.json`: **286 tasks**, **351 seeded
+1. **The world** — canonical `world-v13.json`: **288 tasks**, **352 seeded
    matter documents**, 70 tables + 38 product tables, **183 tools** across two
    generations (95 legacy incl. the async analysis queue + 88 v3 mirroring real vendor APIs), one verifier
-   per task, **286/286 oracle-proven**, 0 domain-lint flags. Every runnable
+   per task, **288/288 oracle-proven**, 0 domain-lint flags. Every runnable
    eval and workflow in the 101-item domain registry is hosted — **zero
    hostable gaps remain** ([`docs/COVERAGE.md`](docs/COVERAGE.md)).
 
@@ -27,7 +27,7 @@ Three things live here:
    *satisfiable*; a **discrimination sweep** proves it *rejects wrong
    behavior* — four adversarial episodes per task (no-op, text-only,
    blind-write, and the reference walk with a corrupted payload). **All
-   286 reject the three behavioral modes; 167 also reject a wrong answer**,
+   288 reject the three behavioral modes; 169 also reject a wrong answer**,
    and of the 119 that cannot, 110 are prose deliverables where no exact
    string exists to pin. Zero broken keys, zero broken guards — every
    verifier that claims an answer key enforces it

@@ -111,9 +111,9 @@ def verify(initial_state, final_state, trace):
     _new_rows_0 = [r for r in _af_0 if str(r.get("id")) not in _bi_0]
     chk("rows_inserted_into_legal_matters_amount_history", len(_new_rows_0) >= 1,
         f"legal_matters_amount_history: {len(_bi_0)} -> {len(_af_0)} rows ({len(_new_rows_0)} new, need >= 1)")
-    _new_0_pin_0 = [r for r in _new_rows_0 if _norm(r.get("fee_budget")) == _norm("9.0")]
-    chk("legal_matters_amount_history_new_row_0_fee_budget_is_9.0", len(_new_0_pin_0) > 0,
-        f"expected a new legal_matters_amount_history row with fee_budget=9.0; got " +
+    _new_0_pin_0 = [r for r in _new_rows_0 if _norm(r.get("fee_budget")) == _norm("10.0")]
+    chk("legal_matters_amount_history_new_row_0_fee_budget_is_10.0", len(_new_0_pin_0) > 0,
+        f"expected a new legal_matters_amount_history row with fee_budget=10.0; got " +
         str([_norm(r.get("fee_budget")) for r in _new_rows_0][:8]))
     _new_0_pin_1 = [r for r in _new_rows_0 if _norm(r.get("changed_by_role")) == _norm("discovery-counsel")]
     chk("legal_matters_amount_history_new_row_1_changed_by_role_is_discovery-counsel", len(_new_0_pin_1) > 0,

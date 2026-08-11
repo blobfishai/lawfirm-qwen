@@ -1,0 +1,77 @@
+{
+ "family": "covenant-portfolio-sweep",
+ "anchor": "harvey_lab",
+ "provenance": {
+  "grows": "banking-finance-covenants (measured 30/30 on deepseek-chat — too easy)",
+  "axis": "named target removed; aggregation across the whole certificate population",
+  "reuses": "the ten compliance certificates already seeded by packs-v4 — no new documents",
+  "derivation": "ratios re-parsed from the shipped certificate bodies at build time, so the answer key cannot drift from the documents"
+ },
+ "documents": [
+  {
+   "title": "Portfolio covenant sweep — quarterly instruction",
+   "doc_type": "sweep_instruction",
+   "body": "PORTFOLIO COVENANT SWEEP — quarter ended 30 June 2026\n\nThe credit committee requires a portfolio-level view this quarter, not a borrower-level one.\nWork the whole book of compliance certificates in the matter folder. The instruction does\nnot name a borrower; identifying which borrowers are in scope is part of the task.\n\nApply the covenant schedule's tests to EVERY compliance certificate on file, on the\ncertified current-quarter figures only. Then answer the committee's question exactly as\nasked — a borrower-level answer to a portfolio-level question is not responsive.\n\nEscalation note. A borrower in breach of BOTH covenants in the same quarter is a workout\ncandidate and is reported separately from single-covenant breaches, which are handled in\nthe ordinary remediation cycle."
+  }
+ ],
+ "tasks": [
+  {
+   "slug": "covenant-portfolio-dual-breach-count",
+   "difficulty": "high",
+   "prompt": "Portfolio covenant sweep for the quarter ended 30 June 2026. Read the covenant schedule and the portfolio sweep instruction in the matter folder in full, then work every compliance certificate on file and determine how many borrowers breached BOTH financial covenants in the same quarter. Record that count by calling legal_matters_amount_history_create against legal_matters_017 with fee_budget set to the number of dual-breach borrowers and changed_by_role exactly \"credit-committee\". No borrower is named for you; the certificates on file are the population.",
+   "reads": [
+    "Credit agreement — Covenant schedule and remediation ownership memo",
+    "Portfolio covenant sweep — quarterly instruction"
+   ],
+   "creates": [
+    {
+     "tool": "legal_matters_amount_history_create",
+     "args": {
+      "legal_matters_id": "legal_matters_017",
+      "fee_budget": 2,
+      "changed_by_role": "credit-committee",
+      "change_reason": "2 of 10 borrowers breached both covenants: Ironwood Ops Holdings (leverage 3.78x, coverage 2.50x); Northgate Utilities Partners (leverage 3.88x, coverage 2.57x)."
+     },
+     "pinned": {
+      "fee_budget": 2,
+      "changed_by_role": "credit-committee"
+     }
+    }
+   ],
+   "forbidden": [
+    {
+     "table": "legal_matters_amount_history",
+     "field": "fee_budget",
+     "value": 10
+    }
+   ]
+  },
+  {
+   "slug": "covenant-portfolio-worst-leverage",
+   "difficulty": "high",
+   "prompt": "Portfolio covenant sweep for the quarter ended 30 June 2026. Read the covenant schedule and the portfolio sweep instruction in the matter folder in full, work every compliance certificate on file, and identify the borrower carrying the HIGHEST total leverage ratio on its certified current-quarter figures. Record it by calling legal_matters_evidence_create against legal_matters_018 with content_digest set to exactly that borrower's name as it appears on its certificate, evidence_type exactly \"portfolio_worst_leverage\", owner_role exactly \"credit-committee\" and status exactly \"confirmed\". Prior-quarter figures are reference only.",
+   "reads": [
+    "Credit agreement — Covenant schedule and remediation ownership memo",
+    "Portfolio covenant sweep — quarterly instruction"
+   ],
+   "creates": [
+    {
+     "tool": "legal_matters_evidence_create",
+     "args": {
+      "legal_matters_id": "legal_matters_018",
+      "evidence_type": "portfolio_worst_leverage",
+      "source_uri": "matter://portfolio/covenant-sweep/q2-2026",
+      "content_digest": "Northgate Utilities Partners",
+      "owner_role": "credit-committee",
+      "status": "confirmed"
+     },
+     "pinned": {
+      "content_digest": "Northgate Utilities Partners",
+      "evidence_type": "portfolio_worst_leverage"
+     }
+    }
+   ],
+   "forbidden": []
+  }
+ ]
+}

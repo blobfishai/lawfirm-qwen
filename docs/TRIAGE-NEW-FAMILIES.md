@@ -1,11 +1,12 @@
 # Triage — new families measured on deepseek-chat
 
-54 tasks · 162 episodes · $8.80
+56 tasks · 168 episodes · $9.20
 
 | Family | Tasks | Episodes passed | too-hard | **FLAKY** | too-easy |
 |---|---|---|---|---|---|
 | lab-employment-compensation-escalation | 4 | 6/12 (50) | 1 | **2** | 1 |
 | posture-dependent-chronology | 4 | 10/12 (83) | 0 | **1** | 3 |
+| covenant-portfolio-sweep | 2 | 5/6 (83) | 0 | **1** | 1 |
 | hsr-merger-notification | 6 | 16/18 (89) | 0 | **2** | 4 |
 | multi-hop-damages | 8 | 22/24 (92) | 0 | **2** | 6 |
 | arbitration-clause-review | 6 | 17/18 (94) | 0 | **1** | 5 |
@@ -28,6 +29,7 @@
 | task_303 | multi-hop-damages | 2/3 | 17 | litigation_cases_amount_history_new_row_0_claimed_amount_is_6389216.44 (1) |
 | task_306 | multi-hop-damages | 2/3 | 14 | litigation_cases_amount_history_new_row_0_claimed_amount_is_4156679.45 (1) |
 | task_312 | lab-employment-compensation-escalation | 2/3 | 21 | no_offtask_table_changes (1), no_undeclared_rows_created (1) |
+| task_326 | covenant-portfolio-sweep | 2/3 | 26 | no_offtask_table_changes (1), no_undeclared_rows_created (1) |
 
 ## Too hard (0/3) — keep, they still yield failure modes
 
@@ -81,13 +83,14 @@
 - `task_322` (posture-dependent-chronology, 13 calls)
 - `task_323` (async-privilege-screen, 14 calls)
 - `task_324` (async-privilege-screen, 12 calls)
+- `task_325` (covenant-portfolio-sweep, 28 calls)
 
 ## Failure conditions across every miss
 
 | Condition | Episodes |
 |---|---|
-| `no_offtask_table_changes` | 10 |
-| `no_undeclared_rows_created` | 10 |
+| `no_offtask_table_changes` | 11 |
+| `no_undeclared_rows_created` | 11 |
 | `legal_matters_evidence_records_new_row_0_content_digest_is_EV-05` | 2 |
 | `no_new_legal_matters_evidence_records_row_with_content_digest_EV-03` | 2 |
 | `litigation_cases_amount_history_new_row_0_claimed_amount_is_6389216.44` | 1 |

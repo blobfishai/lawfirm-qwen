@@ -27,7 +27,7 @@ identical to the admitted reference run.
 
 Run (server must be up, with --v2-contracts for the v3 surface):
   python3 world/local/discriminate.py --base http://localhost:8791 \
-      --world world/blobfish/world-v12.json
+      --world world/blobfish/world-v13.json
 """
 from __future__ import annotations
 
@@ -134,7 +134,7 @@ def episode(base, world, task, verifier, mode):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--base", default="http://localhost:8791")
-    ap.add_argument("--world", default="world/blobfish/world-v12.json")
+    ap.add_argument("--world", default="world/blobfish/world-v13.json")
     ap.add_argument("--tasks", default="")
     ap.add_argument("--out", default="world/local/discrimination-report.json")
     a = ap.parse_args()

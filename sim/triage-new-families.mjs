@@ -21,7 +21,7 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const argv = process.argv.slice(2);
 const ENGINE = argv.includes("--engine") ? argv[argv.indexOf("--engine") + 1] : "deepseek-chat";
 
-const raw = JSON.parse(readFileSync(join(ROOT, "world/blobfish/world-v12.json"), "utf8"));
+const raw = JSON.parse(readFileSync(join(ROOT, "world/blobfish/world-v13.json"), "utf8"));
 const world = raw.world ?? raw;
 const familyOf = (t) => (t.provenance?.source_workflow ?? "").split(":")[1]?.split("/")[0]?.trim()
   || t.expansion?.family || "(none)";
@@ -34,7 +34,7 @@ const byTask = {};
 for (const f of readdirSync(EP).filter((x) => x.endsWith(".json"))) {
   let j; try { j = JSON.parse(readFileSync(join(EP, f), "utf8")); } catch { continue; }
   const n = Number((j.taskId ?? "").match(/^task_(\d+)$/)?.[1]);
-  if (!(n >= 271 && n <= 324)) continue;           // the new families only
+  if (!(n >= 271 && n <= 326)) continue;           // the new families only
   (byTask[j.taskId] ??= []).push(j);
 }
 

@@ -12,7 +12,7 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
-const worldRaw = JSON.parse(readFileSync(join(ROOT, "world", "blobfish", "world-v12.json"), "utf8"));
+const worldRaw = JSON.parse(readFileSync(join(ROOT, "world", "blobfish", "world-v13.json"), "utf8"));
 const world = worldRaw.world ?? worldRaw;
 const oracle = JSON.parse(readFileSync(join(ROOT, "world", "local", "oracle-expanded-full.json"), "utf8"));
 const dsRes = JSON.parse(readFileSync(join(ROOT, "data", "leaderboard", "results", "deepseek-chat.json"), "utf8"));
