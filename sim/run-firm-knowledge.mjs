@@ -167,6 +167,30 @@ if (tools.length !== CORPUS_TOOLS.length) {
   console.error(`expected ${CORPUS_TOOLS.length} corpus tools, server offered ${tools.length} — is world-v14 served?`);
   process.exit(1);
 }
+
+/**
+ * ABORT IF THE WORLD GOES AWAY MID-RUN.
+ *
+ * A previous run lost its server partway through (I killed it myself from
+ * another shell) and the runner cheerfully finished all 201 tasks: every
+ * remaining episode made ZERO tool calls, answered nothing, and was scored
+ * recall 0. Those are indistinguishable from genuine failures in the output —
+ * 186 of 202 episodes were fabricated misses, and the summary reported mean
+ * recall 4.8 as if it were a result.
+ *
+ * A harness that manufactures failures when its backend disappears is worse
+ * than one that crashes. Episodes now verify the world is reachable, and an
+ * episode that completes without a single successful tool call aborts the run
+ * rather than being recorded.
+ */
+async function worldAlive() {
+  try {
+    const r = await fetch(`${BASE}/health`);
+    const j = await r.json();
+    return j && j.ok === true;
+  } catch { return false; }
+}
+if (!(await worldAlive())) { console.error("world /health is not ok — refusing to start"); process.exit(1); }
 mkdirSync(OUT_DIR, { recursive: true });
 console.log(`firm-knowledge: ${list.length} tasks on ${ENGINE_ID}, ${tools.length} corpus tools, max ${MAX_TURNS} turns\n`);
 
@@ -183,6 +207,14 @@ async function worker(queue) {
     let ep;
     try { ep = await runEpisode(task, tools); }
     catch (e) { ep = { error: String(e).slice(0, 160), steps: [], usage: {} }; }
+    if (!ep.steps.length) {
+      const alive = await worldAlive();
+      if (!alive) {
+        console.error(`\nABORT: ${task.task_id} made no tool calls and the world is unreachable. ` +
+          `Refusing to record fabricated failures — fix the world and resume.`);
+        process.exit(2);
+      }
+    }
     const g = grade(task, ep.answer ?? "");
     const secs = (Date.now() - t0) / 1000;
     const rec = { task_id: task.task_id, title: task.title, grading: task.grading,
@@ -206,6 +238,19 @@ async function worker(queue) {
       `${ep.turnExhausted ? " EXHAUSTED" : ep.stoppedWithMore ? " STOPPED-MORE" : ""}`);
   }
 }
+// Resume: a task already recorded WITH tool calls is kept; zero-call records are
+// treated as absent so a poisoned run self-heals instead of needing a manual purge.
+const kept = [];
+list = list.filter((t) => {
+  const f = join(OUT_DIR, `${t.task_id}.json`);
+  if (!existsSync(f)) return true;
+  try {
+    const prev = JSON.parse(readFileSync(f, "utf8"));
+    if ((prev.tool_calls ?? 0) > 0) { kept.push(t.task_id); return false; }
+  } catch { /* unreadable -> rerun */ }
+  return true;
+});
+if (kept.length) console.log(`resuming: ${kept.length} valid episodes kept, ${list.length} to run\n`);
 const queue = [...list.entries()];
 await Promise.all(Array.from({ length: Math.min(CONC, queue.length) }, () => worker(queue)));
 results.sort((a, b) => a.task_id.localeCompare(b.task_id));
