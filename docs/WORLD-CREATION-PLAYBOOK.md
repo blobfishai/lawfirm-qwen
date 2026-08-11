@@ -136,6 +136,26 @@ Growth round 2 should escalate ambiguity, not length. That is exactly the
 "grow until failure" loop doing its job: r1 proved the mechanism and
 eliminated one hypothesis.
 
+**Round-2 result (measured, deepseek-chat, 15 v3 workflow tasks × 3 eps,
+$1.07):** ambiguity escalation works — the pack scores **95.6** with **2
+flaky boundary tasks and 0 too-hard**, versus r1's 27/27 clean sweep. The two
+boundary tasks name their failure modes precisely: (a) **silent scan
+truncation** — the all-matters trust sweep called the list tool with its
+default limit (25 of 36 rows), computed balances from a partial set, and
+filed 2 of the 4 required overdraft alerts; (b) **friction non-recovery** —
+an injected error hit one required checkpoint of the LEDES gate and the run
+moved on instead of retrying. Both are exactly the operational failure modes
+this world exists to catch. Round 3 should push the same levers harder
+(larger scan sets that force explicit pagination; multi-hop derived values).
+
+**Audit discipline held here too:** the round's third failure (0/3 on the
+docket-alert task) was traced to an authoring bug — the prompt said
+"new-entry alert" while the enum value is `entry`, and the required walk gave
+the agent no way to discover the vocabulary. Fixed by making discovery part
+of the task (list existing alerts first, then create with the observed
+value); it now passes 3/3 with the model sending `"entry"`. A task is not
+allowed to grade a guess.
+
 ## Packaging — Harbor
 
 The finished world exports as a self-contained Harbor package (task.yaml,

@@ -1,0 +1,101 @@
+{
+  "taskId": "task_v3_003",
+  "engine": "deepseek-chat",
+  "model": "deepseek-chat",
+  "mcpMode": "bridge",
+  "passed": true,
+  "reward": 1,
+  "failedConditions": [],
+  "advisoryConditions": [],
+  "assertions": [
+    {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+    },
+    {
+      "name": "required_workflow_path",
+      "passed": true,
+      "details": "completed: time_entries_get -> time_entries_update"
+    },
+    {
+      "name": "pm_time_entries_5_utbms_task_code_is_L120",
+      "passed": true,
+      "details": "pm_time_entries[5].utbms_task_code = l120, expected L120"
+    },
+    {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows destroyed"
+    }
+  ],
+  "toolCalls": 4,
+  "turnsUsed": 4,
+  "maxTurns": 50,
+  "usage": {
+    "prompt": 83236,
+    "completion": 622,
+    "total": 83858
+  },
+  "costUsd": 0.02316,
+  "log": "/Users/samuelchien/dev/lawfirm-qwen/sim/logs/run-2026-08-11T00-24-17-616Z.jsonl",
+  "finishedAt": "2026-08-11T00:24:26.317Z",
+  "steps": [
+    {
+      "turn": 1,
+      "tool": "time_entries_get",
+      "args": {
+        "id": 5
+      },
+      "argBytes": 9,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"data\": {\"id\": 5, \"matter_id\": 5, \"user_id\": 11, \"date\": \"2026-05-13\", \"quantity_hours\": 7.65, \"rate\": 290.64, \"total\": 2223.4, \"description\": \"Analyze discovery responses; prepare deficiency letter\", \"utbms_task_code\": \"L430\", \"billable\": 0, \"billed\": 0, \"created_at\": \"2026-08-22\"}}",
+      "thought": null
+    },
+    {
+      "turn": 1,
+      "tool": "utbms_codes_list",
+      "args": {
+        "code": "L120"
+      },
+      "argBytes": 16,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"count\": 1, \"results\": [{\"id\": 2, \"code\": \"L120\", \"kind\": \"task\", \"description\": \"Analysis/Strategy\"}]}",
+      "thought": null
+    },
+    {
+      "turn": 2,
+      "tool": "time_entries_update",
+      "args": {
+        "id": 5,
+        "utbms_task_code": "L120"
+      },
+      "argBytes": 36,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"data\": {\"id\": 5, \"updated\": \"pm_time_entries\", \"fields\": [\"utbms_task_code\", \"total\"]}}",
+      "thought": null
+    },
+    {
+      "turn": 3,
+      "tool": "time_entries_get",
+      "args": {
+        "id": 5
+      },
+      "argBytes": 9,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"data\": {\"id\": 5, \"matter_id\": 5, \"user_id\": 11, \"date\": \"2026-05-13\", \"quantity_hours\": 7.65, \"rate\": 290.64, \"total\": 2223.4, \"description\": \"Analyze discovery responses; prepare deficiency letter\", \"utbms_task_code\": \"L120\", \"billable\": 0, \"billed\": 0, \"created_at\": \"2026-08-22\"}}",
+      "thought": null
+    },
+    {
+      "turn": 4,
+      "tool": "_final_answer",
+      "ok": true,
+      "thought": null,
+      "observation": "Billing compliance task complete.\n\n**Time entry 5 recoded:**\n\n- **Entry ID:** 5\n- **Matter ID:** 5\n- **Date:** 2026-05-13\n- **Narrative:** \"Analyze discovery responses; prepare deficiency letter\"\n- **Task code:** L430 → **L120** (Analysis/Strategy)\n- **Only the task code was modified** — the hours (7.65), rate, total, description, and all other fields were left untouched.\n\nThe entry was previously coded as L430 (trial attendance type code) but its narrative reflects analytical/strategy work (analyzing discovery and preparing a deficiency letter), which correctly maps to UTBMS **L120 – Analysis"
+    }
+  ]
+}

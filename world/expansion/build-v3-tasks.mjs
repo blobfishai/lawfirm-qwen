@@ -212,11 +212,11 @@ const TASKS = [
   },
   {
     id: "task_v3_009", family: "courtlistener-docket-watch",
-    prompt: 'Docket monitoring: find the docket for "Talvern Logistics v. Halcyon Therapeutics" (search by case name), list its recent entries, and subscribe a new-entry alert on that docket for exactly "docketing@simulated-firm.example".',
-    walk: ["dockets_search", "docket_entries_list", "docket_alerts_create"],
+    prompt: 'Docket monitoring: find the docket for "Talvern Logistics v. Halcyon Therapeutics" (search by case name). Before subscribing, inspect the firm\'s existing docket alerts to learn the exact alert_type vocabulary this system uses — do not invent a value. Then subscribe a new-filing alert on that docket for exactly "docketing@simulated-firm.example", using the alert_type value that means a new docket entry.',
+    walk: ["dockets_search", "docket_alerts_list", "docket_alerts_create"],
     args: [
       { q: "Talvern Logistics v. Halcyon" },
-      { docket: 7, limit: 10 },
+      { limit: 20 },
       { docket: 7, alert_type: "entry", recipient: "docketing@simulated-firm.example" },
     ],
     inserts: [{ table: "cl_docket_alerts", pinned: [["docket_id", 7], ["alert_type", "entry"], ["recipient", "docketing@simulated-firm.example"]] }],

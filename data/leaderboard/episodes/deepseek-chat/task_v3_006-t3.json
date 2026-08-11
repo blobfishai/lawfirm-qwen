@@ -1,0 +1,145 @@
+{
+  "taskId": "task_v3_006",
+  "engine": "deepseek-chat",
+  "model": "deepseek-chat",
+  "mcpMode": "bridge",
+  "passed": false,
+  "reward": 0,
+  "failedConditions": [
+    "required_workflow_path"
+  ],
+  "advisoryConditions": [],
+  "assertions": [
+    {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+    },
+    {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE: missing invoice_total_check -> invoices_submit"
+    },
+    {
+      "name": "eb_invoices_2_status_is_rejected",
+      "passed": true,
+      "details": "eb_invoices[2].status = rejected, expected rejected"
+    },
+    {
+      "name": "eb_invoices_2_validation_errors_is_TOTAL_MISMATCH",
+      "passed": true,
+      "details": "eb_invoices[2].validation_errors = total_mismatch, expected TOTAL_MISMATCH"
+    },
+    {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows destroyed"
+    }
+  ],
+  "toolCalls": 7,
+  "turnsUsed": 5,
+  "maxTurns": 50,
+  "usage": {
+    "prompt": 112997,
+    "completion": 759,
+    "total": 113756
+  },
+  "costUsd": 0.03134,
+  "log": "/Users/samuelchien/dev/lawfirm-qwen/sim/logs/run-2026-08-11T00-24-33-851Z.jsonl",
+  "finishedAt": "2026-08-11T00:24:43.691Z",
+  "steps": [
+    {
+      "turn": 1,
+      "tool": "invoices_list",
+      "args": {
+        "limit": 20
+      },
+      "argBytes": 13,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"count\": 12, \"invoices\": [{\"INVOICE_ID\": 1, \"INVOICE_NUMBER\": \"INV-43545\", \"LAW_FIRM_MATTER_ID\": \"00405-Summit\", \"CLIENT_MATTER_ID\": \"00694-Ironwood\", \"BILLING_START_DATE\": \"2026-05-25\", \"BILLING_END_DATE\": \"2026-07-09\", \"INVOICE_TOTAL\": 56105.28, \"INVOICE_STATUS\": \"submitted\", \"VALIDATION_ERRORS\": null, \"SUBMITTED_AT\": \"2026-07-01\"}, {\"INVOICE_ID\": 2, \"INVOICE_NUMBER\": \"INV-37157\", \"LAW_FIRM_MATTER_ID\": \"00220-Halcyon\", \"CLIENT_MATTER_ID\": \"00524-Fairview\", \"BILLING_START_DATE\": \"2026-05-06\", \"BILLING_END_DATE\": \"2026-06-05\", \"INVOICE_TOTAL\": 55362.24, \"INVOICE_STATUS\": \"appealed\", \"VALIDATI",
+      "thought": null
+    },
+    {
+      "turn": 2,
+      "tool": "invoices_get",
+      "args": {
+        "id": 2
+      },
+      "argBytes": 9,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"INVOICE_ID\": 2, \"INVOICE_NUMBER\": \"INV-37157\", \"LAW_FIRM_MATTER_ID\": \"00220-Halcyon\", \"CLIENT_MATTER_ID\": \"00524-Fairview\", \"BILLING_START_DATE\": \"2026-05-06\", \"BILLING_END_DATE\": \"2026-06-05\", \"INVOICE_TOTAL\": 55362.24, \"INVOICE_STATUS\": \"appealed\", \"VALIDATION_ERRORS\": null, \"SUBMITTED_AT\": \"2026-07-06\"}",
+      "thought": null
+    },
+    {
+      "turn": 2,
+      "tool": "invoice_lines_list",
+      "args": {
+        "invoice_id": 2
+      },
+      "argBytes": 17,
+      "argParseError": false,
+      "ok": false,
+      "observation": "ERROR rate_limited: upstream service throttled this call. Retry the operation.",
+      "thought": null
+    },
+    {
+      "turn": 2,
+      "tool": "invoice_total_check",
+      "args": {
+        "invoice_id": 2
+      },
+      "argBytes": 17,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"aggregate\": \"sum\", \"field\": \"amount\", \"value\": 15224.06, \"rows_considered\": 9}",
+      "thought": null
+    },
+    {
+      "turn": 3,
+      "tool": "invoice_lines_list",
+      "args": {
+        "invoice_id": 2
+      },
+      "argBytes": 17,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"count\": 9, \"lines\": [{\"LINE_ITEM_NUMBER\": 17, \"INVOICE_ID\": 2, \"LINE_ITEM_DATE\": \"2026-05-10\", \"TIMEKEEPER_NAME\": \"Wes Kessler\", \"LINE_ITEM_TASK_CODE\": \"L330\", \"LINE_ITEM_ACTIVITY_CODE\": \"A103\", \"LINE_ITEM_NUMBER_OF_UNITS\": 7.74, \"LINE_ITEM_UNIT_COST\": 607.65, \"LINE_ITEM_TOTAL\": 4703.21, \"LINE_ITEM_DESCRIPTION\": \"Analyze discovery responses; prepare deficiency letter\"}, {\"LINE_ITEM_NUMBER\": 25, \"INVOICE_ID\": 2, \"LINE_ITEM_DATE\": \"2026-07-14\", \"TIMEKEEPER_NAME\": \"Aiko Ellery\", \"LINE_ITEM_TASK_CODE\": \"L330\", \"LINE_ITEM_ACTIVITY_CODE\": \"A102\", \"LINE_ITEM_NUMBER_OF_UNITS\": 8.16, \"LINE_ITEM_UNIT_",
+      "thought": null
+    },
+    {
+      "turn": 3,
+      "tool": "invoices_submit",
+      "args": {
+        "id": 2,
+        "status": "rejected",
+        "validation_errors": "TOTAL_MISMATCH"
+      },
+      "argBytes": 70,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"INVOICE_ID\": 2, \"updated\": \"eb_invoices\", \"fields\": [\"status\", \"validation_errors\"]}",
+      "thought": null
+    },
+    {
+      "turn": 4,
+      "tool": "invoices_get",
+      "args": {
+        "id": 2
+      },
+      "argBytes": 9,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"INVOICE_ID\": 2, \"INVOICE_NUMBER\": \"INV-37157\", \"LAW_FIRM_MATTER_ID\": \"00220-Halcyon\", \"CLIENT_MATTER_ID\": \"00524-Fairview\", \"BILLING_START_DATE\": \"2026-05-06\", \"BILLING_END_DATE\": \"2026-06-05\", \"INVOICE_TOTAL\": 55362.24, \"INVOICE_STATUS\": \"rejected\", \"VALIDATION_ERRORS\": \"TOTAL_MISMATCH\", \"SUBMITTED_AT\": \"2026-07-06\"}",
+      "thought": null
+    },
+    {
+      "turn": 5,
+      "tool": "_final_answer",
+      "ok": true,
+      "thought": null,
+      "observation": "The e-billing validation gate for invoice 2 has been completed. Here's the summary:\n\n## E-Billing Validation Gate — Invoice 2 (INV-37157)\n\n**Step 1 — Invoice Header:**\n- Invoice Number: INV-37157\n- Header Total: **$55,362.24**\n- Matter: 00220-Halcyon / Client: 00524-Fairview\n\n**Step 2 — Line Items (9 lines):**\nListed 9 LEDES line items (Wes Kessler, Aiko Ellery, Tomas Lindqvist, Wes Beaumont, Jonas Novak, Dana Reyes, Omar Holt, Dana Holt, Priya Whitfield) across various task codes (L330, L450, L240, L110, L430).\n\n**Step 3 — Line-Total Reconciliation:**\n- Sum of line items: **$15,224.06**\n- Hea"
+    }
+  ]
+}

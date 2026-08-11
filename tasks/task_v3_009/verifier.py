@@ -1,5 +1,5 @@
 """VCode verifier for task_v3_009 (v3 workflow: courtlistener-docket-watch)
-Walk: dockets_search -> docket_entries_list -> docket_alerts_create
+Walk: dockets_search -> docket_alerts_list -> docket_alerts_create
 Grades v3 product tables (real-API-mirrored surfaces)."""
 
 def _ids(rows):
@@ -26,7 +26,7 @@ def verify(initial_state, final_state, trace):
     chk("state_changed", initial_state != final_state,
         "world state changed" if initial_state != final_state else "NO state change")
 
-    _path = ["dockets_search","docket_entries_list","docket_alerts_create"]
+    _path = ["dockets_search","docket_alerts_list","docket_alerts_create"]
     _cur = 0
     for _t in tools:
         if _cur < len(_path) and _t == _path[_cur]:
