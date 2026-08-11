@@ -6,9 +6,7 @@
   "passed": true,
   "reward": 1,
   "failedConditions": [],
-  "advisoryConditions": [
-    "all_tools_succeeded"
-  ],
+  "advisoryConditions": [],
   "assertions": [
     {
       "name": "state_changed",
@@ -18,7 +16,7 @@
     {
       "name": "reads_before_writes",
       "passed": true,
-      "details": "reads=9, writes=1, read_first=True"
+      "details": "reads=4, writes=1, read_first=True"
     },
     {
       "name": "no_shortcut_direct_update",
@@ -67,60 +65,34 @@
     },
     {
       "name": "all_tools_succeeded",
-      "passed": false,
-      "details": "11/14 tool calls succeeded"
+      "passed": true,
+      "details": "9/10 tool calls succeeded"
     }
   ],
-  "toolCalls": 14,
-  "turnsUsed": 7,
+  "toolCalls": 10,
+  "turnsUsed": 5,
   "maxTurns": 50,
   "usage": {
-    "prompt": 128271,
-    "completion": 1564,
-    "total": 129835
+    "prompt": 126427,
+    "completion": 1362,
+    "total": 127789
   },
-  "costUsd": 0.03635,
-  "log": "/Users/samuelchien/dev/lawfirm-qwen/sim/logs/run-2026-08-11T18-37-50-409Z.jsonl",
-  "finishedAt": "2026-08-11T18:38:06.873Z",
+  "costUsd": 0.03563,
+  "log": "/Users/samuelchien/dev/lawfirm-qwen/sim/logs/run-2026-08-11T19-33-11-539Z.jsonl",
+  "finishedAt": "2026-08-11T19:33:25.017Z",
   "steps": [
     {
       "turn": 1,
-      "tool": "query_documents",
-      "args": {
-        "query": "claim classification waterfall"
-      },
-      "argBytes": 43,
+      "tool": "literation_cases_list",
+      "args": {},
+      "argBytes": 2,
       "argParseError": false,
       "ok": false,
-      "observation": "{\"error\": \"unknown_filter\", \"message\": \"agent_documents: no such filter ['query']. Supported filters: ['limit', 'offset']. The call was NOT executed \\u2014 re-issue it with a supported filter.\", \"supported_filters\": [\"limit\", \"offset\"]}",
+      "observation": "ERROR: MCP -32602: Unknown tool 'literation_cases_list'",
       "thought": null
     },
     {
       "turn": 1,
-      "tool": "legal_matters_get",
-      "args": {
-        "id": "legal_matters_011"
-      },
-      "argBytes": 27,
-      "argParseError": false,
-      "ok": true,
-      "observation": "{\"id\": \"legal_matters_011\", \"title\": \"Riverside Holdings Legal Matters\", \"status\": \"Intake\", \"department\": \"Legal\", \"owner_role\": \"associate\", \"reviewer_role\": \"partner\", \"fee_budget\": 15.37, \"evidence_summary\": \"Legal Matters follow-up requires attention\", \"decision_reason\": \"Legal Matters requires approval because the ownership handoff is pending.\", \"created_at\": \"2026-01-08T15:18:00Z\", \"updated_at\": \"2026-01-08T03:20:00Z\"}",
-      "thought": null
-    },
-    {
-      "turn": 1,
-      "tool": "query_matter_documents",
-      "args": {
-        "title": "Meridian"
-      },
-      "argBytes": 21,
-      "argParseError": false,
-      "ok": true,
-      "observation": "{\"table\": \"matter_documents\", \"count\": 28, \"returned\": 25, \"offset\": 0, \"limit\": 25, \"rows\": [{\"id\": 131, \"title\": \"CUAD pack \\u2014 Master Services Agreement (Meridian Analytics / Corvus Freight) execution copy\", \"doc_type\": \"contract\", \"related_shape\": \"cuad-clause-extraction\", \"body\": \"MASTER SERVICES AGREEMENT\\n\\nThis Master Services Agreement (this \\\"Agreement\\\"), dated as of March 14, 2025, is entered into by and between Meridian Analytics LLC, a Delaware limited liability company (\\\"Provider\\\"), and Corvus Freight Holdings,\\u2026[preview]\"}, {\"id\": 135, \"title\": \"CUAD pack \\u2014 Corres",
-      "thought": null
-    },
-    {
-      "turn": 2,
       "tool": "query_matter_documents",
       "args": {
         "title": "Northgate"
@@ -132,67 +104,89 @@
       "thought": null
     },
     {
+      "turn": 1,
+      "tool": "legal_matters_list",
+      "args": {},
+      "argBytes": 2,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"table\": \"matters\", \"count\": 28, \"rows\": [{\"id\": \"legal_matters_001\", \"title\": \"Summit Operations Legal Matters\", \"status\": \"Intake\", \"department\": \"Legal\", \"owner_role\": \"associate\", \"reviewer_role\": \"partner\", \"fee_budget\": 39.49, \"evidence_summary\": \"Legal Matters review requires attention\", \"decision_reason\": \"Legal Matters requires verification because a policy exception needs review.\", \"created_at\": \"2026-01-06T05:01:00Z\", \"updated_at\": \"2026-01-07T19:07:00Z\"}, {\"id\": \"legal_matters_002\", \"title\": \"Fairview Group Legal Matters\", \"status\": \"Active\", \"department\": \"Legal\", \"owner_role\": \"",
+      "thought": null
+    },
+    {
+      "turn": 1,
+      "tool": "documents_search",
+      "args": {
+        "anywhere": "Northgate"
+      },
+      "argBytes": 25,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"data\": {\"results\": [], \"total\": 0}}",
+      "thought": null
+    },
+    {
       "turn": 2,
       "tool": "query_matter_documents",
       "args": {
-        "title": "claims"
+        "title": "claim"
       },
-      "argBytes": 19,
+      "argBytes": 18,
       "argParseError": false,
       "ok": true,
-      "observation": "{\"table\": \"matter_documents\", \"count\": 1, \"returned\": 1, \"offset\": 0, \"limit\": 25, \"rows\": [{\"id\": 182, \"title\": \"Hallucination-traps pack \\u2014 Matter intake memorandum (Meridian Structural Claims) with open governing-law and fee-budget items\", \"doc_type\": \"input\", \"related_shape\": \"hallucination-traps\", \"body\": \"MEMORANDUM \\u2014 MATTER INTAKE AND OPEN ISSUES\\n\\nMatter: Meridian Structural Claims \\u2014 Meridian Fabrication Group, Inc. (\\\"Meridian\\\") adverse to Corestone Erectors LLC (\\\"Corestone\\\")\\nFrom: Intake Committee\\nRe: New engagement acceptance; open determ\\u2026[preview]\"}], \"has_",
+      "observation": "{\"table\": \"matter_documents\", \"count\": 11, \"returned\": 11, \"offset\": 0, \"limit\": 25, \"rows\": [{\"id\": 182, \"title\": \"Hallucination-traps pack \\u2014 Matter intake memorandum (Meridian Structural Claims) with open governing-law and fee-budget items\", \"doc_type\": \"input\", \"related_shape\": \"hallucination-traps\", \"body\": \"MEMORANDUM \\u2014 MATTER INTAKE AND OPEN ISSUES\\n\\nMatter: Meridian Structural Claims \\u2014 Meridian Fabrication Group, Inc. (\\\"Meridian\\\") adverse to Corestone Erectors LLC (\\\"Corestone\\\")\\nFrom: Intake Committee\\nRe: New engagement acceptance; open determ\\u2026[preview]\"}, {\"id",
       "thought": null
     },
     {
       "turn": 2,
-      "tool": "query_matter_documents",
+      "tool": "documents_search",
       "args": {
-        "title": "waterfall"
-      },
-      "argBytes": 22,
-      "argParseError": false,
-      "ok": false,
-      "observation": "ERROR rate_limited: upstream service throttled this call. Retry the operation.",
-      "thought": null
-    },
-    {
-      "turn": 3,
-      "tool": "query_matter_documents",
-      "args": {
-        "title": "proof of claim"
-      },
-      "argBytes": 27,
-      "argParseError": false,
-      "ok": true,
-      "observation": "{\"table\": \"matter_documents\", \"count\": 8, \"returned\": 8, \"offset\": 0, \"limit\": 25, \"rows\": [{\"id\": 287, \"title\": \"Proof of claim \\u2014 Meridian Equipment Finance\", \"doc_type\": \"proof_of_claim\", \"related_shape\": \"bankruptcy-claim-classification\", \"body\": \"PROOF OF CLAIM \\u2014 In re Northgate Holdings\\nCreditor: Meridian Equipment Finance\\nBasis of claim: equipment lease financing\\nAmount asserted: $2,400,000.00\\nDate filed with the clerk: 2026-03-02\\nUCC-1 financing statement filed: 2025-11-14\\nWages \\u2026[preview]\"}, {\"id\": 288, \"title\": \"Proof of claim \\u2014 Delacroix Staffing\", \"doc_type",
-      "thought": null
-    },
-    {
-      "turn": 3,
-      "tool": "query_matter_documents",
-      "args": {
-        "title": "Equipment Finance"
+        "anywhere": "proof of claim"
       },
       "argBytes": 30,
       "argParseError": false,
       "ok": true,
-      "observation": "{\"table\": \"matter_documents\", \"count\": 1, \"returned\": 1, \"offset\": 0, \"limit\": 25, \"rows\": [{\"id\": 287, \"title\": \"Proof of claim \\u2014 Meridian Equipment Finance\", \"doc_type\": \"proof_of_claim\", \"related_shape\": \"bankruptcy-claim-classification\", \"body\": \"PROOF OF CLAIM \\u2014 In re Northgate Holdings\\nCreditor: Meridian Equipment Finance\\nBasis of claim: equipment lease financing\\nAmount asserted: $2,400,000.00\\nDate filed with the clerk: 2026-03-02\\nUCC-1 financing statement filed: 2025-11-14\\nWages \\u2026[preview]\"}], \"has_more\": false, \"note\": \"body fields are previews \\u2014 call read_mat",
+      "observation": "{\"data\": {\"results\": [], \"total\": 0}}",
+      "thought": null
+    },
+    {
+      "turn": 2,
+      "tool": "documents_search",
+      "args": {
+        "anywhere": "waterfall"
+      },
+      "argBytes": 25,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"data\": {\"results\": [], \"total\": 0}}",
+      "thought": null
+    },
+    {
+      "turn": 2,
+      "tool": "query_documents",
+      "args": {
+        "query": "claim classification waterfall"
+      },
+      "argBytes": 43,
+      "argParseError": false,
+      "ok": false,
+      "observation": "{\"error\": \"unknown_filter\", \"message\": \"agent_documents: no such filter ['query']. Supported filters: ['limit', 'offset']. The call was NOT executed \\u2014 re-issue it with a supported filter.\", \"supported_filters\": [\"limit\", \"offset\"]}",
       "thought": null
     },
     {
       "turn": 3,
-      "tool": "query_matter_documents",
+      "tool": "read_matter_document",
       "args": {
-        "title": "classification"
+        "id": 286
       },
-      "argBytes": 27,
+      "argBytes": 11,
       "argParseError": false,
-      "ok": false,
-      "observation": "ERROR stale_reference: the referenced record snapshot is stale. Re-read the record and retry with current data.",
+      "ok": true,
+      "observation": "{\"id\": 286, \"title\": \"Chapter 11 \\u2014 Claim classification waterfall memo\", \"doc_type\": \"claims_waterfall\", \"related_shape\": \"bankruptcy-claim-classification\", \"body\": \"CLAIM CLASSIFICATION MEMO \\u2014 In re Northgate Holdings, Chapter 11\\n\\nPetition date: 2026-01-20.   Claims bar date: 2026-04-15.\\n\\nApply the tests IN ORDER. The first test that matches controls.\\n\\n  1. LATE FILING. A proof of claim filed after 2026-04-15 is disallowed unless the docket\\n     shows an excusable-neglect order. No such order has been entered in this case.\\n     -> disallowed\\n\\n  2. PERFECTED SECURITY INTERE",
       "thought": null
     },
     {
-      "turn": 4,
+      "turn": 3,
       "tool": "read_matter_document",
       "args": {
         "id": 287
@@ -205,62 +199,25 @@
     },
     {
       "turn": 4,
-      "tool": "query_matter_documents",
-      "args": {
-        "title": "waterfall memo"
-      },
-      "argBytes": 27,
-      "argParseError": false,
-      "ok": true,
-      "observation": "{\"table\": \"matter_documents\", \"count\": 1, \"returned\": 1, \"offset\": 0, \"limit\": 25, \"rows\": [{\"id\": 286, \"title\": \"Chapter 11 \\u2014 Claim classification waterfall memo\", \"doc_type\": \"claims_waterfall\", \"related_shape\": \"bankruptcy-claim-classification\", \"body\": \"CLAIM CLASSIFICATION MEMO \\u2014 In re Northgate Holdings, Chapter 11\\n\\nPetition date: 2026-01-20.   Claims bar date: 2026-04-15.\\n\\nApply the tests IN ORDER. The first test that matches controls.\\n\\n  1. LATE FILING. A proof of claim filed after 202\\u2026[preview]\"}], \"has_more\": false, \"note\": \"body fields are previews \\u2014 call r",
-      "thought": null
-    },
-    {
-      "turn": 4,
-      "tool": "query_matter_documents",
-      "args": {
-        "title": "memo",
-        "limit": 30
-      },
-      "argBytes": 30,
-      "argParseError": false,
-      "ok": true,
-      "observation": "{\"table\": \"matter_documents\", \"count\": 26, \"returned\": 26, \"offset\": 0, \"limit\": 30, \"rows\": [{\"id\": 142, \"title\": \"damages-computation pack \\u2014 Prejudgment Interest Terms Memorandum \\u2014 Consequential Carve-Out (Meridian v. Corvess)\", \"doc_type\": \"memorandum\", \"related_shape\": \"damages-computation\", \"body\": \"PREJUDGMENT INTEREST TERMS MEMORANDUM \\u2014 CONSEQUENTIAL CARVE-OUT\\n\\nMeridian Fabrication Corp. v. Corvess Industrial Group, LLC, No. 24-cv-8812 (D. Ariz.)\\n\\nThis Memorandum is the instrument referenced in Section 5.2 of the parties' Stipulated \\u2026[preview]\"}, {\"id\": 146, \"tit",
-      "thought": null
-    },
-    {
-      "turn": 5,
-      "tool": "read_matter_document",
-      "args": {
-        "id": 286
-      },
-      "argBytes": 11,
-      "argParseError": false,
-      "ok": true,
-      "observation": "{\"id\": 286, \"title\": \"Chapter 11 \\u2014 Claim classification waterfall memo\", \"doc_type\": \"claims_waterfall\", \"related_shape\": \"bankruptcy-claim-classification\", \"body\": \"CLAIM CLASSIFICATION MEMO \\u2014 In re Northgate Holdings, Chapter 11\\n\\nPetition date: 2026-01-20.   Claims bar date: 2026-04-15.\\n\\nApply the tests IN ORDER. The first test that matches controls.\\n\\n  1. LATE FILING. A proof of claim filed after 2026-04-15 is disallowed unless the docket\\n     shows an excusable-neglect order. No such order has been entered in this case.\\n     -> disallowed\\n\\n  2. PERFECTED SECURITY INTERE",
-      "thought": null
-    },
-    {
-      "turn": 6,
       "tool": "legal_matters_review_create",
       "args": {
         "legal_matters_id": "legal_matters_011",
         "reviewer_role": "claims-analyst",
         "outcome": "allowed_secured",
-        "rationale": "Applied the claim classification waterfall memo tests in order. Test 1 (late filing): claim filed 2026-03-02, before the 2026-04-15 bar date, so not disallowed. Test 2 (perfected security interest): UCC-1 financing statement filed 2025-11-14, before the 2026-01-20 petition date, which perfects the interest, controlling as the first matching test. Result: allowed_secured. Creditor's own characterization as \"secured\" is not treated as evidence."
+        "rationale": "Applied the claim classification waterfall tests in order. Test 1 (LATE FILING): claim filed 2026-03-02, before bar date 2026-04-15 — not disallowed. Test 2 (PERFECTED SECURITY INTEREST): Meridian's UCC-1 financing statement was filed 2025-11-14, before the petition date 2026-01-20, perfecting the security interest. First matching test controls, so classified allowed_secured. Creditor's own characterization (secured) is not relied upon as evidence; classification rests on the perfected UCC-1 timing."
       },
-      "argBytes": 571,
+      "argBytes": 627,
       "argParseError": false,
       "ok": true,
       "observation": "{\"status\": \"created\", \"table\": \"legal_matters_reviews\", \"id\": \"legal_matters_review_010\"}",
       "thought": null
     },
     {
-      "turn": 7,
+      "turn": 5,
       "tool": "_final_answer",
       "ok": true,
       "thought": null,
-      "observation": "I have completed the claim classification task.\n\n## Summary\n\nI read the claim classification waterfall memo (doc 286) and the proof of claim filed by Meridian Equipment Finance (doc 287) in full, applied the memo's tests in order, and recorded the classification.\n\n**Proof of Claim — Meridian Equipment Finance:**\n- Basis: equipment lease financing\n- Amount: $2,400,000.00\n- Filed: 2026-03-02\n- UCC-1 financing statement filed: 2025-11-14\n- Wages component: none\n- Creditor's claim of \"secured\" treatment: not evidence per the memo\n\n**Applying the memo's tests in order (first match controls):**\n\n1. "
+      "observation": "The classification has been recorded successfully.\n\n## Summary\n\nI read the Chapter 11 claim classification waterfall memo (matter document 286) and the proof of claim filed by Meridian Equipment Finance (matter document 287) in full.\n\n**Applying the memo's tests in order for Meridian Equipment Finance:**\n\n1. **LATE FILING** — Claim filed 2026-03-02, which is before the bar date of 2026-04-15. Not disallowed. ✗\n2. **PERFECTED SECURITY INTEREST** — UCC-1 financing statement filed 2025-11-14, which is **before** the petition date of 2026-01-20, perfecting the security interest. ✓ **CONTROLS**\n\nSi"
     }
   ]
 }
