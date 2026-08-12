@@ -1,166 +1,302 @@
 #!/usr/bin/env node
-/**
- * M7.3 — leaderboard v2. Rebuilds the reporting layer from episode JSONs alone
- * (no re-measurement), emitting the metrics the LAB-Superset plan calls for and
- * that LAB structurally cannot:
- *
- *   pass^k            reliability, not pass@1 (the RL/buyer question)
- *   by capability     the 10 §0B capability types, as a jagged-intelligence grid
- *   lane_split        file-passes-but-state-fails % — the deliverable-left-in-
- *                     chat failure LAB's file-only grading cannot see
- *   retrieval P/R     precision / recall / over-inclusion for type-4 (never
- *                     all-pass, which hides over-inclusion by construction)
- *   contamination     verbatim-LAB tasks reported in a SEPARATE column, never
- *                     mixed into the headline
- *   refusal / infra   classified out of the denominator, never graded as fail
- *
- * Every number traces to the episode files under data/leaderboard/episodes/.
- *
- * Usage:
- *   node sim/build-leaderboard-v2.mjs --engine deepseek-chat [--namespace run1]
- *        [--out data/leaderboard/results/<engine>.v2.json]
- */
-import { readFileSync, writeFileSync, readdirSync, existsSync, mkdirSync } from "node:fs";
+/** Build the M7.3 evidence-first leaderboard from episode JSON records. */
+import {
+  readFileSync, writeFileSync, existsSync, mkdirSync,
+} from "node:fs";
+import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
-import { dirname, join } from "node:path";
+import { dirname, join, relative, resolve } from "node:path";
+import { classifyEpisode } from "./lib/sweep-health.mjs";
+import { listJsonRecordFiles, readJsonRecordFile } from "./lib/episode-record.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const argv = process.argv.slice(2);
-const opt = (n, d) => (argv.includes(n) ? argv[argv.indexOf(n) + 1] : d);
-
+const opt = (name, fallback) => argv.includes(name) ? argv[argv.indexOf(name) + 1] : fallback;
 const ENGINE = opt("--engine", null);
 if (!ENGINE) { console.error("--engine required"); process.exit(1); }
-const NS = opt("--namespace", "");
-const EP_DIR = join(ROOT, "data", "leaderboard", "episodes", ENGINE, NS);
-const config = JSON.parse(readFileSync(join(ROOT, "config", "world.config.json"), "utf8"));
+const NAMESPACE = opt("--namespace", "v19-triage");
+const EXPECTED_TOOL_SCOPE = opt("--tool-scope", "systems");
+const WORLD_PATH = resolve(ROOT, opt("--world", "world/blobfish/world-v19.json"));
+const EPISODE_DIR = resolve(ROOT, opt(
+  "--episodes", `data/leaderboard/episodes/${ENGINE}/${NAMESPACE}`,
+));
+const HARBOR_LANE_DIR = resolve(ROOT, opt(
+  "--harbor-lanes", `data/leaderboard/harbor-lanes/${ENGINE}/${NAMESPACE}`,
+));
+const TRIAGE_PATH = resolve(ROOT, opt("--triage", "data/triage/world-v19.json"));
+const OUT = resolve(ROOT, opt(
+  "--out", `data/leaderboard/results/${ENGINE}@${NAMESPACE}.v2.json`,
+));
 
-// Capability-type labels (plan §0B). Tasks carry capability_type 1..10.
-const CAP = {
-  1: "extraction", 2: "rule-application", 3: "computation",
-  4: "retrieval", 5: "grounded-drafting", 6: "workflow",
-  7: "abstention", 8: "robustness", 9: "multi-turn", 10: "long-horizon",
+const config = JSON.parse(readFileSync(join(ROOT, "config", "world.config.json"), "utf8"));
+const worldRaw = JSON.parse(readFileSync(WORLD_PATH, "utf8"));
+const world = worldRaw.world ?? worldRaw;
+const taskById = Object.fromEntries(world.tasks.map((task) => [task.task_id, task]));
+const triage = existsSync(TRIAGE_PATH) ? JSON.parse(readFileSync(TRIAGE_PATH, "utf8")) : null;
+
+const CAPABILITY_NAMES = Object.fromEntries(
+  Object.entries(world.task_taxonomy?.types ?? {
+    1: "extraction_and_determination", 2: "rule_application", 3: "computation",
+    4: "retrieval_and_review_at_scale", 5: "grounded_drafting_and_redlining",
+    6: "workflow_execution", 7: "abstention_and_escalation",
+    8: "operational_robustness", 9: "multi_turn_and_interruption",
+    10: "long_horizon_composite_matters",
+  }).map(([key, value]) => [Number(key), value]),
+);
+
+function mean(values) {
+  const measured = values.filter((value) => Number.isFinite(value));
+  return measured.length ? measured.reduce((sum, value) => sum + value, 0) / measured.length : null;
+}
+
+function rounded(value, digits = 1) {
+  return Number.isFinite(value) ? +value.toFixed(digits) : null;
+}
+
+function percent(values) {
+  const value = mean(values);
+  return value === null ? null : rounded(value * 100, 1);
+}
+
+function passPowK(passes, episodes, k) {
+  if (episodes < k) return null;
+  let numerator = 1;
+  let denominator = 1;
+  for (let index = 0; index < k; index++) {
+    numerator *= passes - index;
+    denominator *= episodes - index;
+  }
+  return denominator ? Math.max(0, numerator / denominator) : null;
+}
+
+function relativeSource(path) {
+  const value = relative(ROOT, path);
+  return value.startsWith("..") ? path : value;
+}
+
+function loadRecords(directory) {
+  if (!existsSync(directory)) return { byTask: {}, digest: null, files: 0 };
+  const byTask = {};
+  const hash = createHash("sha256");
+  let files = 0;
+  for (const path of listJsonRecordFiles(directory)) {
+    const filename = path.slice(directory.length + 1);
+    const bytes = readFileSync(path);
+    let record;
+    try { record = readJsonRecordFile(path); } catch { continue; }
+    if (!record.taskId) continue;
+    hash.update(filename).update("\0").update(bytes).update("\0");
+    record._source = relativeSource(path);
+    (byTask[record.taskId] ??= []).push(record);
+    files++;
+  }
+  return { byTask, digest: files ? hash.digest("hex") : null, files };
+}
+
+function lane(record) {
+  const value = record.fileLane ?? record.harborLane ?? record.verdict?.lanes ?? null;
+  if (!value) return null;
+  const filePassed = value.file_passed ?? value.file?.passed;
+  const statePassed = value.state_passed ?? value.state?.passed;
+  if (typeof filePassed !== "boolean" || typeof statePassed !== "boolean") return null;
+  return {
+    filePassed,
+    statePassed,
+    split: value.lane_split ?? (filePassed !== statePassed),
+  };
+}
+
+function verdictValue(record, snake, camel = snake) {
+  return record.verdict?.[snake] ?? record.verdict?.[camel] ?? record[snake] ?? record[camel] ?? null;
+}
+
+const loaded = loadRecords(EPISODE_DIR);
+const harborLoaded = loadRecords(HARBOR_LANE_DIR);
+const unknownEpisodeTasks = Object.keys(loaded.byTask).filter((taskId) => !taskById[taskId]).sort();
+const unknownHarborLaneTasks = Object.keys(harborLoaded.byTask)
+  .filter((taskId) => !taskById[taskId]).sort();
+const rows = [];
+for (const task of [...world.tasks].sort((left, right) => left.task_id.localeCompare(right.task_id))) {
+  const all = loaded.byTask[task.task_id] ?? [];
+  const kinds = all.map((record) => classifyEpisode(record));
+  const versionMismatches = all.filter((record) => record.worldVersion !== world.version).length;
+  const scopeMismatches = all.filter((record) => record.toolScope?.mode !== EXPECTED_TOOL_SCOPE).length;
+  const eligible = all.filter((record, index) =>
+    record.worldVersion === world.version
+      && record.toolScope?.mode === EXPECTED_TOOL_SCOPE
+      && !["infra_error", "refusal", "not_measured"].includes(kinds[index]));
+  const passes = eligible.filter((record) => record.passed === true).length;
+  const n = eligible.length;
+  const harborLaneRecords = (harborLoaded.byTask[task.task_id] ?? [])
+    .filter((record) => record.worldVersion === world.version);
+  const laneRows = [...eligible, ...harborLaneRecords].map(lane).filter(Boolean);
+  const capabilityType = Number(task.capability_type);
+  if (!CAPABILITY_NAMES[capabilityType]) {
+    throw new Error(`task ${task.task_id} has no valid capability_type`);
+  }
+  const pagingRows = eligible.map((record) => verdictValue(record, "paging_complete", "pagingComplete"))
+    .filter((value) => typeof value === "boolean");
+  // Grounded drafting verifiers also expose criterion-level precision/recall.
+  // The leaderboard's retrieval instrument must not silently mix that signal
+  // with gold-set corpus retrieval, so only type-4 tasks enter this channel.
+  const retrievalRows = capabilityType === 4
+    ? eligible.filter((record) =>
+      Number.isFinite(verdictValue(record, "precision"))
+        && Number.isFinite(verdictValue(record, "recall")))
+    : [];
+  const passRate = n ? passes / n : null;
+  rows.push({
+    taskId: task.task_id,
+    capabilityType,
+    capability: CAPABILITY_NAMES[capabilityType],
+    contaminated: Boolean(task.contamination),
+    method: task.method ?? null,
+    triage: triage?.labels?.[task.task_id]?.label ?? "unmeasured",
+    episodeFiles: all.map((record) => record._source),
+    laneEpisodeFiles: harborLaneRecords.map((record) => record._source),
+    episodesFound: all.length,
+    gradedEpisodes: n,
+    passes,
+    passRate,
+    passSquared: passPowK(passes, n, 2),
+    passCubed: passPowK(passes, n, 3),
+    outcomeClass: n === 0 ? "unmeasured" : passes === n ? "pass" : passes === 0 ? "fail" : "FLAKY",
+    exclusions: {
+      infrastructure: kinds.filter((kind) => kind === "infra_error").length,
+      refusal: kinds.filter((kind) => kind === "refusal").length,
+      versionMismatch: versionMismatches,
+      toolScopeMismatch: scopeMismatches,
+    },
+    zeroCallFailures: eligible.filter((record) =>
+      (record.toolCalls ?? 0) === 0 && record.passed !== true).length,
+    lane: {
+      eligibleEpisodes: laneRows.length,
+      splitEpisodes: laneRows.filter((value) => value.split).length,
+      filePassStateFail: laneRows.filter((value) => value.filePassed && !value.statePassed).length,
+    },
+    paging: {
+      eligibleEpisodes: pagingRows.length,
+      completeEpisodes: pagingRows.filter(Boolean).length,
+    },
+    retrieval: {
+      eligibleEpisodes: retrievalRows.length,
+      precision: mean(retrievalRows.map((record) => verdictValue(record, "precision"))),
+      recall: mean(retrievalRows.map((record) => verdictValue(record, "recall"))),
+      fBeta: mean(retrievalRows.map((record) => verdictValue(record, "f_beta", "fBeta"))),
+      overIncluded: retrievalRows.reduce((sum, record) => {
+        const values = verdictValue(record, "over_included", "overIncluded");
+        return sum + (Array.isArray(values) ? values.length : 0);
+      }, 0),
+    },
+  });
+}
+
+const measured = rows.filter((row) => row.passRate !== null);
+const clean = measured.filter((row) => !row.contaminated);
+const contaminated = measured.filter((row) => row.contaminated);
+const boundary = clean.filter((row) => row.triage === "boundary" && row.passCubed !== null);
+const capability = {};
+for (let type = 1; type <= 10; type++) {
+  const defined = rows.filter((row) => row.capabilityType === type && !row.contaminated);
+  const typeMeasured = defined.filter((row) => row.passRate !== null);
+  const stable = typeMeasured.filter((row) => row.passCubed !== null);
+  capability[String(type)] = {
+    name: CAPABILITY_NAMES[type],
+    tasksDefined: defined.length,
+    tasksMeasured: typeMeasured.length,
+    tasksWithThreeEpisodes: stable.length,
+    passRate: percent(typeMeasured.map((row) => row.passRate)),
+    passCubed: percent(stable.map((row) => row.passCubed)),
+    flakyTasks: typeMeasured.filter((row) => row.outcomeClass === "FLAKY").length,
+  };
+}
+
+const laneRows = rows.filter((row) => row.lane.eligibleEpisodes);
+const retrievalRows = rows.filter((row) => row.retrieval.eligibleEpisodes);
+const pagingRows = rows.filter((row) => row.paging.eligibleEpisodes);
+const allEpisodeCount = rows.reduce((sum, row) => sum + row.episodesFound, 0);
+const refusalCount = rows.reduce((sum, row) => sum + row.exclusions.refusal, 0);
+const infrastructureCount = rows.reduce((sum, row) => sum + row.exclusions.infrastructure, 0);
+const report = {
+  schemaVersion: 2,
+  engine: ENGINE,
+  label: config.models?.[ENGINE]?.label ?? ENGINE,
+  model: config.models?.[ENGINE]?.model ?? ENGINE,
+  namespace: NAMESPACE || null,
+  worldVersion: world.version,
+  toolScope: EXPECTED_TOOL_SCOPE,
+  worldFile: relativeSource(WORLD_PATH),
+  triageFile: relativeSource(TRIAGE_PATH),
+  builtFrom: relativeSource(EPISODE_DIR),
+  inputFiles: loaded.files,
+  inputSha256: loaded.digest,
+  harborLaneInput: {
+    directory: relativeSource(HARBOR_LANE_DIR),
+    files: harborLoaded.files,
+    sha256: harborLoaded.digest,
+    unknownTasks: unknownHarborLaneTasks,
+  },
+  unknownEpisodeTasks,
+  coverage: {
+    tasksDefined: rows.length,
+    tasksMeasured: measured.length,
+    tasksWithThreeEpisodes: rows.filter((row) => row.passCubed !== null).length,
+    episodesFound: allEpisodeCount,
+    refusalsExcluded: refusalCount,
+    infrastructureExcluded: infrastructureCount,
+    versionMismatchesExcluded: rows.reduce((sum, row) => sum + row.exclusions.versionMismatch, 0),
+    toolScopeMismatchesExcluded: rows.reduce((sum, row) => sum + row.exclusions.toolScopeMismatch, 0),
+    zeroCallFailures: rows.reduce((sum, row) => sum + row.zeroCallFailures, 0),
+  },
+  headline: {
+    population: "uncontaminated tasks labeled boundary by tools/triage_world.py",
+    tasks: boundary.length,
+    passCubed: percent(boundary.map((row) => row.passCubed)),
+    passRate: percent(boundary.map((row) => row.passRate)),
+    status: boundary.length ? "measured" : "awaiting-complete-triage",
+  },
+  contaminatedLab: {
+    note: "Public verbatim Harvey-LAB imports are never mixed into the headline.",
+    tasksMeasured: contaminated.length,
+    tasksWithThreeEpisodes: contaminated.filter((row) => row.passCubed !== null).length,
+    passRate: percent(contaminated.map((row) => row.passRate)),
+    passCubed: percent(contaminated.filter((row) => row.passCubed !== null).map((row) => row.passCubed)),
+  },
+  byCapabilityClean: capability,
+  laneSplit: {
+    tasksWithLaneEvidence: laneRows.length,
+    eligibleEpisodes: laneRows.reduce((sum, row) => sum + row.lane.eligibleEpisodes, 0),
+    splitEpisodes: laneRows.reduce((sum, row) => sum + row.lane.splitEpisodes, 0),
+    filePassStateFail: laneRows.reduce((sum, row) => sum + row.lane.filePassStateFail, 0),
+    rate: percent(laneRows.flatMap((row) => Array(row.lane.eligibleEpisodes).fill(0)
+      .map((_, index) => index < row.lane.splitEpisodes ? 1 : 0))),
+  },
+  pagingDiscipline: {
+    tasksWithPagingEvidence: pagingRows.length,
+    eligibleEpisodes: pagingRows.reduce((sum, row) => sum + row.paging.eligibleEpisodes, 0),
+    completeEpisodes: pagingRows.reduce((sum, row) => sum + row.paging.completeEpisodes, 0),
+    completeRate: percent(pagingRows.flatMap((row) => Array(row.paging.eligibleEpisodes).fill(0)
+      .map((_, index) => index < row.paging.completeEpisodes ? 1 : 0))),
+  },
+  retrieval: {
+    tasksWithEvidence: retrievalRows.length,
+    meanPrecision: percent(retrievalRows.map((row) => row.retrieval.precision)),
+    meanRecall: percent(retrievalRows.map((row) => row.retrieval.recall)),
+    meanFBeta: percent(retrievalRows.map((row) => row.retrieval.fBeta)),
+    overIncluded: retrievalRows.reduce((sum, row) => sum + row.retrieval.overIncluded, 0),
+  },
+  refusal: {
+    episodes: refusalCount,
+    rateOfObservedEpisodes: allEpisodeCount ? rounded(refusalCount / allEpisodeCount * 100, 1) : null,
+    note: "Classified mechanically and excluded from graded-failure denominators.",
+  },
+  tasks: rows,
 };
 
-function loadEpisodes(dir) {
-  if (!existsSync(dir)) { console.error(`no episodes at ${dir}`); process.exit(1); }
-  const byTask = {};
-  for (const f of readdirSync(dir)) {
-    if (!f.endsWith(".json") || f.startsWith(".")) continue;
-    let rec;
-    try { rec = JSON.parse(readFileSync(join(dir, f), "utf8")); } catch { continue; }
-    const tid = rec.taskId ?? f.replace(/-t\d+\.json$/, "");
-    (byTask[tid] ??= []).push(rec);
-  }
-  return byTask;
-}
-
-// pass^k = P(all k episodes pass); with n measured episodes and p passes, the
-// unbiased estimate of pass^k is C(p,k)/C(n,k) — the leave-nothing-in estimator.
-function passPowK(passes, n, k) {
-  if (n < k) return null;
-  let num = 1, den = 1;
-  for (let i = 0; i < k; i++) { num *= (passes - i); den *= (n - i); }
-  return den > 0 ? Math.max(0, num / den) : null;
-}
-
-function mean(xs) { return xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null; }
-
-function main() {
-  const byTask = loadEpisodes(EP_DIR);
-  const rows = [];
-  for (const [tid, eps] of Object.entries(byTask)) {
-    const measured = eps.filter((e) => !e.infraError && (e.toolCalls ?? 0) > 0 || e.passed);
-    const graded = eps.filter((e) => !e.infraError);
-    const n = graded.length;
-    const passes = graded.filter((e) => e.passed).length;
-    // lane split needs both sub-verdicts; only dual-lane tasks carry them.
-    const laneSplit = graded.filter((e) => {
-      const L = e.verdict?.lanes;
-      return L && L.file?.passed === true && L.state?.passed === false;
-    }).length;
-    const prEps = graded.filter((e) => e.verdict?.precision != null);
-    rows.push({
-      taskId: tid,
-      capabilityType: eps[0].capabilityType ?? null,
-      capability: CAP[eps[0].capabilityType] ?? "unclassified",
-      contaminated: !!eps[0].contamination,
-      method: eps[0].method ?? null,
-      n, passes,
-      passRate: n ? passes / n : null,
-      passSquared: passPowK(passes, n, 2),
-      passCubed: passPowK(passes, n, 3),
-      class: n === 0 ? "error" : passes === n ? "pass" : passes === 0 ? "fail" : "FLAKY",
-      laneSplitEpisodes: laneSplit,
-      precision: mean(prEps.map((e) => e.verdict.precision)),
-      recall: mean(prEps.map((e) => e.verdict.recall)),
-      fBeta: mean(prEps.map((e) => e.verdict.f_beta)),
-    });
-  }
-
-  const measured = rows.filter((r) => r.passRate !== null);
-  const clean = measured.filter((r) => !r.contaminated);
-  const contaminated = measured.filter((r) => r.contaminated);
-
-  const grid = (subset) => {
-    const g = {};
-    for (const r of subset) {
-      const k = r.capability;
-      (g[k] ??= []).push(r);
-    }
-    return Object.fromEntries(Object.entries(g).sort().map(([k, rs]) => [k, {
-      tasks: rs.length,
-      passRate: +(mean(rs.map((r) => r.passRate)) * 100).toFixed(1),
-      passCubed: +(mean(rs.map((r) => r.passCubed ?? 0)) * 100).toFixed(1),
-      flaky: rs.filter((r) => r.class === "FLAKY").length,
-    }]));
-  };
-
-  const retrieval = measured.filter((r) => r.precision != null);
-  const laneTotal = measured.reduce((a, r) => a + r.laneSplitEpisodes, 0);
-
-  const report = {
-    engine: ENGINE,
-    label: config.models?.[ENGINE]?.label ?? ENGINE,
-    namespace: NS || null,
-    builtFrom: EP_DIR.replace(ROOT + "/", ""),
-    tasksMeasured: measured.length,
-    headline: {
-      // CLEAN column only — contaminated tasks never touch the headline.
-      passRate: +(mean(clean.map((r) => r.passRate)) * 100).toFixed(1),
-      passCubed: +(mean(clean.map((r) => r.passCubed ?? 0)) * 100).toFixed(1),
-      passAll: clean.filter((r) => r.passRate === 1).length,
-      flaky: clean.filter((r) => r.class === "FLAKY").length,
-      failAll: clean.filter((r) => r.passRate === 0).length,
-    },
-    contaminatedColumn: {
-      note: "verbatim Harvey-LAB imports (public since 2026) — reported separately, never in the headline",
-      tasks: contaminated.length,
-      passRate: contaminated.length ? +(mean(contaminated.map((r) => r.passRate)) * 100).toFixed(1) : null,
-      passCubed: contaminated.length ? +(mean(contaminated.map((r) => r.passCubed ?? 0)) * 100).toFixed(1) : null,
-    },
-    byCapabilityClean: grid(clean),
-    retrieval: {
-      tasks: retrieval.length,
-      meanPrecision: retrieval.length ? +(mean(retrieval.map((r) => r.precision)) * 100).toFixed(1) : null,
-      meanRecall: retrieval.length ? +(mean(retrieval.map((r) => r.recall)) * 100).toFixed(1) : null,
-      note: "precision reported alongside recall so over-inclusion is visible (all-pass would hide it)",
-    },
-    laneSplit: {
-      episodes: laneTotal,
-      note: "file deliverable passed but the work never landed in a system of record — the failure mode LAB's file-only grading cannot see",
-    },
-    tasks: rows.sort((a, b) => (a.capabilityType ?? 99) - (b.capabilityType ?? 99)),
-  };
-
-  const outDir = join(ROOT, "data", "leaderboard", "results");
-  mkdirSync(outDir, { recursive: true });
-  const out = opt("--out", join(outDir, `${ENGINE}${NS ? "@" + NS : ""}.v2.json`));
-  writeFileSync(out, JSON.stringify(report, null, 1));
-  console.log(`leaderboard-v2 [${ENGINE}]: headline pass^3 ${report.headline.passCubed} `
-    + `over ${clean.length} clean tasks | ${contaminated.length} contaminated (separate) | `
-    + `retrieval P/R ${report.retrieval.meanPrecision}/${report.retrieval.meanRecall} | `
-    + `lane-split ${laneTotal} episodes`);
-  console.log(`→ ${out}`);
-}
-
-main();
+mkdirSync(dirname(OUT), { recursive: true });
+writeFileSync(OUT, JSON.stringify(report, null, 1) + "\n");
+console.log(`leaderboard-v2 [${ENGINE}]: ${measured.length}/${rows.length} tasks measured; `
+  + `boundary pass^3 ${report.headline.passCubed ?? "—"}; capabilities classified ${Object.keys(capability).length}/10; `
+  + `lane ${report.laneSplit.eligibleEpisodes} eps; paging ${report.pagingDiscipline.eligibleEpisodes} eps; `
+  + `retrieval P/R ${report.retrieval.meanPrecision ?? "—"}/${report.retrieval.meanRecall ?? "—"}`);
+console.log(`→ ${OUT}`);

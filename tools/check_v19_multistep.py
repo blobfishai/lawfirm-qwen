@@ -26,12 +26,19 @@ def main() -> int:
     assert report["added"] == {"capstones": 5, "multi_turn": 30}
     assert report["total_tasks"] == 2324
     assert report["load_bearing_corrections"] == 35
+    assert report["unclassified_capability_tasks"] == 0
+    assert sum(report["capability_counts"].values()) == 2324
+    assert set(report["capability_counts"]) == {str(index) for index in range(1, 11)}
+    assert all(task.get("capability_type") in range(1, 11) for task in world["tasks"])
+    assert all(task.get("capability_name") for task in world["tasks"])
 
     tasks = [task for task in world["tasks"] if task.get("method") in {
         "m6_checkpointed_capstone", "m6_native_multiturn"}]
     capstones = [task for task in tasks if task["method"] == "m6_checkpointed_capstone"]
     turns = [task for task in tasks if task["method"] == "m6_native_multiturn"]
     assert len(capstones) == 5 and len(turns) == 30
+    assert all(task["capability_type"] == 10 for task in capstones)
+    assert all(task["capability_type"] == 9 for task in turns)
     assert all(len(task["walk"]) == 50 for task in capstones)
     assert all(len(task["multi_step"]["phases"]) == 5 for task in capstones)
     assert all(len(task["multi_step"]["phases"]) == 2 for task in turns)

@@ -22,6 +22,89 @@ DEFAULT_BASE = ROOT / "world" / "blobfish" / "world-v18.json"
 DEFAULT_OUT = ROOT / "world" / "blobfish" / "world-v19.json"
 DEFAULT_REPORT = ROOT / "world" / "v19" / "build-report.json"
 
+CAPABILITY_TYPES = {
+    1: "extraction_and_determination",
+    2: "rule_application",
+    3: "computation",
+    4: "retrieval_and_review_at_scale",
+    5: "grounded_drafting_and_redlining",
+    6: "workflow_execution",
+    7: "abstention_and_escalation",
+    8: "operational_robustness",
+    9: "multi_turn_and_interruption",
+    10: "long_horizon_composite_matters",
+}
+
+PACK_CAPABILITY = {
+    # determinate extraction / review
+    "acord-clause-retrieval.json": 1,
+    "arbitration-clause-review.json": 1,
+    "banking-finance-covenants.json": 1,
+    "cuad-clause-extraction.json": 1,
+    "maud-deal-points.json": 1,
+    "spa-deal-extraction.json": 1,
+    # rule application / categorical legal determination
+    "appeal-outcome.json": 2,
+    "bankruptcy-claim-classification.json": 2,
+    "kyc-aml-screening.json": 2,
+    "legalbench-rule-application.json": 2,
+    "obliqa-regulatory-obligations.json": 2,
+    "violation-screening.json": 2,
+    # exact arithmetic / dates
+    "covenant-portfolio-sweep.json": 3,
+    "damages-computation.json": 3,
+    "deadline-computation.json": 3,
+    "hsr-merger-notification.json": 3,
+    "lab-employment-compensation-escalation.json": 3,
+    "multi-hop-damages.json": 3,
+    # all-and-only corpus retrieval
+    "discovery-retrieval.json": 4,
+    "ethical-wall-screening.json": 4,
+    "posture-dependent-chronology.json": 4,
+    "production-gap-disclosure.json": 4,
+    # grounded work product
+    "deep-drafting.json": 5,
+    "engagement-letters.json": 5,
+    "grounded-drafting.json": 5,
+    # executable processes
+    "closing-binder.json": 6,
+    "court-efiling.json": 6,
+    "deposition-management.json": 6,
+    "expert-witness-management.json": 6,
+    "lawflow-entity-formation.json": 6,
+    "settlement-authority.json": 6,
+    # unsupported-answer traps
+    "citation-audit.json": 7,
+    "hallucination-traps.json": 7,
+    # async submit/poll/retrieve is the primary load-bearing capability
+    "async-privilege-screen.json": 8,
+}
+
+METHOD_CAPABILITY = {
+    "graph_walk_exact_state": 6,
+    "v3_workflow": 6,
+    "m3_deadline_workflow": 3,
+    "m3_efiling_workflow": 6,
+    "m3_esign_closing_workflow": 6,
+    "m6_native_multiturn": 9,
+    "m6_checkpointed_capstone": 10,
+}
+
+
+def assign_capability(task: dict[str, Any]) -> None:
+    """Give every task one primary §0B capability, without difficulty claims."""
+    if task.get("capability_type") is None:
+        method = task.get("method")
+        pack = (task.get("expansion") or {}).get("pack")
+        capability = METHOD_CAPABILITY.get(method) or PACK_CAPABILITY.get(pack)
+        if capability is None:
+            raise RuntimeError(f"no capability mapping for {task['task_id']} ({method=}, {pack=})")
+        task["capability_type"] = capability
+    capability = int(task["capability_type"])
+    if capability not in CAPABILITY_TYPES:
+        raise RuntimeError(f"invalid capability type {capability} on {task['task_id']}")
+    task["capability_name"] = CAPABILITY_TYPES[capability]
+
 
 def _phase(name: str, instruction: str, calls: list[tuple[str, dict]],
            assertions: list[dict]) -> dict[str, Any]:
@@ -225,6 +308,7 @@ def _capstone(index: int, values: tuple[str | int, ...]) -> tuple[dict, dict]:
         "provenance": {"source": "manifest-first canonical workflow 12", "synthetic": True},
         "difficulty_tier": "pending_triage",
         "acceptance_label": "admitted_long_horizon_composite",
+        "capability_type": 10,
     }
     verifier = {
         "task_id": task_id,
@@ -355,6 +439,7 @@ def _multiturn(index: int) -> tuple[dict, dict]:
         "provenance": {"source": "manifest-first multi-turn family", "synthetic": True},
         "difficulty_tier": "pending_triage",
         "acceptance_label": "admitted_multi_turn",
+        "capability_type": 9,
     }
     return task, verifier
 
@@ -371,6 +456,15 @@ def build(base: Path, out: Path, report_path: Path) -> dict[str, Any]:
         world["tasks"].append(task)
         world["verifiers"].append(verifier)
         existing.add(task["task_id"])
+    for task in world["tasks"]:
+        assign_capability(task)
+    world["task_taxonomy"] = {
+        "version": "LAB-Superset-0B-v1",
+        "primary_capability_only": True,
+        "types": {str(key): value for key, value in CAPABILITY_TYPES.items()},
+        "assignment": "world/v19/build.py:assign_capability",
+        "difficulty_is_separate": "tools/triage_world.py; never inferred from capability",
+    }
     world["version"] = 19
     world["world_id"] = "legal-agent-simulation-world-v19"
     world["lineage"] = {
@@ -391,6 +485,11 @@ def build(base: Path, out: Path, report_path: Path) -> dict[str, Any]:
                             for task, _ in pairs if task["method"] == "m6_checkpointed_capstone"},
         "load_bearing_corrections": sum(bool(task.get("pre_correction_walk")) for task, _ in pairs),
         "total_tasks": len(world["tasks"]),
+        "capability_counts": {
+            str(capability): sum(task["capability_type"] == capability for task in world["tasks"])
+            for capability in CAPABILITY_TYPES
+        },
+        "unclassified_capability_tasks": sum(task.get("capability_type") is None for task in world["tasks"]),
         "world_sha256": hashlib.sha256(payload.encode()).hexdigest(),
     }
     report_path.parent.mkdir(parents=True, exist_ok=True)

@@ -6,6 +6,13 @@ on:
     branches: [master]
   pull_request:
   workflow_dispatch:
+    inputs:
+      full:
+        description: "Run the FULL v19 trust chain (2,324 tasks) instead of the rotating sample"
+        type: boolean
+        default: false
+  schedule:
+    - cron: "17 6 * * 1"   # weekly full v19 chain, Monday 06:17 UTC
 
 permissions:
   contents: read
@@ -15,16 +22,24 @@ concurrency:
   cancel-in-progress: true
 
 env:
+  # v16 = frozen migration-regression world (291 tasks, cheap, runs full every
+  # time); v19 = canonical (2,324 tasks) — rotating 300-task sample per PR,
+  # full chain on the weekly schedule or workflow_dispatch(full).
   WORLD: world/blobfish/world-v16.json
+  WORLD_V19: world/blobfish/world-v19.json
   BASE: http://127.0.0.1:8974
   HARBOR_VERSION: 0.21.0
   PYTHONDONTWRITEBYTECODE: "1"
+  FULL_CHAIN: ${{ (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.full)) && '1' || '' }}
 
 jobs:
   deterministic-trust-chain:
     name: oracle, discrimination, fixtures, badbank
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # 20 min fits the PR path (v16 full + v19 sampled); the weekly FULL v19
+    # chain (2,324-task oracle + 4-mode discrimination + 11,620 replays) needs
+    # the headroom.
+    timeout-minutes: 55
     steps:
       - name: Check out repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -59,6 +74,10 @@ jobs:
             world/v19/build.py \
             world/v19/verifiers.py \
             world/local/precorrection.py \
+            world/ecosystem/compile_skills.py \
+            world/ecosystem/diff_mcp_schemas.py \
+            mcp/byo/courtlistener_facade.py \
+            mcp/byo/legal_mcp_env.py \
             tools/check_atomic_seed.py \
             tools/check_lab_ingest.py \
             tools/check_harbor_file_lane.py \
@@ -87,13 +106,31 @@ jobs:
             tools/check_discrimination.py \
             tools/check_harbor_result.py \
             tools/check_harbor_multistep.py \
-            tools/check_sweep_health.py
+            tools/check_sweep_health.py \
+            tools/triage_world.py \
+            tools/check_triage_world.py \
+            tools/audit_triage_suspects.py \
+            tools/check_triage_suspect_audit.py \
+            tools/check_leaderboard_v2.py \
+            tools/check_harbor_lane_import.py \
+            tools/check_skill_task_compiler.py \
+            tools/check_byo_mcp.py \
+            tools/check_mcp_schema_diff.py \
+            tools/build_superset_matrix.py \
+            tools/check_superset_matrix.py
           node --check world/expansion/discrimination-report.mjs
           node --check sim/compare-v16-boundary.mjs
           node --check sim/run-leaderboard.mjs
           node --check sim/run-simulation.mjs
+          node --check sim/build-leaderboard-v2.mjs
+          node --check sim/import-harbor-lanes.mjs
+          node --check sim/lib/episode-record.mjs
+          node --check sim/lib/context-policy.mjs
+          node --check sim/lib/tool-scope.mjs
+          node --check tools/compress_episode_records.mjs
           node --check sim/lib/sweep-health.mjs
           node --check sim/tests/sweep-health.test.mjs
+          node --check docs/leaderboard/build-v2-page.mjs
           python3 world/migrate/gen1_to_v16.py --check
           python3 tools/check_product_surface.py
           node sim/compare-v16-boundary.mjs
@@ -122,6 +159,26 @@ jobs:
           python3 tools/check_v19_multistep.py
           python3 tools/check_sweep_health.py --proof data/leaderboard/canary-proof-v19.json
           git diff --exit-code -- data/leaderboard/canary-proof-v19.json
+          python3 tools/check_triage_world.py
+          node tools/check_episode_compression.mjs
+          node tools/check_context_policy.mjs
+          node tools/check_simulation_protocol.mjs
+          python3 tools/triage_world.py --engine deepseek-chat --namespace v19-triage
+          git diff --exit-code -- data/triage/world-v19.json docs/TRIAGE-v19.md
+          python3 tools/audit_triage_suspects.py --check --require-complete
+          python3 tools/check_triage_suspect_audit.py
+          python3 tools/check_leaderboard_v2.py
+          python3 tools/check_harbor_lane_import.py
+          node sim/build-leaderboard-v2.mjs --engine deepseek-chat --namespace v19-triage
+          node docs/leaderboard/build-v2-page.mjs
+          git diff --exit-code -- data/leaderboard/results/deepseek-chat@v19-triage.v2.json docs/leaderboard/index.html
+          python3 world/ecosystem/compile_skills.py --check
+          python3 tools/check_skill_task_compiler.py
+          python3 world/ecosystem/diff_mcp_schemas.py --check
+          python3 tools/check_mcp_schema_diff.py
+          python3 tools/check_byo_mcp.py --check-proof
+          python3 tools/build_superset_matrix.py --check
+          python3 tools/check_superset_matrix.py
           python3 tools/check_pagination.py
           python3 tools/check_query_dsl.py
           python3 -m unittest discover -s world/manifest/tests -v
@@ -168,12 +225,55 @@ jobs:
             --world "$WORLD" \
             --docs-out docs/DISCRIMINATION-v16.md \
             --data-out data/discrimination-v16-classified.json
-          python3 tools/check_fixtures.py --base "$BASE"
           BLOBFISH_LOCAL_BASE="$BASE" node mcp/test-multi-server.mjs
 
           cleanup
           trap - EXIT
           python3 tools/check_gates.py --world "$WORLD" --port 8975
+
+      - name: Canonical v19 chain (rotating sample per PR; full on schedule/dispatch)
+        run: |
+          set -euo pipefail
+          world_log="$RUNNER_TEMP/world-v19.log"
+          python3 world/local/server.py --port 8974 --world "$WORLD_V19" \
+            --v2-contracts mcp/v3/contracts >"$world_log" 2>&1 &
+          world_pid=$!
+          cleanup() {
+            kill "$world_pid" 2>/dev/null || true
+            wait "$world_pid" 2>/dev/null || true
+          }
+          trap cleanup EXIT
+
+          ready=0
+          for attempt in {1..240}; do
+            if curl --fail --silent "$BASE/health" >/dev/null; then
+              ready=1; break
+            fi
+            sleep 1
+          done
+          if [ "$ready" -ne 1 ]; then
+            sed -n '1,200p' "$world_log"; exit 1
+          fi
+
+          if [ -n "$FULL_CHAIN" ]; then
+            echo "FULL v19 chain (2,324 tasks)"
+            python3 world/local/oracle.py --base "$BASE" --world "$WORLD_V19" \
+              --out "$RUNNER_TEMP/oracle-v19-full.json"
+            python3 world/local/discriminate.py --base "$BASE" --world "$WORLD_V19" \
+              --out "$RUNNER_TEMP/discrimination-v19-full.json" --report-only
+            node world/expansion/discrimination-report.mjs \
+              --sweep "$RUNNER_TEMP/discrimination-v19-full.json" \
+              --world "$WORLD_V19" \
+              --docs-out "$RUNNER_TEMP/DISCRIMINATION-v19.md" \
+              --data-out "$RUNNER_TEMP/discrimination-v19-classified.json"
+            python3 tools/check_fixtures.py --base "$BASE"
+          else
+            SAMPLE="$(python3 tools/ci_sample.py --world "$WORLD_V19" --n 300)"
+            echo "sampled v19 chain (300 rotating tasks)"
+            python3 world/local/oracle.py --base "$BASE" --world "$WORLD_V19" \
+              --tasks "$SAMPLE" --out "$RUNNER_TEMP/oracle-v19-sample.json"
+            python3 tools/check_fixtures.py --base "$BASE" --tasks "$SAMPLE"
+          fi
 
       - name: Require committed audit artifacts to be current
         run: |

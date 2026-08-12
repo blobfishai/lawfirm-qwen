@@ -20,6 +20,8 @@ import { readFileSync, existsSync, mkdirSync, appendFileSync, writeFileSync } fr
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { McpClient } from "./lib/mcp-client.mjs";
+import { compactToolHistory, CONTEXT_POLICY } from "./lib/context-policy.mjs";
+import { scopeTools, turnBudget } from "./lib/tool-scope.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const config = JSON.parse(readFileSync(join(ROOT, "config", "world.config.json"), "utf8"));
@@ -32,6 +34,7 @@ const jsonOutFlag = opt("--json-out", null);
 const episodeOutFlag = opt("--episode-out", null);
 const worldFileFlag = opt("--world-file", null);
 const maxTurnsFlag = opt("--max-turns", null);
+const toolScopeFlag = opt("--tool-scope", "all");
 
 function loadEnv() {
   const env = { ...process.env };
@@ -85,19 +88,37 @@ async function chat(messages, tools) {
     "Content-Type": "application/json",
   };
   if (ENGINE.provider === "anthropic-openai-compat") headers["x-api-key"] = ENGINE.apiKey;
-  const res = await fetch(`${ENGINE.baseUrl}/chat/completions`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({
-      model: ENGINE.model,
-      messages,
-      tools,
-      tool_choice: "auto",
-      max_tokens: ENGINE.maxCompletionTokens,
-    }),
+  const body = JSON.stringify({
+    model: ENGINE.model,
+    messages,
+    tools,
+    tool_choice: "auto",
+    max_tokens: ENGINE.maxCompletionTokens,
   });
-  if (!res.ok) throw new Error(`LLM API ${res.status}: ${(await res.text()).slice(0, 500)}`);
-  return res.json();
+  let lastError = null;
+  for (let attempt = 0; attempt < 5; attempt++) {
+    try {
+      const res = await fetch(`${ENGINE.baseUrl}/chat/completions`, {
+        method: "POST", headers, body,
+      });
+      if (res.ok) return res.json();
+      const detail = (await res.text()).slice(0, 500);
+      lastError = new Error(`LLM API ${res.status}: ${detail}`);
+      if (![408, 409, 429, 500, 502, 503, 504].includes(res.status) || attempt === 4) {
+        throw lastError;
+      }
+      const retryAfter = Number(res.headers.get("retry-after"));
+      const backoffMs = Number.isFinite(retryAfter)
+        ? Math.min(30_000, Math.max(1_000, retryAfter * 1000))
+        : Math.min(30_000, 2_000 * (2 ** attempt));
+      await new Promise((resolve) => setTimeout(resolve, backoffMs));
+    } catch (error) {
+      lastError = error;
+      if (attempt === 4 || String(error?.message ?? "").startsWith("LLM API 4")) throw error;
+      await new Promise((resolve) => setTimeout(resolve, Math.min(30_000, 2_000 * (2 ** attempt))));
+    }
+  }
+  throw lastError ?? new Error("LLM API failed without a response");
 }
 
 /** Agentic loop: model <-> MCP tools until a final (non-tool) answer or turn cap.
@@ -112,6 +133,11 @@ async function runAgent(mcp, llmTools, messages, opts = {}) {
   const guardTokens = Math.floor(ENGINE.contextWindowTokens * (config.engine.contextGuardRatio ?? 0.9));
 
   for (let turn = 1; turn <= maxTurns; turn++) {
+    compactToolHistory(
+      messages,
+      CONTEXT_POLICY.keepRecentToolResults,
+      CONTEXT_POLICY.oldToolResultChars,
+    );
     let resp;
     try {
       resp = await chat(messages, llmTools);
@@ -127,8 +153,11 @@ async function runAgent(mcp, llmTools, messages, opts = {}) {
     log({ type: "completion", turn, model: resp.model, usage: u });
 
     if ((u.prompt_tokens ?? 0) > guardTokens) {
-      const oldTool = messages.find((m) => m.role === "tool" && m.content !== "[trimmed]");
-      if (oldTool) oldTool.content = "[trimmed]";
+      compactToolHistory(
+        messages,
+        CONTEXT_POLICY.pressureKeepRecentToolResults,
+        CONTEXT_POLICY.pressureOldToolResultChars,
+      );
     }
 
     const msg = resp.choices?.[0]?.message ?? {};
@@ -278,7 +307,9 @@ async function main() {
     };
   }
 
-  const llmTools = mcp.tools.map((t) => ({
+  const systems = JSON.parse(readFileSync(join(ROOT, "mcp", "systems.json"), "utf8")).systems;
+  const scoped = scopeTools(task, mcp.tools, systems, toolScopeFlag);
+  const llmTools = scoped.tools.map((t) => ({
     type: "function",
     function: { name: t.name, description: t.description, parameters: t.inputSchema },
   }));
@@ -298,7 +329,10 @@ async function main() {
   ];
 
   const refWalk = Array.isArray(task.walk) ? task.walk.length : 0;
-  const maxTurns = maxTurnsFlag ? Number(maxTurnsFlag) : Math.max(config.engine.maxAgentTurns, refWalk * 3 + 6);
+  // maxAgentTurns is a hard ceiling, not a floor. The former Math.max made a
+  // three-call task run for at least 50 turns and a 703-call task eligible for
+  // 2,115 turns, turning harness indecision into unbounded API spend.
+  const maxTurns = maxTurnsFlag ? Number(maxTurnsFlag) : turnBudget(refWalk, config.engine.maxAgentTurns);
   const startedAtMs = Date.now();
   const { usage, toolCallCount, finalText, steps, turnsUsed } = await runAgent(mcp, llmTools, messages, { maxTurns });
 
@@ -316,6 +350,8 @@ async function main() {
     engine: ENGINE.id,
     model: ENGINE.model,
     mcpMode,
+    toolScope: scoped.metadata,
+    contextPolicy: CONTEXT_POLICY,
     worldVersion: world.version ?? null,
     worldFile: worldFileFlag ?? config.blobfish.world,
     worldId: world.world_id ?? null,
@@ -333,6 +369,9 @@ async function main() {
       precision: v.data?.precision ?? null,
       recall: v.data?.recall ?? null,
       f_beta: v.data?.f_beta ?? null,
+      over_included: v.data?.over_included ?? null,
+      paging_complete: v.data?.paging_complete ?? null,
+      paging_discipline: v.data?.paging_discipline ?? null,
       lanes: v.data?.lanes ?? null,
       grounding_fraction: v.data?.raw_grounding_fraction ?? v.data?.grounding_fraction ?? null,
     },

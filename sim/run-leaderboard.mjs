@@ -7,7 +7,8 @@
  *   node sim/run-leaderboard.mjs --engines deepseek-chat,claude-haiku-4-5
  *        [--tasks scored|all|flaky|boundary|task_001,task_002]
  *        [--episodes 3] [--concurrency 6] [--label run1]
- *        [--episode-namespace run1]
+ *        [--episode-namespace run1] [--tool-scope all|systems]
+ *        [--compress-episodes] [--max-cost-usd 1800]
  *
  * Task sets:
  *   scored    all tasks minus config.scoring.quarantinedTasks (default)
@@ -16,16 +17,19 @@
  *   all       every task
  *
  * Outputs:
- *   data/leaderboard/episodes/<engine>/<task>-t<n>.json  (full step traces)
+ *   data/leaderboard/episodes/<engine>/<task>-t<n>.json[.gz] (full step traces)
  *   data/leaderboard/results/<engine>.json               (aggregate)
  *
  * The world server must be running: npm run world:serve
  */
-import { readFileSync, writeFileSync, mkdirSync, existsSync, rmSync } from "node:fs";
+import { readFileSync, writeFileSync, mkdirSync, rmSync } from "node:fs";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { classifyEpisode, summarizeSweepHealth } from "./lib/sweep-health.mjs";
+import {
+  compressJsonRecord, findJsonRecord, readJsonRecordFile, removeJsonRecord,
+} from "./lib/episode-record.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const config = JSON.parse(readFileSync(join(ROOT, "config", "world.config.json"), "utf8"));
@@ -39,18 +43,31 @@ const LABEL = opt("--label", "leaderboard");
 const LABEL_EXPLICIT = argv.includes("--label");
 const TASKSET = opt("--tasks", "scored");
 const RESUME = argv.includes("--resume"); // skip episodes whose record already exists
+const RETRY_UNGRADED = argv.includes("--retry-ungraded"); // replace cached infra/refusal episodes
+const COMPRESS_EPISODES = argv.includes("--compress-episodes"); // deterministic .json.gz evidence
+const MAX_COST_USD = Number(opt("--max-cost-usd", "0")); // conservative reported-cost circuit breaker
+const MAX_EPISODE_COST_USD = Number(opt("--max-episode-cost-usd", "0"));
 const AGG_ONLY = argv.includes("--aggregate-only"); // no API calls: aggregate existing episode files
 const CANARY_PROBE = argv.includes("--canary-probe"); // one oracle check, no model calls
 const HEALTH_OUT = opt("--health-out", null);
 const WORLD_FILE = opt("--world-file", null);      // e.g. world/blobfish/world-expanded.json
 const LOCAL_BASE = opt("--local-base", null);      // e.g. http://127.0.0.1:8972
 const MCP_MODE = opt("--mcp", "bridge");           // bridge | multi (per-system MCP servers)
+const TOOL_SCOPE = opt("--tool-scope", "all");    // all | systems
 const EPISODE_NAMESPACE = opt(
   "--episode-namespace", LABEL_EXPLICIT ? LABEL : "",
 );
 
 if (EPISODE_NAMESPACE && !/^[A-Za-z0-9._-]+$/.test(EPISODE_NAMESPACE)) {
   console.error("--episode-namespace must contain only letters, digits, dot, underscore, or hyphen");
+  process.exit(1);
+}
+if (!["all", "systems"].includes(TOOL_SCOPE)) {
+  console.error("--tool-scope must be all or systems");
+  process.exit(1);
+}
+if (![MAX_COST_USD, MAX_EPISODE_COST_USD].every((value) => Number.isFinite(value) && value >= 0)) {
+  console.error("cost limits must be non-negative numbers (0 disables)");
   process.exit(1);
 }
 
@@ -122,16 +139,22 @@ function runEpisode(engine, taskId, ep) {
     : join(EP_DIR, engine);
   mkdirSync(dir, { recursive: true });
   const out = join(dir, `${taskId}-t${ep}.json`);
-  if ((RESUME || AGG_ONLY) && existsSync(out)) {
-    try { return Promise.resolve({ cached: true, ...JSON.parse(readFileSync(out, "utf8")) }); }
+  const cachedPath = findJsonRecord(out);
+  if ((RESUME || AGG_ONLY) && cachedPath) {
+    try {
+      const cached = readJsonRecordFile(cachedPath);
+      if (!(RESUME && RETRY_UNGRADED && ["infra_error", "refusal"].includes(classifyEpisode(cached)))) {
+        return Promise.resolve({ cached: true, ...cached });
+      }
+    }
     catch { /* rerun */ }
   }
   if (AGG_ONLY) return Promise.resolve({ taskId, notMeasured: true });
-  rmSync(out, { force: true });
+  removeJsonRecord(out);
   return new Promise((resolve) => {
     const child = spawn("node", [
       "sim/run-simulation.mjs", "--task", taskId, "--engine", engine,
-      "--episode-out", out, "--mcp", MCP_MODE,
+      "--episode-out", out, "--mcp", MCP_MODE, "--tool-scope", TOOL_SCOPE,
       ...(WORLD_FILE ? ["--world-file", join(ROOT, WORLD_FILE)] : []),
     ], {
       cwd: ROOT,
@@ -142,11 +165,17 @@ function runEpisode(engine, taskId, ep) {
       },
       stdio: ["ignore", "ignore", "ignore"],
     });
-    const timer = setTimeout(() => { try { child.kill("SIGKILL"); } catch { /* gone */ } }, 12 * 60 * 1000);
+    const referenceCalls = world.tasks.find((task) => task.task_id === taskId)?.walk?.length ?? 0;
+    // Short tasks retain the historical 12-minute ceiling. Long-horizon
+    // capstones receive a bounded reference-relative allowance so a valid
+    // 50–150-call rollout is not mislabeled infrastructure failure.
+    const timeoutMinutes = Math.max(12, Math.min(45, 5 + referenceCalls * 0.35));
+    const timer = setTimeout(() => { try { child.kill("SIGKILL"); } catch { /* gone */ } }, timeoutMinutes * 60 * 1000);
     child.on("exit", () => {
       clearTimeout(timer);
       let rec = null;
       try { rec = JSON.parse(readFileSync(out, "utf8")); } catch { /* infra */ }
+      if (rec && COMPRESS_EPISODES) compressJsonRecord(out);
       resolve(rec ?? { taskId, engine, infraError: true });
     });
   });
@@ -190,9 +219,17 @@ class CanaryFailure extends Error {
   constructor(tid) { super(`oracle canary failed on ${tid} — harness broken, sweep halted`); this.tid = tid; }
 }
 
+class SpendLimit extends Error {
+  constructor(message) { super(message); }
+}
+
 async function measureEngine(engine, ids) {
   const jobs = [];
-  for (const t of ids) for (let ep = 1; ep <= EPISODES; ep++) jobs.push({ t, ep });
+  // Episode-major scheduling gives every task one observation before any task
+  // receives its second. If a spend circuit breaker trips, coverage is broad
+  // and the resumable evidence is still useful; session state is private, so
+  // this ordering cannot change an episode's semantics.
+  for (let ep = 1; ep <= EPISODES; ep++) for (const t of ids) jobs.push({ t, ep });
   const results = [];
   const canaries = [];
   let idx = 0, done = 0, halted = null;
@@ -214,6 +251,19 @@ async function measureEngine(engine, ids) {
       if (r.infraError) r = await runEpisode(engine, t, ep); // one infra retry
       results.push({ ...r, taskId: r.taskId ?? t, episode: ep });
       done++;
+      const episodeCost = Number(r.costUsd ?? 0);
+      const cumulativeCost = results.reduce((sum, item) => sum + Number(item.costUsd ?? 0), 0);
+      if (!halted && MAX_EPISODE_COST_USD && episodeCost > MAX_EPISODE_COST_USD) {
+        halted = new SpendLimit(
+          `episode cost $${episodeCost.toFixed(2)} exceeded $${MAX_EPISODE_COST_USD.toFixed(2)} on ${t}-t${ep}`,
+        );
+      }
+      if (!halted && MAX_COST_USD && cumulativeCost >= MAX_COST_USD) {
+        halted = new SpendLimit(
+          `sweep cost $${cumulativeCost.toFixed(2)} reached $${MAX_COST_USD.toFixed(2)} circuit breaker`,
+        );
+      }
+      if (halted) break;
       if (!AGG_ONLY && CANARY_EVERY && done % CANARY_EVERY === 0) {
         const c = await runCanary(ids);
         canaries.push(c);
@@ -228,7 +278,14 @@ async function measureEngine(engine, ids) {
   }
   await Promise.all(Array.from({ length: CONCURRENCY }, (_, i) => worker(i)));
   if (halted) {
-    writeSweepHealth(engine, ids, results, canaries, { haltedBy: halted.message });
+    writeSweepHealth(engine, ids, results, canaries, {
+      haltedBy: halted.message,
+      spend: {
+        reportedCostUsd: +results.reduce((sum, item) => sum + Number(item.costUsd ?? 0), 0).toFixed(5),
+        sweepLimitUsd: MAX_COST_USD || null,
+        episodeLimitUsd: MAX_EPISODE_COST_USD || null,
+      },
+    });
     throw halted;
   }
   return { results, canaries };
@@ -380,6 +437,7 @@ for (const engine of ENGINES) {
     ({ results, canaries } = await measureEngine(engine, ids));
   } catch (e) {
     if (e instanceof CanaryFailure) { console.error(`✖ ${e.message}`); process.exit(3); }
+    if (e instanceof SpendLimit) { console.error(`✖ ${e.message}`); process.exit(4); }
     throw e;
   }
   writeSweepHealth(engine, ids, results, canaries);

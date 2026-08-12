@@ -461,3 +461,37 @@ superset of LAB's prose-quality judgment.
 **Blast radius:** documentation and external claims only; task rewards and prior model
 episodes are unchanged. M7 remains open until the three-episode world-v19 calibration
 report is complete.
+
+## Bug 18 — calibration resent multi-megabyte schemas for unbounded turns (FIXED)
+
+**Symptom:** the first world-v19 calibration pilot spent $189.68 on only 31
+episodes. A five-call task consumed roughly 4.5 million prompt tokens; several
+short failing tasks consumed 30–40 million each.
+
+**Diagnosis:** the model request published all 91 vendor schemas on every turn.
+The list serialized to 2,989,272 bytes because two self-contained DocuSign
+request schemas alone contributed 2,770,307 bytes. Independently,
+`maxAgentTurns` was implemented as a floor (`Math.max`), despite its name and
+comment describing a cap. Ordinary tasks therefore received at least 50 turns,
+while one pilot task received a 1,551-turn allowance. The 31 quarantined
+episodes accumulated 700,704,206 prompt tokens and 1,324 tool calls.
+
+**Fix:** measured sweeps now support a recorded `systems` protocol: every
+system needed by the workflow, one deterministic core-system distractor, and
+one deterministic specialist distractor. Scoping remains at whole-system
+granularity, so it never reveals the exact reference walk and it does not alter
+any vendor schema. The turn allowance is now bounded by
+`min(50, max(10, ceil(reference_calls * 1.25) + 5))`. Triage and leaderboard
+builders reject records from a different scope. Long episodes retain the 12
+most recent tool results verbatim and deterministically compact older results
+to 1,000 characters (six/300 under context pressure), while preserving every
+assistant/tool protocol link and the full immutable episode trace. Episode records can be stored
+as deterministic JSON.GZ with raw/compressed collision checks and byte-identical
+rebuild tests. A post-fix five-call probe passed for $0.06712: 245,290 prompt
+tokens, six turns, and a 138,293-byte three-system schema surface.
+
+**Blast radius:** the pilot never entered a completed calibration report. Its
+31 records are preserved under
+`data/leaderboard/quarantine/deepseek-chat/v19-triage-oversized-schema/` and are
+excluded from every denominator. No oracle, verifier, task, or product contract
+changed; this was a model-runner protocol and spend-control defect.
