@@ -192,31 +192,42 @@ class V2Runtime:
                 self.tools[tool["name"]] = tool
 
     # ---------------------------------------------------------------- seed
-    def create_and_seed(self, conn: sqlite3.Connection) -> None:
+    def create_and_seed(
+        self, conn: sqlite3.Connection, skip_seed_tables: set[str] | None = None
+    ) -> None:
+        """Create contract tables and seed tables not already owned by a world.
+
+        Product-only worlds embed their exact contract seed plus migrated rows
+        so per-task seed bundles can upsert those tables.  ``skip_seed_tables``
+        prevents the runtime from inserting the contract seed a second time;
+        legacy worlds omit it and retain the original behavior.
+        """
         rng = Rng()
         counts = {}
+        skip_seed_tables = skip_seed_tables or set()
         for c in self.contracts:
             for t in c["tables"]:
                 cols = ", ".join(
                     f'"{col["name"]}" {col["type"]}' + (" PRIMARY KEY" if col.get("pk") else "")
                     for col in t["columns"])
                 conn.execute(f'CREATE TABLE IF NOT EXISTS "{t["name"]}" ({cols})')
-                seed = t.get("seed") or {}
-                rows = seed.get("rows")
-                if rows is None and seed.get("template"):
-                    rows = [dict(seed["template"]) for _ in range(seed.get("count", 0))]
-                for raw in rows or []:
-                    row = {}
-                    for col in t["columns"]:
-                        n = col["name"]
-                        if col.get("pk"):
-                            continue
-                        row[n] = _gen_value(raw.get(n), rng, counts, row)
-                    cq = ", ".join(f'"{k}"' for k in row)
-                    ph = ", ".join("?" for _ in row)
-                    conn.execute(f'INSERT INTO "{t["name"]}" ({cq}) VALUES ({ph})',
-                                 [json.dumps(v) if isinstance(v, (list, dict)) else v
-                                  for v in row.values()])
+                if t["name"] not in skip_seed_tables:
+                    seed = t.get("seed") or {}
+                    rows = seed.get("rows")
+                    if rows is None and seed.get("template"):
+                        rows = [dict(seed["template"]) for _ in range(seed.get("count", 0))]
+                    for raw in rows or []:
+                        row = {}
+                        for col in t["columns"]:
+                            n = col["name"]
+                            if col.get("pk"):
+                                continue
+                            row[n] = _gen_value(raw.get(n), rng, counts, row)
+                        cq = ", ".join(f'"{k}"' for k in row)
+                        ph = ", ".join("?" for _ in row)
+                        conn.execute(f'INSERT INTO "{t["name"]}" ({cq}) VALUES ({ph})',
+                                     [json.dumps(v) if isinstance(v, (list, dict)) else v
+                                      for v in row.values()])
                 counts[t["name"]] = conn.execute(
                     f'SELECT COUNT(*) FROM "{t["name"]}"').fetchone()[0]
         self._coherence_pass(conn)

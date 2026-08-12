@@ -49,7 +49,14 @@ def main() -> int:
 
             class SlowExtension:
                 @staticmethod
-                def create_and_seed(connection: sqlite3.Connection) -> None:
+                def create_and_seed(
+                    connection: sqlite3.Connection,
+                    skip_seed_tables: set[str] | None = None,
+                ) -> None:
+                    if skip_seed_tables != {"records"}:
+                        raise AssertionError(
+                            f"embedded-table exclusion was not forwarded: {skip_seed_tables}"
+                        )
                     connection.execute("CREATE TABLE extension (id TEXT PRIMARY KEY)")
                     connection.execute("INSERT INTO extension VALUES ('extension_001')")
                     connection.commit()

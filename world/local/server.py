@@ -112,7 +112,11 @@ def build_seed_db(world: dict, v2=None) -> None:
                 )
         conn.commit()
         if v2 is not None:
-            v2.create_and_seed(conn)
+            # A product-only world embeds its exact contract seed plus migrated
+            # records. Create every contract table, but do not seed an embedded
+            # table twice. Legacy worlds have no overlap and behave unchanged.
+            embedded_tables = {table["name"] for table in world["tables"]}
+            v2.create_and_seed(conn, skip_seed_tables=embedded_tables)
         integrity = conn.execute("PRAGMA integrity_check").fetchone()[0]
         if integrity != "ok":
             raise sqlite3.DatabaseError(f"new seed failed integrity check: {integrity}")

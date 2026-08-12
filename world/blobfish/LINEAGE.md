@@ -1,7 +1,8 @@
 # World lineage — how the canonical world was built
 
-Only two snapshots are kept: `world.json` (the original 156-task world as
-generated) and `world-v15.json` (canonical). The intermediates were 11 files of
+Three snapshots are kept: `world.json` (the original 156-task world as
+generated), `world-v15.json` (the final synthesized-surface world), and
+`world-v16.json` (canonical product-only world). The intermediates were 11 files of
 ~7 MB each, ~80 MB of near-identical JSON, and every one is reproducible from
 the step that made it — each pack is a *generator*, not static data.
 
@@ -23,14 +24,19 @@ the step that made it — each pack is a *generator*, not static data.
 | corpus tools | → `world-v14.json` | 288 | `node world/expansion/add-corpus-tools.mjs` |
 | grounded drafting | → `world-v15.json` | 288 → 291 | `assemble.mjs --in world/blobfish/world-v14.json --out world/blobfish/world-v15.json --packs-dir world/expansion/packs-grounded` |
 | v3 verifier revision 2 | `world-v15.json` → in place | 291 → 291 | `node world/expansion/build-v3-tasks.mjs --in world/blobfish/world-v15.json --out world/blobfish/world-v15.json --refresh-only` (same-row pin binding; tasks and seeds preserved) |
+| product-surface migration | `world-v15.json` → `world-v16.json` | 291 → 291 | `python3 world/migrate/gen1_to_v16.py --write` (1,279 legacy rows reconciled; 276 verifiers grammar-regenerated; 99 synthesized tool specs removed) |
 
 After any rebuild: re-derive seeds and re-prove.
 
 ```bash
-node world/expansion/derive-task-seeds.mjs --world world/blobfish/world-v15.json
-python3 world/local/server.py --world world/blobfish/world-v15.json \
+python3 world/migrate/gen1_to_v16.py --check
+python3 world/local/server.py --world world/blobfish/world-v16.json \
     --v2-contracts mcp/v3/contracts --port 8791          # --v2-contracts is REQUIRED
-python3 world/local/oracle.py       --base http://localhost:8791 --world world/blobfish/world-v15.json
-python3 world/local/discriminate.py --base http://localhost:8791 --world world/blobfish/world-v15.json --report-only
-node world/expansion/discrimination-report.mjs --world world/blobfish/world-v15.json
+python3 world/local/oracle.py       --base http://localhost:8791 --world world/blobfish/world-v16.json
+python3 world/local/discriminate.py --base http://localhost:8791 --world world/blobfish/world-v16.json \
+    --out data/discrimination-v16.json --report-only
+node world/expansion/discrimination-report.mjs \
+    --sweep data/discrimination-v16.json --world world/blobfish/world-v16.json \
+    --docs-out docs/DISCRIMINATION-v16.md \
+    --data-out data/discrimination-v16-classified.json
 ```

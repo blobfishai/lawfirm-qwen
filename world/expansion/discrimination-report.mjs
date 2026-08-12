@@ -60,6 +60,35 @@ function keyAssertions(taskId) {
     return [];
   }
   const declared = Array.isArray(verifier.assertions) ? verifier.assertions : [];
+  // V16+ generated verifiers carry the source check grammar. It is a more
+  // precise answer-key declaration than naming heuristics: required reads are
+  // workflow/evidence guards, while direct/payload pins, grounded anchors and
+  // forbidden values bind the answer content. The compiler has already
+  // regenerated the complete assertion manifest from this grammar.
+  if (verifier.check_grammar?.schema === "lawfirm.check-grammar.v1") {
+    const grammar = verifier.check_grammar;
+    const keys = [];
+    for (const [index, row] of (grammar.rows ?? []).entries()) {
+      for (const field of Object.keys(row.direct_pins ?? {})) {
+        keys.push(`effect_${index}_direct_${field}`);
+      }
+      for (const field of Object.keys(row.payload_pins ?? {})) {
+        keys.push(`effect_${index}_payload_${field}`);
+      }
+      for (const groundedIndex of (row.grounded ?? []).keys()) {
+        keys.push(`effect_${index}_grounded_${groundedIndex}`);
+        keys.push(`effect_${index}_no_unsupported_${groundedIndex}`);
+      }
+    }
+    for (const index of (grammar.forbidden ?? []).keys()) {
+      keys.push(`forbidden_${index}`);
+    }
+    const missing = keys.filter((name) => !declared.includes(name));
+    if (missing.length) {
+      assertionManifestDrift.push({ task: taskId, missing: missing.slice(0, 12) });
+    }
+    return [...new Set(keys)];
+  }
   // V15's assertion metadata predates several verifier templates and is
   // incomplete for 149 tasks. The executed VCode is authoritative. Every chk
   // call in the shipped world uses a JSON string literal, so extract those
@@ -186,8 +215,8 @@ out.push(`| **BROKEN-GUARD** | ${counts["BROKEN-GUARD"]} | accepts no-op, text-o
 out.push(`| **HARNESS-ERROR** | ${counts["HARNESS-ERROR"]} | an episode is missing or malformed — no task verdict may be inferred |`);
 out.push("");
 out.push(`Assertion-manifest diagnostic: ${assertionManifestDrift.length} verifier(s) omit one or more`);
-out.push("literal `chk` names from metadata. Classification uses the executed VCode; M1.3 must regenerate");
-out.push("those manifests before Gen-1 removal.");
+out.push("declared key assertions from metadata. Classification uses the explicit check grammar when");
+out.push("present and executed VCode for legacy verifiers; any drift is an admission defect.");
 out.push("");
 
 if (counts["BROKEN-KEY"] || counts["BROKEN-GUARD"] || counts["HARNESS-ERROR"] || globalErrors.length) {
@@ -218,7 +247,7 @@ for (const [anchor, value] of Object.entries(anchorRoll).sort((a, b) => b[1].n -
   out.push(`| ${anchor} | ${value.n} | ${value.weak} |`);
 }
 out.push("");
-out.push("*Regenerate: serve world-v15 with `--v2-contracts mcp/v3/contracts`, then run*");
+out.push(`*Regenerate: serve ${WORLD.slice(ROOT.length + 1)} with \`--v2-contracts mcp/v3/contracts\`, then run*`);
 out.push("*`python3 world/local/discriminate.py --report-only` and*");
 out.push("*`node world/expansion/discrimination-report.mjs`.*");
 
