@@ -1,7 +1,7 @@
 # World lineage — how the canonical world was built
 
 Only two snapshots are kept: `world.json` (the original 156-task world as
-generated) and `world-v14.json` (canonical). The intermediates were 11 files of
+generated) and `world-v15.json` (canonical). The intermediates were 11 files of
 ~7 MB each, ~80 MB of near-identical JSON, and every one is reproducible from
 the step that made it — each pack is a *generator*, not static data.
 
@@ -21,13 +21,14 @@ the step that made it — each pack is a *generator*, not static data.
 | async pack | → `world-v12.json` | 284 → 286 | `packs-async/build-async-pack.mjs` then `assemble.mjs` |
 | growth pack | → `world-v13.json` | 286 → 288 | `packs-grow/build-grow-pack.mjs` then `assemble.mjs` |
 | corpus tools | → `world-v14.json` | 288 | `node world/expansion/add-corpus-tools.mjs` |
+| grounded drafting | → `world-v15.json` | 288 → 291 | `assemble.mjs --in world/blobfish/world-v14.json --out world/blobfish/world-v15.json --packs-dir world/expansion/packs-grounded` |
 
 After any rebuild: re-derive seeds and re-prove.
 
 ```bash
-node world/expansion/derive-task-seeds.mjs --world world/blobfish/world-v14.json
-python3 world/local/server.py --world world/blobfish/world-v14.json \
+node world/expansion/derive-task-seeds.mjs --world world/blobfish/world-v15.json
+python3 world/local/server.py --world world/blobfish/world-v15.json \
     --v2-contracts mcp/v3/contracts --port 8791          # --v2-contracts is REQUIRED
-python3 world/local/oracle.py       --base http://localhost:8791 --world world/blobfish/world-v14.json
-python3 world/local/discriminate.py --base http://localhost:8791 --world world/blobfish/world-v14.json
+python3 world/local/oracle.py       --base http://localhost:8791 --world world/blobfish/world-v15.json
+python3 world/local/discriminate.py --base http://localhost:8791 --world world/blobfish/world-v15.json
 ```

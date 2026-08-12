@@ -253,6 +253,66 @@ disk exactly — 9,288 files each way, no rows with `chars = 0`, no
 than set membership, and that needs its own pass. Structural was the only
 family whose key was computed from a source the agent cannot query.
 
+## Bug 13 — no verifier read a deliverable's text, so 119 tasks cannot tell right from wrong (PARTLY FIXED)
+
+Asked what checks the write quality of a drafting task, the answer was: nothing.
+`task_003` commissions an antitrust risk memo. Its only content-bearing
+assertion is
+
+```python
+chk("rows_inserted_into_matter_documents", after_n > before_n, ...)
+```
+
+Live against the world, a document titled `asdf` with body `asdf` returned
+`passed: True, reward: 1.0`.
+
+It generalises. Across the 288 verifiers of world-v14, **none** referenced a
+document body and none did any text inspection; 121 decided correctness on row
+counts alone and 167 pinned only metadata (`doc_type`, a status, a role). Split
+by method the line is clean: **0 of 117 `graph_walk` tasks pinned any field
+value**, while all 156 `eval_anchored_expansion` tasks did.
+
+The discrimination gate had been reporting this the whole time and it was read
+as noise: **119 of 291 tasks fail `wrong_value` discrimination** — a perturbed,
+wrong answer still scores reward 1.0. 117 of the 119 are `graph_walk`. That is
+not a model result and never was; those tasks measure workflow compliance
+(read-before-write, no off-task damage, audit log intact), which is worth
+measuring and is not drafting.
+
+The material for a fix was already in the repo. The packs ship a complete gold
+deliverable body — `deep-drafting`'s `msa-counter-redline-cover-note` carries a
+full counter-turn cover note — and the assembler used it only as the oracle's
+reference answer, never as an assertion.
+
+*Partly fixed:* `assemble.mjs` takes a `grounded` block on a create and emits
+two core assertions over the written text — `<field>_grounded_in_sources` (every
+required anchor present, body over a minimum length) and
+`<field>_no_unsupported_claims` (no value the sources contradict). Anchors are
+strings a correct deliverable must carry verbatim: ratios, dollar figures,
+section numbers, a counterparty's name. `world/expansion/packs-grounded/` uses
+it for three covenant-compliance tasks (`task_327`–`task_329`) seeded with a
+superseded amendment carrying plausible wrong figures, so the check fails a
+confidently wrong memo as well as an empty one:
+
+| deliverable | verdict |
+|---|---|
+| reference body | PASS (oracle, 3/3) |
+| `asdf` | FAIL — 7 anchors missing, 4 chars |
+| fluent prose, no figures | FAIL — 7 anchors missing |
+| cites the superseded amendment | FAIL — both checks, naming `4.25:1.00`, `$10,000,000`, `60 days` |
+
+All three discriminate correctly under the gate. **The other 117 do not, and
+are unchanged** — this adds a family that works rather than repairing the ones
+that do not. Converting them is next, and cheap where a pack already ships a
+gold body.
+
+Two known limits. Substring anchors only bind facts a correct answer must state
+verbatim, so this raises the floor on grounding and says nothing about the
+quality of an argument. And reward is the fraction of core assertions passed, so
+`asdf` still scores **0.8** while failing — for anything consuming reward as a
+training signal that is too generous, and grounding probably belongs with the
+guards that veto to 0.
+
 ## What survived the audit (real model behavior, with evidence)
 
 1. **Side-copy writes (DeepSeek, 34 episodes).** The model files the

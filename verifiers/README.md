@@ -1,4 +1,4 @@
-# verifiers/ — all 288 VCode verifiers, verbatim
+# verifiers/ — all 291 VCode verifiers, verbatim
 
 One Python file per task, extracted from the world document by `node sim/build-catalog.mjs`.
 Contract: `verify(initial_state, final_state, trace) -> {passed, reward, failed_conditions, assertions}`

@@ -8,11 +8,11 @@ picking the work back up.
 
 | | |
 |---|---|
-| Canonical world | `world/blobfish/world-v14.json` — 288 tasks, 99 tools, 72 tables, **288/288 oracle**, 0 lint flags |
+| Canonical world | `world/blobfish/world-v15.json` — 291 tasks, 99 tools, 72 tables, **291/291 oracle**, 0 lint flags |
 | Corpus | `world/corpus/ch` — Harvey's Calderwood & Harkness: 9,288 files, 266 matters, 46 clients, ~534M chars |
 | Ported benchmarks | 543 tasks — C&H 250, LegalBench 160, MAUD 92, CUAD 41 (`docs/PARITY.md`, 23.5%) |
 | Generated | 726 tasks over the corpus with **computed** ground truth (`world/blobfish/corpus-wave-tasks.json`) |
-| **Runnable total** | **1,557** |
+| **Runnable total** | **1,560** |
 | Harbor | `dist/harbor`, regenerate with `python3 world/local/export_harbor.py` |
 
 ## In flight when this was written
@@ -48,7 +48,7 @@ same corpus, same tools, but their criteria are part prose, so they test
 whether the deterministic story survives contact with rubric grading.
 
 ```bash
-python3 world/local/server.py --world world/blobfish/world-v14.json \
+python3 world/local/server.py --world world/blobfish/world-v15.json \
     --v2-contracts mcp/v3/contracts --port 8791 &
 node sim/run-firm-knowledge.mjs --engine deepseek-chat --grading deterministic \
     --limit 999 --max-turns 40 --concurrency 6
@@ -94,7 +94,7 @@ difficulty is unknown until it is re-run.
 1. ~~Finish the C&H run, then `node sim/triage-new-families.mjs`.~~ **Both
    done.** The run is 201/201 (above). The triage was reading the deleted
    `world-v13.json` and had been dying on ENOENT before printing anything; it
-   now takes `--world` and defaults to v14, which carries all 56 of the
+   now takes `--world` and defaults to the canonical world, which carries all 56 of the
    `task_271..326` family tasks it inspects. Current verdict: **56 tasks,
    198/223 episodes passed (88.8), too-hard 0, FLAKY 6, too-easy 50** —
    written to `docs/TRIAGE-NEW-FAMILIES.md`. 50 of 56 sitting in "too easy"
@@ -122,11 +122,22 @@ difficulty is unknown until it is re-run.
 
    **`structural` has not been re-measured** — its difficulty is genuinely
    unknown, not 13%. That re-run is the cheap thing to do before step 2.
-4. **Port more sources.** `world/port/adapters/` — one file per repo answering
+4. **Extend grounded drafting — it is the only family whose output is verified.**
+   `world/expansion/packs-grounded/` shipped 3 tasks (`task_327`–`task_329`)
+   that assert on the deliverable's *text*: every required anchor present, and
+   no value the sources contradict. Everything else in the world checks shape
+   only — see `docs/AUDIT.md` Bug 13, and note the discrimination gate now
+   proves the point, with 119 of 291 tasks unable to tell a wrong answer from a
+   right one (117 of them `graph_walk`, the drafting family). Two things to do:
+   convert existing `graph_walk` drafting tasks to carry a `grounded` block —
+   their packs already ship gold bodies, nothing asserted on them — and decide
+   whether grounding should veto reward to 0 rather than sit in the fractional
+   pool, since `asdf` currently scores 0.8 while failing.
+5. **Port more sources.** `world/port/adapters/` — one file per repo answering
    five questions (tasks, seeded data, tools, verifier, workflow). ACORD is the
    best next candidate: it ships graded relevance judgments, the only source
    here that natively measures the precision/recall trade.
-5. **A judge, if LAB's 1,760 practice tasks matter.** They sit at 0% parity by
+6. **A judge, if LAB's 1,760 practice tasks matter.** They sit at 0% parity by
    design — prose rubrics, no deterministic key. Everything else here is
    judge-free and that is the project's main claim, so add one deliberately and
    keep its scores in a separate column.
@@ -164,11 +175,11 @@ difficulty is unknown until it is re-run.
   the generated-wave pilot, sitting in a directory otherwise full of `fk_*`
   results. Read the per-task files, not this.
 - `oracle.py --world` defaults to `world/blobfish/world.json`, the retired
-  156-task world — **always pass `--world world/blobfish/world-v14.json`**.
+  156-task world — **always pass `--world world/blobfish/world-v15.json`**.
   Driving the old task list against a v14 server reports 117/156 with 39
   `oracle_error` 404s, which reads exactly like a broken world and is not one.
-  The correct invocation is 288/288:
-  `python3 world/local/oracle.py --base http://127.0.0.1:8791 --world world/blobfish/world-v14.json`
+  The correct invocation is 291/291:
+  `python3 world/local/oracle.py --base http://127.0.0.1:8791 --world world/blobfish/world-v15.json`
 - `--v2-contracts mcp/v3/contracts` is **required** when serving, or ~15 v3
   tasks fail with confusing product-table errors. Cost me two false alarms.
 - `world/corpus/ch` and `research/repos` are gitignored (4.5 GB combined).
@@ -189,7 +200,7 @@ difficulty is unknown until it is re-run.
   the parity claim silently degrades to "data missing".
 - `world/local/state/<world-slug>/` is a regenerated per-task-seed baseline
   cache. Stale slugs are safe to delete; only the slug matching the world you
-  serve (`world-v14-with-v2`) is live. It reached 1.5 GB across 28 dead world
+  serve (`world-v15-with-v2`) is live. It reached 1.5 GB across 28 dead world
   versions before being pruned.
 - Intermediate world snapshots were deleted; `world/blobfish/LINEAGE.md` has the
   command that regenerates each.

@@ -23,10 +23,10 @@ const ENGINE = argv.includes("--engine") ? argv[argv.indexOf("--engine") + 1] : 
 
 // Canonical world. This read world-v13.json, which was deleted with the other
 // intermediate snapshots (world/blobfish/LINEAGE.md) — the script had been
-// failing on ENOENT before it printed anything. v14 carries all 56 of the
-// task_271..326 family tasks this triage looks at.
+// failing on ENOENT before it printed anything. The canonical world carries
+// all 56 of the task_271..326 family tasks this triage looks at.
 const WORLD = argv.includes("--world")
-  ? argv[argv.indexOf("--world") + 1] : "world/blobfish/world-v14.json";
+  ? argv[argv.indexOf("--world") + 1] : "world/blobfish/world-v15.json";
 const raw = JSON.parse(readFileSync(join(ROOT, WORLD), "utf8"));
 const world = raw.world ?? raw;
 const familyOf = (t) => (t.provenance?.source_workflow ?? "").split(":")[1]?.split("/")[0]?.trim()

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Catalog builder — materializes browsable per-file folders from the
- * canonical sources (world-v14.json, data/leaderboard/episodes/,
+ * canonical sources (world-v15.json, data/leaderboard/episodes/,
  * data/flake/flaky-trajectories.json). Idempotent: wipes and rebuilds.
  *
  *   tasks/       task_001.json … one file per task definition
@@ -24,7 +24,7 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 // `verifiers/` could not be rebuilt at all — the script died on ENOENT.
 const WORLD = process.argv.includes("--world")
   ? process.argv[process.argv.indexOf("--world") + 1]
-  : "world/blobfish/world-v14.json";
+  : "world/blobfish/world-v15.json";
 const worldRaw = JSON.parse(readFileSync(join(ROOT, WORLD), "utf8"));
 const world = worldRaw.world ?? worldRaw;
 

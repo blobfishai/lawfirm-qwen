@@ -24,9 +24,9 @@ coverage of that benchmark, and it is not counted as such here.
 | Source | Tasks |
 |---|---|
 | hosted (generator reads research/repos/) | 4 |
-| inspired (authored from knowledge) | 152 |
+| inspired (authored from knowledge) | 155 |
 | original world / graph-walk | 132 |
-| **world total** | **288** |
+| **world total** | **291** |
 
 ## What this corrects
 

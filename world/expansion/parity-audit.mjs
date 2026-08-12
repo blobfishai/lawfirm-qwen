@@ -94,7 +94,7 @@ for (const pd of PACK_DIRS) {
   }
 }
 
-const raw = JSON.parse(readFileSync(join(ROOT, "world/blobfish/world-v14.json"), "utf8"));
+const raw = JSON.parse(readFileSync(join(ROOT, "world/blobfish/world-v15.json"), "utf8"));
 const world = raw.world ?? raw;
 const famOf = (t) => (t.provenance?.source_workflow ?? "").split(":")[1]?.split("/")[0]?.trim()
   || t.expansion?.family || "";
