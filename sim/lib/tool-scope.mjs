@@ -78,5 +78,8 @@ export function scopeTools(task, tools, systems, mode = "all") {
 export function turnBudget(referenceCalls, maximum = 50) {
   if (!Number.isFinite(referenceCalls) || referenceCalls < 0) throw new Error("invalid reference call count");
   if (!Number.isInteger(maximum) || maximum < 1) throw new Error("invalid maximum turn count");
-  return Math.min(maximum, Math.max(20, Math.ceil(referenceCalls * 1.25) + 5));
+  // The canonical calibration uses one uniform ceiling. Reference-relative
+  // budgets made task identity affect the agent's opportunity to recover and
+  // caused 84% of the v1 slice to terminate while still calling tools.
+  return maximum;
 }

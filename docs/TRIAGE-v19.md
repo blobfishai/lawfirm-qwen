@@ -6,8 +6,8 @@
 - Usable episodes: **0/6972**
 - Complete: **no**
 - Episode source: `data/leaderboard/episodes/deepseek-chat/v19-triage`
-- Tool-scope protocol: `systems`
-- Measurement protocol: `v19-systems-bounded-context-v2`
+- Tool-scope protocol: `all`
+- Measurement protocol: `v19-all-tools-fixed50-context-v4`
 
 | Label | Tasks | Rule |
 |---|---:|---|
@@ -26,6 +26,6 @@
 node sim/run-leaderboard.mjs --engines deepseek-chat --tasks all --episodes 3 \
   --world-file world/blobfish/world-v19.json --label v19-triage \
   --episode-namespace v19-triage --resume --retry-ungraded --compress-episodes \
-  --tool-scope systems --max-cost-usd 1700 --max-episode-cost-usd 10
+  --tool-scope all --max-cost-usd 1500 --max-episode-cost-usd 10
 python3 tools/triage_world.py --engine deepseek-chat --namespace v19-triage
 ```

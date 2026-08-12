@@ -68,8 +68,8 @@ def main() -> int:
             (episodes / f"fixture_task-t{index}.json").write_text(json.dumps({
                 "taskId": "fixture_task", "worldVersion": 19,
                 "passed": passed, "reward": 1.0 if passed else 0.0,
-                "toolCalls": 2, "toolScope": {"mode": "systems"},
-                "measurementProtocol": "v19-systems-bounded-context-v2",
+                "toolCalls": 2, "toolScope": {"mode": "all"},
+                "measurementProtocol": "v19-all-tools-fixed50-context-v4",
             }))
         triage = base / "triage.json"
         triage.write_text(json.dumps({"labels": {"fixture_task": {"label": "boundary"}}}))

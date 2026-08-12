@@ -522,3 +522,56 @@ pin that behavior.
 excluded by the protocol-version gate. The episode-major schedule made the
 sample broad, but no v1 result is reused. Tasks, verifiers, world state, and
 vendor contracts are unchanged.
+
+## Bug 20 — flat-rate accounting hid cache economics and justified a leaky scope (FIXED)
+
+**Symptom:** the runner reported $189.68 for the 31-episode all-tools pilot and
+projected that an unrestricted world sweep would exceed the approved $2K envelope.
+That projection forced protocol v2 to expose only systems inferred from each task's
+reference walk. Even with two distractors, the scope leaked task relevance and made
+the benchmark easier than the nine-system world it claimed to measure.
+
+**Diagnosis:** DeepSeek returned `prompt_cache_hit_tokens` and
+`prompt_cache_miss_tokens` on every completion, but the runner discarded both and
+charged all input at the uncached V3 rate. The API was in fact serving
+`deepseek-v4-flash` behind the stale `deepseek-chat` alias. Replaying the immutable
+pilot logs at DeepSeek's 2026-08-12 published V4 Flash rates ($0.0028/M cache-hit,
+$0.14/M cache-miss, $0.28/M output) yields **$4.18**, with a **97.9% input cache-hit
+rate**. The original estimate was 45.4× too high.
+
+**Fix:** provider cache fields are now accumulated per turn, unclassified tokens are
+conservatively billed at the uncached rate, and every episode records the full cost
+breakdown, served model, pricing date, and official source URL. Protocol v3 exposes
+all 91 tools across all nine systems and uses one uniform 50-turn ceiling; deterministic
+context compaction remains. `systems` scoping remains available only for diagnostic
+probes and cannot receive the canonical protocol id. A pure CI gate pins cache,
+fallback, model-alias, and provenance behavior.
+
+**Blast radius:** all v1/v2 measurements and cost projections are quarantined by
+protocol id; no task, verifier, world state, or vendor contract changed. The paid
+world-v19 denominator starts empty under `v19-all-tools-fixed50-context-v4`.
+
+## Bug 21 — wall-clock allowance still leaked oracle walk length (FIXED)
+
+**Symptom:** an all-tools v3 acceptance probe completed eight of ten representative
+episodes, including the 125-call capstone, but `task_003` and one LAB extraction task
+were killed twice before they could write terminal records. Their model action budget
+was the same 50 turns as every other task; their process budget was not.
+
+**Diagnosis:** `run-leaderboard.mjs` still calculated child timeout from the reference
+walk: `max(12, min(45, 5 + reference_calls * 0.35))` minutes. This both leaked oracle
+complexity and gave a short-reference task less wall-clock opportunity to use the same
+published 91-tool surface. The eight terminal v3 records took 1.1–13.2 minutes; two
+valid 50-turn records ended at the action ceiling, while the missing cases were killed
+at the unrelated 12-minute process ceiling.
+
+**Fix:** protocol v4 pins one 30-minute wall-clock ceiling for every task, independent
+of reference data, alongside the uniform 50-turn action ceiling. A timeout remains an
+infrastructure classification and is never scored as model failure. The v3 probe is
+preserved in its own namespace and excluded by protocol id; CI pins the v4 timeout.
+The replacement ten-family proof produced 10/10 graded records, zero infrastructure
+errors, three passing oracle canaries, $1.03420 total billed cost, and a 22.20-minute
+maximum (`data/leaderboard/protocol-proof/deepseek-chat/v19-all-tools-fixed50-context-v4/manifest.json`).
+
+**Blast radius:** eight valid but provisional v3 records and two missing records; none
+entered the production namespace or any leaderboard denominator.

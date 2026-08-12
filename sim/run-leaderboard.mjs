@@ -30,6 +30,7 @@ import { classifyEpisode, summarizeSweepHealth } from "./lib/sweep-health.mjs";
 import {
   compressJsonRecord, findJsonRecord, readJsonRecordFile, removeJsonRecord,
 } from "./lib/episode-record.mjs";
+import { MEASUREMENT_PROTOCOL } from "./lib/measurement-protocol.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const config = JSON.parse(readFileSync(join(ROOT, "config", "world.config.json"), "utf8"));
@@ -165,11 +166,10 @@ function runEpisode(engine, taskId, ep) {
       },
       stdio: ["ignore", "ignore", "ignore"],
     });
-    const referenceCalls = world.tasks.find((task) => task.task_id === taskId)?.walk?.length ?? 0;
-    // Short tasks retain the historical 12-minute ceiling. Long-horizon
-    // capstones receive a bounded reference-relative allowance so a valid
-    // 50–150-call rollout is not mislabeled infrastructure failure.
-    const timeoutMinutes = Math.max(12, Math.min(45, 5 + referenceCalls * 0.35));
+    // Wall-clock opportunity is part of the measurement protocol and must not
+    // leak the oracle walk length. It is distinct from the uniform 50-turn
+    // action budget and only classifies a genuinely stuck process as infra.
+    const timeoutMinutes = MEASUREMENT_PROTOCOL.wallClockTimeoutMinutes;
     const timer = setTimeout(() => { try { child.kill("SIGKILL"); } catch { /* gone */ } }, timeoutMinutes * 60 * 1000);
     child.on("exit", () => {
       clearTimeout(timer);

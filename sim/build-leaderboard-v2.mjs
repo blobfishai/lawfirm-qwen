@@ -16,7 +16,7 @@ const opt = (name, fallback) => argv.includes(name) ? argv[argv.indexOf(name) + 
 const ENGINE = opt("--engine", null);
 if (!ENGINE) { console.error("--engine required"); process.exit(1); }
 const NAMESPACE = opt("--namespace", "v19-triage");
-const EXPECTED_TOOL_SCOPE = opt("--tool-scope", "systems");
+const EXPECTED_TOOL_SCOPE = opt("--tool-scope", MEASUREMENT_PROTOCOL.toolScope);
 const EXPECTED_PROTOCOL = opt("--protocol", MEASUREMENT_PROTOCOL.id);
 const WORLD_PATH = resolve(ROOT, opt("--world", "world/blobfish/world-v19.json"));
 const EPISODE_DIR = resolve(ROOT, opt(

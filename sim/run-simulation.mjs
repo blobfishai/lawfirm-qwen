@@ -21,6 +21,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { McpClient } from "./lib/mcp-client.mjs";
 import { compactToolHistory, CONTEXT_POLICY } from "./lib/context-policy.mjs";
+import { accumulateUsage, calculateCost, emptyUsage } from "./lib/cost-accounting.mjs";
 import { MEASUREMENT_PROTOCOL, measurementProtocolId } from "./lib/measurement-protocol.mjs";
 import { scopeTools, turnBudget } from "./lib/tool-scope.mjs";
 
@@ -127,7 +128,8 @@ async function chat(messages, tools) {
  *  length, so long-horizon tasks get proportionally long budgets. */
 async function runAgent(mcp, llmTools, messages, opts = {}) {
   const maxTurns = opts.maxTurns ?? config.engine.maxAgentTurns;
-  const usage = { prompt: 0, completion: 0, total: 0 };
+  const usage = emptyUsage();
+  const servedModels = new Set();
   const steps = []; // full episode record for failure-mode analysis
   let toolCallCount = 0;
   let finalText = null;
@@ -148,9 +150,8 @@ async function runAgent(mcp, llmTools, messages, opts = {}) {
       resp = await chat(messages, llmTools);
     }
     const u = resp.usage ?? {};
-    usage.prompt += u.prompt_tokens ?? 0;
-    usage.completion += u.completion_tokens ?? 0;
-    usage.total += u.total_tokens ?? 0;
+    accumulateUsage(usage, u);
+    if (resp.model) servedModels.add(resp.model);
     log({ type: "completion", turn, model: resp.model, usage: u });
 
     if ((u.prompt_tokens ?? 0) > guardTokens) {
@@ -204,7 +205,14 @@ async function runAgent(mcp, llmTools, messages, opts = {}) {
     log({ type: "final", turn, content: finalText });
     break;
   }
-  return { usage, toolCallCount, finalText, steps, turnsUsed: steps.length ? steps[steps.length - 1].turn : maxTurns };
+  return {
+    usage,
+    servedModels: [...servedModels],
+    toolCallCount,
+    finalText,
+    steps,
+    turnsUsed: steps.length ? steps[steps.length - 1].turn : maxTurns,
+  };
 }
 
 const taskField = (t, ...names) => names.map((n) => t[n]).find((v) => v !== undefined && v !== null);
@@ -335,14 +343,17 @@ async function main() {
   // 2,115 turns, turning harness indecision into unbounded API spend.
   const maxTurns = maxTurnsFlag ? Number(maxTurnsFlag) : turnBudget(refWalk, config.engine.maxAgentTurns);
   const startedAtMs = Date.now();
-  const { usage, toolCallCount, finalText, steps, turnsUsed } = await runAgent(mcp, llmTools, messages, { maxTurns });
+  const { usage, servedModels, toolCallCount, finalText, steps, turnsUsed } = await runAgent(
+    mcp, llmTools, messages, { maxTurns },
+  );
 
   const v = await mcp.verify(taskId);
   log({ type: "verify", taskId, result: v.text });
   await mcp.close();
 
   const passed = v.data?.passed === true;
-  const costUsd = +((usage.prompt / 1e6) * ENGINE.pricing.inputPerM + (usage.completion / 1e6) * ENGINE.pricing.outputPerM).toFixed(5);
+  const cost = calculateCost(usage, ENGINE.pricing);
+  const costUsd = +cost.totalUsd.toFixed(5);
   console.log(`tool calls: ${toolCallCount} | tokens p${usage.prompt}/c${usage.completion} | $${costUsd}`);
   console.log(passed ? "RESULT: PASSED" : `RESULT: NOT PASSED (${(v.data?.failed_conditions ?? []).join(", ")})`);
 
@@ -350,6 +361,7 @@ async function main() {
     taskId,
     engine: ENGINE.id,
     model: ENGINE.model,
+    servedModels,
     mcpMode,
     measurementProtocol: measurementProtocolId(toolScopeFlag, maxTurnsFlag !== null),
     measurementProtocolConfig: MEASUREMENT_PROTOCOL,
@@ -387,6 +399,7 @@ async function main() {
     maxTurns,
     usage,
     costUsd,
+    cost,
     log: LOG,
     durationMs: Date.now() - startedAtMs,
     finishedAt: new Date().toISOString(),

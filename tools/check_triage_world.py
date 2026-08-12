@@ -41,19 +41,19 @@ assert module.usable({"toolCalls": 0, "finalText": "I cannot assist with this."}
 assert module.usable({"toolCalls": 0, "finalText": "No action taken.", "worldVersion": 19}, 19) == (True, "measured")
 assert module.usable({"toolCalls": 1, "worldVersion": 18}, 19) == (False, "wrong_world_version")
 assert module.usable({"toolCalls": 1, "worldVersion": 19,
-                      "toolScope": {"mode": "all"}}, 19, "systems") == (False, "wrong_tool_scope")
+                      "toolScope": {"mode": "systems"}}, 19, "all") == (False, "wrong_tool_scope")
 assert module.usable({"toolCalls": 1, "worldVersion": 19,
-                      "toolScope": {"mode": "systems"}}, 19, "systems", module.DEFAULT_PROTOCOL) == (False, "wrong_measurement_protocol")
+                      "toolScope": {"mode": "all"}}, 19, "all", module.DEFAULT_PROTOCOL) == (False, "wrong_measurement_protocol")
 
 with tempfile.TemporaryDirectory(prefix="triage-gzip-") as temporary:
     root = Path(temporary)
     raw = {"taskId": "fixture", "passed": True, "toolCalls": 2, "worldVersion": 19,
-           "toolScope": {"mode": "systems"}}
+           "toolScope": {"mode": "all"}}
     raw["measurementProtocol"] = module.DEFAULT_PROTOCOL
     gzip_path = root / "fixture-t1.json.gz"
     with gzip.GzipFile(filename="", mode="wb", fileobj=gzip_path.open("wb"), mtime=0) as handle:
         handle.write(json.dumps(raw).encode())
-    loaded, excluded = module.load_episodes(root, 19, "systems", module.DEFAULT_PROTOCOL)
+    loaded, excluded = module.load_episodes(root, 19, "all", module.DEFAULT_PROTOCOL)
     assert loaded == {"fixture": [raw]} and not excluded
     (root / "fixture-t1.json").write_text(json.dumps(raw))
     try:

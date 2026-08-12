@@ -37,8 +37,8 @@ def main() -> int:
                     "passed": passed,
                     "reward": 1 if passed else 0,
                     "toolCalls": 2,
-                    "toolScope": {"mode": "systems"},
-                    "measurementProtocol": "v19-systems-bounded-context-v2",
+                    "toolScope": {"mode": "all"},
+                    "measurementProtocol": "v19-all-tools-fixed50-context-v4",
                     "steps": [{"tool": "read", "observation": "{}"}],
                     "verdict": {"paging_complete": index != 2},
                 }
@@ -72,37 +72,37 @@ def main() -> int:
             (episodes / f"fixture_lab-t{index}.json").write_text(json.dumps({
                 "taskId": "fixture_lab", "worldVersion": 19,
                 "passed": False, "reward": 0, "toolCalls": 1,
-                "toolScope": {"mode": "systems"},
-                "measurementProtocol": "v19-systems-bounded-context-v2",
+                "toolScope": {"mode": "all"},
+                "measurementProtocol": "v19-all-tools-fixed50-context-v4",
             }))
 
         # Refusal is excluded; zero-call non-refusal remains a failure.
         (episodes / "fixture_02-refusal.json").write_text(json.dumps({
             "taskId": "fixture_02", "worldVersion": 19, "passed": False,
             "toolCalls": 0, "finalText": "I cannot assist with that request.",
-            "toolScope": {"mode": "systems"},
-            "measurementProtocol": "v19-systems-bounded-context-v2",
+            "toolScope": {"mode": "all"},
+            "measurementProtocol": "v19-all-tools-fixed50-context-v4",
         }))
         (episodes / "fixture_03-zero.json").write_text(json.dumps({
             "taskId": "fixture_03", "worldVersion": 19, "passed": False,
             "toolCalls": 0, "finalText": "No action taken.",
-            "toolScope": {"mode": "systems"},
-            "measurementProtocol": "v19-systems-bounded-context-v2",
+            "toolScope": {"mode": "all"},
+            "measurementProtocol": "v19-all-tools-fixed50-context-v4",
         }))
         (episodes / "fixture_03-old-world.json").write_text(json.dumps({
             "taskId": "fixture_03", "worldVersion": 18, "passed": True,
             "toolCalls": 1,
-            "toolScope": {"mode": "systems"},
-            "measurementProtocol": "v19-systems-bounded-context-v2",
+            "toolScope": {"mode": "all"},
+            "measurementProtocol": "v19-all-tools-fixed50-context-v4",
         }))
         (episodes / "fixture_04-wrong-scope.json").write_text(json.dumps({
             "taskId": "fixture_04", "worldVersion": 19, "passed": True,
-            "toolCalls": 1, "toolScope": {"mode": "all"},
-            "measurementProtocol": "v19-systems-bounded-context-v2",
+            "toolCalls": 1, "toolScope": {"mode": "systems"},
+            "measurementProtocol": "v19-all-tools-fixed50-context-v4",
         }))
         (episodes / "fixture_05-wrong-protocol.json").write_text(json.dumps({
             "taskId": "fixture_05", "worldVersion": 19, "passed": True,
-            "toolCalls": 1, "toolScope": {"mode": "systems"},
+            "toolCalls": 1, "toolScope": {"mode": "all"},
             "measurementProtocol": "obsolete-protocol",
         }))
 
