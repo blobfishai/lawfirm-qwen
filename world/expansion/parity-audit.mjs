@@ -34,6 +34,16 @@ import { fileURLToPath } from "node:url";
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const REPOS = join(ROOT, "research", "repos");
 
+// The vendored benchmark corpus is gitignored (4.5 GB) and absent on CI
+// runners. Parity is only recomputable where the corpus exists; without it
+// every "available" count reads 0 and rewriting docs/PARITY.md would replace
+// real numbers with zeros. Leave the committed file untouched and exit clean.
+if (!existsSync(REPOS)) {
+  console.log("research/repos/ absent (gitignored corpus) — parity not "
+    + "recomputable here; docs/PARITY.md left untouched.");
+  process.exit(0);
+}
+
 /** Count a benchmark's own task definitions, however that benchmark stores them. */
 const SOURCES = [
   { name: "harvey-labs (practice + contracts)", repo: "harveyai@harvey-labs",
@@ -94,10 +104,10 @@ for (const pd of PACK_DIRS) {
   }
 }
 
-const WORLD_CANDIDATES = ["world-v18.json", "world-v17.json", "world-v16.json", "world-v15.json"];
+const WORLD_CANDIDATES = ["world-v19.json", "world-v18.json", "world-v17.json", "world-v16.json", "world-v15.json"];
 const worldFile = WORLD_CANDIDATES.map((name) => join(ROOT, "world/blobfish", name))
   .find((path) => existsSync(path));
-if (!worldFile) throw new Error("no world-v15/v16/v17/v18 artifact found");
+if (!worldFile) throw new Error("no world-v15 through world-v19 artifact found");
 const raw = JSON.parse(readFileSync(worldFile, "utf8"));
 const world = raw.world ?? raw;
 const famOf = (t) => (t.provenance?.source_workflow ?? "").split(":")[1]?.split("/")[0]?.trim()
@@ -141,7 +151,8 @@ if (existsSync(BUNDLES)) {
 // deterministic file+state tasks (or records an explicit quarantine reason).
 const V17_REPORT = join(ROOT, "world", "v17", "build-report.json");
 let v17Report = null;
-if (["legal-agent-simulation-world-v17", "legal-agent-simulation-world-v18"].includes(world.world_id)
+if (["legal-agent-simulation-world-v17", "legal-agent-simulation-world-v18",
+     "legal-agent-simulation-world-v19"].includes(world.world_id)
     && existsSync(V17_REPORT)) {
   v17Report = JSON.parse(readFileSync(V17_REPORT, "utf8"));
   const accounting = v17Report.lab_source_accounting ?? {};

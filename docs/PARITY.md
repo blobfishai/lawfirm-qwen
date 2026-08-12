@@ -28,12 +28,12 @@ to the headline determinate score.
 |---|---|
 | hosted (generator reads research/repos/) | 2097 |
 | inspired (authored from knowledge) | 155 |
-| original world / graph-walk | 37 |
-| **world total** | **2289** |
+| original world / graph-walk | 72 |
+| **world total** | **2324** |
 
-World artifact audited: `world/blobfish/world-v18.json`.
+World artifact audited: `world/blobfish/world-v19.json`.
 
-## Harvey LAB deterministic coverage (world-v18)
+## Harvey LAB deterministic coverage (world-v19)
 
 - Practice source tasks accounted for: **1,760 / 1,760**
 - Practice tasks quarantined with a published reason: **1**
