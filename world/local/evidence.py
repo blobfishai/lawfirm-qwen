@@ -249,10 +249,9 @@ class ExternalEvidence:
                 if self.kind == "lab":
                     ordinal = document_id - LAB_ID_BASE
                     row = connection.execute(
-                        """SELECT f.ordinal,f.filename,f.relative_path,b.text_path,b.parse_status,
-                                  x.content AS indexed_content
+                        """SELECT f.ordinal,f.filename,f.relative_path,b.sha256 AS blob_sha256,
+                                  b.text_path,b.parse_status
                              FROM files f JOIN blobs b ON b.sha256=f.blob_sha256
-                             LEFT JOIN blobs_fts x ON x.sha256=f.blob_sha256
                             WHERE f.task_id=? AND f.ordinal=?""",
                         (self.config.get("task_id"), ordinal),
                     ).fetchone()
@@ -260,9 +259,8 @@ class ExternalEvidence:
                 else:
                     file_id = document_id - CH_ID_BASE
                     row = connection.execute(
-                        """SELECT f.id,f.filename,f.matter_id,f.client_id,f.text_path,f.parse_error,
-                                  x.content AS indexed_content
-                             FROM files f LEFT JOIN files_fts x ON x.file_id=f.id
+                        """SELECT f.id,f.filename,f.matter_id,f.client_id,f.text_path,f.parse_error
+                             FROM files f
                             WHERE f.id=?""",
                         (file_id,),
                     ).fetchone()
@@ -273,15 +271,30 @@ class ExternalEvidence:
                 if download:
                     if status != "parsed":
                         return False, f"ERROR 422: document {document_id} could not be text-extracted"
-                    body = row["indexed_content"]
-                    if body is None:
-                        text_path = row["text_path"]
-                        if not text_path:
-                            return False, f"ERROR 422: document {document_id} has no extracted body"
-                        target = (self.store / text_path).resolve()
-                        if self.store not in target.parents:
-                            return False, "ERROR external_evidence: text path escapes store"
+                    text_path = row["text_path"]
+                    if not text_path:
+                        return False, f"ERROR 422: document {document_id} has no extracted body"
+                    target = (self.store / text_path).resolve()
+                    if self.store not in target.parents:
+                        return False, "ERROR external_evidence: text path escapes store"
+                    if target.is_file():
                         body = target.read_text("utf-8", errors="replace")
+                    elif self.kind == "lab":
+                        embedded = connection.execute(
+                            "SELECT content FROM blobs_fts WHERE sha256=? LIMIT 1",
+                            (row["blob_sha256"],),
+                        ).fetchone()
+                        if not embedded:
+                            return False, f"ERROR 422: document {document_id} has no packaged body"
+                        body = embedded["content"]
+                    else:
+                        embedded = connection.execute(
+                            "SELECT content FROM files_fts WHERE file_id=? LIMIT 1",
+                            (file_id,),
+                        ).fetchone()
+                        if not embedded:
+                            return False, f"ERROR 422: document {document_id} has no packaged body"
+                        body = embedded["content"]
                 profile = self._profile(row, document_id, body=body)
         except (OSError, sqlite3.Error) as exc:
             return False, f"ERROR external_evidence_read: {exc}"

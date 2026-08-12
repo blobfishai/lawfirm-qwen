@@ -66,6 +66,11 @@ jobs:
             tools/check_retrieval_grading.py \
             tools/check_practice_import.py \
             tools/check_existing_grounding.py \
+            tools/check_v17_import.py \
+            tools/promote_lab_determinization.py \
+            tools/report_lab_determinization.py \
+            tools/sample_lab_determinization.py \
+            tools/check_v18_workflows.py \
             tools/check_m3_contracts.py \
             tools/check_pagination.py \
             tools/check_query_dsl.py \
@@ -94,6 +99,11 @@ jobs:
           python3 tools/check_retrieval_grading.py
           python3 tools/check_practice_import.py
           python3 tools/check_existing_grounding.py
+          python3 tools/check_v17_import.py
+          python3 tools/report_lab_determinization.py --check
+          python3 tools/sample_lab_determinization.py --check
+          node world/expansion/parity-audit.mjs
+          git diff --exit-code -- docs/PARITY.md
           python3 tools/check_m3_contracts.py
           python3 tools/check_pagination.py
           python3 tools/check_query_dsl.py
@@ -182,10 +192,10 @@ jobs:
 
       - name: Build cached world image
         run: |
-          solve_token="$(<dist/harbor-ci/world-image/solve-token.txt)"
+          solve_token_hash="$(python3 -c 'import hashlib,pathlib; print(hashlib.sha256(pathlib.Path("dist/harbor-ci/world-image/solve-token.txt").read_text().strip().encode()).hexdigest())')"
           docker buildx build --load \
             --tag legal-agent-sim-world:ci \
-            --build-arg "SOLVE_TOKEN=$solve_token" \
+            --build-arg "ORACLE_PROOF_SHA256=$solve_token_hash" \
             --cache-from type=gha,scope=world-v16 \
             --cache-to type=gha,mode=max,scope=world-v16 \
             dist/harbor-ci/world-image

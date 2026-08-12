@@ -1,8 +1,9 @@
 # World lineage — how the canonical world was built
 
-Three snapshots are kept: `world.json` (the original 156-task world as
-generated), `world-v15.json` (the final synthesized-surface world), and
-`world-v16.json` (canonical product-only world). The intermediates were 11 files of
+Four snapshots are kept: `world.json` (the original 156-task world as
+generated), `world-v15.json` (the final synthesized-surface world),
+`world-v16.json` (canonical product-only world), and `world-v17.json` (the
+deterministic Harvey LAB superset). The intermediates were 11 files of
 ~7 MB each, ~80 MB of near-identical JSON, and every one is reproducible from
 the step that made it — each pack is a *generator*, not static data.
 
@@ -25,6 +26,7 @@ the step that made it — each pack is a *generator*, not static data.
 | grounded drafting | → `world-v15.json` | 288 → 291 | `assemble.mjs --in world/blobfish/world-v14.json --out world/blobfish/world-v15.json --packs-dir world/expansion/packs-grounded` |
 | v3 verifier revision 2 | `world-v15.json` → in place | 291 → 291 | `node world/expansion/build-v3-tasks.mjs --in world/blobfish/world-v15.json --out world/blobfish/world-v15.json --refresh-only` (same-row pin binding; tasks and seeds preserved) |
 | product-surface migration | `world-v15.json` → `world-v16.json` | 291 → 291 | `python3 world/migrate/gen1_to_v16.py --write` (1,279 legacy rows reconciled; 276 verifiers grammar-regenerated; 99 synthesized tool specs removed) |
+| LAB deterministic import | `world-v16.json` → `world-v17.json` | 291 → 2,274 | `python3 world/v17/build.py` after `python3 world/port/lab_determinize.py --check` (2,009/2,010 LAB tasks hosted; 65,596/111,814 practice criteria compiled; one source quarantined with reason) |
 
 After any rebuild: re-derive seeds and re-prove.
 
@@ -41,4 +43,19 @@ node world/expansion/discrimination-report.mjs \
     --docs-out docs/DISCRIMINATION-v16.md \
     --data-out data/discrimination-v16-classified.json
 node sim/compare-v16-boundary.mjs
+
+# v17 compiler/import proof
+python3 world/port/lab_determinize.py --check
+python3 world/v17/build.py
+python3 tools/check_v17_import.py
+python3 tools/report_lab_determinization.py --check
+python3 tools/sample_lab_determinization.py --check
+python3 world/local/oracle.py --base http://localhost:8791 \
+    --world world/blobfish/world-v17.json --out data/oracle-v17.json
+python3 world/local/discriminate.py --base http://localhost:8791 \
+    --world world/blobfish/world-v17.json --out data/discrimination-v17.json --report-only
+node world/expansion/discrimination-report.mjs \
+    --sweep data/discrimination-v17.json --world world/blobfish/world-v17.json \
+    --docs-out docs/DISCRIMINATION-v17.md \
+    --data-out data/discrimination-v17-classified.json
 ```

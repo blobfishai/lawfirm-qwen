@@ -58,13 +58,17 @@ def _document_map(connection: sqlite3.Connection, task_id: str) -> dict[str, dic
 
 
 def _minimum_reads(criteria: list[dict[str, Any]], documents: dict[str, dict[str, Any]]) -> list[str]:
-    universe: set[tuple[str, int]] = set()
-    covers: dict[str, set[tuple[str, int]]] = defaultdict(set)
+    universe: set[tuple[str, int, int]] = set()
+    covers: dict[str, set[tuple[str, int, int]]] = defaultdict(set)
     for criterion in criteria:
         for index, assertion in enumerate(criterion["assertions"]):
-            key = (str(criterion["criterion_id"]), index)
-            universe.add(key)
-            for source in assertion.get("source_files") or []:
+            sources = list(assertion.get("source_files") or [])
+            sources.extend(option["source_file"] for option in assertion.get("alternatives") or []
+                           if option.get("source_file"))
+            unique_sources = {source["file_id"]: source for source in sources}
+            for source_index, source in enumerate(unique_sources.values()):
+                key = (str(criterion["criterion_id"]), index, source_index)
+                universe.add(key)
                 file_id = source["file_id"]
                 if file_id in documents and documents[file_id]["parsed"]:
                     covers[file_id].add(key)
@@ -110,6 +114,7 @@ def append_practice_tasks(world: dict[str, Any], rows: list[dict[str, Any]],
     connection = _connect()
     counts = defaultdict(int)
     quarantine: list[dict[str, str]] = []
+    admitted_sources: list[str] = []
     try:
         for compiled in rows:
             task_id = _task_id(compiled["source_task"])
@@ -129,19 +134,25 @@ def append_practice_tasks(world: dict[str, Any], rows: list[dict[str, Any]],
                                    "reason": "unsafe_output_path", "detail": ", ".join(unsafe)})
                 continue
             criteria = _compiled_criteria(compiled, source_task, deliverables)
-            if not criteria:
-                counts["quarantined_no_determinate_criteria"] += 1
-                quarantine.append({"source_task": compiled["source_task"],
-                                   "reason": "no_determinate_criteria"})
-                continue
             documents = _document_map(connection, compiled["task_id"])
-            try:
-                read_files = _minimum_reads(compiled["criteria"], documents)
-            except RuntimeError as error:
-                counts["quarantined_unreadable_grounding"] += 1
-                quarantine.append({"source_task": compiled["source_task"],
-                                   "reason": "unreadable_grounding", "detail": str(error)})
-                continue
+            if criteria:
+                try:
+                    read_files = _minimum_reads(compiled["criteria"], documents)
+                except RuntimeError as error:
+                    counts["quarantined_unreadable_grounding"] += 1
+                    quarantine.append({"source_task": compiled["source_task"],
+                                       "reason": "unreadable_grounding", "detail": str(error)})
+                    continue
+            else:
+                # Thin tasks remain hosted and explicitly excluded from the
+                # headline.  Requiring every readable task-local input still
+                # gives them a deterministic read -> file -> state contract.
+                read_files = [file_id for file_id, row in documents.items() if row["parsed"]]
+                if not read_files:
+                    counts["quarantined_unreadable_grounding"] += 1
+                    quarantine.append({"source_task": compiled["source_task"],
+                                       "reason": "no_readable_task_evidence"})
+                    continue
             read_ids = [documents[file_id]["document_id"] for file_id in read_files]
             reference_by_deliverable: dict[str, list[str]] = {name: [] for name in deliverables}
             for criterion in criteria:
@@ -168,8 +179,10 @@ def append_practice_tasks(world: dict[str, Any], rows: list[dict[str, Any]],
                       "to MatterVault DMS. Work left only in chat does not satisfy the assignment.")
             file_assertions = [{"criterion_id": criterion["criterion_id"],
                                 "deliverables": criterion["deliverables"],
-                                "anchor_groups": criterion["anchor_groups"]}
+                                "anchor_groups": criterion["anchor_groups"],
+                                "reference_fragment": criterion["reference_fragment"]}
                                for criterion in criteria]
+            is_diligence = compiled["source_task"].startswith("diligence/")
             task = {
                 "task_id": task_id,
                 "outcome_class": "eligible_action",
@@ -178,6 +191,8 @@ def append_practice_tasks(world: dict[str, Any], rows: list[dict[str, Any]],
                 "required_tools": ["documents_search_fulltext", "documents_download", "documents_create"],
                 "complexity": "high" if len(read_ids) >= 8 or len(criteria) >= 40 else "medium",
                 "method": "harvey_lab_determinate_import",
+                "capability_type": 4 if is_diligence else (
+                    5 if compiled.get("work_type") in {"draft", "review", "contracting"} else 1),
                 "steps": ["Search for each grounding record", "Open every grounding document in full",
                           "Create requested file artifacts", "File matching deliverables to MatterVault"],
                 "relevant_data": [{"external_store": "lab", "source_task": compiled["source_task"],
@@ -190,6 +205,8 @@ def append_practice_tasks(world: dict[str, Any], rows: list[dict[str, Any]],
                 "effects": [{"table": "dm_documents", "op": "insert"} for _ in deliverables],
                 "provenance": {"source_repo": "harveyai/harvey-labs", "source_commit": SOURCE_COMMIT,
                                "source_task": compiled["source_task"]},
+                "contamination": {"status": "public", "public_since": "2026",
+                                  "lane": "verbatim_lab"},
                 "difficulty_tier": "pending_triage",
                 "acceptance_label": ("admitted_determinate" if compiled["admission"] == "compiled"
                                      else "admitted_thin_excluded_headline"),
@@ -198,11 +215,16 @@ def append_practice_tasks(world: dict[str, Any], rows: list[dict[str, Any]],
                     "source_task": compiled["source_task"], "source_commit": SOURCE_COMMIT,
                     "documents_source": f"research/repos/harveyai@harvey-labs/tasks/{compiled['source_task']}/documents",
                     "deliverables": deliverables, "skills": ["docx", "xlsx", "pptx"],
-                    "grading": "determinate", "assertions": file_assertions,
+                    "grading": "determinate" if file_assertions else "output_contract_only",
+                    "assertions": file_assertions,
                 },
                 "grading": {"kind": "determinate_grounding", "criteria_total": compiled["criteria_total"],
                             "criteria_determinate": len(criteria), "assertions": compiled["assertion_count"],
-                            "coverage": compiled["coverage"], "headline_eligible": compiled["admission"] == "compiled"},
+                            "coverage": compiled["coverage"], "headline_eligible": compiled["admission"] == "compiled",
+                            "reports": ["precision", "recall", "f_beta", "over_included"],
+                            "metric_scope": "determinate criteria plus unsupported high-risk facts",
+                            "beta": 2.0, "scale_review": is_diligence,
+                            "corpus_documents": len(documents)},
             }
             if task_id in existing:
                 raise RuntimeError(f"duplicate v17 task id {task_id}")
@@ -210,20 +232,24 @@ def append_practice_tasks(world: dict[str, Any], rows: list[dict[str, Any]],
                 "task_id": task_id,
                 "assertions": ["required_workflow_path", "required_search_discovery", "required_documents_read",
                                "all_deliverables_filed_to_dms", "grounded_criteria",
+                               "no_unsupported_numeric_facts",
                                "no_offtask_table_changes", "no_documents_destroyed",
                                "no_undeclared_documents"],
+                "key_assertions": ["grounded_criteria", "no_unsupported_numeric_facts"],
                 "vcode": practice_vcode(task_id, deliverables, criteria, read_ids),
                 "generated_by": "world/v17/practice.py",
             }
             world["tasks"].append(task)
             world["verifiers"].append(verifier)
             existing.add(task_id)
+            admitted_sources.append(compiled["source_task"])
             counts["added"] += 1
             counts["headline"] += compiled["admission"] == "compiled"
             counts["thin"] += compiled["admission"] != "compiled"
     finally:
         connection.close()
     result: dict[str, Any] = {**dict(counts), "quarantined": len(quarantine),
+                              "admitted_sources": admitted_sources,
                               "quarantine": quarantine}
     world["lab_practice_import"] = result
     return result

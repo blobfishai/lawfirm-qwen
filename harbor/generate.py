@@ -27,6 +27,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import secrets
@@ -277,7 +278,7 @@ def test_sh(task: dict) -> str:
 # executed against the session's final state + the recorded tool trace),
 # then emit the Harbor reward file.
 python3 - <<'PYEOF'
-import json, os, re, shutil, unicodedata, urllib.request, zipfile
+import hashlib, json, os, re, shutil, unicodedata, urllib.request, zipfile
 from xml.etree import ElementTree as ET
 
 expected = {expected}
@@ -320,7 +321,11 @@ def normalize(value):
 
 def has_anchor(text, anchor):
     needle = normalize(anchor)
-    return bool(needle and re.search(r"(?<![\\w])" + re.escape(needle) + r"(?![\\w])", text))
+    if not needle:
+        return False
+    left = r"(?<![\\w.,])" if needle[0].isdigit() else r"(?<![\\w])"
+    right = r"(?![\\w]|\\.\\d)" if needle[-1].isdigit() else r"(?![\\w])"
+    return bool(re.search(left + re.escape(needle) + right, text))
 
 def output_text(path):
     suffix = os.path.splitext(path)[1].lower()
@@ -352,16 +357,17 @@ def output_text(path):
 
 file_criterion_results = []
 file_parse_errors = []
-if file_contract_passed and file_assertions:
+text_by_file = {{}}
+if file_contract_passed:
     criteria_to_check = []
     if isinstance(file_assertions, dict):
         for name, criteria in file_assertions.items():
             criteria_to_check.extend({{**criterion, "deliverables": [name]}} for criterion in criteria)
     else:
         criteria_to_check = file_assertions
-    text_by_file = {{}}
-    for name in sorted({{name for criterion in criteria_to_check
-                         for name in criterion.get("deliverables") or []}}):
+    names_to_parse = set(expected) | {{name for criterion in criteria_to_check
+                                      for name in criterion.get("deliverables") or []}}
+    for name in sorted(names_to_parse):
         try:
             text_by_file[name] = normalize(output_text(os.path.join(output_root, name)))
         except Exception as error:
@@ -399,6 +405,11 @@ except Exception as e:  # world unreachable / verifier crash -> reward 0
     verdict = {{"error": repr(e)}}
 
 state_passed = bool(out["passed"])
+state_digests = (verdict or {{}}).get("filed_text_sha256") or {{}}
+file_digests = {{name: hashlib.sha256(normalize(text_by_file.get(name, "")).encode()).hexdigest()
+                for name in expected if name in text_by_file}}
+cross_lane_match = (None if not expected or not state_digests else
+                    all(file_digests.get(name) == state_digests.get(name) for name in expected))
 lane = {{
     "enabled": bool(expected),
     "grade_kind": "determinate" if file_assertions else "output_contract_only",
@@ -411,13 +422,20 @@ lane = {{
     "file_parse_errors": file_parse_errors,
     "file_passed": file_passed,
     "state_passed": state_passed,
+    "cross_lane_match": cross_lane_match,
+    "file_text_sha256": file_digests,
+    "state_text_sha256": state_digests,
     "lane_split": None if file_passed is None else file_passed != state_passed,
 }}
-out.update({{
-    "file_passed": file_passed,
-    "state_passed": state_passed,
-    "lane_split": lane["lane_split"],
-}})
+# Harbor's VerifierResult contract accepts numeric reward channels only.  Keep
+# the nullable/boolean diagnostic values in file-lane.json, and expose each
+# applicable channel here as 0.0/1.0 so a real Harbor run can ingest it.
+out["state_passed"] = 1.0 if state_passed else 0.0
+if file_passed is not None:
+    out["file_passed"] = 1.0 if file_passed else 0.0
+    out["lane_split"] = 1.0 if lane["lane_split"] else 0.0
+if cross_lane_match is not None:
+    out["cross_lane_match"] = 1.0 if cross_lane_match else 0.0
 
 os.makedirs(verifier_root, exist_ok=True)
 with open(os.path.join(verifier_root, "verdict.json"), "w") as f:
@@ -433,14 +451,70 @@ PYEOF
 """
 
 
-def solve_sh(token: str) -> str:
+def oracle_file_outputs(task: dict) -> dict[str, str]:
+    """Build deterministic file-lane oracle text from compiled anchor groups."""
+    outputs: dict[str, list[str]] = {name: [] for name in validated_deliverables(task)}
+    for criterion in (task.get("file_lane") or {}).get("assertions") or []:
+        targets = criterion.get("deliverables") or list(outputs)
+        fragment = " | ".join(str(group[0]) for group in criterion.get("anchor_groups") or [] if group)
+        if not fragment:
+            continue
+        for name in targets:
+            if name in outputs:
+                outputs[name].append(fragment)
+    return {name: "\n".join(lines) or "Completed deliverable."
+            for name, lines in outputs.items()}
+
+
+def solve_sh(token: str, task: dict | None = None) -> str:
+    import base64
+    payload = base64.b64encode(json.dumps(oracle_file_outputs(task or {})).encode()).decode()
+    file_writer = f"""\
+python3 - <<'PYEOF'
+import base64, json
+from pathlib import Path
+
+outputs = json.loads(base64.b64decode({payload!r}).decode())
+root = Path('/workspace/output')
+root.mkdir(parents=True, exist_ok=True)
+for name, body in outputs.items():
+    target = root / name
+    target.parent.mkdir(parents=True, exist_ok=True)
+    suffix = target.suffix.casefold()
+    if suffix == '.docx':
+        from docx import Document
+        document = Document()
+        for line in body.splitlines() or ['Completed deliverable.']:
+            document.add_paragraph(line)
+        document.save(target)
+    elif suffix == '.xlsx':
+        from openpyxl import Workbook
+        workbook = Workbook()
+        sheet = workbook.active
+        sheet.title = 'Determinate Findings'
+        for row, line in enumerate(body.splitlines() or ['Completed deliverable.'], 1):
+            sheet.cell(row=row, column=1, value=line)
+        workbook.save(target)
+    elif suffix == '.pptx':
+        from pptx import Presentation
+        from pptx.util import Inches
+        presentation = Presentation()
+        slide = presentation.slides.add_slide(presentation.slide_layouts[6])
+        box = slide.shapes.add_textbox(Inches(0.75), Inches(0.75), Inches(8.5), Inches(5.5))
+        box.text_frame.text = body or 'Completed deliverable.'
+        presentation.save(target)
+    else:
+        target.write_text(body + '\\n', encoding='utf-8')
+PYEOF
+""" if payload != "e30=" else ""
     return f"""\
 #!/bin/bash
 # Oracle solution: the world container replays this task's reference walk
-# through the live session (token-gated; the token exists only in the world
-# image and in this file, which is never present during agent runs).
+# through the live session. The raw proof token exists only in this solution
+# file; the world image contains its SHA-256 digest and this file is never
+# present during ordinary agent runs.
 set -e
-curl -fsS -X POST -H "X-Solve-Token: {token}" http://world:8972/solve
+{file_writer}curl -fsS -X POST -H "X-Solve-Token: {token}" http://world:8972/solve
 echo
 """
 
@@ -502,7 +576,8 @@ def assemble_world_image(out: str, world_path: str) -> str:
     img = os.path.join(out, "world-image")
     os.makedirs(img, exist_ok=True)
     local = os.path.join(ROOT, "world", "local")
-    for name in ("server.py", "oracle.py", "v2runtime.py", "v3dialects.py", "evidence.py"):
+    for name in ("server.py", "oracle.py", "v2runtime.py", "v3dialects.py", "evidence.py",
+                 "paging.py", "wire_errors.py", "product_workflows.py", "query_dsl.py"):
         shutil.copyfile(os.path.join(local, name), os.path.join(img, name))
     for name in ("shim.py", "start.sh", "Dockerfile"):
         shutil.copyfile(os.path.join(HERE, "world-image", name),
@@ -598,7 +673,7 @@ def main() -> None:
         write(os.path.join(d, "environment", "docker-compose.yaml"),
               compose_yaml(tid, args.image_tag, bool(task.get("file_lane"))))
         write(os.path.join(d, "tests", "test.sh"), test_sh(task), executable=True)
-        write(os.path.join(d, "solution", "solve.sh"), solve_sh(token),
+        write(os.path.join(d, "solution", "solve.sh"), solve_sh(token, task),
               executable=True)
 
     write(os.path.join(out, "README.md"), f"""\
@@ -648,8 +723,9 @@ Multi-container tasks require Harbor's **docker** environment provider
     print(f"world image context -> {img_dir}")
 
     if args.build_image:
+        token_hash = hashlib.sha256(token.encode()).hexdigest()
         cmd = ["docker", "build", "-t", args.image_tag,
-               "--build-arg", f"SOLVE_TOKEN={token}", img_dir]
+               "--build-arg", f"ORACLE_PROOF_SHA256={token_hash}", img_dir]
         print("+", " ".join(cmd))
         subprocess.run(cmd, check=True)
 

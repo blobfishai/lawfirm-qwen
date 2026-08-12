@@ -82,6 +82,12 @@ def main() -> int:
         assert ok and "body" not in json.loads(raw)["data"]
         ok, raw = lab.call("documents_download", {"id": LAB_ID_BASE + 1})
         assert ok and "$54 million" in json.loads(raw)["data"]["body"]
+        # The Harbor world image intentionally packages only index.sqlite,
+        # not tens of thousands of duplicate extracted-text files.  Downloads
+        # must therefore fall back to the body embedded in the FTS index.
+        (lab.store / "text" / "two.txt").unlink()
+        ok, raw = lab.call("documents_download", {"id": LAB_ID_BASE + 1})
+        assert ok and "$54 million" in json.loads(raw)["data"]["body"]
         ok, raw = lab.call("documents_download", {"id": LAB_ID_BASE + 99})
         assert not ok and "404" in raw
         assert lab.call("documents_create", {}) is None
@@ -94,6 +100,9 @@ def main() -> int:
         assert ok and json.loads(raw)["data"]["total"] == 1
         ok, raw = ch.call("documents_search_fulltext", {"query": '"patent" AND "claim"'})
         assert ok and json.loads(raw)["data"]["total"] == 1
+        ok, raw = ch.call("documents_download", {"id": CH_ID_BASE + 7})
+        assert ok and "claim chart" in json.loads(raw)["data"]["body"]
+        (ch.store / "text" / "1001-00001" / "memo.txt").unlink()
         ok, raw = ch.call("documents_download", {"id": CH_ID_BASE + 7})
         assert ok and "claim chart" in json.loads(raw)["data"]["body"]
 

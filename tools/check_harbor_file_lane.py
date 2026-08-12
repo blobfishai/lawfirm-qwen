@@ -3,10 +3,14 @@
 from __future__ import annotations
 
 import importlib.util
+import hashlib
+import http.server
 import json
 import os
 import subprocess
 import tempfile
+import threading
+import unicodedata
 from pathlib import Path
 
 
@@ -121,6 +125,13 @@ def main() -> int:
                 }],
             },
         }
+        oracle_outputs = generator.oracle_file_outputs(grounded)
+        assert oracle_outputs == {"grounded.md": "$54M | Section 7.2(b)"}
+        oracle_script = generator.solve_sh("fixture-token", grounded)
+        assert "from docx import Document" in oracle_script
+        assert "from openpyxl import Workbook" in oracle_script
+        assert "from pptx import Presentation" in oracle_script
+        assert "/workspace/output" in oracle_script
         grounded_script = base / "grounded-test.sh"
         grounded_script.write_text(generator.test_sh(grounded))
         grounded_script.chmod(0o755)
@@ -141,6 +152,49 @@ def main() -> int:
                        capture_output=True, text=True)
         collision_lane = json.loads((logs / "verifier" / "file-lane.json").read_text())
         assert collision_lane["file_content_passed"] is False
+
+        def normalized(value: str) -> str:
+            value = unicodedata.normalize("NFKC", value).casefold()
+            value = value.replace("\u00a0", " ").replace("–", "-").replace("—", "-")
+            return " ".join(value.split())
+
+        state_body = "Approved amount: $54M under Section 7.2(b)."
+        state_digest = hashlib.sha256(normalized(state_body).encode()).hexdigest()
+
+        class VerifyHandler(http.server.BaseHTTPRequestHandler):
+            digest = state_digest
+            def do_POST(self):  # noqa: N802
+                payload = json.dumps({"passed": True, "reward": 1.0,
+                                      "filed_text_sha256": {"grounded.md": self.digest}}).encode()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(payload)))
+                self.end_headers()
+                self.wfile.write(payload)
+            def log_message(self, *_):
+                return
+
+        server = http.server.HTTPServer(("127.0.0.1", 0), VerifyHandler)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            (output / "grounded.md").write_text(state_body)
+            live_environment = {**environment,
+                                "WORLD_VERIFY_URL": f"http://127.0.0.1:{server.server_port}/verify"}
+            subprocess.run(["bash", str(grounded_script)], env=live_environment, check=True,
+                           capture_output=True, text=True)
+            consistent = json.loads((logs / "verifier" / "file-lane.json").read_text())
+            assert consistent["file_passed"] and consistent["state_passed"]
+            assert consistent["cross_lane_match"] is True
+            VerifyHandler.digest = hashlib.sha256(b"different filed body").hexdigest()
+            subprocess.run(["bash", str(grounded_script)], env=live_environment, check=True,
+                           capture_output=True, text=True)
+            divergent = json.loads((logs / "verifier" / "file-lane.json").read_text())
+            assert divergent["cross_lane_match"] is False
+        finally:
+            server.shutdown()
+            server.server_close()
+            thread.join(timeout=2)
 
         cross_file = {
             **grounded,
@@ -186,6 +240,19 @@ def main() -> int:
                               if path.is_file()]
             assert len(live_documents) == 9
             live_checked = True
+
+        image_context = Path(generator.assemble_world_image(
+            str(base / "world-build"), str(ROOT / "world" / "blobfish" / "world-v16.json")))
+        required_runtime = {
+            "server.py", "oracle.py", "v2runtime.py", "v3dialects.py", "evidence.py",
+            "paging.py", "wire_errors.py", "product_workflows.py", "query_dsl.py",
+        }
+        assert required_runtime <= {path.name for path in image_context.iterdir() if path.is_file()}
+        world_dockerfile = (image_context / "Dockerfile").read_text()
+        assert "ORACLE_PROOF_SHA256" in world_dockerfile
+        assert 'ARG SOLVE_TOKEN=""' not in world_dockerfile
+        shim_source = (image_context / "shim.py").read_text()
+        assert "hmac.compare_digest" in shim_source and "supplied_hash" in shim_source
 
     print("Harbor file lane: 9 source docs staged read-only, LAB skills present, "
           f"artifact/state lanes stay separate (live_source={str(live_checked).lower()})")

@@ -18,6 +18,7 @@ import sqlite3
 import sys
 from collections import Counter
 from dataclasses import dataclass
+from decimal import Decimal
 from pathlib import Path
 from typing import Any, Iterable
 
@@ -26,6 +27,7 @@ sys.path.insert(0, str(ROOT))
 
 from world.manifest.normalization import (  # noqa: E402
     canonical,
+    decimal_value,
     fact_variants,
     normalized_text,
 )
@@ -33,18 +35,21 @@ from world.manifest.normalization import (  # noqa: E402
 DEFAULT_STORE = ROOT / "world" / "corpus" / "lab"
 DEFAULT_OUT = ROOT / "world" / "port" / "determinate" / "lab-assertions.jsonl"
 DEFAULT_REPORT = ROOT / "world" / "port" / "determinate" / "lab-report.json"
-COMPILER_VERSION = "3"
+COMPILER_VERSION = "7"
 MIN_ANCHOR_CHARS = 4
 
 GENERIC = {
     "high", "medium", "low", "yes", "no", "pass", "fail", "client", "agency",
     "agreement", "agreements", "memo", "memos", "redline", "redlines",
     "document", "documents", "section", "sections", "risk", "risks", "issue", "issues",
+    "partner", "senior associate", "company", "seller", "buyer", "borrower", "lender",
+    "talent", "effective date", "term", "final judgment", "schedule", "exhibit",
+    "agreement date", "business day", "business days", "calendar day", "calendar days",
 }
 MONTH = r"(?:January|February|March|April|May|June|July|August|September|October|November|December|Jan\.?|Feb\.?|Mar\.?|Apr\.?|Jun\.?|Jul\.?|Aug\.?|Sep\.?|Sept\.?|Oct\.?|Nov\.?|Dec\.?)"
 UNSUPPORTED_LOGIC = re.compile(
-    r"\band/or\b|\beither\b|\bor\b|\bwithin\b|\bbetween\b|\bapprox(?:imately)?\b|"
-    r"\bat\s+least\b|\bat\s+most\b|\bno\s+(?:more|less)\s+than\b|[<>]=?",
+    r"\bwithin\b|\bbetween\b|\bat\s+least\b|\bat\s+most\b|"
+    r"\bno\s+(?:more|less)\s+than\b|[<>]=?",
     flags=re.I,
 )
 
@@ -54,6 +59,8 @@ class Candidate:
     kind: str
     value: str
     source: str
+    start: int
+    end: int
 
     def fact(self) -> dict[str, Any]:
         return {"kind": self.kind, "value": self.value}
@@ -62,8 +69,87 @@ class Candidate:
         return canonical(self.value, self.kind)
 
 
+class EvidenceList(list[dict[str, Any]]):
+    """Task-local evidence plus a compact token-to-document posting index."""
+
+    def __init__(self, documents: list[dict[str, Any]]):
+        super().__init__(documents)
+        self.postings: dict[str, list[int]] = {}
+        for index, document in enumerate(documents):
+            tokens = set(re.findall(r"\w+", document["normalized"], flags=re.UNICODE))
+            for token in tokens:
+                self.postings.setdefault(token, []).append(index)
+
+
+def candidate_variants(candidate: Candidate) -> list[str]:
+    """Enumerate committed grade forms, including fractional scale notation."""
+    variants = fact_variants(candidate.fact())
+    if candidate.kind == "percentage":
+        # A bare ``2`` is not an acceptable rendering of ``2%`` and can
+        # collide with a year, duration, or monetary threshold nearby.
+        return [value for value in variants if "%" in value]
+    if candidate.kind not in {"money", "number"}:
+        return variants
+    number = decimal_value(candidate.value)
+    if number is None:
+        return variants
+    for scale, short, word in ((Decimal(1_000_000_000_000), "T", "trillion"),
+                               (Decimal(1_000_000_000), "B", "billion"),
+                               (Decimal(1_000_000), "M", "million"),
+                               (Decimal(1_000), "K", "thousand")):
+        if abs(number) < scale:
+            continue
+        quotient = number / scale
+        display = f"{quotient:f}"
+        if "." in display:
+            display = display.rstrip("0").rstrip(".")
+        if not display or len(display.partition(".")[2]) > 4:
+            continue
+        variants.extend((f"{display}{short}", f"{display} {word}"))
+        if candidate.kind == "money":
+            variants.extend((f"${display}{short}", f"${display} {word}"))
+    seen: set[str] = set()
+    return [value for value in variants
+            if not (normalized_text(value) in seen or seen.add(normalized_text(value)))]
+
+
+class SQLiteEvidence:
+    """Lazy exact-source lookup for diligence-scale task-local VDRs."""
+
+    def __init__(self, connection: sqlite3.Connection, store: Path, task_id: str, count: int):
+        self.connection = connection
+        self.store = store
+        self.task_id = task_id
+        self.count = count
+
+    def __len__(self) -> int:
+        return self.count
+
+    def find(self, candidate: Candidate) -> list[dict[str, str]]:
+        for variant in candidate_variants(candidate):
+            tokens = re.findall(r"\w+", normalized_text(variant), flags=re.UNICODE)
+            if not tokens:
+                continue
+            phrase = '"' + " ".join(token.replace('"', '""') for token in tokens) + '"'
+            rows = self.connection.execute(
+                """SELECT f.file_id,f.relative_path,b.text_path,x.content
+                     FROM blobs_fts x JOIN files f ON f.blob_sha256=x.sha256
+                     JOIN blobs b ON b.sha256=f.blob_sha256
+                    WHERE f.task_id=? AND b.parse_status='parsed' AND blobs_fts MATCH ?
+                    ORDER BY f.ordinal LIMIT 100""",
+                (self.task_id, phrase),
+            ).fetchall()
+            for row in rows:
+                text = row["content"]
+                if text is None and row["text_path"]:
+                    text = (self.store / row["text_path"]).read_text("utf-8", errors="replace")
+                if _anchor_present_normalized(normalized_text(text), candidate_variants(candidate)):
+                    return [{"file_id": row["file_id"], "relative_path": row["relative_path"]}]
+        return []
+
+
 def pass_clause(match_criteria: str) -> str:
-    text = re.split(r"\bFAIL\s+if\b", match_criteria, maxsplit=1, flags=re.I)[0]
+    text = re.split(r"\bFAIL\b", match_criteria, maxsplit=1, flags=re.I)[0]
     return re.sub(r"^\s*PASS\s+if\s+", "", text, flags=re.I).strip()
 
 
@@ -94,9 +180,16 @@ def mechanically_required_text(match_criteria: str) -> str:
     return re.sub(r"\s+", " ", "".join(output)).strip()
 
 
-def _spans(pattern: str, text: str, kind: str, source: str, group: int = 0) -> list[Candidate]:
-    return [Candidate(kind, match.group(group).strip(" `\"'.,;:"), source)
-            for match in re.finditer(pattern, text, flags=re.I)]
+def _spans(pattern: str, text: str, kind: str, source: str, group: int = 0,
+           flags: int = re.I) -> list[Candidate]:
+    rows = []
+    for match in re.finditer(pattern, text, flags=flags):
+        raw = match.group(group)
+        value = raw.strip(" `\"'.,;:")
+        left = len(raw) - len(raw.lstrip(" `\"'.,;:"))
+        rows.append(Candidate(kind, value, source, match.start(group) + left,
+                              match.start(group) + left + len(value)))
+    return rows
 
 
 def extract_candidates(match_criteria: str, title: str = "") -> list[Candidate]:
@@ -126,7 +219,7 @@ def extract_candidates(match_criteria: str, title: str = "") -> list[Candidate]:
         text, "number", "comma_number",
     )
     found += _spans(
-        r"(?<![\w$€£])\d+(?:\.\d+)?\s*(?:trillion|billion|million|thousand)(?!\w)",
+        r"(?<![\w$€£.\d])\d+(?:\.\d+)?\s*(?:trillion|billion|million|thousand)(?!\w)",
         text, "number", "scaled_number",
     )
     found += _spans(
@@ -141,7 +234,17 @@ def extract_candidates(match_criteria: str, title: str = "") -> list[Candidate]:
     for match in re.finditer(r"[\"'‘’“”]([^\"'‘’“”]{4,160})[\"'‘’“”]", text):
         value = match.group(1).strip(" \t\r\n`\"'.,;:")
         if len(value.split()) >= 2 and normalized_text(value) not in GENERIC:
-            found.append(Candidate("string", value, "quoted_phrase"))
+            found.append(Candidate("string", value, "quoted_phrase", match.start(1), match.end(1)))
+
+    # Proper names are determinate facts too.  They are admitted only if the
+    # exact phrase occurs in task-local evidence, below, and common legal role
+    # labels are excluded.  This captures parties, authorities, venues, and
+    # named products without asking a model to infer an entity at grade time.
+    found += _spans(
+        r"\b(?:[A-Z][A-Za-z0-9&.'’/\-]*|[A-Z]{2,})"
+        r"(?:\s+(?:(?:of|the|and|&|v\.?)\s+)?(?:[A-Z][A-Za-z0-9&.'’/\-]*|[A-Z]{2,})){1,7}\b",
+        text, "string", "proper_name", flags=0,
+    )
 
     # Do not pull values from the title.  A qualitative PASS clause paired
     # with a numeric title is not itself a mechanically checkable criterion;
@@ -149,7 +252,10 @@ def extract_candidates(match_criteria: str, title: str = "") -> list[Candidate]:
 
     unique: list[Candidate] = []
     seen: set[tuple[str, str]] = set()
-    for candidate in found:
+    for candidate in sorted(found, key=lambda row: (row.start, -(row.end - row.start), row.source)):
+        if (candidate.source == "number_with_unit" and
+                re.search(r"(?:Section|Sec\.?|§)\s*$", text[max(0, candidate.start - 16):candidate.start], re.I)):
+            continue
         key = candidate.key()
         if (candidate.kind == "string" and
                 len(normalized_text(candidate.value)) < MIN_ANCHOR_CHARS) or key in seen:
@@ -161,7 +267,58 @@ def extract_candidates(match_criteria: str, title: str = "") -> list[Candidate]:
     return unique
 
 
-def load_task_evidence(connection: sqlite3.Connection, store: Path, task_id: str) -> list[dict[str, Any]]:
+def _prune_subsumed_names(candidates: list[Candidate]) -> list[Candidate]:
+    """Drop a shorter name that is already implied by a longer grounded name."""
+    output = []
+    for candidate in candidates:
+        if candidate.kind == "string" and any(
+            other is not candidate and other.kind == "string" and
+            len(normalized_text(other.value)) > len(normalized_text(candidate.value)) and
+            _anchor_present(other.value, [candidate.value])
+            for other in candidates
+        ):
+            continue
+        output.append(candidate)
+    return output
+
+
+def _candidate_groups(candidates: list[Candidate], text: str) -> list[list[Candidate]]:
+    """Turn explicit ``or``/``and/or`` alternatives into any-of groups.
+
+    Everything else remains conjunctive.  If the text between two anchors
+    contains a real ``and`` before an ``or`` (for example, "dated X and
+    references or quotes Y"), the anchors begin separate groups.  This keeps
+    the date load-bearing while still accepting either quoted alternative.
+    """
+    groups: list[list[Candidate]] = []
+    for candidate in sorted(candidates, key=lambda row: (row.start, row.end)):
+        if not groups:
+            groups.append([candidate])
+            continue
+        previous = groups[-1][-1]
+        if candidate.start < previous.end:
+            # Overlapping extractors describe the same surface token.  Prefer
+            # the earlier/high-signal typed candidate selected by the caller.
+            continue
+        connector = text[previous.end:candidate.start]
+        has_or = bool(re.search(r"\b(?:and/or|or)\b", connector, flags=re.I))
+        has_plain_and = bool(re.search(r"\band\b(?!\s*/\s*or)", connector, flags=re.I))
+        if has_or and not has_plain_and:
+            groups[-1].append(candidate)
+        else:
+            groups.append([candidate])
+    return groups
+
+
+def load_task_evidence(connection: sqlite3.Connection, store: Path,
+                       task_id: str) -> EvidenceList | SQLiteEvidence:
+    count = int(connection.execute(
+        """SELECT COUNT(*) FROM files f JOIN blobs b ON b.sha256=f.blob_sha256
+            WHERE f.task_id=? AND b.parse_status='parsed' AND b.text_path IS NOT NULL""",
+        (task_id,),
+    ).fetchone()[0])
+    if count > 500:
+        return SQLiteEvidence(connection, store, task_id, count)
     rows = connection.execute(
         """SELECT f.file_id,f.relative_path,b.text_path,b.parse_status
              FROM files f JOIN blobs b ON b.sha256=f.blob_sha256
@@ -178,21 +335,39 @@ def load_task_evidence(connection: sqlite3.Connection, store: Path, task_id: str
                          # doing it once per criterion makes the compile
                          # quadratic on long agreements.
                          "normalized": normalized_text(text)})
-    return evidence
+    return EvidenceList(evidence)
 
 
-def source_hits(candidate: Candidate, evidence: list[dict[str, Any]]) -> list[dict[str, str]]:
-    variants = fact_variants(candidate.fact())
+def source_hits(candidate: Candidate,
+                evidence: list[dict[str, Any]] | SQLiteEvidence) -> list[dict[str, str]]:
+    if isinstance(evidence, SQLiteEvidence):
+        return evidence.find(candidate)
+    variants = candidate_variants(candidate)
     hits = []
-    for document in evidence:
-        search_text = document.get("normalized")
-        if search_text is None:
-            search_text = normalized_text(document.get("text", ""))
-        # Source validation uses the same token boundaries as grade time.  A
-        # value such as "$54M" must not be validated merely because "$54MM"
-        # appears in a source.
-        if _anchor_present_normalized(search_text, variants):
-            hits.append({"file_id": document["file_id"], "relative_path": document["relative_path"]})
+    indexed = isinstance(evidence, EvidenceList)
+    checked: set[int] = set()
+    for variant in variants:
+        normalized_variant = normalized_text(variant)
+        tokens = re.findall(r"\w+", normalized_variant, flags=re.UNICODE)
+        if indexed and tokens:
+            available = [evidence.postings.get(token, []) for token in set(tokens)]
+            if not available or any(not posting for posting in available):
+                continue
+            candidate_indices = min(available, key=len)
+        else:
+            candidate_indices = range(len(evidence))
+        for index in candidate_indices:
+            if index in checked:
+                continue
+            checked.add(index)
+            document = evidence[index]
+            search_text = document.get("normalized")
+            if search_text is None:
+                search_text = normalized_text(document.get("text", ""))
+            # Source validation uses the same token boundaries as grade time.
+            if _anchor_present_normalized(search_text, variants):
+                hits.append({"file_id": document["file_id"], "relative_path": document["relative_path"]})
+                return hits
     return hits
 
 
@@ -201,31 +376,65 @@ def _anchor_present(text: str, anchors: Iterable[str]) -> bool:
 
 
 def _anchor_present_normalized(haystack: str, anchors: Iterable[str]) -> bool:
-    return any(
-        needle and re.search(r"(?<![\w])" + re.escape(needle) + r"(?![\w])", haystack)
-        for needle in (normalized_text(anchor) for anchor in anchors)
-    )
+    for needle in (normalized_text(anchor) for anchor in anchors):
+        if not needle:
+            continue
+        left = r"(?<![\w.,])" if needle[0].isdigit() else r"(?<![\w])"
+        right = r"(?![\w]|\.\d)" if needle[-1].isdigit() else r"(?![\w])"
+        if re.search(left + re.escape(needle) + right, haystack):
+            return True
+    return False
 
 
 def compile_criterion(criterion: dict[str, Any], evidence: list[dict[str, Any]]) -> tuple[dict | None, str]:
     required_text = mechanically_required_text(str(criterion.get("match_criteria") or ""))
     if UNSUPPORTED_LOGIC.search(required_text):
-        return None, "unsupported alternative, approximation, or range logic"
-    candidates = extract_candidates(str(criterion.get("match_criteria") or ""), str(criterion.get("title") or ""))
-    assertions = []
+        return None, "unsupported range or comparison logic"
+    candidates = _prune_subsumed_names(extract_candidates(
+        str(criterion.get("match_criteria") or ""), str(criterion.get("title") or "")))
+    grounded: list[tuple[Candidate, list[dict[str, str]]]] = []
+    seen_variants: set[tuple[str, ...]] = set()
     for candidate in candidates:
         hits = source_hits(candidate, evidence)
         if not hits:
             continue
+        variants = tuple(sorted(normalized_text(value) for value in candidate_variants(candidate)))
+        if variants in seen_variants:
+            continue
+        seen_variants.add(variants)
+        grounded.append((candidate, hits))
+    by_identity = {id(candidate): hits for candidate, hits in grounded}
+    assertions = []
+    for group in _candidate_groups([candidate for candidate, _ in grounded], required_text):
+        options = []
+        all_variants: list[str] = []
+        variant_keys: set[str] = set()
+        for candidate in group:
+            variants = candidate_variants(candidate)
+            for variant in variants:
+                key = normalized_text(variant)
+                if key not in variant_keys:
+                    variant_keys.add(key)
+                    all_variants.append(variant)
+            options.append({
+                "kind": candidate.kind,
+                "value": candidate.value,
+                "variants": variants,
+                "source_file": by_identity[id(candidate)][0],
+                "extracted_from": candidate.source,
+            })
+        canonical_option = options[0]
         assertions.append({
-            "kind": candidate.kind,
-            "value": candidate.value,
-            "variants": fact_variants(candidate.fact()),
-            "source_files": hits,
-            "extracted_from": candidate.source,
+            "kind": canonical_option["kind"],
+            "value": canonical_option["value"],
+            "variants": all_variants,
+            "source_files": [canonical_option["source_file"]],
+            "extracted_from": canonical_option["extracted_from"],
+            "logic": "any_source_grounded_alternative" if len(options) > 1 else "source_grounded_anchor",
+            "alternatives": options,
         })
     if not assertions:
-        return None, "no mechanically typed PASS-clause anchor found in task evidence"
+        return None, "no mechanically typed or named PASS-clause anchor found in task evidence"
     # Mechanical discrimination: source-grounded reference output passes and,
     # for every individual assertion, replacing just that assertion with a
     # type-compatible wrong value makes that assertion fail while the others
@@ -255,7 +464,7 @@ def compile_criterion(criterion: dict[str, Any], evidence: list[dict[str, Any]])
     return {
         "criterion_id": criterion.get("id"),
         "title": criterion.get("title") or "",
-        "logic": "all_source_grounded_anchors",
+        "logic": "all_source_grounded_groups",
         "veto": True,
         "assertions": assertions,
         "reference_fragment": reference,
@@ -332,12 +541,11 @@ def build(store: Path, output: Path, report_path: Path, family: str, limit: int 
     output.parent.mkdir(parents=True, exist_ok=True)
     temporary = output.with_suffix(output.suffix + ".tmp")
     family_counts: Counter[str] = Counter()
+    drop_counts: Counter[str] = Counter()
     work_counts: dict[str, Counter[str]] = {}
-    tasks = []
     with temporary.open("w", encoding="utf-8") as handle:
         for index, row in enumerate(rows, 1):
             compiled = compile_task(row, connection, store)
-            tasks.append(compiled)
             family_counts["tasks"] += 1
             family_counts["criteria"] += compiled["criteria_total"]
             family_counts["determinate"] += compiled["criteria_determinate"]
@@ -347,6 +555,7 @@ def build(store: Path, output: Path, report_path: Path, family: str, limit: int 
             wc["tasks"] += 1
             wc["criteria"] += compiled["criteria_total"]
             wc["determinate"] += compiled["criteria_determinate"]
+            drop_counts.update(item["reason"] for item in compiled["dropped"])
             handle.write(json.dumps(compiled, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n")
             if index % 100 == 0:
                 print(f"  compiled {index}/{len(rows)} tasks", flush=True)
@@ -367,6 +576,7 @@ def build(store: Path, output: Path, report_path: Path, family: str, limit: int 
         "assertions": family_counts["assertions"],
         "compiled_tasks": family_counts["compiled"],
         "thin_grading_tasks": family_counts["thin_grading"],
+        "drop_reasons": dict(sorted(drop_counts.items())),
         "work_types": {
             work_type: {**counts, "coverage": round(counts["determinate"] / max(1, counts["criteria"]), 8)}
             for work_type, counts in sorted(work_counts.items())
@@ -375,9 +585,11 @@ def build(store: Path, output: Path, report_path: Path, family: str, limit: int 
             "judge_calls": 0,
             "grade_time": "pure code",
             "admitted_criterion": (
-                "conjunctive typed PASS-clause anchors occur in task evidence and each rejects isolated corruption"
+                "conjunctive typed or named PASS-clause groups occur in task-local evidence and each rejects isolated corruption"
             ),
-            "unsupported_logic": "alternative, approximation, and range criteria are dropped, never over-constrained",
+            "unsupported_logic": "range/comparison criteria are dropped until a typed inequality predicate is proven",
+            "alternative_logic": "explicit or/and-or candidates form one any-of group; groups remain conjunctive",
+            "source_witnesses": "first deterministic task-local document containing each admitted anchor",
             "dropped_criteria_reported": True,
         },
     }

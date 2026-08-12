@@ -53,6 +53,15 @@ const MODES = ["noop", "text_only", "blind_write", "wrong_value"];
 const globalErrors = [];
 const assertionManifestDrift = [];
 
+function taskAnchor(task) {
+  if (task.provenance?.source_repo === "harveyai/harvey-labs"
+      || String(task.method ?? "").startsWith("harvey_lab")
+      || task.method === "graph_walk_grounded_lab") {
+    return "harvey_lab";
+  }
+  return (task.provenance?.source_workflow ?? "").split(":")[0] || "graph-walk";
+}
+
 function keyAssertions(taskId) {
   const verifier = verifierById[taskId];
   if (!verifier || typeof verifier.vcode !== "string") {
@@ -60,6 +69,22 @@ function keyAssertions(taskId) {
     return [];
   }
   const declared = Array.isArray(verifier.assertions) ? verifier.assertions : [];
+  // V17+ generators publish the semantic key manifest directly.  This is
+  // intentionally independent of helper function names and dynamic
+  // per-criterion checks inside VCode.
+  if (Array.isArray(verifier.key_assertions)) {
+    const keys = [...new Set(verifier.key_assertions)];
+    if (!keys.length || keys.some((name) => typeof name !== "string" || !name)) {
+      globalErrors.push(`verifier ${taskId} has a malformed key_assertions manifest`);
+      return [];
+    }
+    const missing = keys.filter((name) => !declared.includes(name));
+    if (missing.length) {
+      assertionManifestDrift.push({ task: taskId, missing: missing.slice(0, 12) });
+      globalErrors.push(`verifier ${taskId} key_assertions are absent from assertions metadata`);
+    }
+    return keys;
+  }
   // V16+ generated verifiers carry the source check grammar. It is a more
   // precise answer-key declaration than naming heuristics: required reads are
   // workflow/evidence guards, while direct/payload pins, grounded anchors and
@@ -95,8 +120,9 @@ function keyAssertions(taskId) {
   // names and fail closed if a future dynamic call cannot be accounted for.
   const executed = [...verifier.vcode.matchAll(/chk\(\s*("(?:\\.|[^"\\])*")/g)]
     .map((match) => JSON.parse(match[1]));
-  const callCount = (verifier.vcode.match(/\bchk\s*\(/g) ?? []).length - 1;
-  if (executed.length !== callCount) {
+  const chkMatches = (verifier.vcode.match(/\bchk\s*\(/g) ?? []).length;
+  const callCount = chkMatches ? chkMatches - 1 : 0;
+  if (chkMatches && executed.length !== callCount) {
     globalErrors.push(
       `verifier ${taskId} has ${callCount} chk calls but ${executed.length} literal assertion names`,
     );
@@ -141,7 +167,7 @@ for (const error of sweep.summary?.harness_errors ?? []) {
 const rows = world.tasks.map((task) => {
   const rawRow = sweepRowsById.get(task.task_id);
   const keys = keyAssertions(task.task_id);
-  const anchor = (task.provenance?.source_workflow ?? "").split(":")[0] || "graph-walk";
+  const anchor = taskAnchor(task);
   if (!rawRow) {
     return {
       task: task.task_id, anchor, verdict: "HARNESS-ERROR", keys: keys.length,

@@ -21,6 +21,8 @@ reaches this HTTP surface over the compose network.
 from __future__ import annotations
 
 import json
+import hashlib
+import hmac
 import os
 import sys
 import threading
@@ -36,7 +38,7 @@ import oracle  # noqa: E402  (derive_args, vcode_walk, pinned_update, world_tool
 WORLD_BASE = os.environ.get("WORLD_BASE", "http://127.0.0.1:8971")
 PORT = int(os.environ.get("SHIM_PORT", "8972"))
 TASK_ID = os.environ["TASK_ID"]
-SOLVE_TOKEN = os.environ.get("SOLVE_TOKEN", "")
+ORACLE_PROOF_SHA256 = os.environ.get("ORACLE_PROOF_SHA256", "")
 WORLD_DOC_PATH = os.environ.get("WORLD_DOC", os.path.join(HERE, "world.json"))
 TRACE_LOG = os.environ.get("TRACE_LOG", os.path.join(HERE, "state", "trace.jsonl"))
 
@@ -221,7 +223,10 @@ def main() -> None:
                 except Exception as e:  # noqa: BLE001
                     return self._json(500, {"error": f"verify failed: {e!r}"})
             if self.path == "/solve":
-                if not SOLVE_TOKEN or self.headers.get("X-Solve-Token") != SOLVE_TOKEN:
+                supplied = self.headers.get("X-Solve-Token", "")
+                supplied_hash = hashlib.sha256(supplied.encode()).hexdigest()
+                if not ORACLE_PROOF_SHA256 or not hmac.compare_digest(
+                        supplied_hash, ORACLE_PROOF_SHA256):
                     return self._json(403, {"error": "forbidden"})
                 try:
                     return self._json(200, solve())

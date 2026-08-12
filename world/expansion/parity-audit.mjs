@@ -94,7 +94,11 @@ for (const pd of PACK_DIRS) {
   }
 }
 
-const raw = JSON.parse(readFileSync(join(ROOT, "world/blobfish/world-v15.json"), "utf8"));
+const WORLD_CANDIDATES = ["world-v17.json", "world-v16.json", "world-v15.json"];
+const worldFile = WORLD_CANDIDATES.map((name) => join(ROOT, "world/blobfish", name))
+  .find((path) => existsSync(path));
+if (!worldFile) throw new Error("no world-v15/v16/v17 artifact found");
+const raw = JSON.parse(readFileSync(worldFile, "utf8"));
 const world = raw.world ?? raw;
 const famOf = (t) => (t.provenance?.source_workflow ?? "").split(":")[1]?.split("/")[0]?.trim()
   || t.expansion?.family || "";
@@ -102,7 +106,12 @@ const ourTasks = world.tasks.length;
 let hosted = 0, inspired = 0, other = 0;
 for (const t of world.tasks) {
   const s = packSource[famOf(t)];
-  if (s === "hosted") hosted++; else if (s === "inspired") inspired++; else other++;
+  const directlyHosted = t.provenance?.source_repo === "harveyai/harvey-labs"
+    || ["harvey_lab_determinate_import", "harvey_lab_firm_knowledge_deterministic",
+        "graph_walk_grounded_lab"].includes(t.method);
+  if (directlyHosted || s === "hosted") hosted++;
+  else if (s === "inspired") inspired++;
+  else other++;
 }
 
 // C&H is hosted outside the world document (its own task bank + corpus)
@@ -126,6 +135,20 @@ if (existsSync(BUNDLES)) {
   }
 }
 
+// Once v17 exists, its fail-closed build report is the authority for Harvey
+// practice hosting.  The old port bundle is intentionally judge-only and
+// therefore reports zero; v17 turns those source tasks into executable,
+// deterministic file+state tasks (or records an explicit quarantine reason).
+const V17_REPORT = join(ROOT, "world", "v17", "build-report.json");
+let v17Report = null;
+if (world.world_id === "legal-agent-simulation-world-v17" && existsSync(V17_REPORT)) {
+  v17Report = JSON.parse(readFileSync(V17_REPORT, "utf8"));
+  const accounting = v17Report.lab_source_accounting ?? {};
+  const hostedPractice = (accounting.represented_by_migrated_graph_task ?? 0)
+    + (accounting.added_as_v17_practice_task ?? 0);
+  BUNDLE_HOSTED["harvey-labs (practice + contracts)"] = hostedPractice;
+}
+
 const rows = SOURCES.map((s) => {
   const d = join(REPOS, s.repo);
   const available = existsSync(d) ? s.count(d) : 0;
@@ -143,6 +166,9 @@ out.push("`HOSTED` means we read the benchmark's own task definitions and/or doc
 out.push("`research/repos/` and run them: their data, their ground truth. `INSPIRED` means we wrote");
 out.push("tasks in that benchmark's shape from our own knowledge — defensible content, but **not**");
 out.push("coverage of that benchmark, and it is not counted as such here.");
+out.push("For Harvey practice, hosting and criterion coverage are separate: a hosted task has a");
+out.push("deterministic file/state contract, while only mechanically validated criteria contribute");
+out.push("to the headline determinate score.");
 out.push("");
 out.push("| Benchmark | Task definitions available | Hosted | Parity |");
 out.push("|---|---|---|---|");
@@ -163,6 +189,18 @@ out.push(`| hosted (generator reads research/repos/) | ${hosted} |`);
 out.push(`| inspired (authored from knowledge) | ${inspired} |`);
 out.push(`| original world / graph-walk | ${other} |`);
 out.push(`| **world total** | **${ourTasks}** |`);
+out.push("");
+out.push(`World artifact audited: \`${worldFile.slice(ROOT.length + 1)}\`.`);
+if (v17Report) {
+  const compiler = v17Report.lab_compiler ?? {};
+  out.push("");
+  out.push("## Harvey LAB deterministic coverage (world-v17)");
+  out.push("");
+  out.push(`- Practice source tasks accounted for: **${(v17Report.lab_source_accounting?.accounted ?? 0).toLocaleString()} / 1,760**`);
+  out.push(`- Practice tasks quarantined with a published reason: **${(v17Report.lab_quarantined_tasks ?? 0).toLocaleString()}**`);
+  out.push(`- Criteria compiled to source-grounded assertions: **${(compiler.criteria_determinate ?? 0).toLocaleString()} / ${(compiler.criteria ?? 0).toLocaleString()} (${(100 * (compiler.criteria_coverage ?? 0)).toFixed(1)}%)**`);
+  out.push("- Residual prose criteria are dropped and counted; no LLM judge contributes to the deterministic score.");
+}
 out.push("");
 out.push("## What this corrects");
 out.push("");

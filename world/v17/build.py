@@ -152,6 +152,7 @@ def _retrieval_task(source: dict[str, Any]) -> tuple[dict[str, Any], dict[str, A
         "required_tools": walk,
         "complexity": "high" if len(gold) >= 5 else "medium",
         "method": "harvey_lab_firm_knowledge_deterministic",
+        "capability_type": 4,
         "steps": ["Search the shared firm DMS exhaustively", "Open supporting records in full",
                   "File an all-and-only matter list to the DMS"],
         "relevant_data": [{"external_store": "ch", "gold_matter_ids": gold,
@@ -164,6 +165,8 @@ def _retrieval_task(source: dict[str, Any]) -> tuple[dict[str, Any], dict[str, A
         "effects": [{"table": "dm_documents", "op": "insert"}],
         "provenance": {"source_repo": "harveyai/harvey-labs", **source.get("provenance", {}),
                        "source_gold_aliases_excluded": excluded_aliases},
+        "contamination": {"status": "public", "public_since": "2026",
+                          "lane": "verbatim_lab"},
         "difficulty_tier": "pending_triage",
         "acceptance_label": "admitted_deterministic_retrieval",
         "evidence_store": {"kind": "ch"},
@@ -178,6 +181,8 @@ def _retrieval_task(source: dict[str, Any]) -> tuple[dict[str, Any], dict[str, A
                        "deliverable_filed_to_dms", "required_grounded_anchors",
                        "gold_set_complete", "no_over_inclusion",
                        "no_offtask_table_changes", "no_documents_destroyed"],
+        "key_assertions": ["required_grounded_anchors", "gold_set_complete",
+                           "no_over_inclusion"],
         "vcode": retrieval_vcode(task_id, gold, read_ids, anchor_groups,
                                   paging_required=paging_required),
         "generated_by": "world/v17/build.py",
@@ -205,9 +210,21 @@ def build(base_path: Path, fk_path: Path, lab_path: Path, out_path: Path,
     practice = 0
     practice_result: dict[str, Any] = {}
     grounding_result: dict[str, Any] = {}
+    compiler_report: dict[str, Any] = {}
+    source_accounting: dict[str, Any] = {}
     if not retrieval_only:
         if not lab_path.is_file():
             raise RuntimeError(f"compiled LAB assertions missing: {lab_path}")
+        compiler_report_path = lab_path.with_name("lab-report.json")
+        from world.port.lab_determinize import check as check_lab_determinization
+        check_lab_determinization(ROOT / "world" / "corpus" / "lab", lab_path,
+                                  compiler_report_path)
+        compiler_report = json.loads(compiler_report_path.read_text("utf-8"))
+        if compiler_report.get("criteria_coverage", 0.0) < 0.55:
+            raise RuntimeError(
+                f"LAB determinate coverage {compiler_report.get('criteria_coverage', 0.0):.1%} "
+                "does not meet the 55% M5 admission floor"
+            )
         # Practice import is appended by the same compiler once its measured
         # artifact is present. Keeping this explicit prevents a partial file
         # from silently becoming a published world.
@@ -221,6 +238,27 @@ def build(base_path: Path, fk_path: Path, lab_path: Path, out_path: Path,
         from world.v17.practice import append_practice_tasks
         practice_result = append_practice_tasks(world, remaining_rows, existing)
         practice = practice_result.get("added", 0)
+        all_sources = {row["source_task"] for row in practice_rows}
+        admitted_sources = set(practice_result.get("admitted_sources") or [])
+        quarantined_sources = {row["source_task"] for row in practice_result.get("quarantine") or []}
+        represented_sources = set(grounding_result["represented_lab_sources"])
+        buckets = {
+            "represented_by_migrated_graph_task": represented_sources,
+            "added_as_v17_practice_task": admitted_sources,
+            "quarantined_with_reason": quarantined_sources,
+        }
+        overlaps = sorted(source for source in all_sources
+                          if sum(source in values for values in buckets.values()) != 1)
+        missing = sorted(all_sources - set().union(*buckets.values()))
+        if overlaps or missing:
+            raise RuntimeError(f"LAB source accounting failed: overlaps={overlaps[:10]} missing={missing[:10]}")
+        source_accounting = {
+            "source_tasks": len(all_sources),
+            **{name: len(values) for name, values in buckets.items()},
+            "accounted": len(set().union(*buckets.values())),
+            "missing": missing,
+            "overlaps": overlaps,
+        }
 
     world["version"] = 17
     world["world_id"] = "legal-agent-simulation-world-v17"
@@ -241,6 +279,11 @@ def build(base_path: Path, fk_path: Path, lab_path: Path, out_path: Path,
         "practice_tasks": practice,
         "practice_import": practice_result,
         "existing_graph_grounding": grounding_result,
+        "lab_compiler": compiler_report,
+        "lab_source_accounting": source_accounting,
+        "lab_hosted_tasks": retrieval + source_accounting.get("represented_by_migrated_graph_task", 0)
+                            + source_accounting.get("added_as_v17_practice_task", 0),
+        "lab_quarantined_tasks": source_accounting.get("quarantined_with_reason", 0),
         "total_tasks": len(world["tasks"]),
         "verifiers": len(world["verifiers"]),
         "world_sha256": hashlib.sha256(payload.encode()).hexdigest(),

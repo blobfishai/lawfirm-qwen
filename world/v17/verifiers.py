@@ -166,8 +166,45 @@ def _norm(value):
 def _has(text, variants):
     import re as _re
     haystack = _norm(text)
-    return any(needle and _re.search(r"(?<![\w])" + _re.escape(needle) + r"(?![\w])", haystack)
-               for needle in (_norm(variant) for variant in variants))
+    for needle in (_norm(variant) for variant in variants):
+        if not needle:
+            continue
+        left = r"(?<![\w.,])" if needle[0].isdigit() else r"(?<![\w])"
+        right = r"(?![\w]|\.\d)" if needle[-1].isdigit() else r"(?![\w])"
+        if _re.search(left + _re.escape(needle) + right, haystack):
+            return True
+    return False
+
+def _high_risk_values(text):
+    import decimal as _decimal
+    import re as _re
+    values = set()
+    normalized = _norm(text)
+    scales = {{"k": 1000, "thousand": 1000, "m": 1000000, "mm": 1000000,
+              "million": 1000000, "b": 1000000000, "bn": 1000000000,
+              "billion": 1000000000, "t": 1000000000000, "trillion": 1000000000000}}
+    for match in _re.finditer(
+            r"([$€£])\s*([+-]?[\d,]+(?:\.\d+)?)\s*(k|thousand|m|mm|million|b|bn|billion|t|trillion)?(?![\w])",
+            normalized):
+        number = _decimal.Decimal(match.group(2).replace(",", "")) * scales.get(match.group(3), 1)
+        values.add(("money", match.group(1), format(number.normalize(), "f")))
+    for match in _re.finditer(r"(?<![\w.])([+-]?\d+(?:\.\d+)?)\s*%(?![\w])", normalized):
+        number = _decimal.Decimal(match.group(1))
+        values.add(("percentage", "%", format(number.normalize(), "f")))
+    return values
+
+def _observation_body(step):
+    import json as _json
+    value = step.get("observation")
+    if isinstance(value, dict):
+        parsed = value
+    else:
+        try:
+            parsed = _json.loads(str(value or ""))
+        except (TypeError, ValueError):
+            return str(value or "")
+    data = parsed.get("data") if isinstance(parsed, dict) else None
+    return str(data.get("body") or "") if isinstance(data, dict) else ""
 
 def verify(initial_state, final_state, trace):
     results = []
@@ -221,6 +258,17 @@ def verify(initial_state, final_state, trace):
         check("criterion_" + str(criterion["criterion_id"]), passed,
               "source-grounded anchors present" if passed else f"missing={{missing}}")
 
+    downloaded_text = "\n".join(_observation_body(step) for step in successful
+                                  if step.get("tool") == "documents_download")
+    expected_text = "\n".join(str(criterion.get("reference_fragment") or "") for criterion in CRITERIA)
+    source_values = _high_risk_values(downloaded_text) | _high_risk_values(expected_text)
+    deliverable_text = "\n".join(str(row.get("body") or "") for row in created
+                                   if row.get("name") in DELIVERABLES)
+    unsupported_values = sorted(_high_risk_values(deliverable_text) - source_values)
+    check("no_unsupported_numeric_facts", not unsupported_values,
+          "every monetary/percentage fact is present in downloaded evidence"
+          if not unsupported_values else f"unsupported={{unsupported_values}}")
+
     changed_tables = []
     for table in set(initial_state) | set(final_state):
         if table in ("dm_documents", "audit_logs"):
@@ -238,25 +286,49 @@ def verify(initial_state, final_state, trace):
 
     criteria_passed = sum(row["passed"] for row in criterion_results)
     raw_fraction = criteria_passed / len(criterion_results) if criterion_results else 0.0
+    false_positives = len(unsupported_values)
+    precision = (criteria_passed / (criteria_passed + false_positives)
+                 if criterion_results and criteria_passed + false_positives else
+                 (1.0 if criterion_results else None))
+    recall = (criteria_passed / len(criterion_results) if criterion_results else None)
+    beta2 = 4.0
+    f_beta = (((1 + beta2) * precision * recall / (beta2 * precision + recall))
+              if precision is not None and recall is not None and precision + recall else
+              (0.0 if criterion_results else None))
     structural = {{"required_workflow_path", "required_search_discovery", "required_documents_read",
                   "all_deliverables_filed_to_dms", "no_offtask_table_changes",
                   "no_documents_destroyed", "no_undeclared_documents"}}
     structural_failed = [row["name"] for row in results
                          if row["name"] in structural and not row["passed"]]
     grounding_failed = [row for row in criterion_results if not row["passed"]]
+    fabrication_failed = bool(unsupported_values)
     # Grounding and fabrication-adjacent failures are hard vetoes: a polished
     # but unsupported deliverable never earns partial headline reward.
-    reward = 0.0 if structural_failed or grounding_failed else 1.0
+    reward = 0.0 if structural_failed or grounding_failed or fabrication_failed else 1.0
     failed = [row["name"] for row in results if not row["passed"]]
+    import hashlib as _hashlib
+    filed_text_sha256 = {{name: _hashlib.sha256(_norm("\n".join(
+        str(row.get("body") or "") for row in by_name.get(name, []))).encode()).hexdigest()
+        for name in DELIVERABLES if by_name.get(name)}}
     return {{
         "task_id": {task_id!r},
-        "passed": not failed and bool(criterion_results),
+        "passed": not failed,
         "reward": reward,
         "raw_grounding_fraction": round(raw_fraction, 4),
+        "precision": round(precision, 4) if precision is not None else None,
+        "recall": round(recall, 4) if recall is not None else None,
+        "f_beta": round(f_beta, 4) if f_beta is not None else None,
+        "beta": 2.0,
+        "metric_scope": "determinate criteria plus unsupported high-risk facts",
+        "over_included": unsupported_values,
         "criteria_passed": criteria_passed,
         "criteria_total": len(criterion_results),
-        "grounding_veto_failed": bool(grounding_failed),
-        "all_determinate_pass": bool(criterion_results) and not grounding_failed,
+        "grounding_veto_failed": bool(grounding_failed or fabrication_failed),
+        "fabrication_veto_failed": fabrication_failed,
+        "unsupported_numeric_facts": unsupported_values,
+        "all_determinate_pass": (not grounding_failed and not fabrication_failed)
+                                if criterion_results else None,
+        "filed_text_sha256": filed_text_sha256,
         "failed_conditions": failed,
         "criterion_results": criterion_results,
         "assertions": results,

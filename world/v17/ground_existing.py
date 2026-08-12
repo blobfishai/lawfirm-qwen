@@ -143,8 +143,10 @@ def ground_existing_graph_tasks(world: dict[str, Any], practice_rows: list[dict[
                     "task_id": original["task_id"],
                     "assertions": ["required_workflow_path", "required_search_discovery",
                                    "required_documents_read", "all_deliverables_filed_to_dms",
-                                   "grounded_criteria", "no_offtask_table_changes",
+                                   "grounded_criteria", "no_unsupported_numeric_facts",
+                                   "no_offtask_table_changes",
                                    "no_documents_destroyed", "no_undeclared_documents"],
+                    "key_assertions": ["grounded_criteria", "no_unsupported_numeric_facts"],
                     "vcode": practice_vcode(original["task_id"], deliverables, criteria, read_ids),
                     "generated_by": "world/v17/ground_existing.py",
                 }
@@ -163,6 +165,7 @@ def ground_existing_graph_tasks(world: dict[str, Any], practice_rows: list[dict[
                     "assertions": ["required_workflow_path", "required_records_read",
                                    "exact_required_notes_created", "no_undeclared_notes",
                                    "no_offtask_table_changes", "no_rows_destroyed"],
+                    "key_assertions": ["exact_required_notes_created", "no_undeclared_notes"],
                     "vcode": notes_vcode(task["task_id"], task["walk"], task["reference_args"]),
                     "generated_by": "world/v17/ground_existing.py",
                 }
