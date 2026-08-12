@@ -161,6 +161,16 @@ function grade(task, answer) {
 const BANK = opt("--bank", "world/blobfish/firm-knowledge-tasks.json");
 const bank = JSON.parse(readFileSync(join(ROOT, BANK), "utf8"));
 let list = bank.taskList.filter((t) => t.grading !== "judge_only");
+// Tasks whose answer key is known-wrong. Measuring them buys nothing but a
+// number that looks like a model result — see docs/AUDIT.md Bug 12. --all
+// includes them for anyone re-checking the keys themselves.
+const quarantined = list.filter((t) => t.quarantined);
+if (!argv.includes("--all") && quarantined.length) {
+  list = list.filter((t) => !t.quarantined);
+  console.log(`quarantined: skipping ${quarantined.length} task(s) with known-bad keys `
+    + `(--all to include): ${quarantined.slice(0, 4).map((t) => t.task_id).join(", ")}`
+    + `${quarantined.length > 4 ? ", …" : ""}`);
+}
 if (GRADING) list = list.filter((t) => t.grading === GRADING);
 if (ONLY) { const want = new Set(ONLY.split(",")); list = list.filter((t) => want.has(t.task_id)); }
 else list = list.slice(0, LIMIT);

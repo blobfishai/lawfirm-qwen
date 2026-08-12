@@ -217,7 +217,11 @@ for (const [f1, f2] of sample(FOLDERS, PER_KIND * 2).reduce((acc, t, i, arr) =>
   add("structural", {
     id: `w${WAVE}_struct_${f1}_${f2}`.replace(/[^a-z0-9_]+/gi, "_").toLowerCase(),
     prompt: `Which matters contain ${f1} material but no ${f2} material at all? List the matter ids.`,
-    expected: out.sort(), computed: `filename evidence of ${f1} without ${f2}`,
+    // Says what it actually did. The old wording ("filename evidence") survived
+    // the switch to the folder index and misattributed every key generated
+    // after it — see docs/AUDIT.md Bug 12.
+    expected: out.sort(),
+    computed: `top-level folder ${f1} without ${f2}, from index.sqlite`,
   });
 }
 

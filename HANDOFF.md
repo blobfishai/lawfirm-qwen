@@ -91,28 +91,37 @@ difficulty is unknown until it is re-run.
 
 ## Next steps, in order
 
-1. **Finish the C&H run**, then `node sim/triage-new-families.mjs` and compare
-   against Harvey's published baselines. Ours is deterministic and theirs is
+1. ~~Finish the C&H run, then `node sim/triage-new-families.mjs`.~~ **Both
+   done.** The run is 201/201 (above). The triage was reading the deleted
+   `world-v13.json` and had been dying on ENOENT before printing anything; it
+   now takes `--world` and defaults to v14, which carries all 56 of the
+   `task_271..326` family tasks it inspects. Current verdict: **56 tasks,
+   198/223 episodes passed (88.8), too-hard 0, FLAKY 6, too-easy 50** —
+   written to `docs/TRIAGE-NEW-FAMILIES.md`. 50 of 56 sitting in "too easy"
+   is the calibration signal to act on. What is still open is the comparison
+   against Harvey's published baselines; ours is deterministic and theirs is
    judged, so the comparable claim is about *shape*, not the number.
 2. **Triage the 726 generated tasks** at scale (the 15-task sample above is a
    pilot). Keep the flaky band, grow what passes, retire what nothing can do.
    ~$0.9/task, so a 100-task stratified run is ~$90.
-3. ~~Verify `structural` before trusting it.~~ **Done — it was both.**
-   `docs/AUDIT.md` Bug 12 has the evidence. 11 of 32 tasks (waves 1–16) are
-   keyed off filenames and unanswerable by any strategy; the other 21 (waves
-   20–23) are exactly answerable in a median of 3 calls. What remains is the
-   repair, and it gates step 2: **retire or regenerate the 11, then re-run the
-   family.** Triaging 726 tasks at ~$90 while a known-broken third sits in the
-   pool spends real money on noise.
+3. ~~Verify `structural` before trusting it.~~ **Done, and repaired.**
+   `docs/AUDIT.md` Bug 12 has the evidence. 11 of 32 tasks are keyed off
+   filenames and unanswerable by any strategy; the other 21 are exactly
+   answerable in a median of 3 calls. The 11 are now `quarantined` in the bank
+   and skipped by `run-firm-knowledge.mjs` (`--all` overrides).
 
-   The other families were audited the same way and are **sound**:
-   `conjunction`, `exclusion` and `client_roll` reproduce exactly from
-   `corpus_search` semantics (9 of 9 sampled tasks, gold set reproduced
-   element-for-element), and the index matches the corpus on disk exactly —
-   9,288 files both ways, no zero-char rows, no parse errors. `superlative`
-   is **not** yet checked; its key depends on per-file hit counts rather than
-   set membership, so it needs its own pass. The whole audit cost nothing but
-   sqlite queries and one corpus scan.
+   Every family was audited the same way and the rest are **sound**:
+   `conjunction`, `exclusion`, `client_roll` and `superlative` all reproduce
+   their keys element-for-element from `corpus_search` semantics (12 of 12
+   sampled), and the index matches the corpus on disk exactly — 9,288 files
+   both ways, no zero-char rows, no parse errors. Paging cost is low too: the
+   heaviest sampled term needs 5 pages at `limit=200`, so these are tractable
+   inside 40 turns. Structural was the only family keyed off something the
+   agent cannot query. The whole audit cost nothing but sqlite queries and one
+   corpus scan.
+
+   **`structural` has not been re-measured** — its difficulty is genuinely
+   unknown, not 13%. That re-run is the cheap thing to do before step 2.
 4. **Port more sources.** `world/port/adapters/` — one file per repo answering
    five questions (tasks, seeded data, tools, verifier, workflow). ACORD is the
    best next candidate: it ships graded relevance judgments, the only source
