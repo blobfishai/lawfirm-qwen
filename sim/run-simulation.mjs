@@ -324,6 +324,20 @@ async function main() {
     failedConditions: v.data?.failed_conditions ?? [],
     advisoryConditions: v.data?.advisory_conditions ?? [],
     assertions: v.data?.assertions ?? [],
+    // Full verdict fields for leaderboard-v2 (P/R, lane split, grounding) — the
+    // verifier emits precision/recall/f_beta on retrieval tasks and file/state
+    // lane sub-verdicts on dual-lane tasks; keep them verbatim rather than
+    // re-deriving downstream.
+    verdict: {
+      precision: v.data?.precision ?? null,
+      recall: v.data?.recall ?? null,
+      f_beta: v.data?.f_beta ?? null,
+      lanes: v.data?.lanes ?? null,
+      grounding_fraction: v.data?.raw_grounding_fraction ?? v.data?.grounding_fraction ?? null,
+    },
+    capabilityType: task.capability_type ?? null,
+    contamination: task.contamination ?? task.metadata?.contamination ?? null,
+    method: task.method ?? null,
     toolCalls: toolCallCount,
     turnsUsed,
     maxTurns,
