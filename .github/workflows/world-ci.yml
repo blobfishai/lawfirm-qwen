@@ -29,16 +29,23 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
+      - name: Install pinned conformance validator
+        run: python3 -m pip install --disable-pip-version-check --require-hashes -r tools/conformance/requirements.txt
+
       - name: Validate scripts
         run: |
           python3 -m py_compile \
             world/local/server.py \
             world/local/discriminate.py \
             tools/check_atomic_seed.py \
+            tools/conformance/run.py \
+            tools/conformance/sync_specs.py \
             tools/check_discrimination.py \
             tools/check_harbor_result.py
           node --check world/expansion/discrimination-report.mjs
           python3 tools/check_atomic_seed.py
+          python3 tools/conformance/sync_specs.py --check
+          python3 tools/conformance/run.py --check
 
       - name: Run deterministic trust chain
         run: |
@@ -66,6 +73,7 @@ jobs:
             exit 1
           fi
 
+          python3 tools/conformance/live.py --base "$BASE" --check
           python3 world/local/oracle.py --base "$BASE" --world "$WORLD" \
             --out "$RUNNER_TEMP/oracle-report.json"
           python3 world/local/discriminate.py --base "$BASE" --world "$WORLD" \
