@@ -82,3 +82,11 @@ node world/expansion/parity-audit.mjs    # scoreboard
 ```
 
 Bundles land in `world/port/bundles/<id>.json` and are what the world hosts.
+
+Harvey LAB is split deliberately: `harvey-practice.json` carries all 1,760
+task-local definitions plus their exact file-lane paths/output contracts, and
+`harvey-firm-knowledge.json` carries the 250 tasks over the shared C&H DMS.
+Both point to `world/ingest/lab-source-lock.json` at the same source revision.
+Evidence-ready tasks are not counted as hosted until deterministic assertions
+pass oracle and discrimination; `python3 tools/check_lab_port.py` enforces the
+2,010-task/114,437-criterion reconciliation.

@@ -1,6 +1,6 @@
 /** Shared helpers for port adapters. */
 import { readFileSync, readdirSync, statSync, existsSync } from "node:fs";
-import { join } from "node:path";
+import { basename, dirname, join } from "node:path";
 
 /** Walk a tree, yielding files that match. Never descends into a corpus dir. */
 export function walkFiles(dir, pred, skip = new Set(["documents", "dms", ".git", "node_modules"])) {
@@ -55,7 +55,14 @@ export const gitCommit = (dir) => {
       return readFileSync(join(dir, ".git", head.slice(5)), "utf8").trim().slice(0, 9);
     }
     return head.slice(0, 9);
-  } catch { return null; }
+  } catch {
+    // research/repos is intentionally distributed without nested .git
+    // directories. Its committed lock remains the authoritative revision.
+    try {
+      const locks = JSON.parse(readFileSync(join(dirname(dir), "..", "repos-commits.json"), "utf8"));
+      return locks[basename(dir)] ?? null;
+    } catch { return null; }
+  }
 };
 
 export const has = (p) => existsSync(p);

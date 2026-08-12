@@ -15,6 +15,25 @@ python3 harbor/generate.py --build-image   # 291 tasks -> dist/harbor/tasks/,
                                            # shared image legal-agent-sim-world:v16
 ```
 
+LAB-imported tasks carry a `file_lane` block. For those tasks the generator
+also stages the exact commit-pinned input tree at `/workspace/documents`
+(read-only), creates `/workspace/output`, copies Harvey's docx/xlsx/pptx skill
+manuals, and uses the heavier LibreOffice+pandoc agent base:
+
+```bash
+python3 harbor/generate.py --build-lab-agent-image \
+  --lab-agent-image ghcr.io/blobfishai/legal-agent-sim-agent-lab:v17
+```
+
+The verifier copies non-symlink output files to `/logs/artifacts` and emits
+`file-lane.json`. At this evidence-only milestone, `file_passed` means the
+exact non-empty output filename contract was satisfied
+(`grade_kind=output_contract_only`), not that prose quality passed a rubric.
+`reward.json` retains the deterministic world reward and adds the separate
+file/state diagnostics; the lanes are never averaged. Deterministic content
+assertions are added during v17B admission. `python3
+tools/check_harbor_file_lane.py` gates path confinement and this contract.
+
 `dist/` is gitignored; the generated tree is a build artifact. Regeneration is
 deterministic (the `/solve` token persists in
 `dist/harbor/world-image/solve-token.txt`).
@@ -68,9 +87,11 @@ main (agent)                          world (shared image, TASK_ID env)
   and runs verification server-side — so the agent container never contains
   `world.json` (tasks, walks, verifier code, answer keys). The canonical source
   is `world/blobfish/world-v16.json`.
-- `tests/test.sh` writes `reward.json` with two metrics: `reward` (the
+- `tests/test.sh` writes `reward.json` with `reward` (the
   verifier's graded fraction, anti-hack vetoes to 0) and `passed` (strict
-  pass/fail — the world's headline metric).
+  pass/fail — the world's headline metric). File-lane tasks add separate
+  diagnostic fields and preserve every produced artifact under
+  `/logs/artifacts`.
 - `solution/solve.sh` triggers the same reference walk that
   `world/local/oracle.py` proves 291/291; the solve endpoint is gated by a
   token that exists only in the world image and in `solution/` (which Harbor

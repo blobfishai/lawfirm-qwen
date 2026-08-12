@@ -2,8 +2,8 @@
 /**
  * Extract the Harvey LAB corpus into a structured inventory.
  *
- * `research/repos/harveyai@harvey-labs` — v1.0, 1,671 tasks across 24 practice
- * areas plus contracting, 3.2 GB of task documents. This is the benchmark our
+ * `research/repos/harveyai@harvey-labs` — a commit-pinned snapshot containing
+ * 2,010 tasks and 3.2 GB of task documents. This is the benchmark our
  * world has been anchoring to BY NAME (`provenance.source_workflow` values like
  * `harvey_lab/diligence/aerospace-vertical-integration`) without ever having
  * the tasks on disk. Now we can check the resemblance instead of asserting it.
@@ -28,6 +28,7 @@ import { fileURLToPath } from "node:url";
 const HERE = dirname(fileURLToPath(import.meta.url));
 const LAB = join(HERE, "repos", "harveyai@harvey-labs");
 const TASKS = join(LAB, "tasks");
+const REPO_COMMITS = join(HERE, "repos-commits.json");
 if (!existsSync(TASKS)) {
   console.error("harvey-labs corpus missing — run bash research/clone-repos.sh");
   process.exit(1);
@@ -69,7 +70,13 @@ function findTaskDirs(root) {
   return out;
 }
 
-const areas = readdirSync(TASKS).filter((d) => statSync(join(TASKS, d)).isDirectory());
+const commits = JSON.parse(readFileSync(REPO_COMMITS, "utf8"));
+const sourceCommit = commits["harveyai@harvey-labs"];
+if (!sourceCommit) {
+  console.error(`source revision missing from ${REPO_COMMITS}`);
+  process.exit(1);
+}
+const areas = readdirSync(TASKS).filter((d) => statSync(join(TASKS, d)).isDirectory()).sort();
 const tasks = [];
 {
   for (const tdir of findTaskDirs(TASKS)) {
@@ -102,6 +109,10 @@ const tasks = [];
     });
   }
 }
+tasks.sort((a, b) => {
+  const left = `${a.area}/${a.slug}`, right = `${b.area}/${b.slug}`;
+  return left < right ? -1 : left > right ? 1 : 0;
+});
 
 const tally = (arr, key) => arr.reduce((a, t) => {
   const v = typeof key === "function" ? key(t) : t[key];
@@ -122,7 +133,9 @@ const withDocs = tasks.filter((t) => t.documents > 0);
 const DEST = join(HERE, "answers", "data");
 mkdirSync(DEST, { recursive: true });
 writeFileSync(join(DEST, "lab-corpus.json"), JSON.stringify({
+  schema_version: 2,
   source_repo: "harveyai/harvey-labs",
+  source_commit: sourceCommit,
   tasks: tasks.length, areas: areas.length,
   totals: { documents: totalDocs, criteria: totalCriteria },
   byWorkType, byArea, byDeliverableExt, docExtTotals,

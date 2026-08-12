@@ -39,7 +39,8 @@ Three things live here:
    and a 46-repository legal-domain research corpus under `research/repos/`.
    The v17 work imports Harvey LAB’s documents and task harness into a separate
    file lane while deterministic state/grounding checks remain the headline
-   score.
+   score. The completed evidence/file-lane gate and its measured parse caveats
+   are in [`docs/V17A-EVIDENCE-AND-FILE-LANE.md`](docs/V17A-EVIDENCE-AND-FILE-LANE.md).
 3. **Audited measurements** — deterministic episode traces, pass^k,
    discrimination artifacts, and per-model failure-mode reports. Historical
    v15 boundary results remain available, but absolute model outcomes must be
@@ -152,17 +153,20 @@ the repo's target policy via `QWEN_BASE_URL`).
 ## Why this is more than Harvey LAB's world
 
 Harvey LAB grades *what an agent wrote* with an LLM judge — the strongest
-rubric corpus in legal AI (~1,660 tasks, ~101K expert criteria), and
-structurally unable to measure what this repo measures: whether the work
-*actually happened* in a system of record, whether it happens *reliably*
-across repeated runs, and *which step* breaks when it doesn't. The full
+rubric corpus in legal AI (2,010 tasks, 114,437 criteria, 51,683 task-local
+documents, plus one shared 9,288-file firm-knowledge DMS at the pinned
+`60071cc424d6` snapshot). It is structurally unable to measure what this repo
+measures: whether the work *actually happened* in a system of record, whether
+it happens *reliably* across repeated runs, and *which step* breaks when it
+doesn't. The exact source and extraction boundary is documented in
+[`world/ingest/README.md`](world/ingest/README.md). The full
 argument, grounded in a 29-benchmark survey of the legal-eval field, is in
 [`docs/WHY-BEYOND-HARVEY-LAB.md`](docs/WHY-BEYOND-HARVEY-LAB.md); the survey
 itself is [`data/research/legal-eval-inventory.md`](data/research/legal-eval-inventory.md).
 
 | | Harvey LAB | legal-agent-simulation world |
 |---|---|---|
-| Environment | file sandbox, no state | 74-table live SQLite, 102 executable tools |
+| Environment | file sandbox, no system-of-record state | 39-table live SQLite, 92 product-contract tools (canonical v16) |
 | Grading | LLM judge, all-pass rubric | deterministic VCode, per-assertion, anti-hack vetoes |
 | Repeatability | judge-dependent (same family scores 26.7% / ~7–12% / ~13.3% top all-pass under three harnesses) | bit-identical re-runs, seeded friction |
 | Difficulty evidence | none | 21 boundary-proven flaky tasks with full traces |
@@ -171,8 +175,11 @@ itself is [`data/research/legal-eval-inventory.md`](data/research/legal-eval-inv
 | Runs offline | no (judge API) | yes (stdlib Python + Node) |
 
 And the honest converse: LAB has expert-written rubrics, human-guided
-documents, prose-quality judgment, and ~8× our task count. The two measure
-different halves of "did the associate do good work."
+documents, prose-quality judgment, and nearly 7× the canonical v16 task
+count. Evidence-ready is not the same as deterministically hosted: imported
+tasks remain outside the headline score until their assertions pass both the
+oracle and discrimination gates. The two systems currently measure different
+halves of "did the associate do good work."
 
 ## Leaderboard & failure modes
 

@@ -33,6 +33,7 @@ import secrets
 import shutil
 import subprocess
 import sys
+from pathlib import Path, PurePosixPath
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
@@ -80,6 +81,23 @@ def instruction_md(task: dict) -> str:
             "of the request:\n\n"
             + "\n".join(f"{i}. {json.dumps(t)}" for i, t in enumerate(followups, 1))
         )
+    file_lane = task.get("file_lane") or {}
+    if file_lane:
+        deliverables = file_lane.get("deliverables") or []
+        rendered = "\n".join(f"- `/workspace/output/{name}`" for name in deliverables)
+        parts.append(f"""
+## File deliverable lane (Harvey LAB parity)
+
+The source documents are mounted read-only at `/workspace/documents`. Write
+the required deliverables under `/workspace/output`; expected files:
+
+{rendered or "- Follow the exact output filename stated in the assignment."}
+
+The file lane and the law-firm system-of-record lane are verified separately.
+Creating a file does not substitute for filing the work through the product
+tools, and filing a record does not substitute for creating the requested
+file.
+""")
     parts.append(f"""
 ## Environment
 
@@ -149,6 +167,9 @@ def task_toml(task: dict, image_tag: str, world_version) -> str:
         f"method = {toml_str(task.get('method') or '')}",
         f"world_image = {toml_str(image_tag)}",
         f"disclaimer = {toml_str(DISCLAIMER)}",
+        f"file_lane = {str(bool(task.get('file_lane'))).lower()}",
+        f"lab_source_task = {toml_str((task.get('file_lane') or {}).get('source_task') or '')}",
+        f"lab_source_commit = {toml_str((task.get('file_lane') or {}).get('source_commit') or '')}",
         "",
         "[verifier]",
         "timeout_sec = 180.0",
@@ -185,7 +206,31 @@ WORKDIR /app
 """
 
 
-def compose_yaml(task_id: str, image_tag: str) -> str:
+def lab_agent_dockerfile(base_image: str) -> str:
+    return f"""\
+# File-lane agent container. The base is built from Harvey LAB's pinned
+# sandbox Dockerfile and contains LibreOffice, pandoc, and format parsers.
+FROM {base_image}
+COPY tool /usr/local/bin/tool
+RUN chmod +x /usr/local/bin/tool
+COPY skills /workspace/skills
+ENV LAWFIRM_MCP=http://world:8972/mcp \\
+    WORKSPACE_DIR=/workspace \\
+    DOCUMENTS_DIR=/workspace/documents \\
+    OUTPUT_DIR=/workspace/output
+RUN mkdir -p /workspace/documents /workspace/output
+WORKDIR /workspace
+"""
+
+
+def compose_yaml(task_id: str, image_tag: str, file_lane: bool = False) -> str:
+    documents_mount = """
+    volumes:
+      - type: bind
+        source: ./documents
+        target: /workspace/documents
+        read_only: true
+""" if file_lane else ""
     return f"""\
 # Merged on top of Harbor's base compose config; `main` (the agent container)
 # is configured by Harbor automatically. The shared world image is built once:
@@ -195,6 +240,7 @@ services:
     depends_on:
       world:
         condition: service_healthy
+{documents_mount.rstrip()}
 
   world:
     image: {image_tag}
@@ -211,33 +257,97 @@ services:
 """
 
 
-TEST_SH = """\
+def validated_deliverables(task: dict) -> list[str]:
+    values = (task.get("file_lane") or {}).get("deliverables") or []
+    clean = []
+    for value in values:
+        path = PurePosixPath(str(value))
+        if path.is_absolute() or ".." in path.parts or not path.name:
+            raise RuntimeError(f"{task['task_id']}: unsafe deliverable path {value!r}")
+        clean.append(path.as_posix())
+    return clean
+
+
+def test_sh(task: dict) -> str:
+    expected = json.dumps(validated_deliverables(task))
+    return f"""\
 #!/bin/bash
 # Verifier: ask the world container for the trial verdict (shipped VCode,
 # executed against the session's final state + the recorded tool trace),
 # then emit the Harbor reward file.
-mkdir -p /logs/verifier
 python3 - <<'PYEOF'
-import json, os, urllib.request
+import json, os, shutil, urllib.request
 
-verdict, out = None, {"reward": 0.0, "passed": 0.0}
+expected = {expected}
+logs_root = os.environ.get("HARBOR_LOGS", "/logs")
+artifact_root = os.path.join(logs_root, "artifacts")
+verifier_root = os.path.join(logs_root, "verifier")
+output_root = os.environ.get("WORKSPACE_OUTPUT", "/workspace/output")
+verify_url = os.environ.get("WORLD_VERIFY_URL", "http://world:8972/verify")
+os.makedirs(artifact_root, exist_ok=True)
+artifacts = []
+rejected_artifacts = []
+if os.path.isdir(output_root):
+    for root, _, files in os.walk(output_root):
+        for name in sorted(files):
+            source = os.path.join(root, name)
+            relative = os.path.relpath(source, output_root)
+            if os.path.islink(source):
+                rejected_artifacts.append({{"path": relative, "reason": "symlink"}})
+                continue
+            target = os.path.join(artifact_root, relative)
+            os.makedirs(os.path.dirname(target), exist_ok=True)
+            shutil.copy2(source, target)
+            artifacts.append({{"path": relative, "bytes": os.path.getsize(source)}})
+output_real = os.path.realpath(output_root)
+def valid_expected_file(name):
+    candidate = os.path.join(output_root, name)
+    real = os.path.realpath(candidate)
+    return (
+        os.path.commonpath([output_real, real]) == output_real and
+        not os.path.islink(candidate) and os.path.isfile(candidate) and
+        os.path.getsize(candidate) > 0
+    )
+file_passed = None if not expected else all(valid_expected_file(name) for name in expected)
+
+verdict, out = None, {{"reward": 0.0, "passed": 0.0}}
 try:
-    req = urllib.request.Request("http://world:8972/verify", method="POST")
+    req = urllib.request.Request(verify_url, method="POST")
     req.add_header("Content-Type", "application/json")
-    with urllib.request.urlopen(req, data=b"{}", timeout=150) as res:
-        verdict = json.loads(res.read().decode() or "{}")
+    with urllib.request.urlopen(req, data=b"{{}}", timeout=150) as res:
+        verdict = json.loads(res.read().decode() or "{{}}")
     out["reward"] = round(float(verdict.get("reward") or 0.0), 4)
     out["passed"] = 1.0 if verdict.get("passed") else 0.0
 except Exception as e:  # world unreachable / verifier crash -> reward 0
-    verdict = {"error": repr(e)}
+    verdict = {{"error": repr(e)}}
 
-os.makedirs("/logs/verifier", exist_ok=True)
-with open("/logs/verifier/verdict.json", "w") as f:
+state_passed = bool(out["passed"])
+lane = {{
+    "enabled": bool(expected),
+    "grade_kind": "output_contract_only",
+    "expected": expected,
+    "artifacts": artifacts,
+    "rejected_artifacts": rejected_artifacts,
+    "file_passed": file_passed,
+    "state_passed": state_passed,
+    "lane_split": None if file_passed is None else file_passed != state_passed,
+}}
+out.update({{
+    "file_passed": file_passed,
+    "state_passed": state_passed,
+    "lane_split": lane["lane_split"],
+}})
+
+os.makedirs(verifier_root, exist_ok=True)
+with open(os.path.join(verifier_root, "verdict.json"), "w") as f:
     json.dump(verdict, f, indent=1)
-with open("/logs/verifier/reward.json", "w") as f:
+with open(os.path.join(verifier_root, "reward.json"), "w") as f:
     json.dump(out, f)
-print(json.dumps({"passed": out["passed"], "reward": out["reward"],
-                  "failed_conditions": (verdict or {}).get("failed_conditions")}))
+with open(os.path.join(verifier_root, "file-lane.json"), "w") as f:
+    json.dump(lane, f, indent=1)
+print(json.dumps({{"passed": out["passed"], "reward": out["reward"],
+                  "file_passed": file_passed, "lane_split": lane["lane_split"],
+                  "failed_conditions": (verdict or {{}}).get("failed_conditions")}}))
 PYEOF
 """
 
@@ -264,6 +374,46 @@ def write(path: str, content: str, executable: bool = False) -> None:
         f.write(content)
     if executable:
         os.chmod(path, 0o755)
+
+
+def link_or_copy(source: str, destination: str) -> str:
+    """Copy-tree callback that avoids duplicating the multi-GB local corpus."""
+    try:
+        os.link(source, destination)
+    except OSError:
+        shutil.copy2(source, destination)
+    return destination
+
+
+def stage_file_lane(task: dict, task_dir: str) -> None:
+    config = task.get("file_lane") or {}
+    source = config.get("documents_source")
+    if not source:
+        raise RuntimeError(f"{task['task_id']}: file_lane.documents_source is required")
+    source_path = Path(source)
+    if not source_path.is_absolute():
+        source_path = Path(ROOT) / source_path
+    source_path = source_path.resolve()
+    if not source_path.is_dir():
+        raise RuntimeError(f"{task['task_id']}: file-lane documents missing: {source_path}")
+    destination = Path(task_dir) / "environment" / "documents"
+    shutil.copytree(source_path, destination, copy_function=link_or_copy)
+
+    configured_skills = config.get("skills_source")
+    skills_source = Path(configured_skills) if configured_skills else (
+        Path(ROOT) / "research" / "repos" / "harveyai@harvey-labs" / "harness" / "skills"
+    )
+    if not skills_source.is_absolute():
+        skills_source = Path(ROOT) / skills_source
+    skills_source = skills_source.resolve()
+    skills_destination = Path(task_dir) / "environment" / "skills"
+    requested = config.get("skills") or ["docx", "xlsx", "pptx"]
+    skills_destination.mkdir(parents=True, exist_ok=True)
+    for name in requested:
+        source_skill = skills_source / name
+        if not (source_skill / "SKILL.md").is_file():
+            raise RuntimeError(f"{task['task_id']}: Harvey LAB skill missing: {source_skill}")
+        shutil.copytree(source_skill, skills_destination / name, copy_function=link_or_copy)
 
 
 def assemble_world_image(out: str, world_path: str) -> str:
@@ -296,6 +446,10 @@ def main() -> None:
                     help="world image reference baked into every task's compose "
                          "file; --build-image tags the local build with it")
     ap.add_argument("--build-image", action="store_true")
+    ap.add_argument("--lab-agent-image",
+                    default="ghcr.io/blobfishai/legal-agent-sim-agent-lab:v17")
+    ap.add_argument("--build-lab-agent-image", action="store_true",
+                    help="build the heavy file-lane base from the pinned LAB sandbox")
     args = ap.parse_args()
 
     world = load_world(args.world)
@@ -317,6 +471,14 @@ def main() -> None:
     img_dir = assemble_world_image(out, args.world)
     write(token_path, token + "\n")
 
+    if args.build_lab_agent_image:
+        lab_sandbox = os.path.join(ROOT, "research", "repos", "harveyai@harvey-labs", "sandbox")
+        if not os.path.isfile(os.path.join(lab_sandbox, "Dockerfile")):
+            sys.exit(f"Harvey LAB sandbox source missing: {lab_sandbox}")
+        command = ["docker", "build", "-t", args.lab_agent_image, lab_sandbox]
+        print("+", " ".join(command))
+        subprocess.run(command, check=True)
+
     tool_src = open(os.path.join(HERE, "agent-image", "tool")).read()
     tasks_root = os.path.join(out, "tasks")
     for task in tasks:
@@ -327,11 +489,16 @@ def main() -> None:
         write(os.path.join(d, "instruction.md"), instruction_md(task))
         write(os.path.join(d, "task.toml"),
               task_toml(task, args.image_tag, world.get("version")))
-        write(os.path.join(d, "environment", "Dockerfile"), AGENT_DOCKERFILE)
+        if task.get("file_lane"):
+            stage_file_lane(task, d)
+            dockerfile = lab_agent_dockerfile(args.lab_agent_image)
+        else:
+            dockerfile = AGENT_DOCKERFILE
+        write(os.path.join(d, "environment", "Dockerfile"), dockerfile)
         write(os.path.join(d, "environment", "tool"), tool_src, executable=True)
         write(os.path.join(d, "environment", "docker-compose.yaml"),
-              compose_yaml(tid, args.image_tag))
-        write(os.path.join(d, "tests", "test.sh"), TEST_SH, executable=True)
+              compose_yaml(tid, args.image_tag, bool(task.get("file_lane"))))
+        write(os.path.join(d, "tests", "test.sh"), test_sh(task), executable=True)
         write(os.path.join(d, "solution", "solve.sh"), solve_sh(token),
               executable=True)
 

@@ -48,6 +48,7 @@ export function port(repoDir) {
               path: "tasks/firm-knowledge", license: meta.license, adaptations: [] },
     tasks,
     documents: { external_store: "world/corpus/ch",
+                 source_lock: "world/ingest/lab-source-lock.json#shared_document_sets[ch]",
                  note: "9,288 files ingested by world/corpus/build-corpus-index.py; the world "
                      + "document holds only the catalogue" },
     tools: ["corpus_matters_list", "corpus_files_list", "corpus_search", "corpus_read"],

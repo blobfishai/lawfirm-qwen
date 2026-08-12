@@ -4,7 +4,9 @@
 
 **Evidence:** `research/repos/harveyai@harvey-labs` @ `60071cc4` (2026-08-10,
 "firm-knowledge: update tasks to v3 rubric"). Inventory extracted by
-`research/extract-lab-corpus.mjs` into `research/answers/data/lab-corpus.json`.
+`research/extract-lab-corpus.mjs` into `research/answers/data/lab-corpus.json`;
+the byte-level source identity is frozen in
+`world/ingest/lab-source-lock.json`.
 
 > **Count correction.** The repo's README badge says 1,671 tasks. At HEAD there
 > are **2,010** `task.json` files. My first extraction found only 1,143 because
@@ -19,13 +21,21 @@
 | | LAB | our world (`world-v6.json`) |
 |---|---|---|
 | tasks | 2,010 | 270 |
-| input documents | **51,683** | 311 |
+| task-local input documents | **51,683** | 311 |
+| shared firm-knowledge DMS | **9,288** | separately hosted as C&H |
 | document format | real `.docx` / `.xlsx` / `.eml` / `.pptx` | text rows in SQLite |
 | grading units | 114,437 rubric criteria (mean **56.9**/task) | ~7 assertions/task |
 | deliverable format | 1,247 `.docx`, 39 `.xlsx`, 11 `.md` | a row insert, or a document row |
 
 Document formats, by count: `.docx` 33,954 · `.xlsx` 10,575 · `.eml` 5,169 ·
 `.pptx` 1,091 · `.txt` 889.
+
+The 51,683 figure is the sum of task-local `documents/` trees. LAB also has a
+single 9,288-file `firm-knowledge/dms` tree referenced by 250 tasks via
+`docs_dir`; it must be counted once, not omitted and not multiplied by 250.
+The complete physical input boundary is therefore **60,971 files / 3.207 GB**.
+Our `world/corpus/ch` index is that shared tree (9,288 parsed, zero failures),
+while `world/corpus/lab` holds the task-local content-addressed store.
 
 **The `.eml` and `.xlsx` counts are the interesting ones.** 5,169 emails and
 10,575 spreadsheets means a large fraction of the evidence is *correspondence

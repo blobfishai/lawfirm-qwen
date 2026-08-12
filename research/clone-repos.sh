@@ -8,13 +8,15 @@
 # registry (data/research/domain-registry.json, 101 items) was web-sourced and
 # nothing was ever downloaded, so no claim in it could be checked against code.
 #
-# Shallow clones (--depth 1); we want source and fixtures, not history.
+# Shallow, detached checkouts of the exact revisions in repos-commits.json; we
+# want source and fixtures, not history, and "latest main" is not provenance.
 # Failures are RECORDED, never silently skipped — an unavailable repo is a fact
 # about the domain, not a gap to paper over.
 #
 # Usage: bash research/clone-repos.sh
 set -u
 DEST="$(cd "$(dirname "$0")" && pwd)/repos"
+LOCKS="$(cd "$(dirname "$0")" && pwd)/repos-commits.json"
 mkdir -p "$DEST"
 MANIFEST="$DEST/../repos-manifest.tsv"
 : > "$MANIFEST"
@@ -24,14 +26,46 @@ clone() {  # clone <category> <owner/name>
   local cat="$1" repo="$2"
   local name="${repo//\//@}"
   local dir="$DEST/$name"
+  local locked
+  locked="$(python3 - "$LOCKS" "$name" <<'PY'
+import json, sys
+print(json.load(open(sys.argv[1])).get(sys.argv[2], ""))
+PY
+)"
+  if [ -z "$locked" ]; then
+    printf 'FAIL\t%s\t%s\t-\tmissing revision in repos-commits.json\n' "$cat" "$repo" >> "$MANIFEST"
+    echo "FAIL  $repo — no pinned revision"; return
+  fi
   if [ -d "$dir/.git" ]; then
-    printf 'OK\t%s\t%s\t%s\tpresent\n' "$cat" "$repo" "$(du -sh "$dir" | cut -f1 | tr -d ' ')" >> "$MANIFEST"
-    echo "SKIP  $repo"; return
+    local actual; actual="$(git -C "$dir" rev-parse HEAD 2>/dev/null || true)"
+    if [[ "$actual" == "$locked"* ]]; then
+      printf 'OK\t%s\t%s\t%s\tpresent@%s\n' "$cat" "$repo" "$(du -sh "$dir" | cut -f1 | tr -d ' ')" "$locked" >> "$MANIFEST"
+      echo "SKIP  $repo@$locked"; return
+    fi
   fi
   rm -rf "$dir"
-  if timeout 900 git clone --depth 1 --quiet "https://github.com/$repo.git" "$dir" 2>/tmp/clone_err; then
-    printf 'OK\t%s\t%s\t%s\t\n' "$cat" "$repo" "$(du -sh "$dir" | cut -f1 | tr -d ' ')" >> "$MANIFEST"
-    echo "OK    $repo"
+  mkdir -p "$dir"
+  git -C "$dir" init --quiet
+  git -C "$dir" remote add origin "https://github.com/$repo.git"
+  # Git upload-pack generally does not accept abbreviated, unreachable SHAs.
+  # Resolve our human-auditable 12-char lock through GitHub's commit endpoint,
+  # then fetch that exact full object even after the default branch moves.
+  local resolved
+  resolved="$(curl -fsSL "https://api.github.com/repos/$repo/commits/$locked" 2>/tmp/clone_err \
+    | python3 -c 'import json,sys; print(json.load(sys.stdin).get("sha", ""))' 2>>/tmp/clone_err || true)"
+  if [ -z "$resolved" ] || [[ "$resolved" != "$locked"* ]]; then
+    printf 'FAIL\t%s\t%s\t-\tcannot resolve pinned revision %s\n' "$cat" "$repo" "$locked" >> "$MANIFEST"
+    echo "FAIL  $repo — cannot resolve $locked"; return
+  fi
+  if timeout 900 git -C "$dir" fetch --depth 1 --quiet origin "$resolved" 2>/tmp/clone_err \
+      && git -C "$dir" checkout --detach --quiet FETCH_HEAD; then
+    local actual; actual="$(git -C "$dir" rev-parse HEAD)"
+    if [[ "$actual" != "$locked"* ]]; then
+      printf 'FAIL\t%s\t%s\t-\trevision mismatch: got %s expected %s\n' "$cat" "$repo" "$actual" "$locked" >> "$MANIFEST"
+      echo "FAIL  $repo — revision mismatch"; return
+    fi
+    printf 'OK\t%s\t%s\t%s\t%s\n' "$cat" "$repo" "$(du -sh "$dir" | cut -f1 | tr -d ' ')" "$actual" >> "$MANIFEST"
+    echo "OK    $repo@$actual"
   else
     local err; err=$(tr '\n' ' ' < /tmp/clone_err | head -c 140)
     printf 'FAIL\t%s\t%s\t-\t%s\n' "$cat" "$repo" "$err" >> "$MANIFEST"

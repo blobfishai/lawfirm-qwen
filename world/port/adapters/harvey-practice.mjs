@@ -8,9 +8,10 @@
  * workflow    none declared beyond the deliverable list
  *
  * This adapter deliberately reports grading.kind = "judge". We can host the
- * documents verbatim (packs-lab does, for one task) but we cannot score the
- * rubric without a judge, and claiming otherwise would be the exact error
- * docs/PARITY.md exists to prevent.
+ * source-native rubric without a judge. v17 imports every file into the
+ * content-addressed LAB evidence store; deterministic criterion compilation
+ * is a separate admission gate, so evidence-ready is never conflated with
+ * score-ready.
  */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -18,31 +19,57 @@ import { walkFiles, gitCommit } from "../lib.mjs";
 
 export const meta = { id: "harvey-practice", repo: "harveyai@harvey-labs", license: "MIT" };
 
+function deliverablesOf(task) {
+  const declared = Object.keys(task.deliverables ?? {});
+  if (declared.length) return declared;
+  const output = String(task.instructions ?? "").match(
+    /(?:^|\n)#{0,3}\s*Output:\s*(?:\n\s*)?`?([^`\n]+\.(?:docx|xlsx|pptx|md|pdf))`?/i,
+  );
+  return output ? [output[1].trim()] : [];
+}
+
 export function port(repoDir) {
   const src = join(repoDir, "tasks");
+  const commit = gitCommit(repoDir);
   const files = walkFiles(src, (p) => p.endsWith("task.json") && !p.includes("firm-knowledge"));
   const tasks = files.map((p) => {
     const t = JSON.parse(readFileSync(p, "utf8"));
+    const sourceTask = p.split("/tasks/")[1].replace(/\/task\.json$/, "");
+    const deliverables = deliverablesOf(t);
     return {
       id: `lab_${p.split("/tasks/")[1].replace(/\/task\.json$/, "").replace(/\//g, "__")}`,
       prompt: t.instructions ?? "", title: t.title ?? "",
       work_type: t.work_type ?? null,
-      deliverables: Object.keys(t.deliverables ?? {}),
+      deliverables,
       criteria_count: (t.criteria ?? []).length,
       grading: "judge_only",
-      provenance: { path: p.split("/harvey-labs/")[1] },
+      file_lane: {
+        source_task: sourceTask,
+        source_commit: commit,
+        documents_source: `research/repos/${meta.repo}/tasks/${sourceTask}/documents`,
+        deliverables,
+        skills: ["docx", "xlsx", "pptx"],
+      },
+      provenance: { path: `tasks/${sourceTask}/task.json` },
     };
   });
+  const missingOutputContract = tasks.filter((task) => task.deliverables.length === 0)
+    .map((task) => task.id);
   return {
-    source: { repo: meta.repo, commit: gitCommit(repoDir), path: "tasks/", license: meta.license,
+    source: { repo: meta.repo, commit, path: "tasks/", license: meta.license,
               adaptations: [] },
     tasks,
-    documents: { external_store: null,
-                 note: "per-task documents/ trees, 51k+ files; not yet ingested" },
-    tools: ["corpus_search", "corpus_read"],
+    documents: { external_store: "world/corpus/lab",
+                 source_lock: "world/ingest/lab-source-lock.json",
+                 note: "51,683 task-local files; exact bytes + extracted text + provenance" },
+    tools: ["documents_search_fulltext", "documents_download", "documents_create"],
+    file_lane: {
+      tasks: tasks.length,
+      exact_filename_contracts: tasks.length - missingOutputContract.length,
+      missing_filename_contracts: missingOutputContract,
+    },
     grading: { kind: "judge", key: "prose rubric criteria, LLM-adjudicated",
                ungraded: tasks.reduce((a, t) => a + t.criteria_count, 0) },
-    gaps: [{ what: "scoring", why: "rubric is prose; no deterministic key extractable" },
-           { what: "documents", why: "per-task corpora not yet ingested into world/corpus" }],
+    gaps: [{ what: "admission", why: "criteria remain excluded until propose-validate-compile and discrimination pass" }],
   };
 }
