@@ -38,7 +38,7 @@ def main() -> int:
                     "reward": 1 if passed else 0,
                     "toolCalls": 2,
                     "toolScope": {"mode": "systems"},
-                    "measurementProtocol": "v19-systems-bounded-context-v1",
+                    "measurementProtocol": "v19-systems-bounded-context-v2",
                     "steps": [{"tool": "read", "observation": "{}"}],
                     "verdict": {"paging_complete": index != 2},
                 }
@@ -73,7 +73,7 @@ def main() -> int:
                 "taskId": "fixture_lab", "worldVersion": 19,
                 "passed": False, "reward": 0, "toolCalls": 1,
                 "toolScope": {"mode": "systems"},
-                "measurementProtocol": "v19-systems-bounded-context-v1",
+                "measurementProtocol": "v19-systems-bounded-context-v2",
             }))
 
         # Refusal is excluded; zero-call non-refusal remains a failure.
@@ -81,24 +81,24 @@ def main() -> int:
             "taskId": "fixture_02", "worldVersion": 19, "passed": False,
             "toolCalls": 0, "finalText": "I cannot assist with that request.",
             "toolScope": {"mode": "systems"},
-            "measurementProtocol": "v19-systems-bounded-context-v1",
+            "measurementProtocol": "v19-systems-bounded-context-v2",
         }))
         (episodes / "fixture_03-zero.json").write_text(json.dumps({
             "taskId": "fixture_03", "worldVersion": 19, "passed": False,
             "toolCalls": 0, "finalText": "No action taken.",
             "toolScope": {"mode": "systems"},
-            "measurementProtocol": "v19-systems-bounded-context-v1",
+            "measurementProtocol": "v19-systems-bounded-context-v2",
         }))
         (episodes / "fixture_03-old-world.json").write_text(json.dumps({
             "taskId": "fixture_03", "worldVersion": 18, "passed": True,
             "toolCalls": 1,
             "toolScope": {"mode": "systems"},
-            "measurementProtocol": "v19-systems-bounded-context-v1",
+            "measurementProtocol": "v19-systems-bounded-context-v2",
         }))
         (episodes / "fixture_04-wrong-scope.json").write_text(json.dumps({
             "taskId": "fixture_04", "worldVersion": 19, "passed": True,
             "toolCalls": 1, "toolScope": {"mode": "all"},
-            "measurementProtocol": "v19-systems-bounded-context-v1",
+            "measurementProtocol": "v19-systems-bounded-context-v2",
         }))
         (episodes / "fixture_05-wrong-protocol.json").write_text(json.dumps({
             "taskId": "fixture_05", "worldVersion": 19, "passed": True,

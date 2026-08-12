@@ -487,7 +487,7 @@ most recent tool results verbatim and deterministically compact older results
 to 1,000 characters (six/300 under context pressure), while preserving every
 assistant/tool protocol link and the full immutable episode trace. Episode records can be stored
 as deterministic JSON.GZ with raw/compressed collision checks and byte-identical
-rebuild tests. A final-protocol probe passed for $0.07966: 290,296 prompt
+rebuild tests. A v1 post-fix probe passed for $0.07966: 290,296 prompt
 tokens, seven turns/eight calls, and a 138,293-byte three-system schema surface.
 
 **Blast radius:** the pilot never entered a completed calibration report. Its
@@ -495,3 +495,30 @@ tokens, seven turns/eight calls, and a 138,293-byte three-system schema surface.
 `data/leaderboard/quarantine/deepseek-chat/v19-triage-oversized-schema/` and are
 excluded from every denominator. No oracle, verifier, task, or product contract
 changed; this was a model-runner protocol and spend-control defect.
+
+## Bug 19 — a cost-safe turn floor truncated the calibration (FIXED)
+
+**Symptom:** after Bug 18's schema fix, the first breadth-first calibration
+slice produced 0 passes and 89 of 106 episodes ended on their exact turn
+ceiling. The records were internally valid but could not distinguish model
+difficulty from a harness timeout.
+
+**Diagnosis:** protocol v1 used a 10-turn minimum. The 106-task slice averaged
+15.4 turns and 32.6 tool calls, but 84% exhausted the allowance. This was not an
+API or verifier failure; the model was still actively using tools when the
+runner stopped it. A ceiling that binds most episodes is part of the task, not
+an incidental resource guard, and therefore must be calibrated and versioned.
+
+**Fix:** protocol v2 raises the minimum to 20 turns while retaining the hard
+50-turn cap: `min(50, max(20, ceil(reference_calls * 1.25) + 5))`. The observed
+v1 cost/turn curve projects v2 at roughly $1.7K for 6,972 episodes, within the
+$2K program envelope and behind both $10/episode and $1,700/sweep circuit
+breakers. An explicit `--max-turns` override now clears the canonical protocol
+identifier, so probes can never enter the production denominator. Pure gates
+pin that behavior.
+
+**Blast radius:** all 106 v1 episodes are preserved under
+`data/leaderboard/quarantine/deepseek-chat/v19-triage-turn-budget-v1/` and are
+excluded by the protocol-version gate. The episode-major schedule made the
+sample broad, but no v1 result is reused. Tasks, verifiers, world state, and
+vendor contracts are unchanged.

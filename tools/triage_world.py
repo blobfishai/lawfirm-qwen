@@ -18,7 +18,7 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_WORLD = ROOT / "world" / "blobfish" / "world-v19.json"
-DEFAULT_PROTOCOL = "v19-systems-bounded-context-v1"
+DEFAULT_PROTOCOL = "v19-systems-bounded-context-v2"
 REFUSAL_RE = re.compile(
     r"\b(cannot assist|can't assist|cannot help with|unable to (help|assist)|"
     r"i (must|have to) (decline|refuse)|against my (guidelines|principles))\b",

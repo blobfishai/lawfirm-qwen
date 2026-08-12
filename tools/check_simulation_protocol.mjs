@@ -19,10 +19,12 @@ if (!scoped.tools.some((tool) => tool.name === "documents_create")) throw new Er
 if (scoped.metadata.distractorSystems.length !== 2) throw new Error("system distractors missing");
 if (scoped.metadata.tools === 2) throw new Error("scope leaked exact reference walk");
 if (scopeTools(task, tools, systems, "all").tools.length !== tools.length) throw new Error("all scope changed");
-if (turnBudget(3, 50) !== 10 || turnBudget(5, 50) !== 12 || turnBudget(11, 50) !== 19 || turnBudget(50, 50) !== 50 || turnBudget(703, 50) !== 50) {
+if (turnBudget(3, 50) !== 20 || turnBudget(5, 50) !== 20 || turnBudget(11, 50) !== 20 || turnBudget(15, 50) !== 24 || turnBudget(50, 50) !== 50 || turnBudget(703, 50) !== 50) {
   throw new Error("reference-relative turn budget changed");
 }
-if (measurementProtocolId("systems") !== MEASUREMENT_PROTOCOL_ID || measurementProtocolId("all") !== null) {
+if (measurementProtocolId("systems") !== MEASUREMENT_PROTOCOL_ID
+    || measurementProtocolId("all") !== null
+    || measurementProtocolId("systems", true) !== null) {
   throw new Error("measurement protocol labeling changed");
 }
 

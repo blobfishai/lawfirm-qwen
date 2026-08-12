@@ -351,7 +351,7 @@ async function main() {
     engine: ENGINE.id,
     model: ENGINE.model,
     mcpMode,
-    measurementProtocol: measurementProtocolId(toolScopeFlag),
+    measurementProtocol: measurementProtocolId(toolScopeFlag, maxTurnsFlag !== null),
     measurementProtocolConfig: MEASUREMENT_PROTOCOL,
     toolScope: scoped.metadata,
     contextPolicy: CONTEXT_POLICY,

@@ -7,7 +7,7 @@
 - Complete: **no**
 - Episode source: `data/leaderboard/episodes/deepseek-chat/v19-triage`
 - Tool-scope protocol: `systems`
-- Measurement protocol: `v19-systems-bounded-context-v1`
+- Measurement protocol: `v19-systems-bounded-context-v2`
 
 | Label | Tasks | Rule |
 |---|---:|---|
