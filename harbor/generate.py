@@ -280,7 +280,10 @@ def main() -> None:
                                                     "world-v15.json"))
     ap.add_argument("--out", default=os.path.join(ROOT, "dist", "harbor"))
     ap.add_argument("--tasks", default="", help="comma-separated task_id filter")
-    ap.add_argument("--image-tag", default="legal-agent-sim-world:v15")
+    ap.add_argument("--image-tag",
+                    default="ghcr.io/blobfishai/legal-agent-sim-world:v15",
+                    help="world image reference baked into every task's compose "
+                         "file; --build-image tags the local build with it")
     ap.add_argument("--build-image", action="store_true")
     args = ap.parse_args()
 

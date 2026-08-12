@@ -24,10 +24,29 @@ deterministic (the `/solve` token persists in
 ```bash
 uvx harbor run -p "dist/harbor/tasks/task_005" -a oracle                 # sanity: reward 1.0
 uvx harbor run -p "dist/harbor/tasks/task_005" -a claude-code -m anthropic/claude-sonnet-5
+uvx harbor run -p "dist/harbor/tasks" -a oracle -n 4                     # the whole dataset
 ```
 
 Multi-container tasks need Harbor's **docker** environment provider (compose
 networking); cloud providers (Daytona/Modal/E2B) are not supported for these.
+
+## Ship
+
+Tasks reference the world image as `ghcr.io/blobfishai/legal-agent-sim-world:v15`,
+so a published image makes every task dir self-sufficient (no local build).
+Both shipping steps need interactive auth, so they are manual:
+
+```bash
+# 1. Push the world image (one-time; needs the write:packages scope)
+gh auth refresh -h github.com -s write:packages
+gh auth token | docker login ghcr.io -u <github-user> --password-stdin
+docker push ghcr.io/blobfishai/legal-agent-sim-world:v15
+# then make the package public: https://github.com/orgs/blobfishai/packages
+
+# 2. Publish tasks to the Harbor registry (hub.harborframework.com)
+uvx harbor auth login          # GitHub sign-in flow
+uvx harbor publish "dist/harbor/tasks"
+```
 
 ## Architecture
 
