@@ -83,12 +83,30 @@ function buildVcode(taskId, task, walk, insertChecks, forbidden, requiredReadIds
         f"expected a new ${c.table} row with ${f}=${String(nv).slice(0, 60)}; got " +
         str([_norm(r.get(${pyStr(f)})) for r in _new_rows_${i}][:8]))`;
     }).join("");
+    // Grounding assertions over the written text of the new rows.
+    const groundLines = (c.grounded ?? []).map((g, j) => {
+      const present = JSON.stringify(g.present);
+      const absent = JSON.stringify(g.absent);
+      return `
+    _txt_${i}_${j} = " \\n ".join(str(r.get(${pyStr(g.field)}) or "") for r in _new_rows_${i}).lower()
+    _need_${i}_${j} = [a for a in ${present} if a.lower() not in _txt_${i}_${j}]
+    chk(${pyStr(`${c.table}_${g.field}_grounded_in_sources`)},
+        len(_txt_${i}_${j}) >= ${g.minChars} and len(_need_${i}_${j}) == 0,
+        ("deliverable carries all " + str(${present.length ? `len(${present})` : 0}) + " source anchors")
+        if len(_need_${i}_${j}) == 0 and len(_txt_${i}_${j}) >= ${g.minChars}
+        else (f"UNGROUNDED: body is {len(_txt_${i}_${j})} chars (need >= ${g.minChars}); "
+              f"missing {len(_need_${i}_${j})} required anchor(s): " + str(_need_${i}_${j}[:6])))
+    _bad_${i}_${j} = [a for a in ${absent} if a.lower() in _txt_${i}_${j}]
+    chk(${pyStr(`${c.table}_${g.field}_no_unsupported_claims`)}, len(_bad_${i}_${j}) == 0,
+        "no contradicted figures in the deliverable" if not _bad_${i}_${j}
+        else f"UNSUPPORTED: deliverable asserts value(s) the sources contradict: " + str(_bad_${i}_${j}[:6]))`;
+    }).join("");
     return `
     _bi_${i} = _by_id(_rows(initial_state, ${pyStr(c.table)}))
     _af_${i} = _rows(final_state, ${pyStr(c.table)})
     _new_rows_${i} = [r for r in _af_${i} if str(r.get("id")) not in _bi_${i}]
     chk(${pyStr(`rows_inserted_into_${c.table}`)}, len(_new_rows_${i}) >= ${c.minRows ?? 1},
-        f"${c.table}: {len(_bi_${i})} -> {len(_af_${i})} rows ({len(_new_rows_${i})} new, need >= ${c.minRows ?? 1})")${pinLines}`;
+        f"${c.table}: {len(_bi_${i})} -> {len(_af_${i})} rows ({len(_new_rows_${i})} new, need >= ${c.minRows ?? 1})")${pinLines}${groundLines}`;
   }).join("\n");
 
   const forbiddenBlocks = (forbidden ?? []).map((f, i) => `
@@ -319,6 +337,26 @@ for (const pf of packFiles) {
           continue;
         }
         m.pinnedPairs.push([f, v]);
+      }
+      // Grounding: assert on the TEXT of a written deliverable, not just its
+      // metadata. Without this a drafting task passes on `after_n > before_n`
+      // — a document titled "asdf" with body "asdf" scored reward 1.0 on
+      // task_003. Anchors must be strings any correct deliverable has to carry
+      // verbatim (figures, section numbers, defined terms), and `absent` holds
+      // the plausible wrong values, so the check fails both an empty draft and
+      // a confidently wrong one.
+      if (c.grounded) {
+        const g = c.grounded;
+        if (!cols.has(g.field)) {
+          report.skipped.push(`${pf}/${spec.slug}: grounding on non-column ${table}.${g.field} dropped`);
+        } else {
+          (m.grounded ??= []).push({
+            field: g.field,
+            present: g.present ?? [],
+            absent: g.absent ?? [],
+            minChars: g.minChars ?? 0,
+          });
+        }
       }
     }
     const finalChecks = Object.values(mergedByTable);
