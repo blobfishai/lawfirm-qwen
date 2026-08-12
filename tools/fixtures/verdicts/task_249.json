@@ -1,0 +1,514 @@
+{
+ "task_id": "task_249",
+ "world": "world-v15.json",
+ "episodes": {
+  "oracle": {
+   "trace": [
+    {
+     "tool": "query_matter_documents",
+     "requested_tool": "query_matter_documents",
+     "arguments": {
+      "title": "Clause library \u2014 CL-117 Audit Rights"
+     },
+     "observation": "{\"table\": \"matter_documents\", \"count\": 1, \"returned\": 1, \"offset\": 0, \"limit\": 25, \"rows\": [{\"id\": 228, \"title\": \"Clause library \\u2014 CL-117 Audit Rights\", \"doc_type\": \"precedent_clause\", \"related_shape\": \"acord-clause-retrieval\", \"body\": \"PRECEDENT CLAUSE CL-117\\nCategory: Audit Rights\\nLibrary slug: audit_rights\\nApproved by: Contracts KM Committee\\n\\nAUDIT RIGHTS. Customer may, not more than once per calendar year and upon thirty (30) days' notice, audit Supplier's records rela\\u2026[preview]\"}], \"has_more\": false, \"note\": \"body fields are previews \\u2014 call read_matter_document(id) to read a document in full before using it\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 228
+     },
+     "observation": "{\"id\": 228, \"title\": \"Clause library \\u2014 CL-117 Audit Rights\", \"doc_type\": \"precedent_clause\", \"related_shape\": \"acord-clause-retrieval\", \"body\": \"PRECEDENT CLAUSE CL-117\\nCategory: Audit Rights\\nLibrary slug: audit_rights\\nApproved by: Contracts KM Committee\\n\\nAUDIT RIGHTS. Customer may, not more than once per calendar year and upon thirty (30) days' notice, audit Supplier's records relating to fees charged under this Agreement. If an audit reveals an overcharge exceeding five percent (5%), Supplier shall bear the cost of the audit.\\n\\nUse note: this is firm-approved precedent language; deviations require playbook escalation.\"}",
+     "ok": true
+    },
+    {
+     "tool": "legal_matters_amount_history_create",
+     "requested_tool": "legal_matters_amount_history_create",
+     "arguments": {
+      "legal_matters_id": "legal_matters_001",
+      "fee_budget": 5,
+      "changed_by_role": "contracts-km",
+      "change_reason": "CL-117 audit-rights cost-shifting threshold is a 5% overcharge."
+     },
+     "observation": "{\"status\": \"created\", \"table\": \"legal_matters_amount_history\", \"id\": \"legal_matters_amount_history_016\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_249",
+    "passed": true,
+    "reward": 1.0,
+    "explanation": "All task checks passed",
+    "failed_conditions": [],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": true,
+      "details": "reads=2, writes=1, read_first=True"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": true,
+      "details": "completed ordered workflow: query_matter_documents -> read_matter_document -> legal_matters_amount_history_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": true,
+      "details": "all required input documents were read in full"
+     },
+     {
+      "name": "rows_inserted_into_legal_matters_amount_history",
+      "passed": true,
+      "details": "legal_matters_amount_history: 15 -> 16 rows (1 new, need >= 1)"
+     },
+     {
+      "name": "legal_matters_amount_history_new_row_0_fee_budget_is_5.0",
+      "passed": true,
+      "details": "expected a new legal_matters_amount_history row with fee_budget=5.0; got ['5.0']"
+     },
+     {
+      "name": "legal_matters_amount_history_new_row_1_changed_by_role_is_contracts-km",
+      "passed": true,
+      "details": "expected a new legal_matters_amount_history row with changed_by_role=contracts-km; got ['contracts-km']"
+     },
+     {
+      "name": "no_new_legal_matters_amount_history_row_with_fee_budget_10",
+      "passed": true,
+      "details": "no fabricated fee_budget=10 row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "3/3 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "noop": {
+   "trace": [],
+   "verdict": {
+    "task_id": "task_249",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: state_changed, reads_before_writes, required_workflow_path, required_documents_read, rows_inserted_into_legal_matters_amount_history, legal_matters_amount_history_new_row_0_fee_budget_is_5.0, legal_matters_amount_history_new_row_1_changed_by_role_is_contracts-km",
+    "failed_conditions": [
+     "state_changed",
+     "reads_before_writes",
+     "required_workflow_path",
+     "required_documents_read",
+     "rows_inserted_into_legal_matters_amount_history",
+     "legal_matters_amount_history_new_row_0_fee_budget_is_5.0",
+     "legal_matters_amount_history_new_row_1_changed_by_role_is_contracts-km"
+    ],
+    "advisory_conditions": [
+     "all_tools_succeeded"
+    ],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": false,
+      "details": "NO state change \u2014 agent did nothing"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": false,
+      "details": "reads=0, writes=0, read_first=False"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints query_matter_documents -> read_matter_document -> legal_matters_amount_history_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": false,
+      "details": "EVIDENCE GAP: matter_documents ['228'] were never read with read_matter_document"
+     },
+     {
+      "name": "rows_inserted_into_legal_matters_amount_history",
+      "passed": false,
+      "details": "legal_matters_amount_history: 15 -> 15 rows (0 new, need >= 1)"
+     },
+     {
+      "name": "legal_matters_amount_history_new_row_0_fee_budget_is_5.0",
+      "passed": false,
+      "details": "expected a new legal_matters_amount_history row with fee_budget=5.0; got []"
+     },
+     {
+      "name": "legal_matters_amount_history_new_row_1_changed_by_role_is_contracts-km",
+      "passed": false,
+      "details": "expected a new legal_matters_amount_history row with changed_by_role=contracts-km; got []"
+     },
+     {
+      "name": "no_new_legal_matters_amount_history_row_with_fee_budget_10",
+      "passed": true,
+      "details": "no fabricated fee_budget=10 row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": false,
+      "details": "0/0 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "text_only": {
+   "trace": [
+    {
+     "tool": "query_matter_documents",
+     "requested_tool": "query_matter_documents",
+     "arguments": {
+      "title": "Clause library \u2014 CL-117 Audit Rights"
+     },
+     "observation": "{\"table\": \"matter_documents\", \"count\": 1, \"returned\": 1, \"offset\": 0, \"limit\": 25, \"rows\": [{\"id\": 228, \"title\": \"Clause library \\u2014 CL-117 Audit Rights\", \"doc_type\": \"precedent_clause\", \"related_shape\": \"acord-clause-retrieval\", \"body\": \"PRECEDENT CLAUSE CL-117\\nCategory: Audit Rights\\nLibrary slug: audit_rights\\nApproved by: Contracts KM Committee\\n\\nAUDIT RIGHTS. Customer may, not more than once per calendar year and upon thirty (30) days' notice, audit Supplier's records rela\\u2026[preview]\"}], \"has_more\": false, \"note\": \"body fields are previews \\u2014 call read_matter_document(id) to read a document in full before using it\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 228
+     },
+     "observation": "{\"id\": 228, \"title\": \"Clause library \\u2014 CL-117 Audit Rights\", \"doc_type\": \"precedent_clause\", \"related_shape\": \"acord-clause-retrieval\", \"body\": \"PRECEDENT CLAUSE CL-117\\nCategory: Audit Rights\\nLibrary slug: audit_rights\\nApproved by: Contracts KM Committee\\n\\nAUDIT RIGHTS. Customer may, not more than once per calendar year and upon thirty (30) days' notice, audit Supplier's records relating to fees charged under this Agreement. If an audit reveals an overcharge exceeding five percent (5%), Supplier shall bear the cost of the audit.\\n\\nUse note: this is firm-approved precedent language; deviations require playbook escalation.\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_249",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: state_changed, required_workflow_path, rows_inserted_into_legal_matters_amount_history, legal_matters_amount_history_new_row_0_fee_budget_is_5.0, legal_matters_amount_history_new_row_1_changed_by_role_is_contracts-km",
+    "failed_conditions": [
+     "state_changed",
+     "required_workflow_path",
+     "rows_inserted_into_legal_matters_amount_history",
+     "legal_matters_amount_history_new_row_0_fee_budget_is_5.0",
+     "legal_matters_amount_history_new_row_1_changed_by_role_is_contracts-km"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": false,
+      "details": "NO state change \u2014 agent did nothing"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": true,
+      "details": "reads=2, writes=0, read_first=True"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints legal_matters_amount_history_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": true,
+      "details": "all required input documents were read in full"
+     },
+     {
+      "name": "rows_inserted_into_legal_matters_amount_history",
+      "passed": false,
+      "details": "legal_matters_amount_history: 15 -> 15 rows (0 new, need >= 1)"
+     },
+     {
+      "name": "legal_matters_amount_history_new_row_0_fee_budget_is_5.0",
+      "passed": false,
+      "details": "expected a new legal_matters_amount_history row with fee_budget=5.0; got []"
+     },
+     {
+      "name": "legal_matters_amount_history_new_row_1_changed_by_role_is_contracts-km",
+      "passed": false,
+      "details": "expected a new legal_matters_amount_history row with changed_by_role=contracts-km; got []"
+     },
+     {
+      "name": "no_new_legal_matters_amount_history_row_with_fee_budget_10",
+      "passed": true,
+      "details": "no fabricated fee_budget=10 row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "2/2 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "blind_write": {
+   "trace": [
+    {
+     "tool": "legal_matters_amount_history_create",
+     "requested_tool": "legal_matters_amount_history_create",
+     "arguments": {
+      "legal_matters_id": "legal_matters_001",
+      "fee_budget": 5,
+      "changed_by_role": "contracts-km",
+      "change_reason": "CL-117 audit-rights cost-shifting threshold is a 5% overcharge."
+     },
+     "observation": "{\"status\": \"created\", \"table\": \"legal_matters_amount_history\", \"id\": \"legal_matters_amount_history_016\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_249",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: reads_before_writes, no_shortcut_direct_update, required_workflow_path, required_documents_read",
+    "failed_conditions": [
+     "reads_before_writes",
+     "no_shortcut_direct_update",
+     "required_workflow_path",
+     "required_documents_read"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": false,
+      "details": "reads=0, writes=1, read_first=False"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": false,
+      "details": "SHORTCUT: wrote without reading first"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints query_matter_documents -> read_matter_document"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": false,
+      "details": "EVIDENCE GAP: matter_documents ['228'] were never read with read_matter_document"
+     },
+     {
+      "name": "rows_inserted_into_legal_matters_amount_history",
+      "passed": true,
+      "details": "legal_matters_amount_history: 15 -> 16 rows (1 new, need >= 1)"
+     },
+     {
+      "name": "legal_matters_amount_history_new_row_0_fee_budget_is_5.0",
+      "passed": true,
+      "details": "expected a new legal_matters_amount_history row with fee_budget=5.0; got ['5.0']"
+     },
+     {
+      "name": "legal_matters_amount_history_new_row_1_changed_by_role_is_contracts-km",
+      "passed": true,
+      "details": "expected a new legal_matters_amount_history row with changed_by_role=contracts-km; got ['contracts-km']"
+     },
+     {
+      "name": "no_new_legal_matters_amount_history_row_with_fee_budget_10",
+      "passed": true,
+      "details": "no fabricated fee_budget=10 row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "1/1 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "wrong_value": {
+   "trace": [
+    {
+     "tool": "query_matter_documents",
+     "requested_tool": "query_matter_documents",
+     "arguments": {
+      "title": "Clause library \u2014 CL-117 Audit Rights"
+     },
+     "observation": "{\"table\": \"matter_documents\", \"count\": 1, \"returned\": 1, \"offset\": 0, \"limit\": 25, \"rows\": [{\"id\": 228, \"title\": \"Clause library \\u2014 CL-117 Audit Rights\", \"doc_type\": \"precedent_clause\", \"related_shape\": \"acord-clause-retrieval\", \"body\": \"PRECEDENT CLAUSE CL-117\\nCategory: Audit Rights\\nLibrary slug: audit_rights\\nApproved by: Contracts KM Committee\\n\\nAUDIT RIGHTS. Customer may, not more than once per calendar year and upon thirty (30) days' notice, audit Supplier's records rela\\u2026[preview]\"}], \"has_more\": false, \"note\": \"body fields are previews \\u2014 call read_matter_document(id) to read a document in full before using it\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 228
+     },
+     "observation": "{\"id\": 228, \"title\": \"Clause library \\u2014 CL-117 Audit Rights\", \"doc_type\": \"precedent_clause\", \"related_shape\": \"acord-clause-retrieval\", \"body\": \"PRECEDENT CLAUSE CL-117\\nCategory: Audit Rights\\nLibrary slug: audit_rights\\nApproved by: Contracts KM Committee\\n\\nAUDIT RIGHTS. Customer may, not more than once per calendar year and upon thirty (30) days' notice, audit Supplier's records relating to fees charged under this Agreement. If an audit reveals an overcharge exceeding five percent (5%), Supplier shall bear the cost of the audit.\\n\\nUse note: this is firm-approved precedent language; deviations require playbook escalation.\"}",
+     "ok": true
+    },
+    {
+     "tool": "legal_matters_amount_history_create",
+     "requested_tool": "legal_matters_amount_history_create",
+     "arguments": {
+      "legal_matters_id": "legal_matters_001",
+      "fee_budget": 4247.42,
+      "changed_by_role": "contracts-km XX-WRONG",
+      "change_reason": "CL-117 audit-rights cost-shifting threshold is a 5% overcharge. XX-WRONG"
+     },
+     "observation": "{\"status\": \"created\", \"table\": \"legal_matters_amount_history\", \"id\": \"legal_matters_amount_history_016\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_249",
+    "passed": false,
+    "reward": 0.3333,
+    "explanation": "Failed: legal_matters_amount_history_new_row_0_fee_budget_is_5.0, legal_matters_amount_history_new_row_1_changed_by_role_is_contracts-km",
+    "failed_conditions": [
+     "legal_matters_amount_history_new_row_0_fee_budget_is_5.0",
+     "legal_matters_amount_history_new_row_1_changed_by_role_is_contracts-km"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": true,
+      "details": "reads=2, writes=1, read_first=True"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": true,
+      "details": "completed ordered workflow: query_matter_documents -> read_matter_document -> legal_matters_amount_history_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": true,
+      "details": "all required input documents were read in full"
+     },
+     {
+      "name": "rows_inserted_into_legal_matters_amount_history",
+      "passed": true,
+      "details": "legal_matters_amount_history: 15 -> 16 rows (1 new, need >= 1)"
+     },
+     {
+      "name": "legal_matters_amount_history_new_row_0_fee_budget_is_5.0",
+      "passed": false,
+      "details": "expected a new legal_matters_amount_history row with fee_budget=5.0; got ['4247.42']"
+     },
+     {
+      "name": "legal_matters_amount_history_new_row_1_changed_by_role_is_contracts-km",
+      "passed": false,
+      "details": "expected a new legal_matters_amount_history row with changed_by_role=contracts-km; got ['contracts-km xx-wrong']"
+     },
+     {
+      "name": "no_new_legal_matters_amount_history_row_with_fee_budget_10",
+      "passed": true,
+      "details": "no fabricated fee_budget=10 row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "3/3 tool calls succeeded"
+     }
+    ]
+   }
+  }
+ }
+}

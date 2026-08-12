@@ -1,0 +1,547 @@
+{
+ "task_id": "task_275",
+ "world": "world-v15.json",
+ "episodes": {
+  "oracle": {
+   "trace": [
+    {
+     "tool": "query_matter_documents",
+     "requested_tool": "query_matter_documents",
+     "arguments": {
+      "title": "Arbitration clause review \u2014 Institutional rules mapping memo"
+     },
+     "observation": "{\"table\": \"matter_documents\", \"count\": 1, \"returned\": 1, \"offset\": 0, \"limit\": 25, \"rows\": [{\"id\": 268, \"title\": \"Arbitration clause review \\u2014 Institutional rules mapping memo\", \"doc_type\": \"arbitration_rules_memo\", \"related_shape\": \"arbitration-clause-review\", \"body\": \"ARBITRATION CLAUSE REVIEW (firm memo)\\n\\nClassify each clause by the RULES it adopts, not by where hearings are held. A clause that\\nfixes a hearing venue for convenience does not change the administering institution, and the\\nvenue city is fre\\u2026[preview]\"}], \"has_more\": false, \"note\": \"body fields are previews \\u2014 call read_matter_document(id) to read a document in full before using it\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 268
+     },
+     "observation": "{\"id\": 268, \"title\": \"Arbitration clause review \\u2014 Institutional rules mapping memo\", \"doc_type\": \"arbitration_rules_memo\", \"related_shape\": \"arbitration-clause-review\", \"body\": \"ARBITRATION CLAUSE REVIEW (firm memo)\\n\\nClassify each clause by the RULES it adopts, not by where hearings are held. A clause that\\nfixes a hearing venue for convenience does not change the administering institution, and the\\nvenue city is frequently another institution's home seat \\u2014 that coincidence is a trap.\\n\\nMAPPING (by the rules named in the clause):\\n  ICC Rules of Arbitration ......... administered by the ICC     -> icc_administered\\n  LCIA Arbitration Rules ........... administered by the LCIA    -> lcia_administered\\n  SIAC Arbitration Rules ........... administered by SIAC        -> siac_administered\\n  UNCITRAL Arbitration Rules ....... NOT administered by an institution unless the clause\\n                                     separately appoints one     -> uncitral_ad_hoc\\n\\nRecord the classification as an evidence record with owner_role exactly \\\"arbitration-counsel\\\"\\nand status exactly \\\"confirmed\\\".\\n\\nEvidence type vocabulary (use exactly):\\n  icc_administered | lcia_administered | siac_administered | uncitral_ad_hoc\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 273
+     },
+     "observation": "{\"id\": 273, \"title\": \"Arbitration clause \\u2014 Ridgeway Metals GmbH master agreement\", \"doc_type\": \"arbitration_clause\", \"related_shape\": \"arbitration-clause-review\", \"body\": \"ARBITRATION CLAUSE \\u2014 master agreement with Ridgeway Metals GmbH\\n\\n\\\"Any dispute arising out of or in connection with this Agreement shall be finally resolved by\\n arbitration under the ICC Rules of Arbitration. The seat of the arbitration shall be Zurich. The\\n tribunal shall consist of three arbitrators. Hearings shall be held in London for the\\n convenience of the parties and their witnesses. The language of the arbitration shall be\\n English.\\\"\\n\\nCounterparty correspondence notes that its counsel \\\"expects the London centre to\\nadminister the reference\\\" \\u2014 the counterparty's expectation is not part of the clause.\"}",
+     "ok": true
+    },
+    {
+     "tool": "legal_matters_evidence_create",
+     "requested_tool": "legal_matters_evidence_create",
+     "arguments": {
+      "legal_matters_id": "legal_matters_029",
+      "evidence_type": "icc_administered",
+      "source_uri": "matter://arbitration/ridgeway-metals-gmbh/clause",
+      "content_digest": "clause-icc-seat-zurich",
+      "owner_role": "arbitration-counsel",
+      "status": "confirmed"
+     },
+     "observation": "{\"status\": \"created\", \"table\": \"legal_matters_evidence_records\", \"id\": \"legal_matters_evidence_010\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_275",
+    "passed": true,
+    "reward": 1.0,
+    "explanation": "All task checks passed",
+    "failed_conditions": [],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": true,
+      "details": "reads=3, writes=1, read_first=True"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": true,
+      "details": "completed ordered workflow: query_matter_documents -> read_matter_document -> read_matter_document -> legal_matters_evidence_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": true,
+      "details": "all required input documents were read in full"
+     },
+     {
+      "name": "rows_inserted_into_legal_matters_evidence_records",
+      "passed": true,
+      "details": "legal_matters_evidence_records: 9 -> 10 rows (1 new, need >= 1)"
+     },
+     {
+      "name": "legal_matters_evidence_records_new_row_0_evidence_type_is_icc_administered",
+      "passed": true,
+      "details": "expected a new legal_matters_evidence_records row with evidence_type=icc_administered; got ['icc_administered']"
+     },
+     {
+      "name": "legal_matters_evidence_records_new_row_1_owner_role_is_arbitration-counsel",
+      "passed": true,
+      "details": "expected a new legal_matters_evidence_records row with owner_role=arbitration-counsel; got ['arbitration-counsel']"
+     },
+     {
+      "name": "no_new_legal_matters_evidence_records_row_with_evidence_type_lcia_administered",
+      "passed": true,
+      "details": "no fabricated evidence_type=lcia_administered row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "4/4 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "noop": {
+   "trace": [],
+   "verdict": {
+    "task_id": "task_275",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: state_changed, reads_before_writes, required_workflow_path, required_documents_read, rows_inserted_into_legal_matters_evidence_records, legal_matters_evidence_records_new_row_0_evidence_type_is_icc_administered, legal_matters_evidence_records_new_row_1_owner_role_is_arbitration-counsel",
+    "failed_conditions": [
+     "state_changed",
+     "reads_before_writes",
+     "required_workflow_path",
+     "required_documents_read",
+     "rows_inserted_into_legal_matters_evidence_records",
+     "legal_matters_evidence_records_new_row_0_evidence_type_is_icc_administered",
+     "legal_matters_evidence_records_new_row_1_owner_role_is_arbitration-counsel"
+    ],
+    "advisory_conditions": [
+     "all_tools_succeeded"
+    ],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": false,
+      "details": "NO state change \u2014 agent did nothing"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": false,
+      "details": "reads=0, writes=0, read_first=False"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints query_matter_documents -> read_matter_document -> read_matter_document -> legal_matters_evidence_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": false,
+      "details": "EVIDENCE GAP: matter_documents ['268', '273'] were never read with read_matter_document"
+     },
+     {
+      "name": "rows_inserted_into_legal_matters_evidence_records",
+      "passed": false,
+      "details": "legal_matters_evidence_records: 9 -> 9 rows (0 new, need >= 1)"
+     },
+     {
+      "name": "legal_matters_evidence_records_new_row_0_evidence_type_is_icc_administered",
+      "passed": false,
+      "details": "expected a new legal_matters_evidence_records row with evidence_type=icc_administered; got []"
+     },
+     {
+      "name": "legal_matters_evidence_records_new_row_1_owner_role_is_arbitration-counsel",
+      "passed": false,
+      "details": "expected a new legal_matters_evidence_records row with owner_role=arbitration-counsel; got []"
+     },
+     {
+      "name": "no_new_legal_matters_evidence_records_row_with_evidence_type_lcia_administered",
+      "passed": true,
+      "details": "no fabricated evidence_type=lcia_administered row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": false,
+      "details": "0/0 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "text_only": {
+   "trace": [
+    {
+     "tool": "query_matter_documents",
+     "requested_tool": "query_matter_documents",
+     "arguments": {
+      "title": "Arbitration clause review \u2014 Institutional rules mapping memo"
+     },
+     "observation": "{\"table\": \"matter_documents\", \"count\": 1, \"returned\": 1, \"offset\": 0, \"limit\": 25, \"rows\": [{\"id\": 268, \"title\": \"Arbitration clause review \\u2014 Institutional rules mapping memo\", \"doc_type\": \"arbitration_rules_memo\", \"related_shape\": \"arbitration-clause-review\", \"body\": \"ARBITRATION CLAUSE REVIEW (firm memo)\\n\\nClassify each clause by the RULES it adopts, not by where hearings are held. A clause that\\nfixes a hearing venue for convenience does not change the administering institution, and the\\nvenue city is fre\\u2026[preview]\"}], \"has_more\": false, \"note\": \"body fields are previews \\u2014 call read_matter_document(id) to read a document in full before using it\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 268
+     },
+     "observation": "{\"id\": 268, \"title\": \"Arbitration clause review \\u2014 Institutional rules mapping memo\", \"doc_type\": \"arbitration_rules_memo\", \"related_shape\": \"arbitration-clause-review\", \"body\": \"ARBITRATION CLAUSE REVIEW (firm memo)\\n\\nClassify each clause by the RULES it adopts, not by where hearings are held. A clause that\\nfixes a hearing venue for convenience does not change the administering institution, and the\\nvenue city is frequently another institution's home seat \\u2014 that coincidence is a trap.\\n\\nMAPPING (by the rules named in the clause):\\n  ICC Rules of Arbitration ......... administered by the ICC     -> icc_administered\\n  LCIA Arbitration Rules ........... administered by the LCIA    -> lcia_administered\\n  SIAC Arbitration Rules ........... administered by SIAC        -> siac_administered\\n  UNCITRAL Arbitration Rules ....... NOT administered by an institution unless the clause\\n                                     separately appoints one     -> uncitral_ad_hoc\\n\\nRecord the classification as an evidence record with owner_role exactly \\\"arbitration-counsel\\\"\\nand status exactly \\\"confirmed\\\".\\n\\nEvidence type vocabulary (use exactly):\\n  icc_administered | lcia_administered | siac_administered | uncitral_ad_hoc\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 273
+     },
+     "observation": "{\"id\": 273, \"title\": \"Arbitration clause \\u2014 Ridgeway Metals GmbH master agreement\", \"doc_type\": \"arbitration_clause\", \"related_shape\": \"arbitration-clause-review\", \"body\": \"ARBITRATION CLAUSE \\u2014 master agreement with Ridgeway Metals GmbH\\n\\n\\\"Any dispute arising out of or in connection with this Agreement shall be finally resolved by\\n arbitration under the ICC Rules of Arbitration. The seat of the arbitration shall be Zurich. The\\n tribunal shall consist of three arbitrators. Hearings shall be held in London for the\\n convenience of the parties and their witnesses. The language of the arbitration shall be\\n English.\\\"\\n\\nCounterparty correspondence notes that its counsel \\\"expects the London centre to\\nadminister the reference\\\" \\u2014 the counterparty's expectation is not part of the clause.\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_275",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: state_changed, required_workflow_path, rows_inserted_into_legal_matters_evidence_records, legal_matters_evidence_records_new_row_0_evidence_type_is_icc_administered, legal_matters_evidence_records_new_row_1_owner_role_is_arbitration-counsel",
+    "failed_conditions": [
+     "state_changed",
+     "required_workflow_path",
+     "rows_inserted_into_legal_matters_evidence_records",
+     "legal_matters_evidence_records_new_row_0_evidence_type_is_icc_administered",
+     "legal_matters_evidence_records_new_row_1_owner_role_is_arbitration-counsel"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": false,
+      "details": "NO state change \u2014 agent did nothing"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": true,
+      "details": "reads=3, writes=0, read_first=True"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints legal_matters_evidence_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": true,
+      "details": "all required input documents were read in full"
+     },
+     {
+      "name": "rows_inserted_into_legal_matters_evidence_records",
+      "passed": false,
+      "details": "legal_matters_evidence_records: 9 -> 9 rows (0 new, need >= 1)"
+     },
+     {
+      "name": "legal_matters_evidence_records_new_row_0_evidence_type_is_icc_administered",
+      "passed": false,
+      "details": "expected a new legal_matters_evidence_records row with evidence_type=icc_administered; got []"
+     },
+     {
+      "name": "legal_matters_evidence_records_new_row_1_owner_role_is_arbitration-counsel",
+      "passed": false,
+      "details": "expected a new legal_matters_evidence_records row with owner_role=arbitration-counsel; got []"
+     },
+     {
+      "name": "no_new_legal_matters_evidence_records_row_with_evidence_type_lcia_administered",
+      "passed": true,
+      "details": "no fabricated evidence_type=lcia_administered row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "3/3 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "blind_write": {
+   "trace": [
+    {
+     "tool": "legal_matters_evidence_create",
+     "requested_tool": "legal_matters_evidence_create",
+     "arguments": {
+      "legal_matters_id": "legal_matters_029",
+      "evidence_type": "icc_administered",
+      "source_uri": "matter://arbitration/ridgeway-metals-gmbh/clause",
+      "content_digest": "clause-icc-seat-zurich",
+      "owner_role": "arbitration-counsel",
+      "status": "confirmed"
+     },
+     "observation": "{\"status\": \"created\", \"table\": \"legal_matters_evidence_records\", \"id\": \"legal_matters_evidence_010\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_275",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: reads_before_writes, no_shortcut_direct_update, required_workflow_path, required_documents_read",
+    "failed_conditions": [
+     "reads_before_writes",
+     "no_shortcut_direct_update",
+     "required_workflow_path",
+     "required_documents_read"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": false,
+      "details": "reads=0, writes=1, read_first=False"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": false,
+      "details": "SHORTCUT: wrote without reading first"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints query_matter_documents -> read_matter_document -> read_matter_document"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": false,
+      "details": "EVIDENCE GAP: matter_documents ['268', '273'] were never read with read_matter_document"
+     },
+     {
+      "name": "rows_inserted_into_legal_matters_evidence_records",
+      "passed": true,
+      "details": "legal_matters_evidence_records: 9 -> 10 rows (1 new, need >= 1)"
+     },
+     {
+      "name": "legal_matters_evidence_records_new_row_0_evidence_type_is_icc_administered",
+      "passed": true,
+      "details": "expected a new legal_matters_evidence_records row with evidence_type=icc_administered; got ['icc_administered']"
+     },
+     {
+      "name": "legal_matters_evidence_records_new_row_1_owner_role_is_arbitration-counsel",
+      "passed": true,
+      "details": "expected a new legal_matters_evidence_records row with owner_role=arbitration-counsel; got ['arbitration-counsel']"
+     },
+     {
+      "name": "no_new_legal_matters_evidence_records_row_with_evidence_type_lcia_administered",
+      "passed": true,
+      "details": "no fabricated evidence_type=lcia_administered row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "1/1 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "wrong_value": {
+   "trace": [
+    {
+     "tool": "query_matter_documents",
+     "requested_tool": "query_matter_documents",
+     "arguments": {
+      "title": "Arbitration clause review \u2014 Institutional rules mapping memo"
+     },
+     "observation": "{\"table\": \"matter_documents\", \"count\": 1, \"returned\": 1, \"offset\": 0, \"limit\": 25, \"rows\": [{\"id\": 268, \"title\": \"Arbitration clause review \\u2014 Institutional rules mapping memo\", \"doc_type\": \"arbitration_rules_memo\", \"related_shape\": \"arbitration-clause-review\", \"body\": \"ARBITRATION CLAUSE REVIEW (firm memo)\\n\\nClassify each clause by the RULES it adopts, not by where hearings are held. A clause that\\nfixes a hearing venue for convenience does not change the administering institution, and the\\nvenue city is fre\\u2026[preview]\"}], \"has_more\": false, \"note\": \"body fields are previews \\u2014 call read_matter_document(id) to read a document in full before using it\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 268
+     },
+     "observation": "{\"id\": 268, \"title\": \"Arbitration clause review \\u2014 Institutional rules mapping memo\", \"doc_type\": \"arbitration_rules_memo\", \"related_shape\": \"arbitration-clause-review\", \"body\": \"ARBITRATION CLAUSE REVIEW (firm memo)\\n\\nClassify each clause by the RULES it adopts, not by where hearings are held. A clause that\\nfixes a hearing venue for convenience does not change the administering institution, and the\\nvenue city is frequently another institution's home seat \\u2014 that coincidence is a trap.\\n\\nMAPPING (by the rules named in the clause):\\n  ICC Rules of Arbitration ......... administered by the ICC     -> icc_administered\\n  LCIA Arbitration Rules ........... administered by the LCIA    -> lcia_administered\\n  SIAC Arbitration Rules ........... administered by SIAC        -> siac_administered\\n  UNCITRAL Arbitration Rules ....... NOT administered by an institution unless the clause\\n                                     separately appoints one     -> uncitral_ad_hoc\\n\\nRecord the classification as an evidence record with owner_role exactly \\\"arbitration-counsel\\\"\\nand status exactly \\\"confirmed\\\".\\n\\nEvidence type vocabulary (use exactly):\\n  icc_administered | lcia_administered | siac_administered | uncitral_ad_hoc\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 273
+     },
+     "observation": "{\"id\": 273, \"title\": \"Arbitration clause \\u2014 Ridgeway Metals GmbH master agreement\", \"doc_type\": \"arbitration_clause\", \"related_shape\": \"arbitration-clause-review\", \"body\": \"ARBITRATION CLAUSE \\u2014 master agreement with Ridgeway Metals GmbH\\n\\n\\\"Any dispute arising out of or in connection with this Agreement shall be finally resolved by\\n arbitration under the ICC Rules of Arbitration. The seat of the arbitration shall be Zurich. The\\n tribunal shall consist of three arbitrators. Hearings shall be held in London for the\\n convenience of the parties and their witnesses. The language of the arbitration shall be\\n English.\\\"\\n\\nCounterparty correspondence notes that its counsel \\\"expects the London centre to\\nadminister the reference\\\" \\u2014 the counterparty's expectation is not part of the clause.\"}",
+     "ok": true
+    },
+    {
+     "tool": "legal_matters_evidence_create",
+     "requested_tool": "legal_matters_evidence_create",
+     "arguments": {
+      "legal_matters_id": "legal_matters_029",
+      "evidence_type": "icc_administered XX-WRONG",
+      "source_uri": "matter://arbitration/ridgeway-metals-gmbh/clause XX-WRONG",
+      "content_digest": "clause-icc-seat-zurich XX-WRONG",
+      "owner_role": "arbitration-counsel XX-WRONG",
+      "status": "confirmed XX-WRONG"
+     },
+     "observation": "{\"status\": \"created\", \"table\": \"legal_matters_evidence_records\", \"id\": \"legal_matters_evidence_010\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_275",
+    "passed": false,
+    "reward": 0.3333,
+    "explanation": "Failed: legal_matters_evidence_records_new_row_0_evidence_type_is_icc_administered, legal_matters_evidence_records_new_row_1_owner_role_is_arbitration-counsel",
+    "failed_conditions": [
+     "legal_matters_evidence_records_new_row_0_evidence_type_is_icc_administered",
+     "legal_matters_evidence_records_new_row_1_owner_role_is_arbitration-counsel"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": true,
+      "details": "reads=3, writes=1, read_first=True"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": true,
+      "details": "completed ordered workflow: query_matter_documents -> read_matter_document -> read_matter_document -> legal_matters_evidence_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": true,
+      "details": "all required input documents were read in full"
+     },
+     {
+      "name": "rows_inserted_into_legal_matters_evidence_records",
+      "passed": true,
+      "details": "legal_matters_evidence_records: 9 -> 10 rows (1 new, need >= 1)"
+     },
+     {
+      "name": "legal_matters_evidence_records_new_row_0_evidence_type_is_icc_administered",
+      "passed": false,
+      "details": "expected a new legal_matters_evidence_records row with evidence_type=icc_administered; got ['icc_administered xx-wrong']"
+     },
+     {
+      "name": "legal_matters_evidence_records_new_row_1_owner_role_is_arbitration-counsel",
+      "passed": false,
+      "details": "expected a new legal_matters_evidence_records row with owner_role=arbitration-counsel; got ['arbitration-counsel xx-wrong']"
+     },
+     {
+      "name": "no_new_legal_matters_evidence_records_row_with_evidence_type_lcia_administered",
+      "passed": true,
+      "details": "no fabricated evidence_type=lcia_administered row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "4/4 tool calls succeeded"
+     }
+    ]
+   }
+  }
+ }
+}

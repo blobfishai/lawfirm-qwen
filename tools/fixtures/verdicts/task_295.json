@@ -1,0 +1,541 @@
+{
+ "task_id": "task_295",
+ "world": "world-v15.json",
+ "episodes": {
+  "oracle": {
+   "trace": [
+    {
+     "tool": "query_matter_documents",
+     "requested_tool": "query_matter_documents",
+     "arguments": {
+      "title": "HSR filing fee schedule and valuation memo (2026)"
+     },
+     "observation": "{\"table\": \"matter_documents\", \"count\": 1, \"returned\": 1, \"offset\": 0, \"limit\": 25, \"rows\": [{\"id\": 295, \"title\": \"HSR filing fee schedule and valuation memo (2026)\", \"doc_type\": \"hsr_fee_schedule\", \"related_shape\": \"hsr-merger-notification\", \"body\": \"HART-SCOTT-RODINO FILING FEE MEMO (2026 thresholds, firm memo)\\n\\nACQUISITION VALUE. The reportable value is the total consideration the buyer gives up:\\n\\n  acquisition value = cash consideration\\n                    + funded debt assumed or re\\u2026[preview]\"}], \"has_more\": false, \"note\": \"body fields are previews \\u2014 call read_matter_document(id) to read a document in full before using it\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 295
+     },
+     "observation": "{\"id\": 295, \"title\": \"HSR filing fee schedule and valuation memo (2026)\", \"doc_type\": \"hsr_fee_schedule\", \"related_shape\": \"hsr-merger-notification\", \"body\": \"HART-SCOTT-RODINO FILING FEE MEMO (2026 thresholds, firm memo)\\n\\nACQUISITION VALUE. The reportable value is the total consideration the buyer gives up:\\n\\n  acquisition value = cash consideration\\n                    + funded debt assumed or refinanced at closing\\n                    + the MAXIMUM contingent earnout payable\\n\\nCash on the target's balance sheet at closing is NOT deducted. A deal's headline\\n'purchase price' customarily quotes cash consideration only and is not the reportable value.\\n\\nFEE TIERS (fee is determined by the tier the acquisition value falls into):\\n  $119,500,000.00 to < $173,300,000.00 .... fee $30,000.00\\n  $173,300,000.00 to < $536,500,000.00 .... fee $105,000.00\\n  $536,500,000.00 to < $1,073,000,000.00 .... fee $260,000.00\\n  $1,073,000,000.00 to < $2,146,000,000.00 .... fee $415,000.00\\n  $2,146,000,000.00 to and above .... fee $2,335,000.00\\n\\nRecord the fee as the matter's filing fee budget.\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 296
+     },
+     "observation": "{\"id\": 296, \"title\": \"Transaction summary \\u2014 Acquisition of Cedarline Manufacturing\", \"doc_type\": \"transaction_summary\", \"related_shape\": \"hsr-merger-notification\", \"body\": \"TRANSACTION SUMMARY \\u2014 Acquisition of Cedarline Manufacturing\\n\\nHeadline purchase price (as announced) ........ $410,000,000.00\\n\\nConsideration detail:\\n  Cash consideration at closing ............... $410,000,000.00\\n  Funded debt assumed / refinanced ............ $165,000,000.00\\n  Contingent earnout, maximum payable ......... $40,000,000.00\\n  Target cash on balance sheet at closing ..... $22,000,000.00\\n\\nThe earnout is payable on revenue milestones through 2028; the maximum is stated above.\"}",
+     "ok": true
+    },
+    {
+     "tool": "legal_matters_amount_history_create",
+     "requested_tool": "legal_matters_amount_history_create",
+     "arguments": {
+      "legal_matters_id": "legal_matters_019",
+      "fee_budget": 260000,
+      "changed_by_role": "antitrust-counsel",
+      "change_reason": "Acquisition value $615,000,000.00 = cash $410,000,000.00 + assumed debt $165,000,000.00 + max earnout $40,000,000.00; target cash not deducted. Tier fee $260,000.00."
+     },
+     "observation": "{\"status\": \"created\", \"table\": \"legal_matters_amount_history\", \"id\": \"legal_matters_amount_history_016\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_295",
+    "passed": true,
+    "reward": 1.0,
+    "explanation": "All task checks passed",
+    "failed_conditions": [],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": true,
+      "details": "reads=3, writes=1, read_first=True"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": true,
+      "details": "completed ordered workflow: query_matter_documents -> read_matter_document -> read_matter_document -> legal_matters_amount_history_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": true,
+      "details": "all required input documents were read in full"
+     },
+     {
+      "name": "rows_inserted_into_legal_matters_amount_history",
+      "passed": true,
+      "details": "legal_matters_amount_history: 15 -> 16 rows (1 new, need >= 1)"
+     },
+     {
+      "name": "legal_matters_amount_history_new_row_0_fee_budget_is_260000.0",
+      "passed": true,
+      "details": "expected a new legal_matters_amount_history row with fee_budget=260000.0; got ['260000.0']"
+     },
+     {
+      "name": "legal_matters_amount_history_new_row_1_changed_by_role_is_antitrust-counsel",
+      "passed": true,
+      "details": "expected a new legal_matters_amount_history row with changed_by_role=antitrust-counsel; got ['antitrust-counsel']"
+     },
+     {
+      "name": "no_new_legal_matters_amount_history_row_with_fee_budget_105000",
+      "passed": true,
+      "details": "no fabricated fee_budget=105000 row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "4/4 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "noop": {
+   "trace": [],
+   "verdict": {
+    "task_id": "task_295",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: state_changed, reads_before_writes, required_workflow_path, required_documents_read, rows_inserted_into_legal_matters_amount_history, legal_matters_amount_history_new_row_0_fee_budget_is_260000.0, legal_matters_amount_history_new_row_1_changed_by_role_is_antitrust-counsel",
+    "failed_conditions": [
+     "state_changed",
+     "reads_before_writes",
+     "required_workflow_path",
+     "required_documents_read",
+     "rows_inserted_into_legal_matters_amount_history",
+     "legal_matters_amount_history_new_row_0_fee_budget_is_260000.0",
+     "legal_matters_amount_history_new_row_1_changed_by_role_is_antitrust-counsel"
+    ],
+    "advisory_conditions": [
+     "all_tools_succeeded"
+    ],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": false,
+      "details": "NO state change \u2014 agent did nothing"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": false,
+      "details": "reads=0, writes=0, read_first=False"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints query_matter_documents -> read_matter_document -> read_matter_document -> legal_matters_amount_history_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": false,
+      "details": "EVIDENCE GAP: matter_documents ['295', '296'] were never read with read_matter_document"
+     },
+     {
+      "name": "rows_inserted_into_legal_matters_amount_history",
+      "passed": false,
+      "details": "legal_matters_amount_history: 15 -> 15 rows (0 new, need >= 1)"
+     },
+     {
+      "name": "legal_matters_amount_history_new_row_0_fee_budget_is_260000.0",
+      "passed": false,
+      "details": "expected a new legal_matters_amount_history row with fee_budget=260000.0; got []"
+     },
+     {
+      "name": "legal_matters_amount_history_new_row_1_changed_by_role_is_antitrust-counsel",
+      "passed": false,
+      "details": "expected a new legal_matters_amount_history row with changed_by_role=antitrust-counsel; got []"
+     },
+     {
+      "name": "no_new_legal_matters_amount_history_row_with_fee_budget_105000",
+      "passed": true,
+      "details": "no fabricated fee_budget=105000 row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": false,
+      "details": "0/0 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "text_only": {
+   "trace": [
+    {
+     "tool": "query_matter_documents",
+     "requested_tool": "query_matter_documents",
+     "arguments": {
+      "title": "HSR filing fee schedule and valuation memo (2026)"
+     },
+     "observation": "{\"table\": \"matter_documents\", \"count\": 1, \"returned\": 1, \"offset\": 0, \"limit\": 25, \"rows\": [{\"id\": 295, \"title\": \"HSR filing fee schedule and valuation memo (2026)\", \"doc_type\": \"hsr_fee_schedule\", \"related_shape\": \"hsr-merger-notification\", \"body\": \"HART-SCOTT-RODINO FILING FEE MEMO (2026 thresholds, firm memo)\\n\\nACQUISITION VALUE. The reportable value is the total consideration the buyer gives up:\\n\\n  acquisition value = cash consideration\\n                    + funded debt assumed or re\\u2026[preview]\"}], \"has_more\": false, \"note\": \"body fields are previews \\u2014 call read_matter_document(id) to read a document in full before using it\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 295
+     },
+     "observation": "{\"id\": 295, \"title\": \"HSR filing fee schedule and valuation memo (2026)\", \"doc_type\": \"hsr_fee_schedule\", \"related_shape\": \"hsr-merger-notification\", \"body\": \"HART-SCOTT-RODINO FILING FEE MEMO (2026 thresholds, firm memo)\\n\\nACQUISITION VALUE. The reportable value is the total consideration the buyer gives up:\\n\\n  acquisition value = cash consideration\\n                    + funded debt assumed or refinanced at closing\\n                    + the MAXIMUM contingent earnout payable\\n\\nCash on the target's balance sheet at closing is NOT deducted. A deal's headline\\n'purchase price' customarily quotes cash consideration only and is not the reportable value.\\n\\nFEE TIERS (fee is determined by the tier the acquisition value falls into):\\n  $119,500,000.00 to < $173,300,000.00 .... fee $30,000.00\\n  $173,300,000.00 to < $536,500,000.00 .... fee $105,000.00\\n  $536,500,000.00 to < $1,073,000,000.00 .... fee $260,000.00\\n  $1,073,000,000.00 to < $2,146,000,000.00 .... fee $415,000.00\\n  $2,146,000,000.00 to and above .... fee $2,335,000.00\\n\\nRecord the fee as the matter's filing fee budget.\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 296
+     },
+     "observation": "{\"id\": 296, \"title\": \"Transaction summary \\u2014 Acquisition of Cedarline Manufacturing\", \"doc_type\": \"transaction_summary\", \"related_shape\": \"hsr-merger-notification\", \"body\": \"TRANSACTION SUMMARY \\u2014 Acquisition of Cedarline Manufacturing\\n\\nHeadline purchase price (as announced) ........ $410,000,000.00\\n\\nConsideration detail:\\n  Cash consideration at closing ............... $410,000,000.00\\n  Funded debt assumed / refinanced ............ $165,000,000.00\\n  Contingent earnout, maximum payable ......... $40,000,000.00\\n  Target cash on balance sheet at closing ..... $22,000,000.00\\n\\nThe earnout is payable on revenue milestones through 2028; the maximum is stated above.\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_295",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: state_changed, required_workflow_path, rows_inserted_into_legal_matters_amount_history, legal_matters_amount_history_new_row_0_fee_budget_is_260000.0, legal_matters_amount_history_new_row_1_changed_by_role_is_antitrust-counsel",
+    "failed_conditions": [
+     "state_changed",
+     "required_workflow_path",
+     "rows_inserted_into_legal_matters_amount_history",
+     "legal_matters_amount_history_new_row_0_fee_budget_is_260000.0",
+     "legal_matters_amount_history_new_row_1_changed_by_role_is_antitrust-counsel"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": false,
+      "details": "NO state change \u2014 agent did nothing"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": true,
+      "details": "reads=3, writes=0, read_first=True"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints legal_matters_amount_history_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": true,
+      "details": "all required input documents were read in full"
+     },
+     {
+      "name": "rows_inserted_into_legal_matters_amount_history",
+      "passed": false,
+      "details": "legal_matters_amount_history: 15 -> 15 rows (0 new, need >= 1)"
+     },
+     {
+      "name": "legal_matters_amount_history_new_row_0_fee_budget_is_260000.0",
+      "passed": false,
+      "details": "expected a new legal_matters_amount_history row with fee_budget=260000.0; got []"
+     },
+     {
+      "name": "legal_matters_amount_history_new_row_1_changed_by_role_is_antitrust-counsel",
+      "passed": false,
+      "details": "expected a new legal_matters_amount_history row with changed_by_role=antitrust-counsel; got []"
+     },
+     {
+      "name": "no_new_legal_matters_amount_history_row_with_fee_budget_105000",
+      "passed": true,
+      "details": "no fabricated fee_budget=105000 row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "3/3 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "blind_write": {
+   "trace": [
+    {
+     "tool": "legal_matters_amount_history_create",
+     "requested_tool": "legal_matters_amount_history_create",
+     "arguments": {
+      "legal_matters_id": "legal_matters_019",
+      "fee_budget": 260000,
+      "changed_by_role": "antitrust-counsel",
+      "change_reason": "Acquisition value $615,000,000.00 = cash $410,000,000.00 + assumed debt $165,000,000.00 + max earnout $40,000,000.00; target cash not deducted. Tier fee $260,000.00."
+     },
+     "observation": "{\"status\": \"created\", \"table\": \"legal_matters_amount_history\", \"id\": \"legal_matters_amount_history_016\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_295",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: reads_before_writes, no_shortcut_direct_update, required_workflow_path, required_documents_read",
+    "failed_conditions": [
+     "reads_before_writes",
+     "no_shortcut_direct_update",
+     "required_workflow_path",
+     "required_documents_read"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": false,
+      "details": "reads=0, writes=1, read_first=False"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": false,
+      "details": "SHORTCUT: wrote without reading first"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints query_matter_documents -> read_matter_document -> read_matter_document"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": false,
+      "details": "EVIDENCE GAP: matter_documents ['295', '296'] were never read with read_matter_document"
+     },
+     {
+      "name": "rows_inserted_into_legal_matters_amount_history",
+      "passed": true,
+      "details": "legal_matters_amount_history: 15 -> 16 rows (1 new, need >= 1)"
+     },
+     {
+      "name": "legal_matters_amount_history_new_row_0_fee_budget_is_260000.0",
+      "passed": true,
+      "details": "expected a new legal_matters_amount_history row with fee_budget=260000.0; got ['260000.0']"
+     },
+     {
+      "name": "legal_matters_amount_history_new_row_1_changed_by_role_is_antitrust-counsel",
+      "passed": true,
+      "details": "expected a new legal_matters_amount_history row with changed_by_role=antitrust-counsel; got ['antitrust-counsel']"
+     },
+     {
+      "name": "no_new_legal_matters_amount_history_row_with_fee_budget_105000",
+      "passed": true,
+      "details": "no fabricated fee_budget=105000 row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "1/1 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "wrong_value": {
+   "trace": [
+    {
+     "tool": "query_matter_documents",
+     "requested_tool": "query_matter_documents",
+     "arguments": {
+      "title": "HSR filing fee schedule and valuation memo (2026)"
+     },
+     "observation": "{\"table\": \"matter_documents\", \"count\": 1, \"returned\": 1, \"offset\": 0, \"limit\": 25, \"rows\": [{\"id\": 295, \"title\": \"HSR filing fee schedule and valuation memo (2026)\", \"doc_type\": \"hsr_fee_schedule\", \"related_shape\": \"hsr-merger-notification\", \"body\": \"HART-SCOTT-RODINO FILING FEE MEMO (2026 thresholds, firm memo)\\n\\nACQUISITION VALUE. The reportable value is the total consideration the buyer gives up:\\n\\n  acquisition value = cash consideration\\n                    + funded debt assumed or re\\u2026[preview]\"}], \"has_more\": false, \"note\": \"body fields are previews \\u2014 call read_matter_document(id) to read a document in full before using it\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 295
+     },
+     "observation": "{\"id\": 295, \"title\": \"HSR filing fee schedule and valuation memo (2026)\", \"doc_type\": \"hsr_fee_schedule\", \"related_shape\": \"hsr-merger-notification\", \"body\": \"HART-SCOTT-RODINO FILING FEE MEMO (2026 thresholds, firm memo)\\n\\nACQUISITION VALUE. The reportable value is the total consideration the buyer gives up:\\n\\n  acquisition value = cash consideration\\n                    + funded debt assumed or refinanced at closing\\n                    + the MAXIMUM contingent earnout payable\\n\\nCash on the target's balance sheet at closing is NOT deducted. A deal's headline\\n'purchase price' customarily quotes cash consideration only and is not the reportable value.\\n\\nFEE TIERS (fee is determined by the tier the acquisition value falls into):\\n  $119,500,000.00 to < $173,300,000.00 .... fee $30,000.00\\n  $173,300,000.00 to < $536,500,000.00 .... fee $105,000.00\\n  $536,500,000.00 to < $1,073,000,000.00 .... fee $260,000.00\\n  $1,073,000,000.00 to < $2,146,000,000.00 .... fee $415,000.00\\n  $2,146,000,000.00 to and above .... fee $2,335,000.00\\n\\nRecord the fee as the matter's filing fee budget.\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 296
+     },
+     "observation": "{\"id\": 296, \"title\": \"Transaction summary \\u2014 Acquisition of Cedarline Manufacturing\", \"doc_type\": \"transaction_summary\", \"related_shape\": \"hsr-merger-notification\", \"body\": \"TRANSACTION SUMMARY \\u2014 Acquisition of Cedarline Manufacturing\\n\\nHeadline purchase price (as announced) ........ $410,000,000.00\\n\\nConsideration detail:\\n  Cash consideration at closing ............... $410,000,000.00\\n  Funded debt assumed / refinanced ............ $165,000,000.00\\n  Contingent earnout, maximum payable ......... $40,000,000.00\\n  Target cash on balance sheet at closing ..... $22,000,000.00\\n\\nThe earnout is payable on revenue milestones through 2028; the maximum is stated above.\"}",
+     "ok": true
+    },
+    {
+     "tool": "legal_matters_amount_history_create",
+     "requested_tool": "legal_matters_amount_history_create",
+     "arguments": {
+      "legal_matters_id": "legal_matters_019",
+      "fee_budget": 264242.42,
+      "changed_by_role": "antitrust-counsel XX-WRONG",
+      "change_reason": "Acquisition value $615,000,000.00 = cash $410,000,000.00 + assumed debt $165,000,000.00 + max earnout $40,000,000.00; target cash not deducted. Tier fee $260,000.00. XX-WRONG"
+     },
+     "observation": "{\"status\": \"created\", \"table\": \"legal_matters_amount_history\", \"id\": \"legal_matters_amount_history_016\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_295",
+    "passed": false,
+    "reward": 0.3333,
+    "explanation": "Failed: legal_matters_amount_history_new_row_0_fee_budget_is_260000.0, legal_matters_amount_history_new_row_1_changed_by_role_is_antitrust-counsel",
+    "failed_conditions": [
+     "legal_matters_amount_history_new_row_0_fee_budget_is_260000.0",
+     "legal_matters_amount_history_new_row_1_changed_by_role_is_antitrust-counsel"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": true,
+      "details": "reads=3, writes=1, read_first=True"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": true,
+      "details": "completed ordered workflow: query_matter_documents -> read_matter_document -> read_matter_document -> legal_matters_amount_history_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": true,
+      "details": "all required input documents were read in full"
+     },
+     {
+      "name": "rows_inserted_into_legal_matters_amount_history",
+      "passed": true,
+      "details": "legal_matters_amount_history: 15 -> 16 rows (1 new, need >= 1)"
+     },
+     {
+      "name": "legal_matters_amount_history_new_row_0_fee_budget_is_260000.0",
+      "passed": false,
+      "details": "expected a new legal_matters_amount_history row with fee_budget=260000.0; got ['264242.42']"
+     },
+     {
+      "name": "legal_matters_amount_history_new_row_1_changed_by_role_is_antitrust-counsel",
+      "passed": false,
+      "details": "expected a new legal_matters_amount_history row with changed_by_role=antitrust-counsel; got ['antitrust-counsel xx-wrong']"
+     },
+     {
+      "name": "no_new_legal_matters_amount_history_row_with_fee_budget_105000",
+      "passed": true,
+      "details": "no fabricated fee_budget=105000 row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "4/4 tool calls succeeded"
+     }
+    ]
+   }
+  }
+ }
+}

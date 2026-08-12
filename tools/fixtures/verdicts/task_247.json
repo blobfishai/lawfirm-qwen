@@ -1,0 +1,523 @@
+{
+ "task_id": "task_247",
+ "world": "world-v15.json",
+ "episodes": {
+  "oracle": {
+   "trace": [
+    {
+     "tool": "query_matter_documents",
+     "requested_tool": "query_matter_documents",
+     "arguments": {
+      "title": "Clause library \u2014 CL-105 Limitation of Liability with uncappe"
+     },
+     "observation": "{\"table\": \"matter_documents\", \"count\": 1, \"returned\": 1, \"offset\": 0, \"limit\": 25, \"rows\": [{\"id\": 216, \"title\": \"Clause library \\u2014 CL-105 Limitation of Liability with uncapped carve-outs\", \"doc_type\": \"precedent_clause\", \"related_shape\": \"acord-clause-retrieval\", \"body\": \"PRECEDENT CLAUSE CL-105\\nCategory: Limitation of Liability with uncapped carve-outs\\nLibrary slug: limitation_of_liability_uncapped_carveout\\nApproved by: Contracts KM Committee\\n\\nLIMITATION OF LIABILITY. The limitations in this Section shall n\\u2026[preview]\"}], \"has_more\": false, \"note\": \"body fields are previews \\u2014 call read_matter_document(id) to read a document in full before using it\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 216
+     },
+     "observation": "{\"id\": 216, \"title\": \"Clause library \\u2014 CL-105 Limitation of Liability with uncapped carve-outs\", \"doc_type\": \"precedent_clause\", \"related_shape\": \"acord-clause-retrieval\", \"body\": \"PRECEDENT CLAUSE CL-105\\nCategory: Limitation of Liability with uncapped carve-outs\\nLibrary slug: limitation_of_liability_uncapped_carveout\\nApproved by: Contracts KM Committee\\n\\nLIMITATION OF LIABILITY. The limitations in this Section shall not apply to (a) a party's indemnification obligations for third-party intellectual-property claims, (b) breach of confidentiality, (c) gross negligence or willful misconduct, or (d) a party's payment obligations, each of which shall be uncapped.\\n\\nUse note: this is firm-approved precedent language; deviations require playbook escalation.\"}",
+     "ok": true
+    },
+    {
+     "tool": "legal_matters_evidence_create",
+     "requested_tool": "legal_matters_evidence_create",
+     "arguments": {
+      "legal_matters_id": "legal_matters_001",
+      "evidence_type": "limitation_of_liability_uncapped_carveout",
+      "source_uri": "clause-library://selected",
+      "content_summary": "CL-105 selected: carve-outs for confidentiality, IP indemnity, gross negligence, payment.",
+      "content_digest": "sha256:reference-digest",
+      "owner_role": "associate",
+      "status": "open"
+     },
+     "observation": "{\"status\": \"created\", \"table\": \"legal_matters_evidence_records\", \"id\": \"legal_matters_evidence_010\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_247",
+    "passed": true,
+    "reward": 1.0,
+    "explanation": "All task checks passed",
+    "failed_conditions": [],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": true,
+      "details": "reads=2, writes=1, read_first=True"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": true,
+      "details": "completed ordered workflow: query_matter_documents -> read_matter_document -> legal_matters_evidence_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": true,
+      "details": "all required input documents were read in full"
+     },
+     {
+      "name": "rows_inserted_into_legal_matters_evidence_records",
+      "passed": true,
+      "details": "legal_matters_evidence_records: 9 -> 10 rows (1 new, need >= 1)"
+     },
+     {
+      "name": "legal_matters_evidence_records_new_row_0_evidence_type_is_limitation_of_liability_uncapped_carveou",
+      "passed": true,
+      "details": "expected a new legal_matters_evidence_records row with evidence_type=limitation_of_liability_uncapped_carveout; got ['limitation_of_liability_uncapped_carveout']"
+     },
+     {
+      "name": "legal_matters_evidence_records_new_row_1_source_uri_is_clause-library://selected",
+      "passed": true,
+      "details": "expected a new legal_matters_evidence_records row with source_uri=clause-library://selected; got ['clause-library://selected']"
+     },
+     {
+      "name": "no_new_legal_matters_evidence_records_row_with_evidence_type_limitation_of_liability_capped",
+      "passed": true,
+      "details": "no fabricated evidence_type=limitation_of_liability_capped row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "3/3 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "noop": {
+   "trace": [],
+   "verdict": {
+    "task_id": "task_247",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: state_changed, reads_before_writes, required_workflow_path, required_documents_read, rows_inserted_into_legal_matters_evidence_records, legal_matters_evidence_records_new_row_0_evidence_type_is_limitation_of_liability_uncapped_carveou, legal_matters_evidence_records_new_row_1_source_uri_is_clause-library://selected",
+    "failed_conditions": [
+     "state_changed",
+     "reads_before_writes",
+     "required_workflow_path",
+     "required_documents_read",
+     "rows_inserted_into_legal_matters_evidence_records",
+     "legal_matters_evidence_records_new_row_0_evidence_type_is_limitation_of_liability_uncapped_carveou",
+     "legal_matters_evidence_records_new_row_1_source_uri_is_clause-library://selected"
+    ],
+    "advisory_conditions": [
+     "all_tools_succeeded"
+    ],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": false,
+      "details": "NO state change \u2014 agent did nothing"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": false,
+      "details": "reads=0, writes=0, read_first=False"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints query_matter_documents -> read_matter_document -> legal_matters_evidence_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": false,
+      "details": "EVIDENCE GAP: matter_documents ['216'] were never read with read_matter_document"
+     },
+     {
+      "name": "rows_inserted_into_legal_matters_evidence_records",
+      "passed": false,
+      "details": "legal_matters_evidence_records: 9 -> 9 rows (0 new, need >= 1)"
+     },
+     {
+      "name": "legal_matters_evidence_records_new_row_0_evidence_type_is_limitation_of_liability_uncapped_carveou",
+      "passed": false,
+      "details": "expected a new legal_matters_evidence_records row with evidence_type=limitation_of_liability_uncapped_carveout; got []"
+     },
+     {
+      "name": "legal_matters_evidence_records_new_row_1_source_uri_is_clause-library://selected",
+      "passed": false,
+      "details": "expected a new legal_matters_evidence_records row with source_uri=clause-library://selected; got []"
+     },
+     {
+      "name": "no_new_legal_matters_evidence_records_row_with_evidence_type_limitation_of_liability_capped",
+      "passed": true,
+      "details": "no fabricated evidence_type=limitation_of_liability_capped row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": false,
+      "details": "0/0 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "text_only": {
+   "trace": [
+    {
+     "tool": "query_matter_documents",
+     "requested_tool": "query_matter_documents",
+     "arguments": {
+      "title": "Clause library \u2014 CL-105 Limitation of Liability with uncappe"
+     },
+     "observation": "{\"table\": \"matter_documents\", \"count\": 1, \"returned\": 1, \"offset\": 0, \"limit\": 25, \"rows\": [{\"id\": 216, \"title\": \"Clause library \\u2014 CL-105 Limitation of Liability with uncapped carve-outs\", \"doc_type\": \"precedent_clause\", \"related_shape\": \"acord-clause-retrieval\", \"body\": \"PRECEDENT CLAUSE CL-105\\nCategory: Limitation of Liability with uncapped carve-outs\\nLibrary slug: limitation_of_liability_uncapped_carveout\\nApproved by: Contracts KM Committee\\n\\nLIMITATION OF LIABILITY. The limitations in this Section shall n\\u2026[preview]\"}], \"has_more\": false, \"note\": \"body fields are previews \\u2014 call read_matter_document(id) to read a document in full before using it\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 216
+     },
+     "observation": "{\"id\": 216, \"title\": \"Clause library \\u2014 CL-105 Limitation of Liability with uncapped carve-outs\", \"doc_type\": \"precedent_clause\", \"related_shape\": \"acord-clause-retrieval\", \"body\": \"PRECEDENT CLAUSE CL-105\\nCategory: Limitation of Liability with uncapped carve-outs\\nLibrary slug: limitation_of_liability_uncapped_carveout\\nApproved by: Contracts KM Committee\\n\\nLIMITATION OF LIABILITY. The limitations in this Section shall not apply to (a) a party's indemnification obligations for third-party intellectual-property claims, (b) breach of confidentiality, (c) gross negligence or willful misconduct, or (d) a party's payment obligations, each of which shall be uncapped.\\n\\nUse note: this is firm-approved precedent language; deviations require playbook escalation.\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_247",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: state_changed, required_workflow_path, rows_inserted_into_legal_matters_evidence_records, legal_matters_evidence_records_new_row_0_evidence_type_is_limitation_of_liability_uncapped_carveou, legal_matters_evidence_records_new_row_1_source_uri_is_clause-library://selected",
+    "failed_conditions": [
+     "state_changed",
+     "required_workflow_path",
+     "rows_inserted_into_legal_matters_evidence_records",
+     "legal_matters_evidence_records_new_row_0_evidence_type_is_limitation_of_liability_uncapped_carveou",
+     "legal_matters_evidence_records_new_row_1_source_uri_is_clause-library://selected"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": false,
+      "details": "NO state change \u2014 agent did nothing"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": true,
+      "details": "reads=2, writes=0, read_first=True"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints legal_matters_evidence_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": true,
+      "details": "all required input documents were read in full"
+     },
+     {
+      "name": "rows_inserted_into_legal_matters_evidence_records",
+      "passed": false,
+      "details": "legal_matters_evidence_records: 9 -> 9 rows (0 new, need >= 1)"
+     },
+     {
+      "name": "legal_matters_evidence_records_new_row_0_evidence_type_is_limitation_of_liability_uncapped_carveou",
+      "passed": false,
+      "details": "expected a new legal_matters_evidence_records row with evidence_type=limitation_of_liability_uncapped_carveout; got []"
+     },
+     {
+      "name": "legal_matters_evidence_records_new_row_1_source_uri_is_clause-library://selected",
+      "passed": false,
+      "details": "expected a new legal_matters_evidence_records row with source_uri=clause-library://selected; got []"
+     },
+     {
+      "name": "no_new_legal_matters_evidence_records_row_with_evidence_type_limitation_of_liability_capped",
+      "passed": true,
+      "details": "no fabricated evidence_type=limitation_of_liability_capped row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "2/2 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "blind_write": {
+   "trace": [
+    {
+     "tool": "legal_matters_evidence_create",
+     "requested_tool": "legal_matters_evidence_create",
+     "arguments": {
+      "legal_matters_id": "legal_matters_001",
+      "evidence_type": "limitation_of_liability_uncapped_carveout",
+      "source_uri": "clause-library://selected",
+      "content_summary": "CL-105 selected: carve-outs for confidentiality, IP indemnity, gross negligence, payment.",
+      "content_digest": "sha256:reference-digest",
+      "owner_role": "associate",
+      "status": "open"
+     },
+     "observation": "{\"status\": \"created\", \"table\": \"legal_matters_evidence_records\", \"id\": \"legal_matters_evidence_010\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_247",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: reads_before_writes, no_shortcut_direct_update, required_workflow_path, required_documents_read",
+    "failed_conditions": [
+     "reads_before_writes",
+     "no_shortcut_direct_update",
+     "required_workflow_path",
+     "required_documents_read"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": false,
+      "details": "reads=0, writes=1, read_first=False"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": false,
+      "details": "SHORTCUT: wrote without reading first"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints query_matter_documents -> read_matter_document"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": false,
+      "details": "EVIDENCE GAP: matter_documents ['216'] were never read with read_matter_document"
+     },
+     {
+      "name": "rows_inserted_into_legal_matters_evidence_records",
+      "passed": true,
+      "details": "legal_matters_evidence_records: 9 -> 10 rows (1 new, need >= 1)"
+     },
+     {
+      "name": "legal_matters_evidence_records_new_row_0_evidence_type_is_limitation_of_liability_uncapped_carveou",
+      "passed": true,
+      "details": "expected a new legal_matters_evidence_records row with evidence_type=limitation_of_liability_uncapped_carveout; got ['limitation_of_liability_uncapped_carveout']"
+     },
+     {
+      "name": "legal_matters_evidence_records_new_row_1_source_uri_is_clause-library://selected",
+      "passed": true,
+      "details": "expected a new legal_matters_evidence_records row with source_uri=clause-library://selected; got ['clause-library://selected']"
+     },
+     {
+      "name": "no_new_legal_matters_evidence_records_row_with_evidence_type_limitation_of_liability_capped",
+      "passed": true,
+      "details": "no fabricated evidence_type=limitation_of_liability_capped row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "1/1 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "wrong_value": {
+   "trace": [
+    {
+     "tool": "query_matter_documents",
+     "requested_tool": "query_matter_documents",
+     "arguments": {
+      "title": "Clause library \u2014 CL-105 Limitation of Liability with uncappe"
+     },
+     "observation": "{\"table\": \"matter_documents\", \"count\": 1, \"returned\": 1, \"offset\": 0, \"limit\": 25, \"rows\": [{\"id\": 216, \"title\": \"Clause library \\u2014 CL-105 Limitation of Liability with uncapped carve-outs\", \"doc_type\": \"precedent_clause\", \"related_shape\": \"acord-clause-retrieval\", \"body\": \"PRECEDENT CLAUSE CL-105\\nCategory: Limitation of Liability with uncapped carve-outs\\nLibrary slug: limitation_of_liability_uncapped_carveout\\nApproved by: Contracts KM Committee\\n\\nLIMITATION OF LIABILITY. The limitations in this Section shall n\\u2026[preview]\"}], \"has_more\": false, \"note\": \"body fields are previews \\u2014 call read_matter_document(id) to read a document in full before using it\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 216
+     },
+     "observation": "{\"id\": 216, \"title\": \"Clause library \\u2014 CL-105 Limitation of Liability with uncapped carve-outs\", \"doc_type\": \"precedent_clause\", \"related_shape\": \"acord-clause-retrieval\", \"body\": \"PRECEDENT CLAUSE CL-105\\nCategory: Limitation of Liability with uncapped carve-outs\\nLibrary slug: limitation_of_liability_uncapped_carveout\\nApproved by: Contracts KM Committee\\n\\nLIMITATION OF LIABILITY. The limitations in this Section shall not apply to (a) a party's indemnification obligations for third-party intellectual-property claims, (b) breach of confidentiality, (c) gross negligence or willful misconduct, or (d) a party's payment obligations, each of which shall be uncapped.\\n\\nUse note: this is firm-approved precedent language; deviations require playbook escalation.\"}",
+     "ok": true
+    },
+    {
+     "tool": "legal_matters_evidence_create",
+     "requested_tool": "legal_matters_evidence_create",
+     "arguments": {
+      "legal_matters_id": "legal_matters_001",
+      "evidence_type": "limitation_of_liability_uncapped_carveout XX-WRONG",
+      "source_uri": "clause-library://selected XX-WRONG",
+      "content_summary": "CL-105 selected: carve-outs for confidentiality, IP indemnity, gross negligence, payment. XX-WRONG",
+      "content_digest": "sha256:reference-digest XX-WRONG",
+      "owner_role": "associate XX-WRONG",
+      "status": "open XX-WRONG"
+     },
+     "observation": "{\"status\": \"created\", \"table\": \"legal_matters_evidence_records\", \"id\": \"legal_matters_evidence_010\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_247",
+    "passed": false,
+    "reward": 0.3333,
+    "explanation": "Failed: legal_matters_evidence_records_new_row_0_evidence_type_is_limitation_of_liability_uncapped_carveou, legal_matters_evidence_records_new_row_1_source_uri_is_clause-library://selected",
+    "failed_conditions": [
+     "legal_matters_evidence_records_new_row_0_evidence_type_is_limitation_of_liability_uncapped_carveou",
+     "legal_matters_evidence_records_new_row_1_source_uri_is_clause-library://selected"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": true,
+      "details": "reads=2, writes=1, read_first=True"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": true,
+      "details": "completed ordered workflow: query_matter_documents -> read_matter_document -> legal_matters_evidence_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": true,
+      "details": "all required input documents were read in full"
+     },
+     {
+      "name": "rows_inserted_into_legal_matters_evidence_records",
+      "passed": true,
+      "details": "legal_matters_evidence_records: 9 -> 10 rows (1 new, need >= 1)"
+     },
+     {
+      "name": "legal_matters_evidence_records_new_row_0_evidence_type_is_limitation_of_liability_uncapped_carveou",
+      "passed": false,
+      "details": "expected a new legal_matters_evidence_records row with evidence_type=limitation_of_liability_uncapped_carveout; got ['limitation_of_liability_uncapped_carveout xx-wrong']"
+     },
+     {
+      "name": "legal_matters_evidence_records_new_row_1_source_uri_is_clause-library://selected",
+      "passed": false,
+      "details": "expected a new legal_matters_evidence_records row with source_uri=clause-library://selected; got ['clause-library://selected xx-wrong']"
+     },
+     {
+      "name": "no_new_legal_matters_evidence_records_row_with_evidence_type_limitation_of_liability_capped",
+      "passed": true,
+      "details": "no fabricated evidence_type=limitation_of_liability_capped row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "3/3 tool calls succeeded"
+     }
+    ]
+   }
+  }
+ }
+}

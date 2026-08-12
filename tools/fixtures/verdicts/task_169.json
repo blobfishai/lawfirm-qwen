@@ -1,0 +1,514 @@
+{
+ "task_id": "task_169",
+ "world": "world-v15.json",
+ "episodes": {
+  "oracle": {
+   "trace": [
+    {
+     "tool": "query_matter_documents",
+     "requested_tool": "query_matter_documents",
+     "arguments": {
+      "title": "damages-computation pack \u2014 Discovery Cost-Sharing Stipulatio"
+     },
+     "observation": "{\"table\": \"matter_documents\", \"count\": 1, \"returned\": 1, \"offset\": 0, \"limit\": 25, \"rows\": [{\"id\": 139, \"title\": \"damages-computation pack \\u2014 Discovery Cost-Sharing Stipulation and Vendor Cost Report (Meridian v. Corvess)\", \"doc_type\": \"stipulation\", \"related_shape\": \"damages-computation\", \"body\": \"DISCOVERY COST-SHARING STIPULATION AND VENDOR COST REPORT\\n\\nMeridian Fabrication Corp. v. Corvess Industrial Group, LLC, No. 24-cv-8812 (D. Ariz.)\\n\\nPursuant to the Court's ESI Order, the parties submit this stipulation allocating the third-p\\u2026[preview]\"}], \"has_more\": false, \"note\": \"body fields are previews \\u2014 call read_matter_document(id) to read a document in full before using it\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 139
+     },
+     "observation": "{\"id\": 139, \"title\": \"damages-computation pack \\u2014 Discovery Cost-Sharing Stipulation and Vendor Cost Report (Meridian v. Corvess)\", \"doc_type\": \"stipulation\", \"related_shape\": \"damages-computation\", \"body\": \"DISCOVERY COST-SHARING STIPULATION AND VENDOR COST REPORT\\n\\nMeridian Fabrication Corp. v. Corvess Industrial Group, LLC, No. 24-cv-8812 (D. Ariz.)\\n\\nPursuant to the Court's ESI Order, the parties submit this stipulation allocating the third-party vendor costs of the document production hosted by LitServe Data Solutions (\\\"Vendor\\\").\\n\\nSection 1. Vendor Cost Components (invoiced to date, final for this allocation).\\n1.1 Processing. The Vendor processed 480 GB of collected data at the contracted rate of $75 per GB.\\n1.2 Hosting. The Vendor hosted the review database for 14 months at the contracted rate of $2,300 per month.\\n1.3 First-Pass Review Support. The Vendor's managed-review team performed first-pass review of 12,600 documents at the contracted per-document rate of $1.50 per document.\\n1.4 No other Vendor charges are subject to this stipulation. Aggregate Vendor cost means the sum of the amounts computed under 1.1, 1.2, and 1.3.\\n\\nSection 2. Allocation.\\n2.1 The parties stipulate that the requesting party, Meridian, shall bear 60% (sixty percent) of the aggregate Vendor cost, and the producing party, Corvess, shall bear the remaining 40% (forty percent).\\n2.2 Meridian's allocated share shall be computed by multiplying the aggregate Vendor cost from Section 1.4 by 60%, rounded to whole dollars, and recorded on the discovery cost ledger for the matter.\\n2.3 The allocation in this Section 2 is a cost-shifting stipulation only and does not affect any party's right to seek taxation of costs at the conclusion of the action.\\n\\nSection 3. Payment Mechanics.\\n3.1 The Vendor shall issue split invoices consistent with Section 2 beginning with the next billing cycle. Amounts already paid by either party shall be trued up against the allocated shares within 30 days.\\n3.2 Any dispute concerning the arithmetic of the allocation shall be resolved by reference to the contracted rates and volumes stated in Section 1, which the parties agree are accurate and complete.\\n\\nSection 4. Reservation.\\n4.1 Nothing in this stipulation waives any objection to the merits, relevance, or admissibility of any produced document.\\n\\nSO STIPULATED, by counsel of record for Meridian and Corvess, and approved by the Special Master for discovery.\\n\"}",
+     "ok": true
+    },
+    {
+     "tool": "litigation_discovery_amount_history_create",
+     "requested_tool": "litigation_discovery_amount_history_create",
+     "arguments": {
+      "litigation_discovery_id": "litigation_discovery_001",
+      "production_cost": 52260,
+      "changed_by_role": "discovery_manager",
+      "change_reason": "Requesting-party 60% share of aggregate vendor cost per the ESI cost-sharing stipulation."
+     },
+     "observation": "Request accepted and queued for processing. The record change will be reflected shortly.",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_169",
+    "passed": true,
+    "reward": 1.0,
+    "explanation": "All task checks passed",
+    "failed_conditions": [],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": true,
+      "details": "reads=2, writes=1, read_first=True"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": true,
+      "details": "completed ordered workflow: query_matter_documents -> read_matter_document -> litigation_discovery_amount_history_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": true,
+      "details": "all required input documents were read in full"
+     },
+     {
+      "name": "rows_inserted_into_litigation_discovery_amount_history",
+      "passed": true,
+      "details": "litigation_discovery_amount_history: 14 -> 15 rows (1 new, need >= 1)"
+     },
+     {
+      "name": "litigation_discovery_amount_history_new_row_0_production_cost_is_52260.0",
+      "passed": true,
+      "details": "expected a new litigation_discovery_amount_history row with production_cost=52260.0; got ['52260.0']"
+     },
+     {
+      "name": "litigation_discovery_amount_history_new_row_1_changed_by_role_is_discovery_manager",
+      "passed": true,
+      "details": "expected a new litigation_discovery_amount_history row with changed_by_role=discovery_manager; got ['discovery_manager']"
+     },
+     {
+      "name": "no_new_litigation_discovery_amount_history_row_with_production_cost_87100",
+      "passed": true,
+      "details": "no fabricated production_cost=87100 row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "3/3 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "noop": {
+   "trace": [],
+   "verdict": {
+    "task_id": "task_169",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: state_changed, reads_before_writes, required_workflow_path, required_documents_read, rows_inserted_into_litigation_discovery_amount_history, litigation_discovery_amount_history_new_row_0_production_cost_is_52260.0, litigation_discovery_amount_history_new_row_1_changed_by_role_is_discovery_manager",
+    "failed_conditions": [
+     "state_changed",
+     "reads_before_writes",
+     "required_workflow_path",
+     "required_documents_read",
+     "rows_inserted_into_litigation_discovery_amount_history",
+     "litigation_discovery_amount_history_new_row_0_production_cost_is_52260.0",
+     "litigation_discovery_amount_history_new_row_1_changed_by_role_is_discovery_manager"
+    ],
+    "advisory_conditions": [
+     "all_tools_succeeded"
+    ],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": false,
+      "details": "NO state change \u2014 agent did nothing"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": false,
+      "details": "reads=0, writes=0, read_first=False"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints query_matter_documents -> read_matter_document -> litigation_discovery_amount_history_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": false,
+      "details": "EVIDENCE GAP: matter_documents ['139'] were never read with read_matter_document"
+     },
+     {
+      "name": "rows_inserted_into_litigation_discovery_amount_history",
+      "passed": false,
+      "details": "litigation_discovery_amount_history: 14 -> 14 rows (0 new, need >= 1)"
+     },
+     {
+      "name": "litigation_discovery_amount_history_new_row_0_production_cost_is_52260.0",
+      "passed": false,
+      "details": "expected a new litigation_discovery_amount_history row with production_cost=52260.0; got []"
+     },
+     {
+      "name": "litigation_discovery_amount_history_new_row_1_changed_by_role_is_discovery_manager",
+      "passed": false,
+      "details": "expected a new litigation_discovery_amount_history row with changed_by_role=discovery_manager; got []"
+     },
+     {
+      "name": "no_new_litigation_discovery_amount_history_row_with_production_cost_87100",
+      "passed": true,
+      "details": "no fabricated production_cost=87100 row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": false,
+      "details": "0/0 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "text_only": {
+   "trace": [
+    {
+     "tool": "query_matter_documents",
+     "requested_tool": "query_matter_documents",
+     "arguments": {
+      "title": "damages-computation pack \u2014 Discovery Cost-Sharing Stipulatio"
+     },
+     "observation": "{\"table\": \"matter_documents\", \"count\": 1, \"returned\": 1, \"offset\": 0, \"limit\": 25, \"rows\": [{\"id\": 139, \"title\": \"damages-computation pack \\u2014 Discovery Cost-Sharing Stipulation and Vendor Cost Report (Meridian v. Corvess)\", \"doc_type\": \"stipulation\", \"related_shape\": \"damages-computation\", \"body\": \"DISCOVERY COST-SHARING STIPULATION AND VENDOR COST REPORT\\n\\nMeridian Fabrication Corp. v. Corvess Industrial Group, LLC, No. 24-cv-8812 (D. Ariz.)\\n\\nPursuant to the Court's ESI Order, the parties submit this stipulation allocating the third-p\\u2026[preview]\"}], \"has_more\": false, \"note\": \"body fields are previews \\u2014 call read_matter_document(id) to read a document in full before using it\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 139
+     },
+     "observation": "{\"id\": 139, \"title\": \"damages-computation pack \\u2014 Discovery Cost-Sharing Stipulation and Vendor Cost Report (Meridian v. Corvess)\", \"doc_type\": \"stipulation\", \"related_shape\": \"damages-computation\", \"body\": \"DISCOVERY COST-SHARING STIPULATION AND VENDOR COST REPORT\\n\\nMeridian Fabrication Corp. v. Corvess Industrial Group, LLC, No. 24-cv-8812 (D. Ariz.)\\n\\nPursuant to the Court's ESI Order, the parties submit this stipulation allocating the third-party vendor costs of the document production hosted by LitServe Data Solutions (\\\"Vendor\\\").\\n\\nSection 1. Vendor Cost Components (invoiced to date, final for this allocation).\\n1.1 Processing. The Vendor processed 480 GB of collected data at the contracted rate of $75 per GB.\\n1.2 Hosting. The Vendor hosted the review database for 14 months at the contracted rate of $2,300 per month.\\n1.3 First-Pass Review Support. The Vendor's managed-review team performed first-pass review of 12,600 documents at the contracted per-document rate of $1.50 per document.\\n1.4 No other Vendor charges are subject to this stipulation. Aggregate Vendor cost means the sum of the amounts computed under 1.1, 1.2, and 1.3.\\n\\nSection 2. Allocation.\\n2.1 The parties stipulate that the requesting party, Meridian, shall bear 60% (sixty percent) of the aggregate Vendor cost, and the producing party, Corvess, shall bear the remaining 40% (forty percent).\\n2.2 Meridian's allocated share shall be computed by multiplying the aggregate Vendor cost from Section 1.4 by 60%, rounded to whole dollars, and recorded on the discovery cost ledger for the matter.\\n2.3 The allocation in this Section 2 is a cost-shifting stipulation only and does not affect any party's right to seek taxation of costs at the conclusion of the action.\\n\\nSection 3. Payment Mechanics.\\n3.1 The Vendor shall issue split invoices consistent with Section 2 beginning with the next billing cycle. Amounts already paid by either party shall be trued up against the allocated shares within 30 days.\\n3.2 Any dispute concerning the arithmetic of the allocation shall be resolved by reference to the contracted rates and volumes stated in Section 1, which the parties agree are accurate and complete.\\n\\nSection 4. Reservation.\\n4.1 Nothing in this stipulation waives any objection to the merits, relevance, or admissibility of any produced document.\\n\\nSO STIPULATED, by counsel of record for Meridian and Corvess, and approved by the Special Master for discovery.\\n\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_169",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: state_changed, required_workflow_path, rows_inserted_into_litigation_discovery_amount_history, litigation_discovery_amount_history_new_row_0_production_cost_is_52260.0, litigation_discovery_amount_history_new_row_1_changed_by_role_is_discovery_manager",
+    "failed_conditions": [
+     "state_changed",
+     "required_workflow_path",
+     "rows_inserted_into_litigation_discovery_amount_history",
+     "litigation_discovery_amount_history_new_row_0_production_cost_is_52260.0",
+     "litigation_discovery_amount_history_new_row_1_changed_by_role_is_discovery_manager"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": false,
+      "details": "NO state change \u2014 agent did nothing"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": true,
+      "details": "reads=2, writes=0, read_first=True"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints litigation_discovery_amount_history_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": true,
+      "details": "all required input documents were read in full"
+     },
+     {
+      "name": "rows_inserted_into_litigation_discovery_amount_history",
+      "passed": false,
+      "details": "litigation_discovery_amount_history: 14 -> 14 rows (0 new, need >= 1)"
+     },
+     {
+      "name": "litigation_discovery_amount_history_new_row_0_production_cost_is_52260.0",
+      "passed": false,
+      "details": "expected a new litigation_discovery_amount_history row with production_cost=52260.0; got []"
+     },
+     {
+      "name": "litigation_discovery_amount_history_new_row_1_changed_by_role_is_discovery_manager",
+      "passed": false,
+      "details": "expected a new litigation_discovery_amount_history row with changed_by_role=discovery_manager; got []"
+     },
+     {
+      "name": "no_new_litigation_discovery_amount_history_row_with_production_cost_87100",
+      "passed": true,
+      "details": "no fabricated production_cost=87100 row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "2/2 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "blind_write": {
+   "trace": [
+    {
+     "tool": "litigation_discovery_amount_history_create",
+     "requested_tool": "litigation_discovery_amount_history_create",
+     "arguments": {
+      "litigation_discovery_id": "litigation_discovery_001",
+      "production_cost": 52260,
+      "changed_by_role": "discovery_manager",
+      "change_reason": "Requesting-party 60% share of aggregate vendor cost per the ESI cost-sharing stipulation."
+     },
+     "observation": "{\"status\": \"created\", \"table\": \"litigation_discovery_amount_history\", \"id\": \"litigation_discovery_amount_history_015\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_169",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: reads_before_writes, no_shortcut_direct_update, required_workflow_path, required_documents_read",
+    "failed_conditions": [
+     "reads_before_writes",
+     "no_shortcut_direct_update",
+     "required_workflow_path",
+     "required_documents_read"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": false,
+      "details": "reads=0, writes=1, read_first=False"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": false,
+      "details": "SHORTCUT: wrote without reading first"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints query_matter_documents -> read_matter_document"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": false,
+      "details": "EVIDENCE GAP: matter_documents ['139'] were never read with read_matter_document"
+     },
+     {
+      "name": "rows_inserted_into_litigation_discovery_amount_history",
+      "passed": true,
+      "details": "litigation_discovery_amount_history: 14 -> 15 rows (1 new, need >= 1)"
+     },
+     {
+      "name": "litigation_discovery_amount_history_new_row_0_production_cost_is_52260.0",
+      "passed": true,
+      "details": "expected a new litigation_discovery_amount_history row with production_cost=52260.0; got ['52260.0']"
+     },
+     {
+      "name": "litigation_discovery_amount_history_new_row_1_changed_by_role_is_discovery_manager",
+      "passed": true,
+      "details": "expected a new litigation_discovery_amount_history row with changed_by_role=discovery_manager; got ['discovery_manager']"
+     },
+     {
+      "name": "no_new_litigation_discovery_amount_history_row_with_production_cost_87100",
+      "passed": true,
+      "details": "no fabricated production_cost=87100 row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "1/1 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "wrong_value": {
+   "trace": [
+    {
+     "tool": "query_matter_documents",
+     "requested_tool": "query_matter_documents",
+     "arguments": {
+      "title": "damages-computation pack \u2014 Discovery Cost-Sharing Stipulatio"
+     },
+     "observation": "{\"table\": \"matter_documents\", \"count\": 1, \"returned\": 1, \"offset\": 0, \"limit\": 25, \"rows\": [{\"id\": 139, \"title\": \"damages-computation pack \\u2014 Discovery Cost-Sharing Stipulation and Vendor Cost Report (Meridian v. Corvess)\", \"doc_type\": \"stipulation\", \"related_shape\": \"damages-computation\", \"body\": \"DISCOVERY COST-SHARING STIPULATION AND VENDOR COST REPORT\\n\\nMeridian Fabrication Corp. v. Corvess Industrial Group, LLC, No. 24-cv-8812 (D. Ariz.)\\n\\nPursuant to the Court's ESI Order, the parties submit this stipulation allocating the third-p\\u2026[preview]\"}], \"has_more\": false, \"note\": \"body fields are previews \\u2014 call read_matter_document(id) to read a document in full before using it\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 139
+     },
+     "observation": "{\"id\": 139, \"title\": \"damages-computation pack \\u2014 Discovery Cost-Sharing Stipulation and Vendor Cost Report (Meridian v. Corvess)\", \"doc_type\": \"stipulation\", \"related_shape\": \"damages-computation\", \"body\": \"DISCOVERY COST-SHARING STIPULATION AND VENDOR COST REPORT\\n\\nMeridian Fabrication Corp. v. Corvess Industrial Group, LLC, No. 24-cv-8812 (D. Ariz.)\\n\\nPursuant to the Court's ESI Order, the parties submit this stipulation allocating the third-party vendor costs of the document production hosted by LitServe Data Solutions (\\\"Vendor\\\").\\n\\nSection 1. Vendor Cost Components (invoiced to date, final for this allocation).\\n1.1 Processing. The Vendor processed 480 GB of collected data at the contracted rate of $75 per GB.\\n1.2 Hosting. The Vendor hosted the review database for 14 months at the contracted rate of $2,300 per month.\\n1.3 First-Pass Review Support. The Vendor's managed-review team performed first-pass review of 12,600 documents at the contracted per-document rate of $1.50 per document.\\n1.4 No other Vendor charges are subject to this stipulation. Aggregate Vendor cost means the sum of the amounts computed under 1.1, 1.2, and 1.3.\\n\\nSection 2. Allocation.\\n2.1 The parties stipulate that the requesting party, Meridian, shall bear 60% (sixty percent) of the aggregate Vendor cost, and the producing party, Corvess, shall bear the remaining 40% (forty percent).\\n2.2 Meridian's allocated share shall be computed by multiplying the aggregate Vendor cost from Section 1.4 by 60%, rounded to whole dollars, and recorded on the discovery cost ledger for the matter.\\n2.3 The allocation in this Section 2 is a cost-shifting stipulation only and does not affect any party's right to seek taxation of costs at the conclusion of the action.\\n\\nSection 3. Payment Mechanics.\\n3.1 The Vendor shall issue split invoices consistent with Section 2 beginning with the next billing cycle. Amounts already paid by either party shall be trued up against the allocated shares within 30 days.\\n3.2 Any dispute concerning the arithmetic of the allocation shall be resolved by reference to the contracted rates and volumes stated in Section 1, which the parties agree are accurate and complete.\\n\\nSection 4. Reservation.\\n4.1 Nothing in this stipulation waives any objection to the merits, relevance, or admissibility of any produced document.\\n\\nSO STIPULATED, by counsel of record for Meridian and Corvess, and approved by the Special Master for discovery.\\n\"}",
+     "ok": true
+    },
+    {
+     "tool": "litigation_discovery_amount_history_create",
+     "requested_tool": "litigation_discovery_amount_history_create",
+     "arguments": {
+      "litigation_discovery_id": "litigation_discovery_001",
+      "production_cost": 56502.42,
+      "changed_by_role": "discovery_manager XX-WRONG",
+      "change_reason": "Requesting-party 60% share of aggregate vendor cost per the ESI cost-sharing stipulation. XX-WRONG"
+     },
+     "observation": "Request accepted and queued for processing. The record change will be reflected shortly.",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_169",
+    "passed": false,
+    "reward": 0.3333,
+    "explanation": "Failed: litigation_discovery_amount_history_new_row_0_production_cost_is_52260.0, litigation_discovery_amount_history_new_row_1_changed_by_role_is_discovery_manager",
+    "failed_conditions": [
+     "litigation_discovery_amount_history_new_row_0_production_cost_is_52260.0",
+     "litigation_discovery_amount_history_new_row_1_changed_by_role_is_discovery_manager"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": true,
+      "details": "reads=2, writes=1, read_first=True"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": true,
+      "details": "completed ordered workflow: query_matter_documents -> read_matter_document -> litigation_discovery_amount_history_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": true,
+      "details": "all required input documents were read in full"
+     },
+     {
+      "name": "rows_inserted_into_litigation_discovery_amount_history",
+      "passed": true,
+      "details": "litigation_discovery_amount_history: 14 -> 15 rows (1 new, need >= 1)"
+     },
+     {
+      "name": "litigation_discovery_amount_history_new_row_0_production_cost_is_52260.0",
+      "passed": false,
+      "details": "expected a new litigation_discovery_amount_history row with production_cost=52260.0; got ['56502.42']"
+     },
+     {
+      "name": "litigation_discovery_amount_history_new_row_1_changed_by_role_is_discovery_manager",
+      "passed": false,
+      "details": "expected a new litigation_discovery_amount_history row with changed_by_role=discovery_manager; got ['discovery_manager xx-wrong']"
+     },
+     {
+      "name": "no_new_litigation_discovery_amount_history_row_with_production_cost_87100",
+      "passed": true,
+      "details": "no fabricated production_cost=87100 row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "3/3 tool calls succeeded"
+     }
+    ]
+   }
+  }
+ }
+}

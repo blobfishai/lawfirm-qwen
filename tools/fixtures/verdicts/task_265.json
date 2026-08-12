@@ -1,0 +1,514 @@
+{
+ "task_id": "task_265",
+ "world": "world-v15.json",
+ "episodes": {
+  "oracle": {
+   "trace": [
+    {
+     "tool": "query_matter_documents",
+     "requested_tool": "query_matter_documents",
+     "arguments": {
+      "title": "Expert pack \u2014 Scheduling order excerpt: Meridian Grain v. Ta"
+     },
+     "observation": "{\"table\": \"matter_documents\", \"count\": 1, \"returned\": 1, \"offset\": 0, \"limit\": 25, \"rows\": [{\"id\": 257, \"title\": \"Expert pack \\u2014 Scheduling order excerpt: Meridian Grain v. Talvern\", \"doc_type\": \"court_order\", \"related_shape\": \"expert-witness-management\", \"body\": \"SCHEDULING ORDER (excerpt)\\n\\n3. TRIAL. This matter is set for jury trial commencing MONDAY, MARCH 1, 2027.\\n\\n4. EXPERT DISCLOSURES. Absent a stipulation approved by the Court, disclosures under Rule 26(a)(2) shall be made:\\n   (a) for the part\\u2026[preview]\"}], \"has_more\": false, \"note\": \"body fields are previews \\u2014 call read_matter_document(id) to read a document in full before using it\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 257
+     },
+     "observation": "{\"id\": 257, \"title\": \"Expert pack \\u2014 Scheduling order excerpt: Meridian Grain v. Talvern\", \"doc_type\": \"court_order\", \"related_shape\": \"expert-witness-management\", \"body\": \"SCHEDULING ORDER (excerpt)\\n\\n3. TRIAL. This matter is set for jury trial commencing MONDAY, MARCH 1, 2027.\\n\\n4. EXPERT DISCLOSURES. Absent a stipulation approved by the Court, disclosures under Rule 26(a)(2) shall be made:\\n   (a) for the party bearing the burden of proof on an issue: AT LEAST 90 DAYS BEFORE TRIAL;\\n   (b) solely to contradict or rebut evidence on the same subject: WITHIN 30 DAYS AFTER the other party's disclosure.\\n\\n5. No extension of the expert-disclosure dates will be granted absent a showing of good cause filed before the deadline.\"}",
+     "ok": true
+    },
+    {
+     "tool": "litigation_deadlines_review_create",
+     "requested_tool": "litigation_deadlines_review_create",
+     "arguments": {
+      "litigation_deadlines_id": "litigation_deadlines_001",
+      "reviewer_role": "docketing-clerk",
+      "outcome": "2026-12-01",
+      "rationale": "90 days before the March 1, 2027 trial date is December 1, 2026."
+     },
+     "observation": "{\"status\": \"created\", \"table\": \"litigation_deadlines_reviews\", \"id\": \"litigation_deadlines_review_021\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_265",
+    "passed": true,
+    "reward": 1.0,
+    "explanation": "All task checks passed",
+    "failed_conditions": [],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": true,
+      "details": "reads=2, writes=1, read_first=True"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": true,
+      "details": "completed ordered workflow: query_matter_documents -> read_matter_document -> litigation_deadlines_review_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": true,
+      "details": "all required input documents were read in full"
+     },
+     {
+      "name": "rows_inserted_into_litigation_deadlines_reviews",
+      "passed": true,
+      "details": "litigation_deadlines_reviews: 20 -> 21 rows (1 new, need >= 1)"
+     },
+     {
+      "name": "litigation_deadlines_reviews_new_row_0_outcome_is_2026-12-01",
+      "passed": true,
+      "details": "expected a new litigation_deadlines_reviews row with outcome=2026-12-01; got ['2026-12-01']"
+     },
+     {
+      "name": "litigation_deadlines_reviews_new_row_1_reviewer_role_is_docketing-clerk",
+      "passed": true,
+      "details": "expected a new litigation_deadlines_reviews row with reviewer_role=docketing-clerk; got ['docketing-clerk']"
+     },
+     {
+      "name": "no_new_litigation_deadlines_reviews_row_with_outcome_2026-11-31",
+      "passed": true,
+      "details": "no fabricated outcome=2026-11-31 row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "3/3 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "noop": {
+   "trace": [],
+   "verdict": {
+    "task_id": "task_265",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: state_changed, reads_before_writes, required_workflow_path, required_documents_read, rows_inserted_into_litigation_deadlines_reviews, litigation_deadlines_reviews_new_row_0_outcome_is_2026-12-01, litigation_deadlines_reviews_new_row_1_reviewer_role_is_docketing-clerk",
+    "failed_conditions": [
+     "state_changed",
+     "reads_before_writes",
+     "required_workflow_path",
+     "required_documents_read",
+     "rows_inserted_into_litigation_deadlines_reviews",
+     "litigation_deadlines_reviews_new_row_0_outcome_is_2026-12-01",
+     "litigation_deadlines_reviews_new_row_1_reviewer_role_is_docketing-clerk"
+    ],
+    "advisory_conditions": [
+     "all_tools_succeeded"
+    ],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": false,
+      "details": "NO state change \u2014 agent did nothing"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": false,
+      "details": "reads=0, writes=0, read_first=False"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints query_matter_documents -> read_matter_document -> litigation_deadlines_review_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": false,
+      "details": "EVIDENCE GAP: matter_documents ['257'] were never read with read_matter_document"
+     },
+     {
+      "name": "rows_inserted_into_litigation_deadlines_reviews",
+      "passed": false,
+      "details": "litigation_deadlines_reviews: 20 -> 20 rows (0 new, need >= 1)"
+     },
+     {
+      "name": "litigation_deadlines_reviews_new_row_0_outcome_is_2026-12-01",
+      "passed": false,
+      "details": "expected a new litigation_deadlines_reviews row with outcome=2026-12-01; got []"
+     },
+     {
+      "name": "litigation_deadlines_reviews_new_row_1_reviewer_role_is_docketing-clerk",
+      "passed": false,
+      "details": "expected a new litigation_deadlines_reviews row with reviewer_role=docketing-clerk; got []"
+     },
+     {
+      "name": "no_new_litigation_deadlines_reviews_row_with_outcome_2026-11-31",
+      "passed": true,
+      "details": "no fabricated outcome=2026-11-31 row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": false,
+      "details": "0/0 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "text_only": {
+   "trace": [
+    {
+     "tool": "query_matter_documents",
+     "requested_tool": "query_matter_documents",
+     "arguments": {
+      "title": "Expert pack \u2014 Scheduling order excerpt: Meridian Grain v. Ta"
+     },
+     "observation": "{\"table\": \"matter_documents\", \"count\": 1, \"returned\": 1, \"offset\": 0, \"limit\": 25, \"rows\": [{\"id\": 257, \"title\": \"Expert pack \\u2014 Scheduling order excerpt: Meridian Grain v. Talvern\", \"doc_type\": \"court_order\", \"related_shape\": \"expert-witness-management\", \"body\": \"SCHEDULING ORDER (excerpt)\\n\\n3. TRIAL. This matter is set for jury trial commencing MONDAY, MARCH 1, 2027.\\n\\n4. EXPERT DISCLOSURES. Absent a stipulation approved by the Court, disclosures under Rule 26(a)(2) shall be made:\\n   (a) for the part\\u2026[preview]\"}], \"has_more\": false, \"note\": \"body fields are previews \\u2014 call read_matter_document(id) to read a document in full before using it\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 257
+     },
+     "observation": "{\"id\": 257, \"title\": \"Expert pack \\u2014 Scheduling order excerpt: Meridian Grain v. Talvern\", \"doc_type\": \"court_order\", \"related_shape\": \"expert-witness-management\", \"body\": \"SCHEDULING ORDER (excerpt)\\n\\n3. TRIAL. This matter is set for jury trial commencing MONDAY, MARCH 1, 2027.\\n\\n4. EXPERT DISCLOSURES. Absent a stipulation approved by the Court, disclosures under Rule 26(a)(2) shall be made:\\n   (a) for the party bearing the burden of proof on an issue: AT LEAST 90 DAYS BEFORE TRIAL;\\n   (b) solely to contradict or rebut evidence on the same subject: WITHIN 30 DAYS AFTER the other party's disclosure.\\n\\n5. No extension of the expert-disclosure dates will be granted absent a showing of good cause filed before the deadline.\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_265",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: state_changed, required_workflow_path, rows_inserted_into_litigation_deadlines_reviews, litigation_deadlines_reviews_new_row_0_outcome_is_2026-12-01, litigation_deadlines_reviews_new_row_1_reviewer_role_is_docketing-clerk",
+    "failed_conditions": [
+     "state_changed",
+     "required_workflow_path",
+     "rows_inserted_into_litigation_deadlines_reviews",
+     "litigation_deadlines_reviews_new_row_0_outcome_is_2026-12-01",
+     "litigation_deadlines_reviews_new_row_1_reviewer_role_is_docketing-clerk"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": false,
+      "details": "NO state change \u2014 agent did nothing"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": true,
+      "details": "reads=2, writes=0, read_first=True"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints litigation_deadlines_review_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": true,
+      "details": "all required input documents were read in full"
+     },
+     {
+      "name": "rows_inserted_into_litigation_deadlines_reviews",
+      "passed": false,
+      "details": "litigation_deadlines_reviews: 20 -> 20 rows (0 new, need >= 1)"
+     },
+     {
+      "name": "litigation_deadlines_reviews_new_row_0_outcome_is_2026-12-01",
+      "passed": false,
+      "details": "expected a new litigation_deadlines_reviews row with outcome=2026-12-01; got []"
+     },
+     {
+      "name": "litigation_deadlines_reviews_new_row_1_reviewer_role_is_docketing-clerk",
+      "passed": false,
+      "details": "expected a new litigation_deadlines_reviews row with reviewer_role=docketing-clerk; got []"
+     },
+     {
+      "name": "no_new_litigation_deadlines_reviews_row_with_outcome_2026-11-31",
+      "passed": true,
+      "details": "no fabricated outcome=2026-11-31 row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "2/2 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "blind_write": {
+   "trace": [
+    {
+     "tool": "litigation_deadlines_review_create",
+     "requested_tool": "litigation_deadlines_review_create",
+     "arguments": {
+      "litigation_deadlines_id": "litigation_deadlines_001",
+      "reviewer_role": "docketing-clerk",
+      "outcome": "2026-12-01",
+      "rationale": "90 days before the March 1, 2027 trial date is December 1, 2026."
+     },
+     "observation": "Request accepted and queued for processing. The record change will be reflected shortly.",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_265",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: reads_before_writes, no_shortcut_direct_update, required_workflow_path, required_documents_read",
+    "failed_conditions": [
+     "reads_before_writes",
+     "no_shortcut_direct_update",
+     "required_workflow_path",
+     "required_documents_read"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": false,
+      "details": "reads=0, writes=1, read_first=False"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": false,
+      "details": "SHORTCUT: wrote without reading first"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints query_matter_documents -> read_matter_document"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": false,
+      "details": "EVIDENCE GAP: matter_documents ['257'] were never read with read_matter_document"
+     },
+     {
+      "name": "rows_inserted_into_litigation_deadlines_reviews",
+      "passed": true,
+      "details": "litigation_deadlines_reviews: 20 -> 21 rows (1 new, need >= 1)"
+     },
+     {
+      "name": "litigation_deadlines_reviews_new_row_0_outcome_is_2026-12-01",
+      "passed": true,
+      "details": "expected a new litigation_deadlines_reviews row with outcome=2026-12-01; got ['2026-12-01']"
+     },
+     {
+      "name": "litigation_deadlines_reviews_new_row_1_reviewer_role_is_docketing-clerk",
+      "passed": true,
+      "details": "expected a new litigation_deadlines_reviews row with reviewer_role=docketing-clerk; got ['docketing-clerk']"
+     },
+     {
+      "name": "no_new_litigation_deadlines_reviews_row_with_outcome_2026-11-31",
+      "passed": true,
+      "details": "no fabricated outcome=2026-11-31 row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "1/1 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "wrong_value": {
+   "trace": [
+    {
+     "tool": "query_matter_documents",
+     "requested_tool": "query_matter_documents",
+     "arguments": {
+      "title": "Expert pack \u2014 Scheduling order excerpt: Meridian Grain v. Ta"
+     },
+     "observation": "{\"table\": \"matter_documents\", \"count\": 1, \"returned\": 1, \"offset\": 0, \"limit\": 25, \"rows\": [{\"id\": 257, \"title\": \"Expert pack \\u2014 Scheduling order excerpt: Meridian Grain v. Talvern\", \"doc_type\": \"court_order\", \"related_shape\": \"expert-witness-management\", \"body\": \"SCHEDULING ORDER (excerpt)\\n\\n3. TRIAL. This matter is set for jury trial commencing MONDAY, MARCH 1, 2027.\\n\\n4. EXPERT DISCLOSURES. Absent a stipulation approved by the Court, disclosures under Rule 26(a)(2) shall be made:\\n   (a) for the part\\u2026[preview]\"}], \"has_more\": false, \"note\": \"body fields are previews \\u2014 call read_matter_document(id) to read a document in full before using it\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 257
+     },
+     "observation": "{\"id\": 257, \"title\": \"Expert pack \\u2014 Scheduling order excerpt: Meridian Grain v. Talvern\", \"doc_type\": \"court_order\", \"related_shape\": \"expert-witness-management\", \"body\": \"SCHEDULING ORDER (excerpt)\\n\\n3. TRIAL. This matter is set for jury trial commencing MONDAY, MARCH 1, 2027.\\n\\n4. EXPERT DISCLOSURES. Absent a stipulation approved by the Court, disclosures under Rule 26(a)(2) shall be made:\\n   (a) for the party bearing the burden of proof on an issue: AT LEAST 90 DAYS BEFORE TRIAL;\\n   (b) solely to contradict or rebut evidence on the same subject: WITHIN 30 DAYS AFTER the other party's disclosure.\\n\\n5. No extension of the expert-disclosure dates will be granted absent a showing of good cause filed before the deadline.\"}",
+     "ok": true
+    },
+    {
+     "tool": "litigation_deadlines_review_create",
+     "requested_tool": "litigation_deadlines_review_create",
+     "arguments": {
+      "litigation_deadlines_id": "litigation_deadlines_001",
+      "reviewer_role": "docketing-clerk XX-WRONG",
+      "outcome": "2026-12-01 XX-WRONG",
+      "rationale": "90 days before the March 1, 2027 trial date is December 1, 2026. XX-WRONG"
+     },
+     "observation": "{\"status\": \"created\", \"table\": \"litigation_deadlines_reviews\", \"id\": \"litigation_deadlines_review_021\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_265",
+    "passed": false,
+    "reward": 0.3333,
+    "explanation": "Failed: litigation_deadlines_reviews_new_row_0_outcome_is_2026-12-01, litigation_deadlines_reviews_new_row_1_reviewer_role_is_docketing-clerk",
+    "failed_conditions": [
+     "litigation_deadlines_reviews_new_row_0_outcome_is_2026-12-01",
+     "litigation_deadlines_reviews_new_row_1_reviewer_role_is_docketing-clerk"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": true,
+      "details": "reads=2, writes=1, read_first=True"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": true,
+      "details": "completed ordered workflow: query_matter_documents -> read_matter_document -> litigation_deadlines_review_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": true,
+      "details": "all required input documents were read in full"
+     },
+     {
+      "name": "rows_inserted_into_litigation_deadlines_reviews",
+      "passed": true,
+      "details": "litigation_deadlines_reviews: 20 -> 21 rows (1 new, need >= 1)"
+     },
+     {
+      "name": "litigation_deadlines_reviews_new_row_0_outcome_is_2026-12-01",
+      "passed": false,
+      "details": "expected a new litigation_deadlines_reviews row with outcome=2026-12-01; got ['2026-12-01 xx-wrong']"
+     },
+     {
+      "name": "litigation_deadlines_reviews_new_row_1_reviewer_role_is_docketing-clerk",
+      "passed": false,
+      "details": "expected a new litigation_deadlines_reviews row with reviewer_role=docketing-clerk; got ['docketing-clerk xx-wrong']"
+     },
+     {
+      "name": "no_new_litigation_deadlines_reviews_row_with_outcome_2026-11-31",
+      "passed": true,
+      "details": "no fabricated outcome=2026-11-31 row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "3/3 tool calls succeeded"
+     }
+    ]
+   }
+  }
+ }
+}

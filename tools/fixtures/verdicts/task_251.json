@@ -1,0 +1,514 @@
+{
+ "task_id": "task_251",
+ "world": "world-v15.json",
+ "episodes": {
+  "oracle": {
+   "trace": [
+    {
+     "tool": "query_matter_documents",
+     "requested_tool": "query_matter_documents",
+     "arguments": {
+      "title": "Formation pack \u2014 State filing checklist: Delaware and Washin"
+     },
+     "observation": "{\"table\": \"matter_documents\", \"count\": 1, \"returned\": 1, \"offset\": 0, \"limit\": 25, \"rows\": [{\"id\": 236, \"title\": \"Formation pack \\u2014 State filing checklist: Delaware and Washington\", \"doc_type\": \"filing_checklist\", \"related_shape\": \"lawflow-entity-formation\", \"body\": \"FORMATION FILING CHECKLIST\\n\\nDelaware (entity domicile):\\n  1. Name availability search with the Division of Corporations.\\n  2. Certificate of Incorporation \\u2014 filing fee $89 minimum.\\n  3. Registered agent appointment (annual fee).\\n  4. Annual\\u2026[preview]\"}], \"has_more\": false, \"note\": \"body fields are previews \\u2014 call read_matter_document(id) to read a document in full before using it\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 236
+     },
+     "observation": "{\"id\": 236, \"title\": \"Formation pack \\u2014 State filing checklist: Delaware and Washington\", \"doc_type\": \"filing_checklist\", \"related_shape\": \"lawflow-entity-formation\", \"body\": \"FORMATION FILING CHECKLIST\\n\\nDelaware (entity domicile):\\n  1. Name availability search with the Division of Corporations.\\n  2. Certificate of Incorporation \\u2014 filing fee $89 minimum.\\n  3. Registered agent appointment (annual fee).\\n  4. Annual franchise tax report due March 1.\\n\\nWashington (foreign qualification, operations state):\\n  5. Foreign registration statement \\u2014 filing fee $180.\\n  6. Business license application (UBI number).\\n  7. State employer registration if hiring.\\n\\nOrganizational items (post-filing):\\n  8. Initial board consent and bylaws.\\n  9. Founder stock issuance with vesting and 83(b) elections filed within 30 DAYS of issuance.\\n  10. EIN application (federal).\\n\\nTotal state filing fees for the Delaware + Washington pair: $269.\"}",
+     "ok": true
+    },
+    {
+     "tool": "legal_matters_amount_history_create",
+     "requested_tool": "legal_matters_amount_history_create",
+     "arguments": {
+      "legal_matters_id": "legal_matters_001",
+      "fee_budget": 269,
+      "changed_by_role": "formation-paralegal",
+      "change_reason": "Delaware Certificate of Incorporation $89 + Washington foreign registration $180 = $269."
+     },
+     "observation": "{\"status\": \"created\", \"table\": \"legal_matters_amount_history\", \"id\": \"legal_matters_amount_history_016\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_251",
+    "passed": true,
+    "reward": 1.0,
+    "explanation": "All task checks passed",
+    "failed_conditions": [],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": true,
+      "details": "reads=2, writes=1, read_first=True"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": true,
+      "details": "completed ordered workflow: query_matter_documents -> read_matter_document -> legal_matters_amount_history_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": true,
+      "details": "all required input documents were read in full"
+     },
+     {
+      "name": "rows_inserted_into_legal_matters_amount_history",
+      "passed": true,
+      "details": "legal_matters_amount_history: 15 -> 16 rows (1 new, need >= 1)"
+     },
+     {
+      "name": "legal_matters_amount_history_new_row_0_fee_budget_is_269.0",
+      "passed": true,
+      "details": "expected a new legal_matters_amount_history row with fee_budget=269.0; got ['269.0']"
+     },
+     {
+      "name": "legal_matters_amount_history_new_row_1_changed_by_role_is_formation-paralegal",
+      "passed": true,
+      "details": "expected a new legal_matters_amount_history row with changed_by_role=formation-paralegal; got ['formation-paralegal']"
+     },
+     {
+      "name": "no_new_legal_matters_amount_history_row_with_fee_budget_300",
+      "passed": true,
+      "details": "no fabricated fee_budget=300 row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "3/3 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "noop": {
+   "trace": [],
+   "verdict": {
+    "task_id": "task_251",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: state_changed, reads_before_writes, required_workflow_path, required_documents_read, rows_inserted_into_legal_matters_amount_history, legal_matters_amount_history_new_row_0_fee_budget_is_269.0, legal_matters_amount_history_new_row_1_changed_by_role_is_formation-paralegal",
+    "failed_conditions": [
+     "state_changed",
+     "reads_before_writes",
+     "required_workflow_path",
+     "required_documents_read",
+     "rows_inserted_into_legal_matters_amount_history",
+     "legal_matters_amount_history_new_row_0_fee_budget_is_269.0",
+     "legal_matters_amount_history_new_row_1_changed_by_role_is_formation-paralegal"
+    ],
+    "advisory_conditions": [
+     "all_tools_succeeded"
+    ],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": false,
+      "details": "NO state change \u2014 agent did nothing"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": false,
+      "details": "reads=0, writes=0, read_first=False"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints query_matter_documents -> read_matter_document -> legal_matters_amount_history_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": false,
+      "details": "EVIDENCE GAP: matter_documents ['236'] were never read with read_matter_document"
+     },
+     {
+      "name": "rows_inserted_into_legal_matters_amount_history",
+      "passed": false,
+      "details": "legal_matters_amount_history: 15 -> 15 rows (0 new, need >= 1)"
+     },
+     {
+      "name": "legal_matters_amount_history_new_row_0_fee_budget_is_269.0",
+      "passed": false,
+      "details": "expected a new legal_matters_amount_history row with fee_budget=269.0; got []"
+     },
+     {
+      "name": "legal_matters_amount_history_new_row_1_changed_by_role_is_formation-paralegal",
+      "passed": false,
+      "details": "expected a new legal_matters_amount_history row with changed_by_role=formation-paralegal; got []"
+     },
+     {
+      "name": "no_new_legal_matters_amount_history_row_with_fee_budget_300",
+      "passed": true,
+      "details": "no fabricated fee_budget=300 row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": false,
+      "details": "0/0 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "text_only": {
+   "trace": [
+    {
+     "tool": "query_matter_documents",
+     "requested_tool": "query_matter_documents",
+     "arguments": {
+      "title": "Formation pack \u2014 State filing checklist: Delaware and Washin"
+     },
+     "observation": "{\"table\": \"matter_documents\", \"count\": 1, \"returned\": 1, \"offset\": 0, \"limit\": 25, \"rows\": [{\"id\": 236, \"title\": \"Formation pack \\u2014 State filing checklist: Delaware and Washington\", \"doc_type\": \"filing_checklist\", \"related_shape\": \"lawflow-entity-formation\", \"body\": \"FORMATION FILING CHECKLIST\\n\\nDelaware (entity domicile):\\n  1. Name availability search with the Division of Corporations.\\n  2. Certificate of Incorporation \\u2014 filing fee $89 minimum.\\n  3. Registered agent appointment (annual fee).\\n  4. Annual\\u2026[preview]\"}], \"has_more\": false, \"note\": \"body fields are previews \\u2014 call read_matter_document(id) to read a document in full before using it\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 236
+     },
+     "observation": "{\"id\": 236, \"title\": \"Formation pack \\u2014 State filing checklist: Delaware and Washington\", \"doc_type\": \"filing_checklist\", \"related_shape\": \"lawflow-entity-formation\", \"body\": \"FORMATION FILING CHECKLIST\\n\\nDelaware (entity domicile):\\n  1. Name availability search with the Division of Corporations.\\n  2. Certificate of Incorporation \\u2014 filing fee $89 minimum.\\n  3. Registered agent appointment (annual fee).\\n  4. Annual franchise tax report due March 1.\\n\\nWashington (foreign qualification, operations state):\\n  5. Foreign registration statement \\u2014 filing fee $180.\\n  6. Business license application (UBI number).\\n  7. State employer registration if hiring.\\n\\nOrganizational items (post-filing):\\n  8. Initial board consent and bylaws.\\n  9. Founder stock issuance with vesting and 83(b) elections filed within 30 DAYS of issuance.\\n  10. EIN application (federal).\\n\\nTotal state filing fees for the Delaware + Washington pair: $269.\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_251",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: state_changed, required_workflow_path, rows_inserted_into_legal_matters_amount_history, legal_matters_amount_history_new_row_0_fee_budget_is_269.0, legal_matters_amount_history_new_row_1_changed_by_role_is_formation-paralegal",
+    "failed_conditions": [
+     "state_changed",
+     "required_workflow_path",
+     "rows_inserted_into_legal_matters_amount_history",
+     "legal_matters_amount_history_new_row_0_fee_budget_is_269.0",
+     "legal_matters_amount_history_new_row_1_changed_by_role_is_formation-paralegal"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": false,
+      "details": "NO state change \u2014 agent did nothing"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": true,
+      "details": "reads=2, writes=0, read_first=True"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints legal_matters_amount_history_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": true,
+      "details": "all required input documents were read in full"
+     },
+     {
+      "name": "rows_inserted_into_legal_matters_amount_history",
+      "passed": false,
+      "details": "legal_matters_amount_history: 15 -> 15 rows (0 new, need >= 1)"
+     },
+     {
+      "name": "legal_matters_amount_history_new_row_0_fee_budget_is_269.0",
+      "passed": false,
+      "details": "expected a new legal_matters_amount_history row with fee_budget=269.0; got []"
+     },
+     {
+      "name": "legal_matters_amount_history_new_row_1_changed_by_role_is_formation-paralegal",
+      "passed": false,
+      "details": "expected a new legal_matters_amount_history row with changed_by_role=formation-paralegal; got []"
+     },
+     {
+      "name": "no_new_legal_matters_amount_history_row_with_fee_budget_300",
+      "passed": true,
+      "details": "no fabricated fee_budget=300 row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "2/2 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "blind_write": {
+   "trace": [
+    {
+     "tool": "legal_matters_amount_history_create",
+     "requested_tool": "legal_matters_amount_history_create",
+     "arguments": {
+      "legal_matters_id": "legal_matters_001",
+      "fee_budget": 269,
+      "changed_by_role": "formation-paralegal",
+      "change_reason": "Delaware Certificate of Incorporation $89 + Washington foreign registration $180 = $269."
+     },
+     "observation": "{\"status\": \"created\", \"table\": \"legal_matters_amount_history\", \"id\": \"legal_matters_amount_history_016\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_251",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: reads_before_writes, no_shortcut_direct_update, required_workflow_path, required_documents_read",
+    "failed_conditions": [
+     "reads_before_writes",
+     "no_shortcut_direct_update",
+     "required_workflow_path",
+     "required_documents_read"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": false,
+      "details": "reads=0, writes=1, read_first=False"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": false,
+      "details": "SHORTCUT: wrote without reading first"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints query_matter_documents -> read_matter_document"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": false,
+      "details": "EVIDENCE GAP: matter_documents ['236'] were never read with read_matter_document"
+     },
+     {
+      "name": "rows_inserted_into_legal_matters_amount_history",
+      "passed": true,
+      "details": "legal_matters_amount_history: 15 -> 16 rows (1 new, need >= 1)"
+     },
+     {
+      "name": "legal_matters_amount_history_new_row_0_fee_budget_is_269.0",
+      "passed": true,
+      "details": "expected a new legal_matters_amount_history row with fee_budget=269.0; got ['269.0']"
+     },
+     {
+      "name": "legal_matters_amount_history_new_row_1_changed_by_role_is_formation-paralegal",
+      "passed": true,
+      "details": "expected a new legal_matters_amount_history row with changed_by_role=formation-paralegal; got ['formation-paralegal']"
+     },
+     {
+      "name": "no_new_legal_matters_amount_history_row_with_fee_budget_300",
+      "passed": true,
+      "details": "no fabricated fee_budget=300 row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "1/1 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "wrong_value": {
+   "trace": [
+    {
+     "tool": "query_matter_documents",
+     "requested_tool": "query_matter_documents",
+     "arguments": {
+      "title": "Formation pack \u2014 State filing checklist: Delaware and Washin"
+     },
+     "observation": "{\"table\": \"matter_documents\", \"count\": 1, \"returned\": 1, \"offset\": 0, \"limit\": 25, \"rows\": [{\"id\": 236, \"title\": \"Formation pack \\u2014 State filing checklist: Delaware and Washington\", \"doc_type\": \"filing_checklist\", \"related_shape\": \"lawflow-entity-formation\", \"body\": \"FORMATION FILING CHECKLIST\\n\\nDelaware (entity domicile):\\n  1. Name availability search with the Division of Corporations.\\n  2. Certificate of Incorporation \\u2014 filing fee $89 minimum.\\n  3. Registered agent appointment (annual fee).\\n  4. Annual\\u2026[preview]\"}], \"has_more\": false, \"note\": \"body fields are previews \\u2014 call read_matter_document(id) to read a document in full before using it\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 236
+     },
+     "observation": "{\"id\": 236, \"title\": \"Formation pack \\u2014 State filing checklist: Delaware and Washington\", \"doc_type\": \"filing_checklist\", \"related_shape\": \"lawflow-entity-formation\", \"body\": \"FORMATION FILING CHECKLIST\\n\\nDelaware (entity domicile):\\n  1. Name availability search with the Division of Corporations.\\n  2. Certificate of Incorporation \\u2014 filing fee $89 minimum.\\n  3. Registered agent appointment (annual fee).\\n  4. Annual franchise tax report due March 1.\\n\\nWashington (foreign qualification, operations state):\\n  5. Foreign registration statement \\u2014 filing fee $180.\\n  6. Business license application (UBI number).\\n  7. State employer registration if hiring.\\n\\nOrganizational items (post-filing):\\n  8. Initial board consent and bylaws.\\n  9. Founder stock issuance with vesting and 83(b) elections filed within 30 DAYS of issuance.\\n  10. EIN application (federal).\\n\\nTotal state filing fees for the Delaware + Washington pair: $269.\"}",
+     "ok": true
+    },
+    {
+     "tool": "legal_matters_amount_history_create",
+     "requested_tool": "legal_matters_amount_history_create",
+     "arguments": {
+      "legal_matters_id": "legal_matters_001",
+      "fee_budget": 4511.42,
+      "changed_by_role": "formation-paralegal XX-WRONG",
+      "change_reason": "Delaware Certificate of Incorporation $89 + Washington foreign registration $180 = $269. XX-WRONG"
+     },
+     "observation": "{\"status\": \"created\", \"table\": \"legal_matters_amount_history\", \"id\": \"legal_matters_amount_history_016\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_251",
+    "passed": false,
+    "reward": 0.3333,
+    "explanation": "Failed: legal_matters_amount_history_new_row_0_fee_budget_is_269.0, legal_matters_amount_history_new_row_1_changed_by_role_is_formation-paralegal",
+    "failed_conditions": [
+     "legal_matters_amount_history_new_row_0_fee_budget_is_269.0",
+     "legal_matters_amount_history_new_row_1_changed_by_role_is_formation-paralegal"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": true,
+      "details": "reads=2, writes=1, read_first=True"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": true,
+      "details": "completed ordered workflow: query_matter_documents -> read_matter_document -> legal_matters_amount_history_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": true,
+      "details": "all required input documents were read in full"
+     },
+     {
+      "name": "rows_inserted_into_legal_matters_amount_history",
+      "passed": true,
+      "details": "legal_matters_amount_history: 15 -> 16 rows (1 new, need >= 1)"
+     },
+     {
+      "name": "legal_matters_amount_history_new_row_0_fee_budget_is_269.0",
+      "passed": false,
+      "details": "expected a new legal_matters_amount_history row with fee_budget=269.0; got ['4511.42']"
+     },
+     {
+      "name": "legal_matters_amount_history_new_row_1_changed_by_role_is_formation-paralegal",
+      "passed": false,
+      "details": "expected a new legal_matters_amount_history row with changed_by_role=formation-paralegal; got ['formation-paralegal xx-wrong']"
+     },
+     {
+      "name": "no_new_legal_matters_amount_history_row_with_fee_budget_300",
+      "passed": true,
+      "details": "no fabricated fee_budget=300 row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "3/3 tool calls succeeded"
+     }
+    ]
+   }
+  }
+ }
+}

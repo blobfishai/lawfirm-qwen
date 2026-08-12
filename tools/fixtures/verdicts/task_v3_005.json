@@ -1,0 +1,366 @@
+{
+ "task_id": "task_v3_005",
+ "world": "world-v15.json",
+ "episodes": {
+  "oracle": {
+   "trace": [
+    {
+     "tool": "review_documents_get",
+     "requested_tool": "review_documents_get",
+     "arguments": {
+      "id": 2
+     },
+     "observation": "{\"ArtifactID\": 2, \"workspace_id\": 3, \"control_number\": \"MER108261\", \"custodian\": \"Felix Vasquez\", \"doc_date\": \"2026-05-15\", \"subject\": \"Scheduling\", \"extracted_text\": \"This document is synthetic simulation content. It sets out the parties' positions, the operative facts as pleaded, and the relief requested, with numbered paragraphs and defined terms used consistently throughout. This document is synthetic simulation content. It sets out the parties' positions, the operative facts as pleaded, and the relief requested, with numbered paragraphs and defined terms used consistently throughout. This document is synthetic simulation content. It sets out the parties' positions, the operative facts as pleaded, and the relief requested, with numbered paragraphs and defined terms used consistently throughout. This document is synthetic simulation content. It sets out the parties' positions, the operative facts as pleaded, and the relief requested, with numbered paragraphs and defined terms used consistently throughout. This document is synthetic simulation content. It sets out the parties' positions, the operative facts as pleaded, and the relief requested, with numbered paragraphs and defined terms used consistently throughout. \", \"responsive\": \"yes\", \"privileged\": \"no\", \"reviewed_by\": null}",
+     "ok": true
+    },
+    {
+     "tool": "documents_code",
+     "requested_tool": "documents_code",
+     "arguments": {
+      "id": 2,
+      "responsive": "yes",
+      "privileged": "yes",
+      "reviewed_by": "second.level"
+     },
+     "observation": "{\"id\": 2, \"updated\": \"ed_documents\", \"fields\": [\"responsive\", \"privileged\", \"reviewed_by\"]}",
+     "ok": true
+    },
+    {
+     "tool": "privilege_log_create",
+     "requested_tool": "privilege_log_create",
+     "arguments": {
+      "workspace_id": 3,
+      "document_id": 2,
+      "basis": "attorney-client",
+      "description": "Counsel email re litigation strategy \u2014 withheld in full."
+     },
+     "observation": "{\"id\": 13, \"created\": \"ed_privilege_log\", \"workspace_id\": 3, \"document_id\": 2, \"basis\": \"attorney-client\", \"description\": \"Counsel email re litigation strategy \\u2014 withheld in full.\", \"created_at\": \"2026-08-10T12:00:00Z\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_v3_005",
+    "passed": true,
+    "reward": 1.0,
+    "explanation": "All checks passed",
+    "failed_conditions": [],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": true,
+      "details": "completed ordered workflow: review_documents_get -> documents_code -> privilege_log_create"
+     },
+     {
+      "name": "rows_inserted_into_ed_privilege_log",
+      "passed": true,
+      "details": "ed_privilege_log: 12 -> 13 rows"
+     },
+     {
+      "name": "ed_privilege_log_new_row_document_id_is_2.0",
+      "passed": true,
+      "details": "expected new ed_privilege_log row with document_id=2.0; saw ['2.0']"
+     },
+     {
+      "name": "ed_privilege_log_new_row_basis_is_attorney-client",
+      "passed": true,
+      "details": "expected new ed_privilege_log row with basis=attorney-client; saw ['attorney-client']"
+     },
+     {
+      "name": "ed_documents_2_reviewed_by_is_second.level",
+      "passed": true,
+      "details": "ed_documents[2].reviewed_by = second.level, expected second.level"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows destroyed"
+     }
+    ]
+   }
+  },
+  "noop": {
+   "trace": [],
+   "verdict": {
+    "task_id": "task_v3_005",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: state_changed, required_workflow_path, rows_inserted_into_ed_privilege_log, ed_privilege_log_new_row_document_id_is_2.0, ed_privilege_log_new_row_basis_is_attorney-client, ed_documents_2_reviewed_by_is_second.level",
+    "failed_conditions": [
+     "state_changed",
+     "required_workflow_path",
+     "rows_inserted_into_ed_privilege_log",
+     "ed_privilege_log_new_row_document_id_is_2.0",
+     "ed_privilege_log_new_row_basis_is_attorney-client",
+     "ed_documents_2_reviewed_by_is_second.level"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": false,
+      "details": "NO state change"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints review_documents_get -> documents_code -> privilege_log_create"
+     },
+     {
+      "name": "rows_inserted_into_ed_privilege_log",
+      "passed": false,
+      "details": "ed_privilege_log: 12 -> 12 rows"
+     },
+     {
+      "name": "ed_privilege_log_new_row_document_id_is_2.0",
+      "passed": false,
+      "details": "expected new ed_privilege_log row with document_id=2.0; saw []"
+     },
+     {
+      "name": "ed_privilege_log_new_row_basis_is_attorney-client",
+      "passed": false,
+      "details": "expected new ed_privilege_log row with basis=attorney-client; saw []"
+     },
+     {
+      "name": "ed_documents_2_reviewed_by_is_second.level",
+      "passed": false,
+      "details": "ed_documents[2].reviewed_by = null, expected second.level"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows destroyed"
+     }
+    ]
+   }
+  },
+  "text_only": {
+   "trace": [
+    {
+     "tool": "review_documents_get",
+     "requested_tool": "review_documents_get",
+     "arguments": {
+      "id": 2
+     },
+     "observation": "{\"ArtifactID\": 2, \"workspace_id\": 3, \"control_number\": \"MER108261\", \"custodian\": \"Felix Vasquez\", \"doc_date\": \"2026-05-15\", \"subject\": \"Scheduling\", \"extracted_text\": \"This document is synthetic simulation content. It sets out the parties' positions, the operative facts as pleaded, and the relief requested, with numbered paragraphs and defined terms used consistently throughout. This document is synthetic simulation content. It sets out the parties' positions, the operative facts as pleaded, and the relief requested, with numbered paragraphs and defined terms used consistently throughout. This document is synthetic simulation content. It sets out the parties' positions, the operative facts as pleaded, and the relief requested, with numbered paragraphs and defined terms used consistently throughout. This document is synthetic simulation content. It sets out the parties' positions, the operative facts as pleaded, and the relief requested, with numbered paragraphs and defined terms used consistently throughout. This document is synthetic simulation content. It sets out the parties' positions, the operative facts as pleaded, and the relief requested, with numbered paragraphs and defined terms used consistently throughout. \", \"responsive\": \"yes\", \"privileged\": \"no\", \"reviewed_by\": null}",
+     "ok": true
+    },
+    {
+     "tool": "documents_code",
+     "requested_tool": "documents_code",
+     "arguments": {
+      "id": 2,
+      "responsive": "yes",
+      "privileged": "yes",
+      "reviewed_by": "second.level"
+     },
+     "observation": "{\"id\": 2, \"updated\": \"ed_documents\", \"fields\": [\"responsive\", \"privileged\", \"reviewed_by\"]}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_v3_005",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: required_workflow_path, rows_inserted_into_ed_privilege_log, ed_privilege_log_new_row_document_id_is_2.0, ed_privilege_log_new_row_basis_is_attorney-client",
+    "failed_conditions": [
+     "required_workflow_path",
+     "rows_inserted_into_ed_privilege_log",
+     "ed_privilege_log_new_row_document_id_is_2.0",
+     "ed_privilege_log_new_row_basis_is_attorney-client"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints privilege_log_create"
+     },
+     {
+      "name": "rows_inserted_into_ed_privilege_log",
+      "passed": false,
+      "details": "ed_privilege_log: 12 -> 12 rows"
+     },
+     {
+      "name": "ed_privilege_log_new_row_document_id_is_2.0",
+      "passed": false,
+      "details": "expected new ed_privilege_log row with document_id=2.0; saw []"
+     },
+     {
+      "name": "ed_privilege_log_new_row_basis_is_attorney-client",
+      "passed": false,
+      "details": "expected new ed_privilege_log row with basis=attorney-client; saw []"
+     },
+     {
+      "name": "ed_documents_2_reviewed_by_is_second.level",
+      "passed": true,
+      "details": "ed_documents[2].reviewed_by = second.level, expected second.level"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows destroyed"
+     }
+    ]
+   }
+  },
+  "blind_write": {
+   "trace": [
+    {
+     "tool": "privilege_log_create",
+     "requested_tool": "privilege_log_create",
+     "arguments": {
+      "workspace_id": 3,
+      "document_id": 2,
+      "basis": "attorney-client",
+      "description": "Counsel email re litigation strategy \u2014 withheld in full."
+     },
+     "observation": "{\"id\": 13, \"created\": \"ed_privilege_log\", \"workspace_id\": 3, \"document_id\": 2, \"basis\": \"attorney-client\", \"description\": \"Counsel email re litigation strategy \\u2014 withheld in full.\", \"created_at\": \"2026-08-10T12:00:00Z\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_v3_005",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: required_workflow_path, ed_documents_2_reviewed_by_is_second.level",
+    "failed_conditions": [
+     "required_workflow_path",
+     "ed_documents_2_reviewed_by_is_second.level"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints review_documents_get -> documents_code"
+     },
+     {
+      "name": "rows_inserted_into_ed_privilege_log",
+      "passed": true,
+      "details": "ed_privilege_log: 12 -> 13 rows"
+     },
+     {
+      "name": "ed_privilege_log_new_row_document_id_is_2.0",
+      "passed": true,
+      "details": "expected new ed_privilege_log row with document_id=2.0; saw ['2.0']"
+     },
+     {
+      "name": "ed_privilege_log_new_row_basis_is_attorney-client",
+      "passed": true,
+      "details": "expected new ed_privilege_log row with basis=attorney-client; saw ['attorney-client']"
+     },
+     {
+      "name": "ed_documents_2_reviewed_by_is_second.level",
+      "passed": false,
+      "details": "ed_documents[2].reviewed_by = null, expected second.level"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows destroyed"
+     }
+    ]
+   }
+  },
+  "wrong_value": {
+   "trace": [
+    {
+     "tool": "review_documents_get",
+     "requested_tool": "review_documents_get",
+     "arguments": {
+      "id": 2
+     },
+     "observation": "{\"ArtifactID\": 2, \"workspace_id\": 3, \"control_number\": \"MER108261\", \"custodian\": \"Felix Vasquez\", \"doc_date\": \"2026-05-15\", \"subject\": \"Scheduling\", \"extracted_text\": \"This document is synthetic simulation content. It sets out the parties' positions, the operative facts as pleaded, and the relief requested, with numbered paragraphs and defined terms used consistently throughout. This document is synthetic simulation content. It sets out the parties' positions, the operative facts as pleaded, and the relief requested, with numbered paragraphs and defined terms used consistently throughout. This document is synthetic simulation content. It sets out the parties' positions, the operative facts as pleaded, and the relief requested, with numbered paragraphs and defined terms used consistently throughout. This document is synthetic simulation content. It sets out the parties' positions, the operative facts as pleaded, and the relief requested, with numbered paragraphs and defined terms used consistently throughout. This document is synthetic simulation content. It sets out the parties' positions, the operative facts as pleaded, and the relief requested, with numbered paragraphs and defined terms used consistently throughout. \", \"responsive\": \"yes\", \"privileged\": \"no\", \"reviewed_by\": null}",
+     "ok": true
+    },
+    {
+     "tool": "documents_code",
+     "requested_tool": "documents_code",
+     "arguments": {
+      "id": 2,
+      "responsive": "yes",
+      "privileged": "yes",
+      "reviewed_by": "second.level"
+     },
+     "observation": "{\"id\": 2, \"updated\": \"ed_documents\", \"fields\": [\"responsive\", \"privileged\", \"reviewed_by\"]}",
+     "ok": true
+    },
+    {
+     "tool": "privilege_log_create",
+     "requested_tool": "privilege_log_create",
+     "arguments": {
+      "workspace_id": 3,
+      "document_id": 2,
+      "basis": "attorney-client XX-WRONG",
+      "description": "Counsel email re litigation strategy \u2014 withheld in full. XX-WRONG"
+     },
+     "observation": "{\"id\": 13, \"created\": \"ed_privilege_log\", \"workspace_id\": 3, \"document_id\": 2, \"basis\": \"attorney-client XX-WRONG\", \"description\": \"Counsel email re litigation strategy \\u2014 withheld in full. XX-WRONG\", \"created_at\": \"2026-08-10T12:00:00Z\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_v3_005",
+    "passed": false,
+    "reward": 0.75,
+    "explanation": "Failed: ed_privilege_log_new_row_basis_is_attorney-client",
+    "failed_conditions": [
+     "ed_privilege_log_new_row_basis_is_attorney-client"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": true,
+      "details": "completed ordered workflow: review_documents_get -> documents_code -> privilege_log_create"
+     },
+     {
+      "name": "rows_inserted_into_ed_privilege_log",
+      "passed": true,
+      "details": "ed_privilege_log: 12 -> 13 rows"
+     },
+     {
+      "name": "ed_privilege_log_new_row_document_id_is_2.0",
+      "passed": true,
+      "details": "expected new ed_privilege_log row with document_id=2.0; saw ['2.0']"
+     },
+     {
+      "name": "ed_privilege_log_new_row_basis_is_attorney-client",
+      "passed": false,
+      "details": "expected new ed_privilege_log row with basis=attorney-client; saw ['attorney-client xx-wrong']"
+     },
+     {
+      "name": "ed_documents_2_reviewed_by_is_second.level",
+      "passed": true,
+      "details": "ed_documents[2].reviewed_by = second.level, expected second.level"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows destroyed"
+     }
+    ]
+   }
+  }
+ }
+}

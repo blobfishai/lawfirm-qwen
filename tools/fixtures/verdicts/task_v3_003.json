@@ -1,0 +1,244 @@
+{
+ "task_id": "task_v3_003",
+ "world": "world-v15.json",
+ "episodes": {
+  "oracle": {
+   "trace": [
+    {
+     "tool": "time_entries_get",
+     "requested_tool": "time_entries_get",
+     "arguments": {
+      "id": 5
+     },
+     "observation": "{\"data\": {\"id\": 5, \"matter_id\": 5, \"user_id\": 11, \"date\": \"2026-05-13\", \"quantity_hours\": 7.65, \"rate\": 290.64, \"total\": 2223.4, \"description\": \"Analyze discovery responses; prepare deficiency letter\", \"utbms_task_code\": \"L430\", \"billable\": 0, \"billed\": 0, \"created_at\": \"2026-08-22\"}}",
+     "ok": true
+    },
+    {
+     "tool": "time_entries_update",
+     "requested_tool": "time_entries_update",
+     "arguments": {
+      "id": 5,
+      "utbms_task_code": "L120"
+     },
+     "observation": "{\"data\": {\"id\": 5, \"updated\": \"pm_time_entries\", \"fields\": [\"utbms_task_code\", \"total\"]}}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_v3_003",
+    "passed": true,
+    "reward": 1.0,
+    "explanation": "All checks passed",
+    "failed_conditions": [],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": true,
+      "details": "completed ordered workflow: time_entries_get -> time_entries_update"
+     },
+     {
+      "name": "pm_time_entries_5_utbms_task_code_is_L120",
+      "passed": true,
+      "details": "pm_time_entries[5].utbms_task_code = l120, expected L120"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows destroyed"
+     }
+    ]
+   }
+  },
+  "noop": {
+   "trace": [],
+   "verdict": {
+    "task_id": "task_v3_003",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: state_changed, required_workflow_path, pm_time_entries_5_utbms_task_code_is_L120",
+    "failed_conditions": [
+     "state_changed",
+     "required_workflow_path",
+     "pm_time_entries_5_utbms_task_code_is_L120"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": false,
+      "details": "NO state change"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints time_entries_get -> time_entries_update"
+     },
+     {
+      "name": "pm_time_entries_5_utbms_task_code_is_L120",
+      "passed": false,
+      "details": "pm_time_entries[5].utbms_task_code = l430, expected L120"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows destroyed"
+     }
+    ]
+   }
+  },
+  "text_only": {
+   "trace": [
+    {
+     "tool": "time_entries_get",
+     "requested_tool": "time_entries_get",
+     "arguments": {
+      "id": 5
+     },
+     "observation": "{\"data\": {\"id\": 5, \"matter_id\": 5, \"user_id\": 11, \"date\": \"2026-05-13\", \"quantity_hours\": 7.65, \"rate\": 290.64, \"total\": 2223.4, \"description\": \"Analyze discovery responses; prepare deficiency letter\", \"utbms_task_code\": \"L430\", \"billable\": 0, \"billed\": 0, \"created_at\": \"2026-08-22\"}}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_v3_003",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: state_changed, required_workflow_path, pm_time_entries_5_utbms_task_code_is_L120",
+    "failed_conditions": [
+     "state_changed",
+     "required_workflow_path",
+     "pm_time_entries_5_utbms_task_code_is_L120"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": false,
+      "details": "NO state change"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints time_entries_update"
+     },
+     {
+      "name": "pm_time_entries_5_utbms_task_code_is_L120",
+      "passed": false,
+      "details": "pm_time_entries[5].utbms_task_code = l430, expected L120"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows destroyed"
+     }
+    ]
+   }
+  },
+  "blind_write": {
+   "trace": [
+    {
+     "tool": "time_entries_update",
+     "requested_tool": "time_entries_update",
+     "arguments": {
+      "id": 5,
+      "utbms_task_code": "L120"
+     },
+     "observation": "{\"data\": {\"id\": 5, \"updated\": \"pm_time_entries\", \"fields\": [\"utbms_task_code\", \"total\"]}}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_v3_003",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: required_workflow_path",
+    "failed_conditions": [
+     "required_workflow_path"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints time_entries_get"
+     },
+     {
+      "name": "pm_time_entries_5_utbms_task_code_is_L120",
+      "passed": true,
+      "details": "pm_time_entries[5].utbms_task_code = l120, expected L120"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows destroyed"
+     }
+    ]
+   }
+  },
+  "wrong_value": {
+   "trace": [
+    {
+     "tool": "time_entries_get",
+     "requested_tool": "time_entries_get",
+     "arguments": {
+      "id": 5
+     },
+     "observation": "{\"data\": {\"id\": 5, \"matter_id\": 5, \"user_id\": 11, \"date\": \"2026-05-13\", \"quantity_hours\": 7.65, \"rate\": 290.64, \"total\": 2223.4, \"description\": \"Analyze discovery responses; prepare deficiency letter\", \"utbms_task_code\": \"L430\", \"billable\": 0, \"billed\": 0, \"created_at\": \"2026-08-22\"}}",
+     "ok": true
+    },
+    {
+     "tool": "time_entries_update",
+     "requested_tool": "time_entries_update",
+     "arguments": {
+      "id": 5,
+      "utbms_task_code": "L120 XX-WRONG"
+     },
+     "observation": "{\"data\": {\"id\": 5, \"updated\": \"pm_time_entries\", \"fields\": [\"utbms_task_code\", \"total\"]}}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_v3_003",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: pm_time_entries_5_utbms_task_code_is_L120",
+    "failed_conditions": [
+     "pm_time_entries_5_utbms_task_code_is_L120"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": true,
+      "details": "completed ordered workflow: time_entries_get -> time_entries_update"
+     },
+     {
+      "name": "pm_time_entries_5_utbms_task_code_is_L120",
+      "passed": false,
+      "details": "pm_time_entries[5].utbms_task_code = l120 xx-wrong, expected L120"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows destroyed"
+     }
+    ]
+   }
+  }
+ }
+}

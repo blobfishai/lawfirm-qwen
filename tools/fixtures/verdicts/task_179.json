@@ -1,0 +1,517 @@
+{
+ "task_id": "task_179",
+ "world": "world-v15.json",
+ "episodes": {
+  "oracle": {
+   "trace": [
+    {
+     "tool": "query_matter_documents",
+     "requested_tool": "query_matter_documents",
+     "arguments": {
+      "title": "Deadline pack \u2014 Consolidated Rules Memo: Computing Time Unde"
+     },
+     "observation": "{\"table\": \"matter_documents\", \"count\": 1, \"returned\": 1, \"offset\": 0, \"limit\": 25, \"rows\": [{\"id\": 146, \"title\": \"Deadline pack \\u2014 Consolidated Rules Memo: Computing Time Under the Simulated Rules of Civil Procedure (SRCP 6)\", \"doc_type\": \"rules-memo\", \"related_shape\": \"deadline-computation\", \"body\": \"MEMORANDUM \\u2014 DOCKETING STANDARDS (SIMULATED JURISDICTION)\\n\\nRe: Computing every litigation deadline under SRCP 6 (this firm's controlling method)\\n\\nI. The counting method. (a) Exclude the trigger day: the day of the event that starts the peri\\u2026[preview]\"}], \"has_more\": false, \"note\": \"body fields are previews \\u2014 call read_matter_document(id) to read a document in full before using it\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 146
+     },
+     "observation": "{\"id\": 146, \"title\": \"Deadline pack \\u2014 Consolidated Rules Memo: Computing Time Under the Simulated Rules of Civil Procedure (SRCP 6)\", \"doc_type\": \"rules-memo\", \"related_shape\": \"deadline-computation\", \"body\": \"MEMORANDUM \\u2014 DOCKETING STANDARDS (SIMULATED JURISDICTION)\\n\\nRe: Computing every litigation deadline under SRCP 6 (this firm's controlling method)\\n\\nI. The counting method. (a) Exclude the trigger day: the day of the event that starts the period is never counted. (b) Count every calendar day thereafter, including intermediate Saturdays, Sundays, and court holidays. (c) Rollover: if the last day of the period lands on a Saturday, Sunday, or court holiday, the period runs to the next day that is not a weekend day or court holiday. (d) Service adjustment: when a deadline runs from SERVICE (not filing) and service was made by mail, add 3 calendar days AFTER the period would otherwise expire; apply the rollover rule of (c) after adding the 3 days, not before.\\n\\nII. Court holidays in this jurisdiction for 2026 (exhaustive list for computation): January 1 (New Year), January 19 (Civil Rights Day), May 25 (Memorial Day), July 3 (observed Independence Day), September 7 (Labor Day), November 26 (Thanksgiving), December 25 (Christmas).\\n\\nIII. Periods that matter here. (1) Answer to a complaint: 21 days after service of the summons and complaint. (2) Opposition to a motion: 14 days after the motion is FILED. (3) Reply in support of a motion: 7 days after the opposition is filed. (4) Notice of appeal: 30 days after entry of judgment. (5) Rule 68-style offer of judgment: acceptance within 14 days after service of the offer.\\n\\nIV. Weekday calendar anchors for 2026 (verified): June 1 is a Monday; July 1 is a Wednesday; August 1 is a Saturday; September 1 is a Tuesday; October 1 is a Thursday.\\n\\nV. Firm rule. Every computed date is recorded in the deadlines register as a review record whose outcome field contains ONLY the final date in YYYY-MM-DD form. A computation that ignores the rollover rule or the mail-service adjustment is a docketing error chargeable to the responsible attorney.\\n\\nThis memo controls over any older docketing chart. The superseded 2024 chart (which used a count-the-trigger-day method and a 5-day mail adjustment) must not be used.\"}",
+     "ok": true
+    },
+    {
+     "tool": "litigation_deadlines_remediation_create",
+     "requested_tool": "litigation_deadlines_remediation_create",
+     "arguments": {
+      "litigation_deadlines_id": "litigation_deadlines_001",
+      "owner_role": "supervising-partner",
+      "action_required": "escalate: no operative trigger document",
+      "due_at": "2026-09-01T12:00:00Z",
+      "status": "open"
+     },
+     "observation": "{\"status\": \"created\", \"table\": \"litigation_deadlines_remediations\", \"id\": \"litigation_deadlines_remediation_017\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_179",
+    "passed": true,
+    "reward": 1.0,
+    "explanation": "All task checks passed",
+    "failed_conditions": [],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": true,
+      "details": "reads=2, writes=1, read_first=True"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": true,
+      "details": "completed ordered workflow: query_matter_documents -> read_matter_document -> litigation_deadlines_remediation_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": true,
+      "details": "all required input documents were read in full"
+     },
+     {
+      "name": "rows_inserted_into_litigation_deadlines_remediations",
+      "passed": true,
+      "details": "litigation_deadlines_remediations: 16 -> 17 rows (1 new, need >= 1)"
+     },
+     {
+      "name": "litigation_deadlines_remediations_new_row_0_owner_role_is_supervising-partner",
+      "passed": true,
+      "details": "expected a new litigation_deadlines_remediations row with owner_role=supervising-partner; got ['supervising-partner']"
+     },
+     {
+      "name": "litigation_deadlines_remediations_new_row_1_action_required_is_escalate: no operative trigger document",
+      "passed": true,
+      "details": "expected a new litigation_deadlines_remediations row with action_required=escalate: no operative trigger document; got ['escalate: no operative trigger document']"
+     },
+     {
+      "name": "no_new_litigation_deadlines_reviews_row_with_reviewer_role_docketing-clerk",
+      "passed": true,
+      "details": "no fabricated reviewer_role=docketing-clerk row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "3/3 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "noop": {
+   "trace": [],
+   "verdict": {
+    "task_id": "task_179",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: state_changed, reads_before_writes, required_workflow_path, required_documents_read, rows_inserted_into_litigation_deadlines_remediations, litigation_deadlines_remediations_new_row_0_owner_role_is_supervising-partner, litigation_deadlines_remediations_new_row_1_action_required_is_escalate: no operative trigger document",
+    "failed_conditions": [
+     "state_changed",
+     "reads_before_writes",
+     "required_workflow_path",
+     "required_documents_read",
+     "rows_inserted_into_litigation_deadlines_remediations",
+     "litigation_deadlines_remediations_new_row_0_owner_role_is_supervising-partner",
+     "litigation_deadlines_remediations_new_row_1_action_required_is_escalate: no operative trigger document"
+    ],
+    "advisory_conditions": [
+     "all_tools_succeeded"
+    ],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": false,
+      "details": "NO state change \u2014 agent did nothing"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": false,
+      "details": "reads=0, writes=0, read_first=False"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints query_matter_documents -> read_matter_document -> litigation_deadlines_remediation_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": false,
+      "details": "EVIDENCE GAP: matter_documents ['146'] were never read with read_matter_document"
+     },
+     {
+      "name": "rows_inserted_into_litigation_deadlines_remediations",
+      "passed": false,
+      "details": "litigation_deadlines_remediations: 16 -> 16 rows (0 new, need >= 1)"
+     },
+     {
+      "name": "litigation_deadlines_remediations_new_row_0_owner_role_is_supervising-partner",
+      "passed": false,
+      "details": "expected a new litigation_deadlines_remediations row with owner_role=supervising-partner; got []"
+     },
+     {
+      "name": "litigation_deadlines_remediations_new_row_1_action_required_is_escalate: no operative trigger document",
+      "passed": false,
+      "details": "expected a new litigation_deadlines_remediations row with action_required=escalate: no operative trigger document; got []"
+     },
+     {
+      "name": "no_new_litigation_deadlines_reviews_row_with_reviewer_role_docketing-clerk",
+      "passed": true,
+      "details": "no fabricated reviewer_role=docketing-clerk row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": false,
+      "details": "0/0 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "text_only": {
+   "trace": [
+    {
+     "tool": "query_matter_documents",
+     "requested_tool": "query_matter_documents",
+     "arguments": {
+      "title": "Deadline pack \u2014 Consolidated Rules Memo: Computing Time Unde"
+     },
+     "observation": "{\"table\": \"matter_documents\", \"count\": 1, \"returned\": 1, \"offset\": 0, \"limit\": 25, \"rows\": [{\"id\": 146, \"title\": \"Deadline pack \\u2014 Consolidated Rules Memo: Computing Time Under the Simulated Rules of Civil Procedure (SRCP 6)\", \"doc_type\": \"rules-memo\", \"related_shape\": \"deadline-computation\", \"body\": \"MEMORANDUM \\u2014 DOCKETING STANDARDS (SIMULATED JURISDICTION)\\n\\nRe: Computing every litigation deadline under SRCP 6 (this firm's controlling method)\\n\\nI. The counting method. (a) Exclude the trigger day: the day of the event that starts the peri\\u2026[preview]\"}], \"has_more\": false, \"note\": \"body fields are previews \\u2014 call read_matter_document(id) to read a document in full before using it\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 146
+     },
+     "observation": "{\"id\": 146, \"title\": \"Deadline pack \\u2014 Consolidated Rules Memo: Computing Time Under the Simulated Rules of Civil Procedure (SRCP 6)\", \"doc_type\": \"rules-memo\", \"related_shape\": \"deadline-computation\", \"body\": \"MEMORANDUM \\u2014 DOCKETING STANDARDS (SIMULATED JURISDICTION)\\n\\nRe: Computing every litigation deadline under SRCP 6 (this firm's controlling method)\\n\\nI. The counting method. (a) Exclude the trigger day: the day of the event that starts the period is never counted. (b) Count every calendar day thereafter, including intermediate Saturdays, Sundays, and court holidays. (c) Rollover: if the last day of the period lands on a Saturday, Sunday, or court holiday, the period runs to the next day that is not a weekend day or court holiday. (d) Service adjustment: when a deadline runs from SERVICE (not filing) and service was made by mail, add 3 calendar days AFTER the period would otherwise expire; apply the rollover rule of (c) after adding the 3 days, not before.\\n\\nII. Court holidays in this jurisdiction for 2026 (exhaustive list for computation): January 1 (New Year), January 19 (Civil Rights Day), May 25 (Memorial Day), July 3 (observed Independence Day), September 7 (Labor Day), November 26 (Thanksgiving), December 25 (Christmas).\\n\\nIII. Periods that matter here. (1) Answer to a complaint: 21 days after service of the summons and complaint. (2) Opposition to a motion: 14 days after the motion is FILED. (3) Reply in support of a motion: 7 days after the opposition is filed. (4) Notice of appeal: 30 days after entry of judgment. (5) Rule 68-style offer of judgment: acceptance within 14 days after service of the offer.\\n\\nIV. Weekday calendar anchors for 2026 (verified): June 1 is a Monday; July 1 is a Wednesday; August 1 is a Saturday; September 1 is a Tuesday; October 1 is a Thursday.\\n\\nV. Firm rule. Every computed date is recorded in the deadlines register as a review record whose outcome field contains ONLY the final date in YYYY-MM-DD form. A computation that ignores the rollover rule or the mail-service adjustment is a docketing error chargeable to the responsible attorney.\\n\\nThis memo controls over any older docketing chart. The superseded 2024 chart (which used a count-the-trigger-day method and a 5-day mail adjustment) must not be used.\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_179",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: state_changed, required_workflow_path, rows_inserted_into_litigation_deadlines_remediations, litigation_deadlines_remediations_new_row_0_owner_role_is_supervising-partner, litigation_deadlines_remediations_new_row_1_action_required_is_escalate: no operative trigger document",
+    "failed_conditions": [
+     "state_changed",
+     "required_workflow_path",
+     "rows_inserted_into_litigation_deadlines_remediations",
+     "litigation_deadlines_remediations_new_row_0_owner_role_is_supervising-partner",
+     "litigation_deadlines_remediations_new_row_1_action_required_is_escalate: no operative trigger document"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": false,
+      "details": "NO state change \u2014 agent did nothing"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": true,
+      "details": "reads=2, writes=0, read_first=True"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints litigation_deadlines_remediation_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": true,
+      "details": "all required input documents were read in full"
+     },
+     {
+      "name": "rows_inserted_into_litigation_deadlines_remediations",
+      "passed": false,
+      "details": "litigation_deadlines_remediations: 16 -> 16 rows (0 new, need >= 1)"
+     },
+     {
+      "name": "litigation_deadlines_remediations_new_row_0_owner_role_is_supervising-partner",
+      "passed": false,
+      "details": "expected a new litigation_deadlines_remediations row with owner_role=supervising-partner; got []"
+     },
+     {
+      "name": "litigation_deadlines_remediations_new_row_1_action_required_is_escalate: no operative trigger document",
+      "passed": false,
+      "details": "expected a new litigation_deadlines_remediations row with action_required=escalate: no operative trigger document; got []"
+     },
+     {
+      "name": "no_new_litigation_deadlines_reviews_row_with_reviewer_role_docketing-clerk",
+      "passed": true,
+      "details": "no fabricated reviewer_role=docketing-clerk row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "2/2 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "blind_write": {
+   "trace": [
+    {
+     "tool": "litigation_deadlines_remediation_create",
+     "requested_tool": "litigation_deadlines_remediation_create",
+     "arguments": {
+      "litigation_deadlines_id": "litigation_deadlines_001",
+      "owner_role": "supervising-partner",
+      "action_required": "escalate: no operative trigger document",
+      "due_at": "2026-09-01T12:00:00Z",
+      "status": "open"
+     },
+     "observation": "{\"status\": \"created\", \"table\": \"litigation_deadlines_remediations\", \"id\": \"litigation_deadlines_remediation_017\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_179",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: reads_before_writes, no_shortcut_direct_update, required_workflow_path, required_documents_read",
+    "failed_conditions": [
+     "reads_before_writes",
+     "no_shortcut_direct_update",
+     "required_workflow_path",
+     "required_documents_read"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": false,
+      "details": "reads=0, writes=1, read_first=False"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": false,
+      "details": "SHORTCUT: wrote without reading first"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints query_matter_documents -> read_matter_document"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": false,
+      "details": "EVIDENCE GAP: matter_documents ['146'] were never read with read_matter_document"
+     },
+     {
+      "name": "rows_inserted_into_litigation_deadlines_remediations",
+      "passed": true,
+      "details": "litigation_deadlines_remediations: 16 -> 17 rows (1 new, need >= 1)"
+     },
+     {
+      "name": "litigation_deadlines_remediations_new_row_0_owner_role_is_supervising-partner",
+      "passed": true,
+      "details": "expected a new litigation_deadlines_remediations row with owner_role=supervising-partner; got ['supervising-partner']"
+     },
+     {
+      "name": "litigation_deadlines_remediations_new_row_1_action_required_is_escalate: no operative trigger document",
+      "passed": true,
+      "details": "expected a new litigation_deadlines_remediations row with action_required=escalate: no operative trigger document; got ['escalate: no operative trigger document']"
+     },
+     {
+      "name": "no_new_litigation_deadlines_reviews_row_with_reviewer_role_docketing-clerk",
+      "passed": true,
+      "details": "no fabricated reviewer_role=docketing-clerk row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "1/1 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "wrong_value": {
+   "trace": [
+    {
+     "tool": "query_matter_documents",
+     "requested_tool": "query_matter_documents",
+     "arguments": {
+      "title": "Deadline pack \u2014 Consolidated Rules Memo: Computing Time Unde"
+     },
+     "observation": "{\"table\": \"matter_documents\", \"count\": 1, \"returned\": 1, \"offset\": 0, \"limit\": 25, \"rows\": [{\"id\": 146, \"title\": \"Deadline pack \\u2014 Consolidated Rules Memo: Computing Time Under the Simulated Rules of Civil Procedure (SRCP 6)\", \"doc_type\": \"rules-memo\", \"related_shape\": \"deadline-computation\", \"body\": \"MEMORANDUM \\u2014 DOCKETING STANDARDS (SIMULATED JURISDICTION)\\n\\nRe: Computing every litigation deadline under SRCP 6 (this firm's controlling method)\\n\\nI. The counting method. (a) Exclude the trigger day: the day of the event that starts the peri\\u2026[preview]\"}], \"has_more\": false, \"note\": \"body fields are previews \\u2014 call read_matter_document(id) to read a document in full before using it\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 146
+     },
+     "observation": "{\"id\": 146, \"title\": \"Deadline pack \\u2014 Consolidated Rules Memo: Computing Time Under the Simulated Rules of Civil Procedure (SRCP 6)\", \"doc_type\": \"rules-memo\", \"related_shape\": \"deadline-computation\", \"body\": \"MEMORANDUM \\u2014 DOCKETING STANDARDS (SIMULATED JURISDICTION)\\n\\nRe: Computing every litigation deadline under SRCP 6 (this firm's controlling method)\\n\\nI. The counting method. (a) Exclude the trigger day: the day of the event that starts the period is never counted. (b) Count every calendar day thereafter, including intermediate Saturdays, Sundays, and court holidays. (c) Rollover: if the last day of the period lands on a Saturday, Sunday, or court holiday, the period runs to the next day that is not a weekend day or court holiday. (d) Service adjustment: when a deadline runs from SERVICE (not filing) and service was made by mail, add 3 calendar days AFTER the period would otherwise expire; apply the rollover rule of (c) after adding the 3 days, not before.\\n\\nII. Court holidays in this jurisdiction for 2026 (exhaustive list for computation): January 1 (New Year), January 19 (Civil Rights Day), May 25 (Memorial Day), July 3 (observed Independence Day), September 7 (Labor Day), November 26 (Thanksgiving), December 25 (Christmas).\\n\\nIII. Periods that matter here. (1) Answer to a complaint: 21 days after service of the summons and complaint. (2) Opposition to a motion: 14 days after the motion is FILED. (3) Reply in support of a motion: 7 days after the opposition is filed. (4) Notice of appeal: 30 days after entry of judgment. (5) Rule 68-style offer of judgment: acceptance within 14 days after service of the offer.\\n\\nIV. Weekday calendar anchors for 2026 (verified): June 1 is a Monday; July 1 is a Wednesday; August 1 is a Saturday; September 1 is a Tuesday; October 1 is a Thursday.\\n\\nV. Firm rule. Every computed date is recorded in the deadlines register as a review record whose outcome field contains ONLY the final date in YYYY-MM-DD form. A computation that ignores the rollover rule or the mail-service adjustment is a docketing error chargeable to the responsible attorney.\\n\\nThis memo controls over any older docketing chart. The superseded 2024 chart (which used a count-the-trigger-day method and a 5-day mail adjustment) must not be used.\"}",
+     "ok": true
+    },
+    {
+     "tool": "litigation_deadlines_remediation_create",
+     "requested_tool": "litigation_deadlines_remediation_create",
+     "arguments": {
+      "litigation_deadlines_id": "litigation_deadlines_001",
+      "owner_role": "supervising-partner XX-WRONG",
+      "action_required": "escalate: no operative trigger document XX-WRONG",
+      "due_at": "2026-09-01T12:00:00Z XX-WRONG",
+      "status": "open XX-WRONG"
+     },
+     "observation": "{\"status\": \"created\", \"table\": \"litigation_deadlines_remediations\", \"id\": \"litigation_deadlines_remediation_017\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_179",
+    "passed": false,
+    "reward": 0.3333,
+    "explanation": "Failed: litigation_deadlines_remediations_new_row_0_owner_role_is_supervising-partner, litigation_deadlines_remediations_new_row_1_action_required_is_escalate: no operative trigger document",
+    "failed_conditions": [
+     "litigation_deadlines_remediations_new_row_0_owner_role_is_supervising-partner",
+     "litigation_deadlines_remediations_new_row_1_action_required_is_escalate: no operative trigger document"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": true,
+      "details": "reads=2, writes=1, read_first=True"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": true,
+      "details": "completed ordered workflow: query_matter_documents -> read_matter_document -> litigation_deadlines_remediation_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": true,
+      "details": "all required input documents were read in full"
+     },
+     {
+      "name": "rows_inserted_into_litigation_deadlines_remediations",
+      "passed": true,
+      "details": "litigation_deadlines_remediations: 16 -> 17 rows (1 new, need >= 1)"
+     },
+     {
+      "name": "litigation_deadlines_remediations_new_row_0_owner_role_is_supervising-partner",
+      "passed": false,
+      "details": "expected a new litigation_deadlines_remediations row with owner_role=supervising-partner; got ['supervising-partner xx-wrong']"
+     },
+     {
+      "name": "litigation_deadlines_remediations_new_row_1_action_required_is_escalate: no operative trigger document",
+      "passed": false,
+      "details": "expected a new litigation_deadlines_remediations row with action_required=escalate: no operative trigger document; got ['escalate: no operative trigger document xx-wrong']"
+     },
+     {
+      "name": "no_new_litigation_deadlines_reviews_row_with_reviewer_role_docketing-clerk",
+      "passed": true,
+      "details": "no fabricated reviewer_role=docketing-clerk row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "3/3 tool calls succeeded"
+     }
+    ]
+   }
+  }
+ }
+}

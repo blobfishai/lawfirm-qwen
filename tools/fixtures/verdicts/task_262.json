@@ -1,0 +1,541 @@
+{
+ "task_id": "task_262",
+ "world": "world-v15.json",
+ "episodes": {
+  "oracle": {
+   "trace": [
+    {
+     "tool": "query_matter_documents",
+     "requested_tool": "query_matter_documents",
+     "arguments": {
+      "title": "Engagement pack \u2014 Prospective engagement facts: Northgale In"
+     },
+     "observation": "{\"table\": \"matter_documents\", \"count\": 1, \"returned\": 1, \"offset\": 0, \"limit\": 25, \"rows\": [{\"id\": 255, \"title\": \"Engagement pack \\u2014 Prospective engagement facts: Northgale Industries\", \"doc_type\": \"engagement_facts\", \"related_shape\": \"engagement-letters\", \"body\": \"PROSPECTIVE ENGAGEMENT \\u2014 Northgale Industries\\n\\nScope requested: defense of a commercial contract dispute, expected 14-month duration, estimated fees $610,000.\\nClient request: Northgale asks for a CONTINGENCY arrangement (25% of any amount s\\u2026[preview]\"}], \"has_more\": false, \"note\": \"body fields are previews \\u2014 call read_matter_document(id) to read a document in full before using it\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 255
+     },
+     "observation": "{\"id\": 255, \"title\": \"Engagement pack \\u2014 Prospective engagement facts: Northgale Industries\", \"doc_type\": \"engagement_facts\", \"related_shape\": \"engagement-letters\", \"body\": \"PROSPECTIVE ENGAGEMENT \\u2014 Northgale Industries\\n\\nScope requested: defense of a commercial contract dispute, expected 14-month duration, estimated fees $610,000.\\nClient request: Northgale asks for a CONTINGENCY arrangement (25% of any amount saved versus the plaintiff's demand).\\nClient status: existing client of the firm on two other matters, both current on fees.\\nMatter type: defense of a money claim (no recovery to the client; the client is the defendant).\\nConflicts: cleared 2026-08-04.\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 256
+     },
+     "observation": "{\"id\": 256, \"title\": \"Engagement pack \\u2014 Firm fee-arrangement policy\", \"doc_type\": \"fee_policy\", \"related_shape\": \"engagement-letters\", \"body\": \"FEE ARRANGEMENT POLICY (firm standard)\\n\\nRule A. Contingency arrangements are permitted ONLY where the client stands to RECEIVE a recovery. A pure defense engagement produces no recovery to the client, so a percentage-of-savings contingency is not permitted; the firm treats it as an unenforceable and ethically improper fee in this jurisdiction.\\n\\nRule B. Where a client requests an impermissible arrangement, counsel must offer the nearest permissible alternative rather than declining the engagement: for defense matters, an hourly arrangement with a blended rate, or a flat fee per phase.\\n\\nRule C. Any engagement over $500,000 estimated fees requires a written engagement letter countersigned by the client before work begins.\\n\\nFee vocabulary (use exactly): hourly | flat_fee_per_phase | contingency\"}",
+     "ok": true
+    },
+    {
+     "tool": "legal_billing_review_create",
+     "requested_tool": "legal_billing_review_create",
+     "arguments": {
+      "legal_billing_id": "legal_billing_001",
+      "reviewer_role": "engagement-partner",
+      "outcome": "hourly",
+      "rationale": "A defense engagement produces no recovery, so Rule A bars the requested contingency; Rule B directs the nearest permissible alternative \u2014 an hourly blended-rate arrangement."
+     },
+     "observation": "{\"status\": \"created\", \"table\": \"legal_billing_reviews\", \"id\": \"legal_billing_review_017\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_262",
+    "passed": true,
+    "reward": 1.0,
+    "explanation": "All task checks passed",
+    "failed_conditions": [],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": true,
+      "details": "reads=3, writes=1, read_first=True"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": true,
+      "details": "completed ordered workflow: query_matter_documents -> read_matter_document -> read_matter_document -> legal_billing_review_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": true,
+      "details": "all required input documents were read in full"
+     },
+     {
+      "name": "rows_inserted_into_legal_billing_reviews",
+      "passed": true,
+      "details": "legal_billing_reviews: 16 -> 17 rows (1 new, need >= 1)"
+     },
+     {
+      "name": "legal_billing_reviews_new_row_0_outcome_is_hourly",
+      "passed": true,
+      "details": "expected a new legal_billing_reviews row with outcome=hourly; got ['hourly']"
+     },
+     {
+      "name": "legal_billing_reviews_new_row_1_reviewer_role_is_engagement-partner",
+      "passed": true,
+      "details": "expected a new legal_billing_reviews row with reviewer_role=engagement-partner; got ['engagement-partner']"
+     },
+     {
+      "name": "no_new_legal_billing_reviews_row_with_outcome_contingency",
+      "passed": true,
+      "details": "no fabricated outcome=contingency row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "4/4 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "noop": {
+   "trace": [],
+   "verdict": {
+    "task_id": "task_262",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: state_changed, reads_before_writes, required_workflow_path, required_documents_read, rows_inserted_into_legal_billing_reviews, legal_billing_reviews_new_row_0_outcome_is_hourly, legal_billing_reviews_new_row_1_reviewer_role_is_engagement-partner",
+    "failed_conditions": [
+     "state_changed",
+     "reads_before_writes",
+     "required_workflow_path",
+     "required_documents_read",
+     "rows_inserted_into_legal_billing_reviews",
+     "legal_billing_reviews_new_row_0_outcome_is_hourly",
+     "legal_billing_reviews_new_row_1_reviewer_role_is_engagement-partner"
+    ],
+    "advisory_conditions": [
+     "all_tools_succeeded"
+    ],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": false,
+      "details": "NO state change \u2014 agent did nothing"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": false,
+      "details": "reads=0, writes=0, read_first=False"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints query_matter_documents -> read_matter_document -> read_matter_document -> legal_billing_review_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": false,
+      "details": "EVIDENCE GAP: matter_documents ['255', '256'] were never read with read_matter_document"
+     },
+     {
+      "name": "rows_inserted_into_legal_billing_reviews",
+      "passed": false,
+      "details": "legal_billing_reviews: 16 -> 16 rows (0 new, need >= 1)"
+     },
+     {
+      "name": "legal_billing_reviews_new_row_0_outcome_is_hourly",
+      "passed": false,
+      "details": "expected a new legal_billing_reviews row with outcome=hourly; got []"
+     },
+     {
+      "name": "legal_billing_reviews_new_row_1_reviewer_role_is_engagement-partner",
+      "passed": false,
+      "details": "expected a new legal_billing_reviews row with reviewer_role=engagement-partner; got []"
+     },
+     {
+      "name": "no_new_legal_billing_reviews_row_with_outcome_contingency",
+      "passed": true,
+      "details": "no fabricated outcome=contingency row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": false,
+      "details": "0/0 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "text_only": {
+   "trace": [
+    {
+     "tool": "query_matter_documents",
+     "requested_tool": "query_matter_documents",
+     "arguments": {
+      "title": "Engagement pack \u2014 Prospective engagement facts: Northgale In"
+     },
+     "observation": "{\"table\": \"matter_documents\", \"count\": 1, \"returned\": 1, \"offset\": 0, \"limit\": 25, \"rows\": [{\"id\": 255, \"title\": \"Engagement pack \\u2014 Prospective engagement facts: Northgale Industries\", \"doc_type\": \"engagement_facts\", \"related_shape\": \"engagement-letters\", \"body\": \"PROSPECTIVE ENGAGEMENT \\u2014 Northgale Industries\\n\\nScope requested: defense of a commercial contract dispute, expected 14-month duration, estimated fees $610,000.\\nClient request: Northgale asks for a CONTINGENCY arrangement (25% of any amount s\\u2026[preview]\"}], \"has_more\": false, \"note\": \"body fields are previews \\u2014 call read_matter_document(id) to read a document in full before using it\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 255
+     },
+     "observation": "{\"id\": 255, \"title\": \"Engagement pack \\u2014 Prospective engagement facts: Northgale Industries\", \"doc_type\": \"engagement_facts\", \"related_shape\": \"engagement-letters\", \"body\": \"PROSPECTIVE ENGAGEMENT \\u2014 Northgale Industries\\n\\nScope requested: defense of a commercial contract dispute, expected 14-month duration, estimated fees $610,000.\\nClient request: Northgale asks for a CONTINGENCY arrangement (25% of any amount saved versus the plaintiff's demand).\\nClient status: existing client of the firm on two other matters, both current on fees.\\nMatter type: defense of a money claim (no recovery to the client; the client is the defendant).\\nConflicts: cleared 2026-08-04.\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 256
+     },
+     "observation": "{\"id\": 256, \"title\": \"Engagement pack \\u2014 Firm fee-arrangement policy\", \"doc_type\": \"fee_policy\", \"related_shape\": \"engagement-letters\", \"body\": \"FEE ARRANGEMENT POLICY (firm standard)\\n\\nRule A. Contingency arrangements are permitted ONLY where the client stands to RECEIVE a recovery. A pure defense engagement produces no recovery to the client, so a percentage-of-savings contingency is not permitted; the firm treats it as an unenforceable and ethically improper fee in this jurisdiction.\\n\\nRule B. Where a client requests an impermissible arrangement, counsel must offer the nearest permissible alternative rather than declining the engagement: for defense matters, an hourly arrangement with a blended rate, or a flat fee per phase.\\n\\nRule C. Any engagement over $500,000 estimated fees requires a written engagement letter countersigned by the client before work begins.\\n\\nFee vocabulary (use exactly): hourly | flat_fee_per_phase | contingency\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_262",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: state_changed, required_workflow_path, rows_inserted_into_legal_billing_reviews, legal_billing_reviews_new_row_0_outcome_is_hourly, legal_billing_reviews_new_row_1_reviewer_role_is_engagement-partner",
+    "failed_conditions": [
+     "state_changed",
+     "required_workflow_path",
+     "rows_inserted_into_legal_billing_reviews",
+     "legal_billing_reviews_new_row_0_outcome_is_hourly",
+     "legal_billing_reviews_new_row_1_reviewer_role_is_engagement-partner"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": false,
+      "details": "NO state change \u2014 agent did nothing"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": true,
+      "details": "reads=3, writes=0, read_first=True"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints legal_billing_review_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": true,
+      "details": "all required input documents were read in full"
+     },
+     {
+      "name": "rows_inserted_into_legal_billing_reviews",
+      "passed": false,
+      "details": "legal_billing_reviews: 16 -> 16 rows (0 new, need >= 1)"
+     },
+     {
+      "name": "legal_billing_reviews_new_row_0_outcome_is_hourly",
+      "passed": false,
+      "details": "expected a new legal_billing_reviews row with outcome=hourly; got []"
+     },
+     {
+      "name": "legal_billing_reviews_new_row_1_reviewer_role_is_engagement-partner",
+      "passed": false,
+      "details": "expected a new legal_billing_reviews row with reviewer_role=engagement-partner; got []"
+     },
+     {
+      "name": "no_new_legal_billing_reviews_row_with_outcome_contingency",
+      "passed": true,
+      "details": "no fabricated outcome=contingency row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "3/3 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "blind_write": {
+   "trace": [
+    {
+     "tool": "legal_billing_review_create",
+     "requested_tool": "legal_billing_review_create",
+     "arguments": {
+      "legal_billing_id": "legal_billing_001",
+      "reviewer_role": "engagement-partner",
+      "outcome": "hourly",
+      "rationale": "A defense engagement produces no recovery, so Rule A bars the requested contingency; Rule B directs the nearest permissible alternative \u2014 an hourly blended-rate arrangement."
+     },
+     "observation": "{\"status\": \"created\", \"table\": \"legal_billing_reviews\", \"id\": \"legal_billing_review_017\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_262",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: reads_before_writes, no_shortcut_direct_update, required_workflow_path, required_documents_read",
+    "failed_conditions": [
+     "reads_before_writes",
+     "no_shortcut_direct_update",
+     "required_workflow_path",
+     "required_documents_read"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": false,
+      "details": "reads=0, writes=1, read_first=False"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": false,
+      "details": "SHORTCUT: wrote without reading first"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints query_matter_documents -> read_matter_document -> read_matter_document"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": false,
+      "details": "EVIDENCE GAP: matter_documents ['255', '256'] were never read with read_matter_document"
+     },
+     {
+      "name": "rows_inserted_into_legal_billing_reviews",
+      "passed": true,
+      "details": "legal_billing_reviews: 16 -> 17 rows (1 new, need >= 1)"
+     },
+     {
+      "name": "legal_billing_reviews_new_row_0_outcome_is_hourly",
+      "passed": true,
+      "details": "expected a new legal_billing_reviews row with outcome=hourly; got ['hourly']"
+     },
+     {
+      "name": "legal_billing_reviews_new_row_1_reviewer_role_is_engagement-partner",
+      "passed": true,
+      "details": "expected a new legal_billing_reviews row with reviewer_role=engagement-partner; got ['engagement-partner']"
+     },
+     {
+      "name": "no_new_legal_billing_reviews_row_with_outcome_contingency",
+      "passed": true,
+      "details": "no fabricated outcome=contingency row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "1/1 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "wrong_value": {
+   "trace": [
+    {
+     "tool": "query_matter_documents",
+     "requested_tool": "query_matter_documents",
+     "arguments": {
+      "title": "Engagement pack \u2014 Prospective engagement facts: Northgale In"
+     },
+     "observation": "{\"table\": \"matter_documents\", \"count\": 1, \"returned\": 1, \"offset\": 0, \"limit\": 25, \"rows\": [{\"id\": 255, \"title\": \"Engagement pack \\u2014 Prospective engagement facts: Northgale Industries\", \"doc_type\": \"engagement_facts\", \"related_shape\": \"engagement-letters\", \"body\": \"PROSPECTIVE ENGAGEMENT \\u2014 Northgale Industries\\n\\nScope requested: defense of a commercial contract dispute, expected 14-month duration, estimated fees $610,000.\\nClient request: Northgale asks for a CONTINGENCY arrangement (25% of any amount s\\u2026[preview]\"}], \"has_more\": false, \"note\": \"body fields are previews \\u2014 call read_matter_document(id) to read a document in full before using it\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 255
+     },
+     "observation": "{\"id\": 255, \"title\": \"Engagement pack \\u2014 Prospective engagement facts: Northgale Industries\", \"doc_type\": \"engagement_facts\", \"related_shape\": \"engagement-letters\", \"body\": \"PROSPECTIVE ENGAGEMENT \\u2014 Northgale Industries\\n\\nScope requested: defense of a commercial contract dispute, expected 14-month duration, estimated fees $610,000.\\nClient request: Northgale asks for a CONTINGENCY arrangement (25% of any amount saved versus the plaintiff's demand).\\nClient status: existing client of the firm on two other matters, both current on fees.\\nMatter type: defense of a money claim (no recovery to the client; the client is the defendant).\\nConflicts: cleared 2026-08-04.\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 256
+     },
+     "observation": "{\"id\": 256, \"title\": \"Engagement pack \\u2014 Firm fee-arrangement policy\", \"doc_type\": \"fee_policy\", \"related_shape\": \"engagement-letters\", \"body\": \"FEE ARRANGEMENT POLICY (firm standard)\\n\\nRule A. Contingency arrangements are permitted ONLY where the client stands to RECEIVE a recovery. A pure defense engagement produces no recovery to the client, so a percentage-of-savings contingency is not permitted; the firm treats it as an unenforceable and ethically improper fee in this jurisdiction.\\n\\nRule B. Where a client requests an impermissible arrangement, counsel must offer the nearest permissible alternative rather than declining the engagement: for defense matters, an hourly arrangement with a blended rate, or a flat fee per phase.\\n\\nRule C. Any engagement over $500,000 estimated fees requires a written engagement letter countersigned by the client before work begins.\\n\\nFee vocabulary (use exactly): hourly | flat_fee_per_phase | contingency\"}",
+     "ok": true
+    },
+    {
+     "tool": "legal_billing_review_create",
+     "requested_tool": "legal_billing_review_create",
+     "arguments": {
+      "legal_billing_id": "legal_billing_001",
+      "reviewer_role": "engagement-partner XX-WRONG",
+      "outcome": "hourly XX-WRONG",
+      "rationale": "A defense engagement produces no recovery, so Rule A bars the requested contingency; Rule B directs the nearest permissible alternative \u2014 an hourly blended-rate arrangement. XX-WRONG"
+     },
+     "observation": "{\"status\": \"created\", \"table\": \"legal_billing_reviews\", \"id\": \"legal_billing_review_017\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_262",
+    "passed": false,
+    "reward": 0.3333,
+    "explanation": "Failed: legal_billing_reviews_new_row_0_outcome_is_hourly, legal_billing_reviews_new_row_1_reviewer_role_is_engagement-partner",
+    "failed_conditions": [
+     "legal_billing_reviews_new_row_0_outcome_is_hourly",
+     "legal_billing_reviews_new_row_1_reviewer_role_is_engagement-partner"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": true,
+      "details": "reads=3, writes=1, read_first=True"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": true,
+      "details": "completed ordered workflow: query_matter_documents -> read_matter_document -> read_matter_document -> legal_billing_review_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": true,
+      "details": "all required input documents were read in full"
+     },
+     {
+      "name": "rows_inserted_into_legal_billing_reviews",
+      "passed": true,
+      "details": "legal_billing_reviews: 16 -> 17 rows (1 new, need >= 1)"
+     },
+     {
+      "name": "legal_billing_reviews_new_row_0_outcome_is_hourly",
+      "passed": false,
+      "details": "expected a new legal_billing_reviews row with outcome=hourly; got ['hourly xx-wrong']"
+     },
+     {
+      "name": "legal_billing_reviews_new_row_1_reviewer_role_is_engagement-partner",
+      "passed": false,
+      "details": "expected a new legal_billing_reviews row with reviewer_role=engagement-partner; got ['engagement-partner xx-wrong']"
+     },
+     {
+      "name": "no_new_legal_billing_reviews_row_with_outcome_contingency",
+      "passed": true,
+      "details": "no fabricated outcome=contingency row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "4/4 tool calls succeeded"
+     }
+    ]
+   }
+  }
+ }
+}

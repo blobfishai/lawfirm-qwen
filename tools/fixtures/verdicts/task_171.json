@@ -1,0 +1,514 @@
+{
+ "task_id": "task_171",
+ "world": "world-v15.json",
+ "episodes": {
+  "oracle": {
+   "trace": [
+    {
+     "tool": "query_matter_documents",
+     "requested_tool": "query_matter_documents",
+     "arguments": {
+      "title": "damages-computation pack \u2014 District Court Fee Schedule and F"
+     },
+     "observation": "{\"table\": \"matter_documents\", \"count\": 1, \"returned\": 1, \"offset\": 0, \"limit\": 25, \"rows\": [{\"id\": 141, \"title\": \"damages-computation pack \\u2014 District Court Fee Schedule and Filing Cost Worksheet (Meridian v. Corvess)\", \"doc_type\": \"fee_schedule\", \"related_shape\": \"damages-computation\", \"body\": \"DISTRICT COURT FEE SCHEDULE AND FILING COST WORKSHEET\\n\\nMeridian Fabrication Corp. v. Corvess Industrial Group, LLC \\u2014 filing program for the District of Arizona action\\n\\nThis worksheet consolidates the court's published fee schedule with the \\u2026[preview]\"}], \"has_more\": false, \"note\": \"body fields are previews \\u2014 call read_matter_document(id) to read a document in full before using it\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 141
+     },
+     "observation": "{\"id\": 141, \"title\": \"damages-computation pack \\u2014 District Court Fee Schedule and Filing Cost Worksheet (Meridian v. Corvess)\", \"doc_type\": \"fee_schedule\", \"related_shape\": \"damages-computation\", \"body\": \"DISTRICT COURT FEE SCHEDULE AND FILING COST WORKSHEET\\n\\nMeridian Fabrication Corp. v. Corvess Industrial Group, LLC \\u2014 filing program for the District of Arizona action\\n\\nThis worksheet consolidates the court's published fee schedule with the firm's planned filings so that the total filing cost for the matter can be computed and recorded on the filings ledger.\\n\\nPart A. Applicable Court Fee Schedule (as published by the Clerk).\\nA.1 Civil complaint filing fee: $402 (one filing required for this action).\\nA.2 Pro hac vice admission fee: $150 per admitted attorney.\\nA.3 Jury trial demand fee: $75 (one demand required for this action).\\n\\nPart B. Planned Admissions.\\nB.1 Three (3) out-of-state attorneys will seek pro hac vice admission for this action: Elena Voss, Daniel Okafor, and appellate counsel Marta Reyes. Each admission incurs the per-attorney fee in A.2. No other admissions are planned.\\n\\nPart C. Appeal Bond Premium.\\nC.1 In anticipation of post-judgment proceedings, the firm has bound a supersedeas bond in the penal amount of $210,000.\\nC.2 The surety's premium is 1.5% (one and one-half percent) of the bond amount for the annual term, payable once for the period covered by this worksheet.\\nC.3 The bond premium is a recorded filing-program cost for this matter and is included in the total filing cost computed under Part D.\\n\\nPart D. Computation Method.\\nD.1 Total filing cost equals: the complaint filing fee (A.1), plus the pro hac vice fees for all planned admissions (A.2 multiplied by the number of attorneys in B.1), plus the jury demand fee (A.3), plus the bond premium computed under Part C. Round to whole dollars.\\nD.2 No other court costs (transcript fees, witness fees, copying) are included in this worksheet; those are tracked on the disbursement ledger, not the filings ledger.\\n\\nPart E. Certification.\\nE.1 The rates and counts above were verified against the Clerk's current fee schedule and the surety's binder on the date of preparation. Any change in the number of admissions requires a revised worksheet before the ledger entry is made.\\n\\nPrepared by the managing clerk's office, Harlow & Trent LLP.\\n\"}",
+     "ok": true
+    },
+    {
+     "tool": "litigation_filings_amount_history_create",
+     "requested_tool": "litigation_filings_amount_history_create",
+     "arguments": {
+      "litigation_filings_id": "litigation_filings_001",
+      "filing_cost": 4077,
+      "changed_by_role": "managing_clerk",
+      "change_reason": "Filing-program total: complaint fee, three pro hac vice admissions, jury demand, and supersedeas bond premium."
+     },
+     "observation": "{\"status\": \"created\", \"table\": \"litigation_filings_amount_history\", \"id\": \"litigation_filings_amount_history_019\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_171",
+    "passed": true,
+    "reward": 1.0,
+    "explanation": "All task checks passed",
+    "failed_conditions": [],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": true,
+      "details": "reads=2, writes=1, read_first=True"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": true,
+      "details": "completed ordered workflow: query_matter_documents -> read_matter_document -> litigation_filings_amount_history_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": true,
+      "details": "all required input documents were read in full"
+     },
+     {
+      "name": "rows_inserted_into_litigation_filings_amount_history",
+      "passed": true,
+      "details": "litigation_filings_amount_history: 18 -> 19 rows (1 new, need >= 1)"
+     },
+     {
+      "name": "litigation_filings_amount_history_new_row_0_filing_cost_is_4077.0",
+      "passed": true,
+      "details": "expected a new litigation_filings_amount_history row with filing_cost=4077.0; got ['4077.0']"
+     },
+     {
+      "name": "litigation_filings_amount_history_new_row_1_changed_by_role_is_managing_clerk",
+      "passed": true,
+      "details": "expected a new litigation_filings_amount_history row with changed_by_role=managing_clerk; got ['managing_clerk']"
+     },
+     {
+      "name": "no_new_litigation_filings_amount_history_row_with_filing_cost_4002",
+      "passed": true,
+      "details": "no fabricated filing_cost=4002 row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "3/3 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "noop": {
+   "trace": [],
+   "verdict": {
+    "task_id": "task_171",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: state_changed, reads_before_writes, required_workflow_path, required_documents_read, rows_inserted_into_litigation_filings_amount_history, litigation_filings_amount_history_new_row_0_filing_cost_is_4077.0, litigation_filings_amount_history_new_row_1_changed_by_role_is_managing_clerk",
+    "failed_conditions": [
+     "state_changed",
+     "reads_before_writes",
+     "required_workflow_path",
+     "required_documents_read",
+     "rows_inserted_into_litigation_filings_amount_history",
+     "litigation_filings_amount_history_new_row_0_filing_cost_is_4077.0",
+     "litigation_filings_amount_history_new_row_1_changed_by_role_is_managing_clerk"
+    ],
+    "advisory_conditions": [
+     "all_tools_succeeded"
+    ],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": false,
+      "details": "NO state change \u2014 agent did nothing"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": false,
+      "details": "reads=0, writes=0, read_first=False"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints query_matter_documents -> read_matter_document -> litigation_filings_amount_history_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": false,
+      "details": "EVIDENCE GAP: matter_documents ['141'] were never read with read_matter_document"
+     },
+     {
+      "name": "rows_inserted_into_litigation_filings_amount_history",
+      "passed": false,
+      "details": "litigation_filings_amount_history: 18 -> 18 rows (0 new, need >= 1)"
+     },
+     {
+      "name": "litigation_filings_amount_history_new_row_0_filing_cost_is_4077.0",
+      "passed": false,
+      "details": "expected a new litigation_filings_amount_history row with filing_cost=4077.0; got []"
+     },
+     {
+      "name": "litigation_filings_amount_history_new_row_1_changed_by_role_is_managing_clerk",
+      "passed": false,
+      "details": "expected a new litigation_filings_amount_history row with changed_by_role=managing_clerk; got []"
+     },
+     {
+      "name": "no_new_litigation_filings_amount_history_row_with_filing_cost_4002",
+      "passed": true,
+      "details": "no fabricated filing_cost=4002 row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": false,
+      "details": "0/0 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "text_only": {
+   "trace": [
+    {
+     "tool": "query_matter_documents",
+     "requested_tool": "query_matter_documents",
+     "arguments": {
+      "title": "damages-computation pack \u2014 District Court Fee Schedule and F"
+     },
+     "observation": "{\"table\": \"matter_documents\", \"count\": 1, \"returned\": 1, \"offset\": 0, \"limit\": 25, \"rows\": [{\"id\": 141, \"title\": \"damages-computation pack \\u2014 District Court Fee Schedule and Filing Cost Worksheet (Meridian v. Corvess)\", \"doc_type\": \"fee_schedule\", \"related_shape\": \"damages-computation\", \"body\": \"DISTRICT COURT FEE SCHEDULE AND FILING COST WORKSHEET\\n\\nMeridian Fabrication Corp. v. Corvess Industrial Group, LLC \\u2014 filing program for the District of Arizona action\\n\\nThis worksheet consolidates the court's published fee schedule with the \\u2026[preview]\"}], \"has_more\": false, \"note\": \"body fields are previews \\u2014 call read_matter_document(id) to read a document in full before using it\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 141
+     },
+     "observation": "{\"id\": 141, \"title\": \"damages-computation pack \\u2014 District Court Fee Schedule and Filing Cost Worksheet (Meridian v. Corvess)\", \"doc_type\": \"fee_schedule\", \"related_shape\": \"damages-computation\", \"body\": \"DISTRICT COURT FEE SCHEDULE AND FILING COST WORKSHEET\\n\\nMeridian Fabrication Corp. v. Corvess Industrial Group, LLC \\u2014 filing program for the District of Arizona action\\n\\nThis worksheet consolidates the court's published fee schedule with the firm's planned filings so that the total filing cost for the matter can be computed and recorded on the filings ledger.\\n\\nPart A. Applicable Court Fee Schedule (as published by the Clerk).\\nA.1 Civil complaint filing fee: $402 (one filing required for this action).\\nA.2 Pro hac vice admission fee: $150 per admitted attorney.\\nA.3 Jury trial demand fee: $75 (one demand required for this action).\\n\\nPart B. Planned Admissions.\\nB.1 Three (3) out-of-state attorneys will seek pro hac vice admission for this action: Elena Voss, Daniel Okafor, and appellate counsel Marta Reyes. Each admission incurs the per-attorney fee in A.2. No other admissions are planned.\\n\\nPart C. Appeal Bond Premium.\\nC.1 In anticipation of post-judgment proceedings, the firm has bound a supersedeas bond in the penal amount of $210,000.\\nC.2 The surety's premium is 1.5% (one and one-half percent) of the bond amount for the annual term, payable once for the period covered by this worksheet.\\nC.3 The bond premium is a recorded filing-program cost for this matter and is included in the total filing cost computed under Part D.\\n\\nPart D. Computation Method.\\nD.1 Total filing cost equals: the complaint filing fee (A.1), plus the pro hac vice fees for all planned admissions (A.2 multiplied by the number of attorneys in B.1), plus the jury demand fee (A.3), plus the bond premium computed under Part C. Round to whole dollars.\\nD.2 No other court costs (transcript fees, witness fees, copying) are included in this worksheet; those are tracked on the disbursement ledger, not the filings ledger.\\n\\nPart E. Certification.\\nE.1 The rates and counts above were verified against the Clerk's current fee schedule and the surety's binder on the date of preparation. Any change in the number of admissions requires a revised worksheet before the ledger entry is made.\\n\\nPrepared by the managing clerk's office, Harlow & Trent LLP.\\n\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_171",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: state_changed, required_workflow_path, rows_inserted_into_litigation_filings_amount_history, litigation_filings_amount_history_new_row_0_filing_cost_is_4077.0, litigation_filings_amount_history_new_row_1_changed_by_role_is_managing_clerk",
+    "failed_conditions": [
+     "state_changed",
+     "required_workflow_path",
+     "rows_inserted_into_litigation_filings_amount_history",
+     "litigation_filings_amount_history_new_row_0_filing_cost_is_4077.0",
+     "litigation_filings_amount_history_new_row_1_changed_by_role_is_managing_clerk"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": false,
+      "details": "NO state change \u2014 agent did nothing"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": true,
+      "details": "reads=2, writes=0, read_first=True"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints litigation_filings_amount_history_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": true,
+      "details": "all required input documents were read in full"
+     },
+     {
+      "name": "rows_inserted_into_litigation_filings_amount_history",
+      "passed": false,
+      "details": "litigation_filings_amount_history: 18 -> 18 rows (0 new, need >= 1)"
+     },
+     {
+      "name": "litigation_filings_amount_history_new_row_0_filing_cost_is_4077.0",
+      "passed": false,
+      "details": "expected a new litigation_filings_amount_history row with filing_cost=4077.0; got []"
+     },
+     {
+      "name": "litigation_filings_amount_history_new_row_1_changed_by_role_is_managing_clerk",
+      "passed": false,
+      "details": "expected a new litigation_filings_amount_history row with changed_by_role=managing_clerk; got []"
+     },
+     {
+      "name": "no_new_litigation_filings_amount_history_row_with_filing_cost_4002",
+      "passed": true,
+      "details": "no fabricated filing_cost=4002 row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "2/2 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "blind_write": {
+   "trace": [
+    {
+     "tool": "litigation_filings_amount_history_create",
+     "requested_tool": "litigation_filings_amount_history_create",
+     "arguments": {
+      "litigation_filings_id": "litigation_filings_001",
+      "filing_cost": 4077,
+      "changed_by_role": "managing_clerk",
+      "change_reason": "Filing-program total: complaint fee, three pro hac vice admissions, jury demand, and supersedeas bond premium."
+     },
+     "observation": "{\"status\": \"created\", \"table\": \"litigation_filings_amount_history\", \"id\": \"litigation_filings_amount_history_019\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_171",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: reads_before_writes, no_shortcut_direct_update, required_workflow_path, required_documents_read",
+    "failed_conditions": [
+     "reads_before_writes",
+     "no_shortcut_direct_update",
+     "required_workflow_path",
+     "required_documents_read"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": false,
+      "details": "reads=0, writes=1, read_first=False"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": false,
+      "details": "SHORTCUT: wrote without reading first"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints query_matter_documents -> read_matter_document"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": false,
+      "details": "EVIDENCE GAP: matter_documents ['141'] were never read with read_matter_document"
+     },
+     {
+      "name": "rows_inserted_into_litigation_filings_amount_history",
+      "passed": true,
+      "details": "litigation_filings_amount_history: 18 -> 19 rows (1 new, need >= 1)"
+     },
+     {
+      "name": "litigation_filings_amount_history_new_row_0_filing_cost_is_4077.0",
+      "passed": true,
+      "details": "expected a new litigation_filings_amount_history row with filing_cost=4077.0; got ['4077.0']"
+     },
+     {
+      "name": "litigation_filings_amount_history_new_row_1_changed_by_role_is_managing_clerk",
+      "passed": true,
+      "details": "expected a new litigation_filings_amount_history row with changed_by_role=managing_clerk; got ['managing_clerk']"
+     },
+     {
+      "name": "no_new_litigation_filings_amount_history_row_with_filing_cost_4002",
+      "passed": true,
+      "details": "no fabricated filing_cost=4002 row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "1/1 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "wrong_value": {
+   "trace": [
+    {
+     "tool": "query_matter_documents",
+     "requested_tool": "query_matter_documents",
+     "arguments": {
+      "title": "damages-computation pack \u2014 District Court Fee Schedule and F"
+     },
+     "observation": "{\"table\": \"matter_documents\", \"count\": 1, \"returned\": 1, \"offset\": 0, \"limit\": 25, \"rows\": [{\"id\": 141, \"title\": \"damages-computation pack \\u2014 District Court Fee Schedule and Filing Cost Worksheet (Meridian v. Corvess)\", \"doc_type\": \"fee_schedule\", \"related_shape\": \"damages-computation\", \"body\": \"DISTRICT COURT FEE SCHEDULE AND FILING COST WORKSHEET\\n\\nMeridian Fabrication Corp. v. Corvess Industrial Group, LLC \\u2014 filing program for the District of Arizona action\\n\\nThis worksheet consolidates the court's published fee schedule with the \\u2026[preview]\"}], \"has_more\": false, \"note\": \"body fields are previews \\u2014 call read_matter_document(id) to read a document in full before using it\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 141
+     },
+     "observation": "{\"id\": 141, \"title\": \"damages-computation pack \\u2014 District Court Fee Schedule and Filing Cost Worksheet (Meridian v. Corvess)\", \"doc_type\": \"fee_schedule\", \"related_shape\": \"damages-computation\", \"body\": \"DISTRICT COURT FEE SCHEDULE AND FILING COST WORKSHEET\\n\\nMeridian Fabrication Corp. v. Corvess Industrial Group, LLC \\u2014 filing program for the District of Arizona action\\n\\nThis worksheet consolidates the court's published fee schedule with the firm's planned filings so that the total filing cost for the matter can be computed and recorded on the filings ledger.\\n\\nPart A. Applicable Court Fee Schedule (as published by the Clerk).\\nA.1 Civil complaint filing fee: $402 (one filing required for this action).\\nA.2 Pro hac vice admission fee: $150 per admitted attorney.\\nA.3 Jury trial demand fee: $75 (one demand required for this action).\\n\\nPart B. Planned Admissions.\\nB.1 Three (3) out-of-state attorneys will seek pro hac vice admission for this action: Elena Voss, Daniel Okafor, and appellate counsel Marta Reyes. Each admission incurs the per-attorney fee in A.2. No other admissions are planned.\\n\\nPart C. Appeal Bond Premium.\\nC.1 In anticipation of post-judgment proceedings, the firm has bound a supersedeas bond in the penal amount of $210,000.\\nC.2 The surety's premium is 1.5% (one and one-half percent) of the bond amount for the annual term, payable once for the period covered by this worksheet.\\nC.3 The bond premium is a recorded filing-program cost for this matter and is included in the total filing cost computed under Part D.\\n\\nPart D. Computation Method.\\nD.1 Total filing cost equals: the complaint filing fee (A.1), plus the pro hac vice fees for all planned admissions (A.2 multiplied by the number of attorneys in B.1), plus the jury demand fee (A.3), plus the bond premium computed under Part C. Round to whole dollars.\\nD.2 No other court costs (transcript fees, witness fees, copying) are included in this worksheet; those are tracked on the disbursement ledger, not the filings ledger.\\n\\nPart E. Certification.\\nE.1 The rates and counts above were verified against the Clerk's current fee schedule and the surety's binder on the date of preparation. Any change in the number of admissions requires a revised worksheet before the ledger entry is made.\\n\\nPrepared by the managing clerk's office, Harlow & Trent LLP.\\n\"}",
+     "ok": true
+    },
+    {
+     "tool": "litigation_filings_amount_history_create",
+     "requested_tool": "litigation_filings_amount_history_create",
+     "arguments": {
+      "litigation_filings_id": "litigation_filings_001",
+      "filing_cost": 8319.42,
+      "changed_by_role": "managing_clerk XX-WRONG",
+      "change_reason": "Filing-program total: complaint fee, three pro hac vice admissions, jury demand, and supersedeas bond premium. XX-WRONG"
+     },
+     "observation": "{\"status\": \"created\", \"table\": \"litigation_filings_amount_history\", \"id\": \"litigation_filings_amount_history_019\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_171",
+    "passed": false,
+    "reward": 0.3333,
+    "explanation": "Failed: litigation_filings_amount_history_new_row_0_filing_cost_is_4077.0, litigation_filings_amount_history_new_row_1_changed_by_role_is_managing_clerk",
+    "failed_conditions": [
+     "litigation_filings_amount_history_new_row_0_filing_cost_is_4077.0",
+     "litigation_filings_amount_history_new_row_1_changed_by_role_is_managing_clerk"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": true,
+      "details": "reads=2, writes=1, read_first=True"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": true,
+      "details": "completed ordered workflow: query_matter_documents -> read_matter_document -> litigation_filings_amount_history_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": true,
+      "details": "all required input documents were read in full"
+     },
+     {
+      "name": "rows_inserted_into_litigation_filings_amount_history",
+      "passed": true,
+      "details": "litigation_filings_amount_history: 18 -> 19 rows (1 new, need >= 1)"
+     },
+     {
+      "name": "litigation_filings_amount_history_new_row_0_filing_cost_is_4077.0",
+      "passed": false,
+      "details": "expected a new litigation_filings_amount_history row with filing_cost=4077.0; got ['8319.42']"
+     },
+     {
+      "name": "litigation_filings_amount_history_new_row_1_changed_by_role_is_managing_clerk",
+      "passed": false,
+      "details": "expected a new litigation_filings_amount_history row with changed_by_role=managing_clerk; got ['managing_clerk xx-wrong']"
+     },
+     {
+      "name": "no_new_litigation_filings_amount_history_row_with_filing_cost_4002",
+      "passed": true,
+      "details": "no fabricated filing_cost=4002 row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "3/3 tool calls succeeded"
+     }
+    ]
+   }
+  }
+ }
+}

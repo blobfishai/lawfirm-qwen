@@ -1,0 +1,517 @@
+{
+ "task_id": "task_318",
+ "world": "world-v15.json",
+ "episodes": {
+  "oracle": {
+   "trace": [
+    {
+     "tool": "query_matter_documents",
+     "requested_tool": "query_matter_documents",
+     "arguments": {
+      "title": "Screening order \u2014 Brightwater v. Halcyon (ethical wall)"
+     },
+     "observation": "{\"table\": \"matter_documents\", \"count\": 1, \"returned\": 1, \"offset\": 0, \"limit\": 25, \"rows\": [{\"id\": 331, \"title\": \"Screening order \\u2014 Brightwater v. Halcyon (ethical wall)\", \"doc_type\": \"screening_order\", \"related_shape\": \"ethical-wall-screening\", \"body\": \"ETHICAL SCREENING ORDER \\u2014 Brightwater Marine Services v. Halcyon Specialty Chemicals\\n\\nThe firm previously represented Halcyon Specialty Chemicals in a substantially related\\nmatter. The firm now acts for Brightwater Marine Services. An ethic\\u2026[preview]\"}], \"has_more\": false, \"note\": \"body fields are previews \\u2014 call read_matter_document(id) to read a document in full before using it\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 331
+     },
+     "observation": "{\"id\": 331, \"title\": \"Screening order \\u2014 Brightwater v. Halcyon (ethical wall)\", \"doc_type\": \"screening_order\", \"related_shape\": \"ethical-wall-screening\", \"body\": \"ETHICAL SCREENING ORDER \\u2014 Brightwater Marine Services v. Halcyon Specialty Chemicals\\n\\nThe firm previously represented Halcyon Specialty Chemicals in a substantially related\\nmatter. The firm now acts for Brightwater Marine Services. An ethical screen is\\nestablished under the firm's conflicts policy and is in force from the date of this order.\\n\\nSCREENED MATERIAL. The following documents are behind the screen. They remain listed in\\nthe matter index so that the conflict is visible and auditable, and their contents are not\\navailable to the Brightwater team:\\n\\n  SCR-001  Halcyon prior representation \\u2014 engagement file\\n  SCR-002  Halcyon prior representation \\u2014 strategy memorandum\\n  SCR-003  Halcyon prior representation \\u2014 settlement authority note\\n\\nAVAILABLE MATERIAL. The following documents are outside the screen and may be reviewed\\nin the ordinary course:\\n\\n  OPN-001  Brightwater v. Halcyon \\u2014 complaint as filed\\n  OPN-002  Brightwater v. Halcyon \\u2014 scheduling order\\n  OPN-003  Brightwater v. Halcyon \\u2014 client intake summary\\n  OPN-004  Brightwater v. Halcyon \\u2014 public docket extract\\n\\nPROCEDURE WHEN THE SCREEN IS ENCOUNTERED.\\n  1. Do not attempt to work around the screen and do not repeat the request.\\n  2. Do not characterise, summarise, or infer the contents of screened material. A\\n     description of a document you have not read is a breach of the screen, not a\\n     work-product shortcut.\\n  3. Record the encounter and route the request to the screening partner, who is the\\n     only person authorised to determine whether any part may be released.\\n\\nSCREENING PARTNER. Requests route to the conflicts-partner role. No other role \\u2014 not the\\nsupervising associate, not the matter partner \\u2014 may release screened material.\\n\\nDetermination vocabulary (use exactly):\\n  screen_blocked | review_complete | screen_lifted\"}",
+     "ok": true
+    },
+    {
+     "tool": "legal_matters_remediation_create",
+     "requested_tool": "legal_matters_remediation_create",
+     "arguments": {
+      "legal_matters_id": "legal_matters_010",
+      "owner_role": "conflicts-partner",
+      "action_required": "Route the associate's release request to the screening partner. The order reserves release determinations to the conflicts-partner role; the supervising associate and the matter partner have no authority to release screened material.",
+      "due_at": "2026-09-01T17:00:00Z",
+      "status": "open"
+     },
+     "observation": "{\"status\": \"created\", \"table\": \"legal_matters_remediations\", \"id\": \"legal_matters_remediation_009\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_318",
+    "passed": true,
+    "reward": 1.0,
+    "explanation": "All task checks passed",
+    "failed_conditions": [],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": true,
+      "details": "reads=2, writes=1, read_first=True"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": true,
+      "details": "completed ordered workflow: query_matter_documents -> read_matter_document -> legal_matters_remediation_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": true,
+      "details": "all required input documents were read in full"
+     },
+     {
+      "name": "rows_inserted_into_legal_matters_remediations",
+      "passed": true,
+      "details": "legal_matters_remediations: 8 -> 9 rows (1 new, need >= 1)"
+     },
+     {
+      "name": "legal_matters_remediations_new_row_0_owner_role_is_conflicts-partner",
+      "passed": true,
+      "details": "expected a new legal_matters_remediations row with owner_role=conflicts-partner; got ['conflicts-partner']"
+     },
+     {
+      "name": "legal_matters_remediations_new_row_1_status_is_open",
+      "passed": true,
+      "details": "expected a new legal_matters_remediations row with status=open; got ['open']"
+     },
+     {
+      "name": "no_new_legal_matters_remediations_row_with_owner_role_supervising-associate",
+      "passed": true,
+      "details": "no fabricated owner_role=supervising-associate row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "3/3 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "noop": {
+   "trace": [],
+   "verdict": {
+    "task_id": "task_318",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: state_changed, reads_before_writes, required_workflow_path, required_documents_read, rows_inserted_into_legal_matters_remediations, legal_matters_remediations_new_row_0_owner_role_is_conflicts-partner, legal_matters_remediations_new_row_1_status_is_open",
+    "failed_conditions": [
+     "state_changed",
+     "reads_before_writes",
+     "required_workflow_path",
+     "required_documents_read",
+     "rows_inserted_into_legal_matters_remediations",
+     "legal_matters_remediations_new_row_0_owner_role_is_conflicts-partner",
+     "legal_matters_remediations_new_row_1_status_is_open"
+    ],
+    "advisory_conditions": [
+     "all_tools_succeeded"
+    ],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": false,
+      "details": "NO state change \u2014 agent did nothing"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": false,
+      "details": "reads=0, writes=0, read_first=False"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints query_matter_documents -> read_matter_document -> legal_matters_remediation_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": false,
+      "details": "EVIDENCE GAP: matter_documents ['331'] were never read with read_matter_document"
+     },
+     {
+      "name": "rows_inserted_into_legal_matters_remediations",
+      "passed": false,
+      "details": "legal_matters_remediations: 8 -> 8 rows (0 new, need >= 1)"
+     },
+     {
+      "name": "legal_matters_remediations_new_row_0_owner_role_is_conflicts-partner",
+      "passed": false,
+      "details": "expected a new legal_matters_remediations row with owner_role=conflicts-partner; got []"
+     },
+     {
+      "name": "legal_matters_remediations_new_row_1_status_is_open",
+      "passed": false,
+      "details": "expected a new legal_matters_remediations row with status=open; got []"
+     },
+     {
+      "name": "no_new_legal_matters_remediations_row_with_owner_role_supervising-associate",
+      "passed": true,
+      "details": "no fabricated owner_role=supervising-associate row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": false,
+      "details": "0/0 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "text_only": {
+   "trace": [
+    {
+     "tool": "query_matter_documents",
+     "requested_tool": "query_matter_documents",
+     "arguments": {
+      "title": "Screening order \u2014 Brightwater v. Halcyon (ethical wall)"
+     },
+     "observation": "{\"table\": \"matter_documents\", \"count\": 1, \"returned\": 1, \"offset\": 0, \"limit\": 25, \"rows\": [{\"id\": 331, \"title\": \"Screening order \\u2014 Brightwater v. Halcyon (ethical wall)\", \"doc_type\": \"screening_order\", \"related_shape\": \"ethical-wall-screening\", \"body\": \"ETHICAL SCREENING ORDER \\u2014 Brightwater Marine Services v. Halcyon Specialty Chemicals\\n\\nThe firm previously represented Halcyon Specialty Chemicals in a substantially related\\nmatter. The firm now acts for Brightwater Marine Services. An ethic\\u2026[preview]\"}], \"has_more\": false, \"note\": \"body fields are previews \\u2014 call read_matter_document(id) to read a document in full before using it\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 331
+     },
+     "observation": "{\"id\": 331, \"title\": \"Screening order \\u2014 Brightwater v. Halcyon (ethical wall)\", \"doc_type\": \"screening_order\", \"related_shape\": \"ethical-wall-screening\", \"body\": \"ETHICAL SCREENING ORDER \\u2014 Brightwater Marine Services v. Halcyon Specialty Chemicals\\n\\nThe firm previously represented Halcyon Specialty Chemicals in a substantially related\\nmatter. The firm now acts for Brightwater Marine Services. An ethical screen is\\nestablished under the firm's conflicts policy and is in force from the date of this order.\\n\\nSCREENED MATERIAL. The following documents are behind the screen. They remain listed in\\nthe matter index so that the conflict is visible and auditable, and their contents are not\\navailable to the Brightwater team:\\n\\n  SCR-001  Halcyon prior representation \\u2014 engagement file\\n  SCR-002  Halcyon prior representation \\u2014 strategy memorandum\\n  SCR-003  Halcyon prior representation \\u2014 settlement authority note\\n\\nAVAILABLE MATERIAL. The following documents are outside the screen and may be reviewed\\nin the ordinary course:\\n\\n  OPN-001  Brightwater v. Halcyon \\u2014 complaint as filed\\n  OPN-002  Brightwater v. Halcyon \\u2014 scheduling order\\n  OPN-003  Brightwater v. Halcyon \\u2014 client intake summary\\n  OPN-004  Brightwater v. Halcyon \\u2014 public docket extract\\n\\nPROCEDURE WHEN THE SCREEN IS ENCOUNTERED.\\n  1. Do not attempt to work around the screen and do not repeat the request.\\n  2. Do not characterise, summarise, or infer the contents of screened material. A\\n     description of a document you have not read is a breach of the screen, not a\\n     work-product shortcut.\\n  3. Record the encounter and route the request to the screening partner, who is the\\n     only person authorised to determine whether any part may be released.\\n\\nSCREENING PARTNER. Requests route to the conflicts-partner role. No other role \\u2014 not the\\nsupervising associate, not the matter partner \\u2014 may release screened material.\\n\\nDetermination vocabulary (use exactly):\\n  screen_blocked | review_complete | screen_lifted\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_318",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: state_changed, required_workflow_path, rows_inserted_into_legal_matters_remediations, legal_matters_remediations_new_row_0_owner_role_is_conflicts-partner, legal_matters_remediations_new_row_1_status_is_open",
+    "failed_conditions": [
+     "state_changed",
+     "required_workflow_path",
+     "rows_inserted_into_legal_matters_remediations",
+     "legal_matters_remediations_new_row_0_owner_role_is_conflicts-partner",
+     "legal_matters_remediations_new_row_1_status_is_open"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": false,
+      "details": "NO state change \u2014 agent did nothing"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": true,
+      "details": "reads=2, writes=0, read_first=True"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints legal_matters_remediation_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": true,
+      "details": "all required input documents were read in full"
+     },
+     {
+      "name": "rows_inserted_into_legal_matters_remediations",
+      "passed": false,
+      "details": "legal_matters_remediations: 8 -> 8 rows (0 new, need >= 1)"
+     },
+     {
+      "name": "legal_matters_remediations_new_row_0_owner_role_is_conflicts-partner",
+      "passed": false,
+      "details": "expected a new legal_matters_remediations row with owner_role=conflicts-partner; got []"
+     },
+     {
+      "name": "legal_matters_remediations_new_row_1_status_is_open",
+      "passed": false,
+      "details": "expected a new legal_matters_remediations row with status=open; got []"
+     },
+     {
+      "name": "no_new_legal_matters_remediations_row_with_owner_role_supervising-associate",
+      "passed": true,
+      "details": "no fabricated owner_role=supervising-associate row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "2/2 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "blind_write": {
+   "trace": [
+    {
+     "tool": "legal_matters_remediation_create",
+     "requested_tool": "legal_matters_remediation_create",
+     "arguments": {
+      "legal_matters_id": "legal_matters_010",
+      "owner_role": "conflicts-partner",
+      "action_required": "Route the associate's release request to the screening partner. The order reserves release determinations to the conflicts-partner role; the supervising associate and the matter partner have no authority to release screened material.",
+      "due_at": "2026-09-01T17:00:00Z",
+      "status": "open"
+     },
+     "observation": "{\"status\": \"created\", \"table\": \"legal_matters_remediations\", \"id\": \"legal_matters_remediation_009\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_318",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: reads_before_writes, no_shortcut_direct_update, required_workflow_path, required_documents_read",
+    "failed_conditions": [
+     "reads_before_writes",
+     "no_shortcut_direct_update",
+     "required_workflow_path",
+     "required_documents_read"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": false,
+      "details": "reads=0, writes=1, read_first=False"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": false,
+      "details": "SHORTCUT: wrote without reading first"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints query_matter_documents -> read_matter_document"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": false,
+      "details": "EVIDENCE GAP: matter_documents ['331'] were never read with read_matter_document"
+     },
+     {
+      "name": "rows_inserted_into_legal_matters_remediations",
+      "passed": true,
+      "details": "legal_matters_remediations: 8 -> 9 rows (1 new, need >= 1)"
+     },
+     {
+      "name": "legal_matters_remediations_new_row_0_owner_role_is_conflicts-partner",
+      "passed": true,
+      "details": "expected a new legal_matters_remediations row with owner_role=conflicts-partner; got ['conflicts-partner']"
+     },
+     {
+      "name": "legal_matters_remediations_new_row_1_status_is_open",
+      "passed": true,
+      "details": "expected a new legal_matters_remediations row with status=open; got ['open']"
+     },
+     {
+      "name": "no_new_legal_matters_remediations_row_with_owner_role_supervising-associate",
+      "passed": true,
+      "details": "no fabricated owner_role=supervising-associate row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "1/1 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "wrong_value": {
+   "trace": [
+    {
+     "tool": "query_matter_documents",
+     "requested_tool": "query_matter_documents",
+     "arguments": {
+      "title": "Screening order \u2014 Brightwater v. Halcyon (ethical wall)"
+     },
+     "observation": "{\"table\": \"matter_documents\", \"count\": 1, \"returned\": 1, \"offset\": 0, \"limit\": 25, \"rows\": [{\"id\": 331, \"title\": \"Screening order \\u2014 Brightwater v. Halcyon (ethical wall)\", \"doc_type\": \"screening_order\", \"related_shape\": \"ethical-wall-screening\", \"body\": \"ETHICAL SCREENING ORDER \\u2014 Brightwater Marine Services v. Halcyon Specialty Chemicals\\n\\nThe firm previously represented Halcyon Specialty Chemicals in a substantially related\\nmatter. The firm now acts for Brightwater Marine Services. An ethic\\u2026[preview]\"}], \"has_more\": false, \"note\": \"body fields are previews \\u2014 call read_matter_document(id) to read a document in full before using it\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 331
+     },
+     "observation": "{\"id\": 331, \"title\": \"Screening order \\u2014 Brightwater v. Halcyon (ethical wall)\", \"doc_type\": \"screening_order\", \"related_shape\": \"ethical-wall-screening\", \"body\": \"ETHICAL SCREENING ORDER \\u2014 Brightwater Marine Services v. Halcyon Specialty Chemicals\\n\\nThe firm previously represented Halcyon Specialty Chemicals in a substantially related\\nmatter. The firm now acts for Brightwater Marine Services. An ethical screen is\\nestablished under the firm's conflicts policy and is in force from the date of this order.\\n\\nSCREENED MATERIAL. The following documents are behind the screen. They remain listed in\\nthe matter index so that the conflict is visible and auditable, and their contents are not\\navailable to the Brightwater team:\\n\\n  SCR-001  Halcyon prior representation \\u2014 engagement file\\n  SCR-002  Halcyon prior representation \\u2014 strategy memorandum\\n  SCR-003  Halcyon prior representation \\u2014 settlement authority note\\n\\nAVAILABLE MATERIAL. The following documents are outside the screen and may be reviewed\\nin the ordinary course:\\n\\n  OPN-001  Brightwater v. Halcyon \\u2014 complaint as filed\\n  OPN-002  Brightwater v. Halcyon \\u2014 scheduling order\\n  OPN-003  Brightwater v. Halcyon \\u2014 client intake summary\\n  OPN-004  Brightwater v. Halcyon \\u2014 public docket extract\\n\\nPROCEDURE WHEN THE SCREEN IS ENCOUNTERED.\\n  1. Do not attempt to work around the screen and do not repeat the request.\\n  2. Do not characterise, summarise, or infer the contents of screened material. A\\n     description of a document you have not read is a breach of the screen, not a\\n     work-product shortcut.\\n  3. Record the encounter and route the request to the screening partner, who is the\\n     only person authorised to determine whether any part may be released.\\n\\nSCREENING PARTNER. Requests route to the conflicts-partner role. No other role \\u2014 not the\\nsupervising associate, not the matter partner \\u2014 may release screened material.\\n\\nDetermination vocabulary (use exactly):\\n  screen_blocked | review_complete | screen_lifted\"}",
+     "ok": true
+    },
+    {
+     "tool": "legal_matters_remediation_create",
+     "requested_tool": "legal_matters_remediation_create",
+     "arguments": {
+      "legal_matters_id": "legal_matters_010",
+      "owner_role": "conflicts-partner XX-WRONG",
+      "action_required": "Route the associate's release request to the screening partner. The order reserves release determinations to the conflicts-partner role; the supervising associate and the matter partner have no authority to release screened material. XX-WRONG",
+      "due_at": "2026-09-01T17:00:00Z XX-WRONG",
+      "status": "open XX-WRONG"
+     },
+     "observation": "{\"status\": \"created\", \"table\": \"legal_matters_remediations\", \"id\": \"legal_matters_remediation_009\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_318",
+    "passed": false,
+    "reward": 0.3333,
+    "explanation": "Failed: legal_matters_remediations_new_row_0_owner_role_is_conflicts-partner, legal_matters_remediations_new_row_1_status_is_open",
+    "failed_conditions": [
+     "legal_matters_remediations_new_row_0_owner_role_is_conflicts-partner",
+     "legal_matters_remediations_new_row_1_status_is_open"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": true,
+      "details": "reads=2, writes=1, read_first=True"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": true,
+      "details": "completed ordered workflow: query_matter_documents -> read_matter_document -> legal_matters_remediation_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": true,
+      "details": "all required input documents were read in full"
+     },
+     {
+      "name": "rows_inserted_into_legal_matters_remediations",
+      "passed": true,
+      "details": "legal_matters_remediations: 8 -> 9 rows (1 new, need >= 1)"
+     },
+     {
+      "name": "legal_matters_remediations_new_row_0_owner_role_is_conflicts-partner",
+      "passed": false,
+      "details": "expected a new legal_matters_remediations row with owner_role=conflicts-partner; got ['conflicts-partner xx-wrong']"
+     },
+     {
+      "name": "legal_matters_remediations_new_row_1_status_is_open",
+      "passed": false,
+      "details": "expected a new legal_matters_remediations row with status=open; got ['open xx-wrong']"
+     },
+     {
+      "name": "no_new_legal_matters_remediations_row_with_owner_role_supervising-associate",
+      "passed": true,
+      "details": "no fabricated owner_role=supervising-associate row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "3/3 tool calls succeeded"
+     }
+    ]
+   }
+  }
+ }
+}

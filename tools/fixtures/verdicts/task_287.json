@@ -1,0 +1,516 @@
+{
+ "task_id": "task_287",
+ "world": "world-v15.json",
+ "episodes": {
+  "oracle": {
+   "trace": [
+    {
+     "tool": "query_matter_documents",
+     "requested_tool": "query_matter_documents",
+     "arguments": {
+      "title": "Chapter 11 \u2014 Claim classification waterfall memo"
+     },
+     "observation": "{\"table\": \"matter_documents\", \"count\": 1, \"returned\": 1, \"offset\": 0, \"limit\": 25, \"rows\": [{\"id\": 286, \"title\": \"Chapter 11 \\u2014 Claim classification waterfall memo\", \"doc_type\": \"claims_waterfall\", \"related_shape\": \"bankruptcy-claim-classification\", \"body\": \"CLAIM CLASSIFICATION MEMO \\u2014 In re Northgate Holdings, Chapter 11\\n\\nPetition date: 2026-01-20.   Claims bar date: 2026-04-15.\\n\\nApply the tests IN ORDER. The first test that matches controls.\\n\\n  1. LATE FILING. A proof of claim filed after 202\\u2026[preview]\"}], \"has_more\": false, \"note\": \"body fields are previews \\u2014 call read_matter_document(id) to read a document in full before using it\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 286
+     },
+     "observation": "{\"id\": 286, \"title\": \"Chapter 11 \\u2014 Claim classification waterfall memo\", \"doc_type\": \"claims_waterfall\", \"related_shape\": \"bankruptcy-claim-classification\", \"body\": \"CLAIM CLASSIFICATION MEMO \\u2014 In re Northgate Holdings, Chapter 11\\n\\nPetition date: 2026-01-20.   Claims bar date: 2026-04-15.\\n\\nApply the tests IN ORDER. The first test that matches controls.\\n\\n  1. LATE FILING. A proof of claim filed after 2026-04-15 is disallowed unless the docket\\n     shows an excusable-neglect order. No such order has been entered in this case.\\n     -> disallowed\\n\\n  2. PERFECTED SECURITY INTEREST. A UCC-1 financing statement filed BEFORE the petition\\n     date perfects the interest. A UCC-1 filed on or after the petition date does not.\\n     -> allowed_secured\\n\\n  3. EMPLOYEE WAGES. Wages EARNED within the 180 days before the petition date (that is, on\\n     or after 2025-07-24), capped at $15,150.00 per employee. Wages earned wholly or\\n     partly outside that window, or exceeding the cap, do not take priority treatment.\\n     -> allowed_priority\\n\\n  4. EVERYTHING ELSE.  -> allowed_general_unsecured\\n\\nA creditor's own characterisation of its claim in the proof of claim is not evidence of its\\ntreatment and is routinely overstated. Classify on the tests above alone.\\n\\nOutcome vocabulary (use exactly):\\n  disallowed | allowed_secured | allowed_priority | allowed_general_unsecured\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 287
+     },
+     "observation": "{\"id\": 287, \"title\": \"Proof of claim \\u2014 Meridian Equipment Finance\", \"doc_type\": \"proof_of_claim\", \"related_shape\": \"bankruptcy-claim-classification\", \"body\": \"PROOF OF CLAIM \\u2014 In re Northgate Holdings\\nCreditor: Meridian Equipment Finance\\nBasis of claim: equipment lease financing\\nAmount asserted: $2,400,000.00\\nDate filed with the clerk: 2026-03-02\\nUCC-1 financing statement filed: 2025-11-14\\nWages component: none\\n\\nCreditor's characterisation: \\\"This claim is entitled to treatment as secured.\\\"\"}",
+     "ok": true
+    },
+    {
+     "tool": "legal_matters_review_create",
+     "requested_tool": "legal_matters_review_create",
+     "arguments": {
+      "legal_matters_id": "legal_matters_011",
+      "reviewer_role": "claims-analyst",
+      "outcome": "allowed_secured",
+      "rationale": "Classified allowed_secured on the waterfall memo: filed 2026-03-02 (bar date 2026-04-15); UCC-1 2025-11-14; wages component none."
+     },
+     "observation": "Request accepted and queued for processing. The record change will be reflected shortly.",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_287",
+    "passed": true,
+    "reward": 1.0,
+    "explanation": "All task checks passed",
+    "failed_conditions": [],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": true,
+      "details": "reads=3, writes=1, read_first=True"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": true,
+      "details": "completed ordered workflow: query_matter_documents -> read_matter_document -> read_matter_document -> legal_matters_review_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": true,
+      "details": "all required input documents were read in full"
+     },
+     {
+      "name": "rows_inserted_into_legal_matters_reviews",
+      "passed": true,
+      "details": "legal_matters_reviews: 9 -> 10 rows (1 new, need >= 1)"
+     },
+     {
+      "name": "legal_matters_reviews_new_row_0_outcome_is_allowed_secured",
+      "passed": true,
+      "details": "expected a new legal_matters_reviews row with outcome=allowed_secured; got ['allowed_secured']"
+     },
+     {
+      "name": "legal_matters_reviews_new_row_1_reviewer_role_is_claims-analyst",
+      "passed": true,
+      "details": "expected a new legal_matters_reviews row with reviewer_role=claims-analyst; got ['claims-analyst']"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "4/4 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "noop": {
+   "trace": [],
+   "verdict": {
+    "task_id": "task_287",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: state_changed, reads_before_writes, required_workflow_path, required_documents_read, rows_inserted_into_legal_matters_reviews, legal_matters_reviews_new_row_0_outcome_is_allowed_secured, legal_matters_reviews_new_row_1_reviewer_role_is_claims-analyst",
+    "failed_conditions": [
+     "state_changed",
+     "reads_before_writes",
+     "required_workflow_path",
+     "required_documents_read",
+     "rows_inserted_into_legal_matters_reviews",
+     "legal_matters_reviews_new_row_0_outcome_is_allowed_secured",
+     "legal_matters_reviews_new_row_1_reviewer_role_is_claims-analyst"
+    ],
+    "advisory_conditions": [
+     "all_tools_succeeded"
+    ],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": false,
+      "details": "NO state change \u2014 agent did nothing"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": false,
+      "details": "reads=0, writes=0, read_first=False"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints query_matter_documents -> read_matter_document -> read_matter_document -> legal_matters_review_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": false,
+      "details": "EVIDENCE GAP: matter_documents ['286', '287'] were never read with read_matter_document"
+     },
+     {
+      "name": "rows_inserted_into_legal_matters_reviews",
+      "passed": false,
+      "details": "legal_matters_reviews: 9 -> 9 rows (0 new, need >= 1)"
+     },
+     {
+      "name": "legal_matters_reviews_new_row_0_outcome_is_allowed_secured",
+      "passed": false,
+      "details": "expected a new legal_matters_reviews row with outcome=allowed_secured; got []"
+     },
+     {
+      "name": "legal_matters_reviews_new_row_1_reviewer_role_is_claims-analyst",
+      "passed": false,
+      "details": "expected a new legal_matters_reviews row with reviewer_role=claims-analyst; got []"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": false,
+      "details": "0/0 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "text_only": {
+   "trace": [
+    {
+     "tool": "query_matter_documents",
+     "requested_tool": "query_matter_documents",
+     "arguments": {
+      "title": "Chapter 11 \u2014 Claim classification waterfall memo"
+     },
+     "observation": "{\"table\": \"matter_documents\", \"count\": 1, \"returned\": 1, \"offset\": 0, \"limit\": 25, \"rows\": [{\"id\": 286, \"title\": \"Chapter 11 \\u2014 Claim classification waterfall memo\", \"doc_type\": \"claims_waterfall\", \"related_shape\": \"bankruptcy-claim-classification\", \"body\": \"CLAIM CLASSIFICATION MEMO \\u2014 In re Northgate Holdings, Chapter 11\\n\\nPetition date: 2026-01-20.   Claims bar date: 2026-04-15.\\n\\nApply the tests IN ORDER. The first test that matches controls.\\n\\n  1. LATE FILING. A proof of claim filed after 202\\u2026[preview]\"}], \"has_more\": false, \"note\": \"body fields are previews \\u2014 call read_matter_document(id) to read a document in full before using it\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 286
+     },
+     "observation": "{\"id\": 286, \"title\": \"Chapter 11 \\u2014 Claim classification waterfall memo\", \"doc_type\": \"claims_waterfall\", \"related_shape\": \"bankruptcy-claim-classification\", \"body\": \"CLAIM CLASSIFICATION MEMO \\u2014 In re Northgate Holdings, Chapter 11\\n\\nPetition date: 2026-01-20.   Claims bar date: 2026-04-15.\\n\\nApply the tests IN ORDER. The first test that matches controls.\\n\\n  1. LATE FILING. A proof of claim filed after 2026-04-15 is disallowed unless the docket\\n     shows an excusable-neglect order. No such order has been entered in this case.\\n     -> disallowed\\n\\n  2. PERFECTED SECURITY INTEREST. A UCC-1 financing statement filed BEFORE the petition\\n     date perfects the interest. A UCC-1 filed on or after the petition date does not.\\n     -> allowed_secured\\n\\n  3. EMPLOYEE WAGES. Wages EARNED within the 180 days before the petition date (that is, on\\n     or after 2025-07-24), capped at $15,150.00 per employee. Wages earned wholly or\\n     partly outside that window, or exceeding the cap, do not take priority treatment.\\n     -> allowed_priority\\n\\n  4. EVERYTHING ELSE.  -> allowed_general_unsecured\\n\\nA creditor's own characterisation of its claim in the proof of claim is not evidence of its\\ntreatment and is routinely overstated. Classify on the tests above alone.\\n\\nOutcome vocabulary (use exactly):\\n  disallowed | allowed_secured | allowed_priority | allowed_general_unsecured\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 287
+     },
+     "observation": "{\"id\": 287, \"title\": \"Proof of claim \\u2014 Meridian Equipment Finance\", \"doc_type\": \"proof_of_claim\", \"related_shape\": \"bankruptcy-claim-classification\", \"body\": \"PROOF OF CLAIM \\u2014 In re Northgate Holdings\\nCreditor: Meridian Equipment Finance\\nBasis of claim: equipment lease financing\\nAmount asserted: $2,400,000.00\\nDate filed with the clerk: 2026-03-02\\nUCC-1 financing statement filed: 2025-11-14\\nWages component: none\\n\\nCreditor's characterisation: \\\"This claim is entitled to treatment as secured.\\\"\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_287",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: state_changed, required_workflow_path, rows_inserted_into_legal_matters_reviews, legal_matters_reviews_new_row_0_outcome_is_allowed_secured, legal_matters_reviews_new_row_1_reviewer_role_is_claims-analyst",
+    "failed_conditions": [
+     "state_changed",
+     "required_workflow_path",
+     "rows_inserted_into_legal_matters_reviews",
+     "legal_matters_reviews_new_row_0_outcome_is_allowed_secured",
+     "legal_matters_reviews_new_row_1_reviewer_role_is_claims-analyst"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": false,
+      "details": "NO state change \u2014 agent did nothing"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": true,
+      "details": "reads=3, writes=0, read_first=True"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints legal_matters_review_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": true,
+      "details": "all required input documents were read in full"
+     },
+     {
+      "name": "rows_inserted_into_legal_matters_reviews",
+      "passed": false,
+      "details": "legal_matters_reviews: 9 -> 9 rows (0 new, need >= 1)"
+     },
+     {
+      "name": "legal_matters_reviews_new_row_0_outcome_is_allowed_secured",
+      "passed": false,
+      "details": "expected a new legal_matters_reviews row with outcome=allowed_secured; got []"
+     },
+     {
+      "name": "legal_matters_reviews_new_row_1_reviewer_role_is_claims-analyst",
+      "passed": false,
+      "details": "expected a new legal_matters_reviews row with reviewer_role=claims-analyst; got []"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "3/3 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "blind_write": {
+   "trace": [
+    {
+     "tool": "legal_matters_review_create",
+     "requested_tool": "legal_matters_review_create",
+     "arguments": {
+      "legal_matters_id": "legal_matters_011",
+      "reviewer_role": "claims-analyst",
+      "outcome": "allowed_secured",
+      "rationale": "Classified allowed_secured on the waterfall memo: filed 2026-03-02 (bar date 2026-04-15); UCC-1 2025-11-14; wages component none."
+     },
+     "observation": "Request accepted and queued for processing. The record change will be reflected shortly.",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_287",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: reads_before_writes, no_shortcut_direct_update, required_workflow_path, required_documents_read",
+    "failed_conditions": [
+     "reads_before_writes",
+     "no_shortcut_direct_update",
+     "required_workflow_path",
+     "required_documents_read"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": false,
+      "details": "reads=0, writes=1, read_first=False"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": false,
+      "details": "SHORTCUT: wrote without reading first"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints query_matter_documents -> read_matter_document -> read_matter_document"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": false,
+      "details": "EVIDENCE GAP: matter_documents ['286', '287'] were never read with read_matter_document"
+     },
+     {
+      "name": "rows_inserted_into_legal_matters_reviews",
+      "passed": true,
+      "details": "legal_matters_reviews: 9 -> 10 rows (1 new, need >= 1)"
+     },
+     {
+      "name": "legal_matters_reviews_new_row_0_outcome_is_allowed_secured",
+      "passed": true,
+      "details": "expected a new legal_matters_reviews row with outcome=allowed_secured; got ['allowed_secured']"
+     },
+     {
+      "name": "legal_matters_reviews_new_row_1_reviewer_role_is_claims-analyst",
+      "passed": true,
+      "details": "expected a new legal_matters_reviews row with reviewer_role=claims-analyst; got ['claims-analyst']"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "1/1 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "wrong_value": {
+   "trace": [
+    {
+     "tool": "query_matter_documents",
+     "requested_tool": "query_matter_documents",
+     "arguments": {
+      "title": "Chapter 11 \u2014 Claim classification waterfall memo"
+     },
+     "observation": "{\"table\": \"matter_documents\", \"count\": 1, \"returned\": 1, \"offset\": 0, \"limit\": 25, \"rows\": [{\"id\": 286, \"title\": \"Chapter 11 \\u2014 Claim classification waterfall memo\", \"doc_type\": \"claims_waterfall\", \"related_shape\": \"bankruptcy-claim-classification\", \"body\": \"CLAIM CLASSIFICATION MEMO \\u2014 In re Northgate Holdings, Chapter 11\\n\\nPetition date: 2026-01-20.   Claims bar date: 2026-04-15.\\n\\nApply the tests IN ORDER. The first test that matches controls.\\n\\n  1. LATE FILING. A proof of claim filed after 202\\u2026[preview]\"}], \"has_more\": false, \"note\": \"body fields are previews \\u2014 call read_matter_document(id) to read a document in full before using it\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 286
+     },
+     "observation": "{\"id\": 286, \"title\": \"Chapter 11 \\u2014 Claim classification waterfall memo\", \"doc_type\": \"claims_waterfall\", \"related_shape\": \"bankruptcy-claim-classification\", \"body\": \"CLAIM CLASSIFICATION MEMO \\u2014 In re Northgate Holdings, Chapter 11\\n\\nPetition date: 2026-01-20.   Claims bar date: 2026-04-15.\\n\\nApply the tests IN ORDER. The first test that matches controls.\\n\\n  1. LATE FILING. A proof of claim filed after 2026-04-15 is disallowed unless the docket\\n     shows an excusable-neglect order. No such order has been entered in this case.\\n     -> disallowed\\n\\n  2. PERFECTED SECURITY INTEREST. A UCC-1 financing statement filed BEFORE the petition\\n     date perfects the interest. A UCC-1 filed on or after the petition date does not.\\n     -> allowed_secured\\n\\n  3. EMPLOYEE WAGES. Wages EARNED within the 180 days before the petition date (that is, on\\n     or after 2025-07-24), capped at $15,150.00 per employee. Wages earned wholly or\\n     partly outside that window, or exceeding the cap, do not take priority treatment.\\n     -> allowed_priority\\n\\n  4. EVERYTHING ELSE.  -> allowed_general_unsecured\\n\\nA creditor's own characterisation of its claim in the proof of claim is not evidence of its\\ntreatment and is routinely overstated. Classify on the tests above alone.\\n\\nOutcome vocabulary (use exactly):\\n  disallowed | allowed_secured | allowed_priority | allowed_general_unsecured\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 287
+     },
+     "observation": "{\"id\": 287, \"title\": \"Proof of claim \\u2014 Meridian Equipment Finance\", \"doc_type\": \"proof_of_claim\", \"related_shape\": \"bankruptcy-claim-classification\", \"body\": \"PROOF OF CLAIM \\u2014 In re Northgate Holdings\\nCreditor: Meridian Equipment Finance\\nBasis of claim: equipment lease financing\\nAmount asserted: $2,400,000.00\\nDate filed with the clerk: 2026-03-02\\nUCC-1 financing statement filed: 2025-11-14\\nWages component: none\\n\\nCreditor's characterisation: \\\"This claim is entitled to treatment as secured.\\\"\"}",
+     "ok": true
+    },
+    {
+     "tool": "legal_matters_review_create",
+     "requested_tool": "legal_matters_review_create",
+     "arguments": {
+      "legal_matters_id": "legal_matters_011",
+      "reviewer_role": "claims-analyst XX-WRONG",
+      "outcome": "allowed_secured XX-WRONG",
+      "rationale": "Classified allowed_secured on the waterfall memo: filed 2026-03-02 (bar date 2026-04-15); UCC-1 2025-11-14; wages component none. XX-WRONG"
+     },
+     "observation": "Request accepted and queued for processing. The record change will be reflected shortly.",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_287",
+    "passed": false,
+    "reward": 0.3333,
+    "explanation": "Failed: legal_matters_reviews_new_row_0_outcome_is_allowed_secured, legal_matters_reviews_new_row_1_reviewer_role_is_claims-analyst",
+    "failed_conditions": [
+     "legal_matters_reviews_new_row_0_outcome_is_allowed_secured",
+     "legal_matters_reviews_new_row_1_reviewer_role_is_claims-analyst"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": true,
+      "details": "reads=3, writes=1, read_first=True"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": true,
+      "details": "completed ordered workflow: query_matter_documents -> read_matter_document -> read_matter_document -> legal_matters_review_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": true,
+      "details": "all required input documents were read in full"
+     },
+     {
+      "name": "rows_inserted_into_legal_matters_reviews",
+      "passed": true,
+      "details": "legal_matters_reviews: 9 -> 10 rows (1 new, need >= 1)"
+     },
+     {
+      "name": "legal_matters_reviews_new_row_0_outcome_is_allowed_secured",
+      "passed": false,
+      "details": "expected a new legal_matters_reviews row with outcome=allowed_secured; got ['allowed_secured xx-wrong']"
+     },
+     {
+      "name": "legal_matters_reviews_new_row_1_reviewer_role_is_claims-analyst",
+      "passed": false,
+      "details": "expected a new legal_matters_reviews row with reviewer_role=claims-analyst; got ['claims-analyst xx-wrong']"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "4/4 tool calls succeeded"
+     }
+    ]
+   }
+  }
+ }
+}

@@ -1,0 +1,357 @@
+{
+ "task_id": "task_v3_009",
+ "world": "world-v15.json",
+ "episodes": {
+  "oracle": {
+   "trace": [
+    {
+     "tool": "dockets_search",
+     "requested_tool": "dockets_search",
+     "arguments": {
+      "q": "Talvern Logistics v. Halcyon"
+     },
+     "observation": "{\"count\": 1, \"next\": null, \"previous\": null, \"results\": [{\"id\": 7, \"docket_number\": \"2:25-cv-9156\", \"case_name\": \"Talvern Logistics v. Halcyon Therapeutics\", \"court_id\": \"simd\", \"date_filed\": \"2026-11-11\", \"date_terminated\": null, \"nature_of_suit\": \"Employment\", \"assigned_to\": \"Hon. Devlin Whitfield\", \"cause\": \"35:271 Patent Infringement\", \"jury_demand\": \"None\"}]}",
+     "ok": true
+    },
+    {
+     "tool": "docket_alerts_list",
+     "requested_tool": "docket_alerts_list",
+     "arguments": {
+      "limit": 20
+     },
+     "observation": "{\"count\": 6, \"next\": null, \"previous\": null, \"results\": [{\"id\": 1, \"docket_id\": 22, \"alert_type\": \"termination\", \"recipient\": \"tomas.abara@simulated-firm.example\", \"created_at\": \"2026-08-21\"}, {\"id\": 2, \"docket_id\": 11, \"alert_type\": \"termination\", \"recipient\": \"ingrid.vasquez@simulated-firm.example\", \"created_at\": \"2026-08-10\"}, {\"id\": 3, \"docket_id\": 4, \"alert_type\": \"entry\", \"recipient\": \"aiko.ellery@simulated-firm.example\", \"created_at\": \"2026-08-15\"}, {\"id\": 4, \"docket_id\": 21, \"alert_type\": \"termination\", \"recipient\": \"dana.okafor@simulated-firm.example\", \"created_at\": \"2026-06-10\"}, {\"id\": 5, \"docket_id\": 21, \"alert_type\": \"termination\", \"recipient\": \"wes.novak@simulated-firm.example\", \"created_at\": \"2026-07-03\"}, {\"id\": 6, \"docket_id\": 10, \"alert_type\": \"entry\", \"recipient\": \"rohan.ellery@simulated-firm.example\", \"created_at\": \"2026-08-03\"}]}",
+     "ok": true
+    },
+    {
+     "tool": "docket_alerts_create",
+     "requested_tool": "docket_alerts_create",
+     "arguments": {
+      "docket": 7,
+      "alert_type": "entry",
+      "recipient": "docketing@simulated-firm.example"
+     },
+     "observation": "{\"id\": 7, \"created\": \"cl_docket_alerts\", \"docket_id\": 7, \"alert_type\": \"entry\", \"recipient\": \"docketing@simulated-firm.example\", \"created_at\": \"2026-08-10T12:00:00Z\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_v3_009",
+    "passed": true,
+    "reward": 1.0,
+    "explanation": "All checks passed",
+    "failed_conditions": [],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": true,
+      "details": "completed ordered workflow: dockets_search -> docket_alerts_list -> docket_alerts_create"
+     },
+     {
+      "name": "rows_inserted_into_cl_docket_alerts",
+      "passed": true,
+      "details": "cl_docket_alerts: 6 -> 7 rows"
+     },
+     {
+      "name": "cl_docket_alerts_new_row_docket_id_is_7.0",
+      "passed": true,
+      "details": "expected new cl_docket_alerts row with docket_id=7.0; saw ['7.0']"
+     },
+     {
+      "name": "cl_docket_alerts_new_row_alert_type_is_entry",
+      "passed": true,
+      "details": "expected new cl_docket_alerts row with alert_type=entry; saw ['entry']"
+     },
+     {
+      "name": "cl_docket_alerts_new_row_recipient_is_docketing@simulated-firm.example",
+      "passed": true,
+      "details": "expected new cl_docket_alerts row with recipient=docketing@simulated-firm.example; saw ['docketing@simulated-firm.example']"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows destroyed"
+     }
+    ]
+   }
+  },
+  "noop": {
+   "trace": [],
+   "verdict": {
+    "task_id": "task_v3_009",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: state_changed, required_workflow_path, rows_inserted_into_cl_docket_alerts, cl_docket_alerts_new_row_docket_id_is_7.0, cl_docket_alerts_new_row_alert_type_is_entry, cl_docket_alerts_new_row_recipient_is_docketing@simulated-firm.example",
+    "failed_conditions": [
+     "state_changed",
+     "required_workflow_path",
+     "rows_inserted_into_cl_docket_alerts",
+     "cl_docket_alerts_new_row_docket_id_is_7.0",
+     "cl_docket_alerts_new_row_alert_type_is_entry",
+     "cl_docket_alerts_new_row_recipient_is_docketing@simulated-firm.example"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": false,
+      "details": "NO state change"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints dockets_search -> docket_alerts_list -> docket_alerts_create"
+     },
+     {
+      "name": "rows_inserted_into_cl_docket_alerts",
+      "passed": false,
+      "details": "cl_docket_alerts: 6 -> 6 rows"
+     },
+     {
+      "name": "cl_docket_alerts_new_row_docket_id_is_7.0",
+      "passed": false,
+      "details": "expected new cl_docket_alerts row with docket_id=7.0; saw []"
+     },
+     {
+      "name": "cl_docket_alerts_new_row_alert_type_is_entry",
+      "passed": false,
+      "details": "expected new cl_docket_alerts row with alert_type=entry; saw []"
+     },
+     {
+      "name": "cl_docket_alerts_new_row_recipient_is_docketing@simulated-firm.example",
+      "passed": false,
+      "details": "expected new cl_docket_alerts row with recipient=docketing@simulated-firm.example; saw []"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows destroyed"
+     }
+    ]
+   }
+  },
+  "text_only": {
+   "trace": [
+    {
+     "tool": "dockets_search",
+     "requested_tool": "dockets_search",
+     "arguments": {
+      "q": "Talvern Logistics v. Halcyon"
+     },
+     "observation": "{\"count\": 1, \"next\": null, \"previous\": null, \"results\": [{\"id\": 7, \"docket_number\": \"2:25-cv-9156\", \"case_name\": \"Talvern Logistics v. Halcyon Therapeutics\", \"court_id\": \"simd\", \"date_filed\": \"2026-11-11\", \"date_terminated\": null, \"nature_of_suit\": \"Employment\", \"assigned_to\": \"Hon. Devlin Whitfield\", \"cause\": \"35:271 Patent Infringement\", \"jury_demand\": \"None\"}]}",
+     "ok": true
+    },
+    {
+     "tool": "docket_alerts_list",
+     "requested_tool": "docket_alerts_list",
+     "arguments": {
+      "limit": 20
+     },
+     "observation": "{\"count\": 6, \"next\": null, \"previous\": null, \"results\": [{\"id\": 1, \"docket_id\": 22, \"alert_type\": \"termination\", \"recipient\": \"tomas.abara@simulated-firm.example\", \"created_at\": \"2026-08-21\"}, {\"id\": 2, \"docket_id\": 11, \"alert_type\": \"termination\", \"recipient\": \"ingrid.vasquez@simulated-firm.example\", \"created_at\": \"2026-08-10\"}, {\"id\": 3, \"docket_id\": 4, \"alert_type\": \"entry\", \"recipient\": \"aiko.ellery@simulated-firm.example\", \"created_at\": \"2026-08-15\"}, {\"id\": 4, \"docket_id\": 21, \"alert_type\": \"termination\", \"recipient\": \"dana.okafor@simulated-firm.example\", \"created_at\": \"2026-06-10\"}, {\"id\": 5, \"docket_id\": 21, \"alert_type\": \"termination\", \"recipient\": \"wes.novak@simulated-firm.example\", \"created_at\": \"2026-07-03\"}, {\"id\": 6, \"docket_id\": 10, \"alert_type\": \"entry\", \"recipient\": \"rohan.ellery@simulated-firm.example\", \"created_at\": \"2026-08-03\"}]}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_v3_009",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: state_changed, required_workflow_path, rows_inserted_into_cl_docket_alerts, cl_docket_alerts_new_row_docket_id_is_7.0, cl_docket_alerts_new_row_alert_type_is_entry, cl_docket_alerts_new_row_recipient_is_docketing@simulated-firm.example",
+    "failed_conditions": [
+     "state_changed",
+     "required_workflow_path",
+     "rows_inserted_into_cl_docket_alerts",
+     "cl_docket_alerts_new_row_docket_id_is_7.0",
+     "cl_docket_alerts_new_row_alert_type_is_entry",
+     "cl_docket_alerts_new_row_recipient_is_docketing@simulated-firm.example"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": false,
+      "details": "NO state change"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints docket_alerts_create"
+     },
+     {
+      "name": "rows_inserted_into_cl_docket_alerts",
+      "passed": false,
+      "details": "cl_docket_alerts: 6 -> 6 rows"
+     },
+     {
+      "name": "cl_docket_alerts_new_row_docket_id_is_7.0",
+      "passed": false,
+      "details": "expected new cl_docket_alerts row with docket_id=7.0; saw []"
+     },
+     {
+      "name": "cl_docket_alerts_new_row_alert_type_is_entry",
+      "passed": false,
+      "details": "expected new cl_docket_alerts row with alert_type=entry; saw []"
+     },
+     {
+      "name": "cl_docket_alerts_new_row_recipient_is_docketing@simulated-firm.example",
+      "passed": false,
+      "details": "expected new cl_docket_alerts row with recipient=docketing@simulated-firm.example; saw []"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows destroyed"
+     }
+    ]
+   }
+  },
+  "blind_write": {
+   "trace": [
+    {
+     "tool": "docket_alerts_create",
+     "requested_tool": "docket_alerts_create",
+     "arguments": {
+      "docket": 7,
+      "alert_type": "entry",
+      "recipient": "docketing@simulated-firm.example"
+     },
+     "observation": "{\"id\": 7, \"created\": \"cl_docket_alerts\", \"docket_id\": 7, \"alert_type\": \"entry\", \"recipient\": \"docketing@simulated-firm.example\", \"created_at\": \"2026-08-10T12:00:00Z\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_v3_009",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: required_workflow_path",
+    "failed_conditions": [
+     "required_workflow_path"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints dockets_search -> docket_alerts_list"
+     },
+     {
+      "name": "rows_inserted_into_cl_docket_alerts",
+      "passed": true,
+      "details": "cl_docket_alerts: 6 -> 7 rows"
+     },
+     {
+      "name": "cl_docket_alerts_new_row_docket_id_is_7.0",
+      "passed": true,
+      "details": "expected new cl_docket_alerts row with docket_id=7.0; saw ['7.0']"
+     },
+     {
+      "name": "cl_docket_alerts_new_row_alert_type_is_entry",
+      "passed": true,
+      "details": "expected new cl_docket_alerts row with alert_type=entry; saw ['entry']"
+     },
+     {
+      "name": "cl_docket_alerts_new_row_recipient_is_docketing@simulated-firm.example",
+      "passed": true,
+      "details": "expected new cl_docket_alerts row with recipient=docketing@simulated-firm.example; saw ['docketing@simulated-firm.example']"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows destroyed"
+     }
+    ]
+   }
+  },
+  "wrong_value": {
+   "trace": [
+    {
+     "tool": "dockets_search",
+     "requested_tool": "dockets_search",
+     "arguments": {
+      "q": "Talvern Logistics v. Halcyon"
+     },
+     "observation": "{\"count\": 1, \"next\": null, \"previous\": null, \"results\": [{\"id\": 7, \"docket_number\": \"2:25-cv-9156\", \"case_name\": \"Talvern Logistics v. Halcyon Therapeutics\", \"court_id\": \"simd\", \"date_filed\": \"2026-11-11\", \"date_terminated\": null, \"nature_of_suit\": \"Employment\", \"assigned_to\": \"Hon. Devlin Whitfield\", \"cause\": \"35:271 Patent Infringement\", \"jury_demand\": \"None\"}]}",
+     "ok": true
+    },
+    {
+     "tool": "docket_alerts_list",
+     "requested_tool": "docket_alerts_list",
+     "arguments": {
+      "limit": 20
+     },
+     "observation": "{\"count\": 6, \"next\": null, \"previous\": null, \"results\": [{\"id\": 1, \"docket_id\": 22, \"alert_type\": \"termination\", \"recipient\": \"tomas.abara@simulated-firm.example\", \"created_at\": \"2026-08-21\"}, {\"id\": 2, \"docket_id\": 11, \"alert_type\": \"termination\", \"recipient\": \"ingrid.vasquez@simulated-firm.example\", \"created_at\": \"2026-08-10\"}, {\"id\": 3, \"docket_id\": 4, \"alert_type\": \"entry\", \"recipient\": \"aiko.ellery@simulated-firm.example\", \"created_at\": \"2026-08-15\"}, {\"id\": 4, \"docket_id\": 21, \"alert_type\": \"termination\", \"recipient\": \"dana.okafor@simulated-firm.example\", \"created_at\": \"2026-06-10\"}, {\"id\": 5, \"docket_id\": 21, \"alert_type\": \"termination\", \"recipient\": \"wes.novak@simulated-firm.example\", \"created_at\": \"2026-07-03\"}, {\"id\": 6, \"docket_id\": 10, \"alert_type\": \"entry\", \"recipient\": \"rohan.ellery@simulated-firm.example\", \"created_at\": \"2026-08-03\"}]}",
+     "ok": true
+    },
+    {
+     "tool": "docket_alerts_create",
+     "requested_tool": "docket_alerts_create",
+     "arguments": {
+      "docket": 4249.42,
+      "alert_type": "entry XX-WRONG",
+      "recipient": "docketing@simulated-firm.example XX-WRONG"
+     },
+     "observation": "{\"id\": 7, \"created\": \"cl_docket_alerts\", \"docket_id\": 4249.42, \"alert_type\": \"entry XX-WRONG\", \"recipient\": \"docketing@simulated-firm.example XX-WRONG\", \"created_at\": \"2026-08-10T12:00:00Z\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_v3_009",
+    "passed": false,
+    "reward": 0.25,
+    "explanation": "Failed: cl_docket_alerts_new_row_docket_id_is_7.0, cl_docket_alerts_new_row_alert_type_is_entry, cl_docket_alerts_new_row_recipient_is_docketing@simulated-firm.example",
+    "failed_conditions": [
+     "cl_docket_alerts_new_row_docket_id_is_7.0",
+     "cl_docket_alerts_new_row_alert_type_is_entry",
+     "cl_docket_alerts_new_row_recipient_is_docketing@simulated-firm.example"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": true,
+      "details": "completed ordered workflow: dockets_search -> docket_alerts_list -> docket_alerts_create"
+     },
+     {
+      "name": "rows_inserted_into_cl_docket_alerts",
+      "passed": true,
+      "details": "cl_docket_alerts: 6 -> 7 rows"
+     },
+     {
+      "name": "cl_docket_alerts_new_row_docket_id_is_7.0",
+      "passed": false,
+      "details": "expected new cl_docket_alerts row with docket_id=7.0; saw ['4249.42']"
+     },
+     {
+      "name": "cl_docket_alerts_new_row_alert_type_is_entry",
+      "passed": false,
+      "details": "expected new cl_docket_alerts row with alert_type=entry; saw ['entry xx-wrong']"
+     },
+     {
+      "name": "cl_docket_alerts_new_row_recipient_is_docketing@simulated-firm.example",
+      "passed": false,
+      "details": "expected new cl_docket_alerts row with recipient=docketing@simulated-firm.example; saw ['docketing@simulated-firm.example xx-wrong']"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows destroyed"
+     }
+    ]
+   }
+  }
+ }
+}

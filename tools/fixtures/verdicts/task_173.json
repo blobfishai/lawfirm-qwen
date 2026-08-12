@@ -1,0 +1,514 @@
+{
+ "task_id": "task_173",
+ "world": "world-v15.json",
+ "episodes": {
+  "oracle": {
+   "trace": [
+    {
+     "tool": "query_matter_documents",
+     "requested_tool": "query_matter_documents",
+     "arguments": {
+      "title": "damages-computation pack \u2014 Engagement Budget Amendment No. 2"
+     },
+     "observation": "{\"table\": \"matter_documents\", \"count\": 1, \"returned\": 1, \"offset\": 0, \"limit\": 25, \"rows\": [{\"id\": 143, \"title\": \"damages-computation pack \\u2014 Engagement Budget Amendment No. 2 (Harlow & Trent LLP / Meridian Fabrication)\", \"doc_type\": \"engagement_amendment\", \"related_shape\": \"damages-computation\", \"body\": \"ENGAGEMENT BUDGET AMENDMENT NO. 2\\n\\nHarlow & Trent LLP \\u2014 Client: Meridian Fabrication Corp.\\nEngagement: Corvess Industrial litigation and related counseling\\n\\nThis Amendment No. 2 to the engagement letter dated January 9 (the \\\"Engagement Lett\\u2026[preview]\"}], \"has_more\": false, \"note\": \"body fields are previews \\u2014 call read_matter_document(id) to read a document in full before using it\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 143
+     },
+     "observation": "{\"id\": 143, \"title\": \"damages-computation pack \\u2014 Engagement Budget Amendment No. 2 (Harlow & Trent LLP / Meridian Fabrication)\", \"doc_type\": \"engagement_amendment\", \"related_shape\": \"damages-computation\", \"body\": \"ENGAGEMENT BUDGET AMENDMENT NO. 2\\n\\nHarlow & Trent LLP \\u2014 Client: Meridian Fabrication Corp.\\nEngagement: Corvess Industrial litigation and related counseling\\n\\nThis Amendment No. 2 to the engagement letter dated January 9 (the \\\"Engagement Letter\\\") is entered into by the Firm and the Client to revise the approved fee budget for the matter. Capitalized terms not defined here have the meanings in the Engagement Letter.\\n\\nSection 1. Background.\\n1.1 Under Amendment No. 1, the approved fee budget for the matter was set at $480,000 (four hundred eighty thousand dollars) (the \\\"Original Approved Budget\\\").\\n1.2 The matter has entered Phase 2 (expert discovery and dispositive motions), which the parties agree requires additional budget. Separately, the Firm has agreed to a one-time client-relations credit in connection with the Q1 invoicing delay.\\n\\nSection 2. Budget Revision.\\n2.1 Phase 2 Increase. The approved fee budget is increased by an amount equal to 25% (twenty-five percent) of the Original Approved Budget stated in Section 1.1.\\n2.2 Client-Relations Credit. A one-time credit of $18,500 (eighteen thousand five hundred dollars) shall be SUBTRACTED from the budget in connection with the matters described in Section 1.2. The credit is applied once and does not recur.\\n2.3 Revised Budget Computation. The revised approved fee budget equals: the Original Approved Budget (Section 1.1), plus the Phase 2 Increase (Section 2.1), minus the Client-Relations Credit (Section 2.2), rounded to whole dollars. The revised figure is the new fee budget of record for the matter and shall be recorded on the matter's budget history.\\n2.4 The revised budget is a cap for planning purposes only and does not modify the fee schedule rates, which remain as stated in Exhibit B to the Engagement Letter.\\n\\nSection 3. Effect.\\n3.1 Except as amended by this Amendment No. 2, the Engagement Letter and Amendment No. 1 remain in full force and effect.\\n3.2 This Amendment No. 2 supersedes any draft budget projections circulated by email, which were preliminary and are not to be recorded.\\n\\nAgreed and accepted by the Firm's engagement partner and the Client's general counsel.\\n\"}",
+     "ok": true
+    },
+    {
+     "tool": "legal_matters_amount_history_create",
+     "requested_tool": "legal_matters_amount_history_create",
+     "arguments": {
+      "legal_matters_id": "legal_matters_001",
+      "fee_budget": 581500,
+      "changed_by_role": "engagement_partner",
+      "change_reason": "Amendment No. 2 revision: original budget plus Phase 2 increase less one-time client-relations credit."
+     },
+     "observation": "{\"status\": \"created\", \"table\": \"legal_matters_amount_history\", \"id\": \"legal_matters_amount_history_016\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_173",
+    "passed": true,
+    "reward": 1.0,
+    "explanation": "All task checks passed",
+    "failed_conditions": [],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": true,
+      "details": "reads=2, writes=1, read_first=True"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": true,
+      "details": "completed ordered workflow: query_matter_documents -> read_matter_document -> legal_matters_amount_history_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": true,
+      "details": "all required input documents were read in full"
+     },
+     {
+      "name": "rows_inserted_into_legal_matters_amount_history",
+      "passed": true,
+      "details": "legal_matters_amount_history: 15 -> 16 rows (1 new, need >= 1)"
+     },
+     {
+      "name": "legal_matters_amount_history_new_row_0_fee_budget_is_581500.0",
+      "passed": true,
+      "details": "expected a new legal_matters_amount_history row with fee_budget=581500.0; got ['581500.0']"
+     },
+     {
+      "name": "legal_matters_amount_history_new_row_1_changed_by_role_is_engagement_partner",
+      "passed": true,
+      "details": "expected a new legal_matters_amount_history row with changed_by_role=engagement_partner; got ['engagement_partner']"
+     },
+     {
+      "name": "no_new_legal_matters_amount_history_row_with_fee_budget_600000",
+      "passed": true,
+      "details": "no fabricated fee_budget=600000 row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "3/3 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "noop": {
+   "trace": [],
+   "verdict": {
+    "task_id": "task_173",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: state_changed, reads_before_writes, required_workflow_path, required_documents_read, rows_inserted_into_legal_matters_amount_history, legal_matters_amount_history_new_row_0_fee_budget_is_581500.0, legal_matters_amount_history_new_row_1_changed_by_role_is_engagement_partner",
+    "failed_conditions": [
+     "state_changed",
+     "reads_before_writes",
+     "required_workflow_path",
+     "required_documents_read",
+     "rows_inserted_into_legal_matters_amount_history",
+     "legal_matters_amount_history_new_row_0_fee_budget_is_581500.0",
+     "legal_matters_amount_history_new_row_1_changed_by_role_is_engagement_partner"
+    ],
+    "advisory_conditions": [
+     "all_tools_succeeded"
+    ],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": false,
+      "details": "NO state change \u2014 agent did nothing"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": false,
+      "details": "reads=0, writes=0, read_first=False"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints query_matter_documents -> read_matter_document -> legal_matters_amount_history_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": false,
+      "details": "EVIDENCE GAP: matter_documents ['143'] were never read with read_matter_document"
+     },
+     {
+      "name": "rows_inserted_into_legal_matters_amount_history",
+      "passed": false,
+      "details": "legal_matters_amount_history: 15 -> 15 rows (0 new, need >= 1)"
+     },
+     {
+      "name": "legal_matters_amount_history_new_row_0_fee_budget_is_581500.0",
+      "passed": false,
+      "details": "expected a new legal_matters_amount_history row with fee_budget=581500.0; got []"
+     },
+     {
+      "name": "legal_matters_amount_history_new_row_1_changed_by_role_is_engagement_partner",
+      "passed": false,
+      "details": "expected a new legal_matters_amount_history row with changed_by_role=engagement_partner; got []"
+     },
+     {
+      "name": "no_new_legal_matters_amount_history_row_with_fee_budget_600000",
+      "passed": true,
+      "details": "no fabricated fee_budget=600000 row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": false,
+      "details": "0/0 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "text_only": {
+   "trace": [
+    {
+     "tool": "query_matter_documents",
+     "requested_tool": "query_matter_documents",
+     "arguments": {
+      "title": "damages-computation pack \u2014 Engagement Budget Amendment No. 2"
+     },
+     "observation": "{\"table\": \"matter_documents\", \"count\": 1, \"returned\": 1, \"offset\": 0, \"limit\": 25, \"rows\": [{\"id\": 143, \"title\": \"damages-computation pack \\u2014 Engagement Budget Amendment No. 2 (Harlow & Trent LLP / Meridian Fabrication)\", \"doc_type\": \"engagement_amendment\", \"related_shape\": \"damages-computation\", \"body\": \"ENGAGEMENT BUDGET AMENDMENT NO. 2\\n\\nHarlow & Trent LLP \\u2014 Client: Meridian Fabrication Corp.\\nEngagement: Corvess Industrial litigation and related counseling\\n\\nThis Amendment No. 2 to the engagement letter dated January 9 (the \\\"Engagement Lett\\u2026[preview]\"}], \"has_more\": false, \"note\": \"body fields are previews \\u2014 call read_matter_document(id) to read a document in full before using it\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 143
+     },
+     "observation": "{\"id\": 143, \"title\": \"damages-computation pack \\u2014 Engagement Budget Amendment No. 2 (Harlow & Trent LLP / Meridian Fabrication)\", \"doc_type\": \"engagement_amendment\", \"related_shape\": \"damages-computation\", \"body\": \"ENGAGEMENT BUDGET AMENDMENT NO. 2\\n\\nHarlow & Trent LLP \\u2014 Client: Meridian Fabrication Corp.\\nEngagement: Corvess Industrial litigation and related counseling\\n\\nThis Amendment No. 2 to the engagement letter dated January 9 (the \\\"Engagement Letter\\\") is entered into by the Firm and the Client to revise the approved fee budget for the matter. Capitalized terms not defined here have the meanings in the Engagement Letter.\\n\\nSection 1. Background.\\n1.1 Under Amendment No. 1, the approved fee budget for the matter was set at $480,000 (four hundred eighty thousand dollars) (the \\\"Original Approved Budget\\\").\\n1.2 The matter has entered Phase 2 (expert discovery and dispositive motions), which the parties agree requires additional budget. Separately, the Firm has agreed to a one-time client-relations credit in connection with the Q1 invoicing delay.\\n\\nSection 2. Budget Revision.\\n2.1 Phase 2 Increase. The approved fee budget is increased by an amount equal to 25% (twenty-five percent) of the Original Approved Budget stated in Section 1.1.\\n2.2 Client-Relations Credit. A one-time credit of $18,500 (eighteen thousand five hundred dollars) shall be SUBTRACTED from the budget in connection with the matters described in Section 1.2. The credit is applied once and does not recur.\\n2.3 Revised Budget Computation. The revised approved fee budget equals: the Original Approved Budget (Section 1.1), plus the Phase 2 Increase (Section 2.1), minus the Client-Relations Credit (Section 2.2), rounded to whole dollars. The revised figure is the new fee budget of record for the matter and shall be recorded on the matter's budget history.\\n2.4 The revised budget is a cap for planning purposes only and does not modify the fee schedule rates, which remain as stated in Exhibit B to the Engagement Letter.\\n\\nSection 3. Effect.\\n3.1 Except as amended by this Amendment No. 2, the Engagement Letter and Amendment No. 1 remain in full force and effect.\\n3.2 This Amendment No. 2 supersedes any draft budget projections circulated by email, which were preliminary and are not to be recorded.\\n\\nAgreed and accepted by the Firm's engagement partner and the Client's general counsel.\\n\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_173",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: state_changed, required_workflow_path, rows_inserted_into_legal_matters_amount_history, legal_matters_amount_history_new_row_0_fee_budget_is_581500.0, legal_matters_amount_history_new_row_1_changed_by_role_is_engagement_partner",
+    "failed_conditions": [
+     "state_changed",
+     "required_workflow_path",
+     "rows_inserted_into_legal_matters_amount_history",
+     "legal_matters_amount_history_new_row_0_fee_budget_is_581500.0",
+     "legal_matters_amount_history_new_row_1_changed_by_role_is_engagement_partner"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": false,
+      "details": "NO state change \u2014 agent did nothing"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": true,
+      "details": "reads=2, writes=0, read_first=True"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints legal_matters_amount_history_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": true,
+      "details": "all required input documents were read in full"
+     },
+     {
+      "name": "rows_inserted_into_legal_matters_amount_history",
+      "passed": false,
+      "details": "legal_matters_amount_history: 15 -> 15 rows (0 new, need >= 1)"
+     },
+     {
+      "name": "legal_matters_amount_history_new_row_0_fee_budget_is_581500.0",
+      "passed": false,
+      "details": "expected a new legal_matters_amount_history row with fee_budget=581500.0; got []"
+     },
+     {
+      "name": "legal_matters_amount_history_new_row_1_changed_by_role_is_engagement_partner",
+      "passed": false,
+      "details": "expected a new legal_matters_amount_history row with changed_by_role=engagement_partner; got []"
+     },
+     {
+      "name": "no_new_legal_matters_amount_history_row_with_fee_budget_600000",
+      "passed": true,
+      "details": "no fabricated fee_budget=600000 row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "2/2 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "blind_write": {
+   "trace": [
+    {
+     "tool": "legal_matters_amount_history_create",
+     "requested_tool": "legal_matters_amount_history_create",
+     "arguments": {
+      "legal_matters_id": "legal_matters_001",
+      "fee_budget": 581500,
+      "changed_by_role": "engagement_partner",
+      "change_reason": "Amendment No. 2 revision: original budget plus Phase 2 increase less one-time client-relations credit."
+     },
+     "observation": "{\"status\": \"created\", \"table\": \"legal_matters_amount_history\", \"id\": \"legal_matters_amount_history_016\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_173",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: reads_before_writes, no_shortcut_direct_update, required_workflow_path, required_documents_read",
+    "failed_conditions": [
+     "reads_before_writes",
+     "no_shortcut_direct_update",
+     "required_workflow_path",
+     "required_documents_read"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": false,
+      "details": "reads=0, writes=1, read_first=False"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": false,
+      "details": "SHORTCUT: wrote without reading first"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints query_matter_documents -> read_matter_document"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": false,
+      "details": "EVIDENCE GAP: matter_documents ['143'] were never read with read_matter_document"
+     },
+     {
+      "name": "rows_inserted_into_legal_matters_amount_history",
+      "passed": true,
+      "details": "legal_matters_amount_history: 15 -> 16 rows (1 new, need >= 1)"
+     },
+     {
+      "name": "legal_matters_amount_history_new_row_0_fee_budget_is_581500.0",
+      "passed": true,
+      "details": "expected a new legal_matters_amount_history row with fee_budget=581500.0; got ['581500.0']"
+     },
+     {
+      "name": "legal_matters_amount_history_new_row_1_changed_by_role_is_engagement_partner",
+      "passed": true,
+      "details": "expected a new legal_matters_amount_history row with changed_by_role=engagement_partner; got ['engagement_partner']"
+     },
+     {
+      "name": "no_new_legal_matters_amount_history_row_with_fee_budget_600000",
+      "passed": true,
+      "details": "no fabricated fee_budget=600000 row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "1/1 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "wrong_value": {
+   "trace": [
+    {
+     "tool": "query_matter_documents",
+     "requested_tool": "query_matter_documents",
+     "arguments": {
+      "title": "damages-computation pack \u2014 Engagement Budget Amendment No. 2"
+     },
+     "observation": "{\"table\": \"matter_documents\", \"count\": 1, \"returned\": 1, \"offset\": 0, \"limit\": 25, \"rows\": [{\"id\": 143, \"title\": \"damages-computation pack \\u2014 Engagement Budget Amendment No. 2 (Harlow & Trent LLP / Meridian Fabrication)\", \"doc_type\": \"engagement_amendment\", \"related_shape\": \"damages-computation\", \"body\": \"ENGAGEMENT BUDGET AMENDMENT NO. 2\\n\\nHarlow & Trent LLP \\u2014 Client: Meridian Fabrication Corp.\\nEngagement: Corvess Industrial litigation and related counseling\\n\\nThis Amendment No. 2 to the engagement letter dated January 9 (the \\\"Engagement Lett\\u2026[preview]\"}], \"has_more\": false, \"note\": \"body fields are previews \\u2014 call read_matter_document(id) to read a document in full before using it\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 143
+     },
+     "observation": "{\"id\": 143, \"title\": \"damages-computation pack \\u2014 Engagement Budget Amendment No. 2 (Harlow & Trent LLP / Meridian Fabrication)\", \"doc_type\": \"engagement_amendment\", \"related_shape\": \"damages-computation\", \"body\": \"ENGAGEMENT BUDGET AMENDMENT NO. 2\\n\\nHarlow & Trent LLP \\u2014 Client: Meridian Fabrication Corp.\\nEngagement: Corvess Industrial litigation and related counseling\\n\\nThis Amendment No. 2 to the engagement letter dated January 9 (the \\\"Engagement Letter\\\") is entered into by the Firm and the Client to revise the approved fee budget for the matter. Capitalized terms not defined here have the meanings in the Engagement Letter.\\n\\nSection 1. Background.\\n1.1 Under Amendment No. 1, the approved fee budget for the matter was set at $480,000 (four hundred eighty thousand dollars) (the \\\"Original Approved Budget\\\").\\n1.2 The matter has entered Phase 2 (expert discovery and dispositive motions), which the parties agree requires additional budget. Separately, the Firm has agreed to a one-time client-relations credit in connection with the Q1 invoicing delay.\\n\\nSection 2. Budget Revision.\\n2.1 Phase 2 Increase. The approved fee budget is increased by an amount equal to 25% (twenty-five percent) of the Original Approved Budget stated in Section 1.1.\\n2.2 Client-Relations Credit. A one-time credit of $18,500 (eighteen thousand five hundred dollars) shall be SUBTRACTED from the budget in connection with the matters described in Section 1.2. The credit is applied once and does not recur.\\n2.3 Revised Budget Computation. The revised approved fee budget equals: the Original Approved Budget (Section 1.1), plus the Phase 2 Increase (Section 2.1), minus the Client-Relations Credit (Section 2.2), rounded to whole dollars. The revised figure is the new fee budget of record for the matter and shall be recorded on the matter's budget history.\\n2.4 The revised budget is a cap for planning purposes only and does not modify the fee schedule rates, which remain as stated in Exhibit B to the Engagement Letter.\\n\\nSection 3. Effect.\\n3.1 Except as amended by this Amendment No. 2, the Engagement Letter and Amendment No. 1 remain in full force and effect.\\n3.2 This Amendment No. 2 supersedes any draft budget projections circulated by email, which were preliminary and are not to be recorded.\\n\\nAgreed and accepted by the Firm's engagement partner and the Client's general counsel.\\n\"}",
+     "ok": true
+    },
+    {
+     "tool": "legal_matters_amount_history_create",
+     "requested_tool": "legal_matters_amount_history_create",
+     "arguments": {
+      "legal_matters_id": "legal_matters_001",
+      "fee_budget": 585742.42,
+      "changed_by_role": "engagement_partner XX-WRONG",
+      "change_reason": "Amendment No. 2 revision: original budget plus Phase 2 increase less one-time client-relations credit. XX-WRONG"
+     },
+     "observation": "{\"status\": \"created\", \"table\": \"legal_matters_amount_history\", \"id\": \"legal_matters_amount_history_016\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_173",
+    "passed": false,
+    "reward": 0.3333,
+    "explanation": "Failed: legal_matters_amount_history_new_row_0_fee_budget_is_581500.0, legal_matters_amount_history_new_row_1_changed_by_role_is_engagement_partner",
+    "failed_conditions": [
+     "legal_matters_amount_history_new_row_0_fee_budget_is_581500.0",
+     "legal_matters_amount_history_new_row_1_changed_by_role_is_engagement_partner"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": true,
+      "details": "reads=2, writes=1, read_first=True"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": true,
+      "details": "completed ordered workflow: query_matter_documents -> read_matter_document -> legal_matters_amount_history_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": true,
+      "details": "all required input documents were read in full"
+     },
+     {
+      "name": "rows_inserted_into_legal_matters_amount_history",
+      "passed": true,
+      "details": "legal_matters_amount_history: 15 -> 16 rows (1 new, need >= 1)"
+     },
+     {
+      "name": "legal_matters_amount_history_new_row_0_fee_budget_is_581500.0",
+      "passed": false,
+      "details": "expected a new legal_matters_amount_history row with fee_budget=581500.0; got ['585742.42']"
+     },
+     {
+      "name": "legal_matters_amount_history_new_row_1_changed_by_role_is_engagement_partner",
+      "passed": false,
+      "details": "expected a new legal_matters_amount_history row with changed_by_role=engagement_partner; got ['engagement_partner xx-wrong']"
+     },
+     {
+      "name": "no_new_legal_matters_amount_history_row_with_fee_budget_600000",
+      "passed": true,
+      "details": "no fabricated fee_budget=600000 row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "3/3 tool calls succeeded"
+     }
+    ]
+   }
+  }
+ }
+}

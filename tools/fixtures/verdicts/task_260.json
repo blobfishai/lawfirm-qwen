@@ -1,0 +1,541 @@
+{
+ "task_id": "task_260",
+ "world": "world-v15.json",
+ "episodes": {
+  "oracle": {
+   "trace": [
+    {
+     "tool": "query_matter_documents",
+     "requested_tool": "query_matter_documents",
+     "arguments": {
+      "title": "Deposition pack \u2014 Scheduling order excerpt: discovery cutoff"
+     },
+     "observation": "{\"table\": \"matter_documents\", \"count\": 1, \"returned\": 1, \"offset\": 0, \"limit\": 25, \"rows\": [{\"id\": 252, \"title\": \"Deposition pack \\u2014 Scheduling order excerpt: discovery cutoff\", \"doc_type\": \"court_order\", \"related_shape\": \"deposition-management\", \"body\": \"SCHEDULING ORDER (excerpt)\\n\\n2. FACT DISCOVERY. All fact discovery, INCLUDING depositions, shall be COMPLETED by FRIDAY, OCTOBER 30, 2026. 'Completed' means the deposition has been taken, not merely noticed.\\n\\n2.1 A deposition notice served o\\u2026[preview]\"}], \"has_more\": false, \"note\": \"body fields are previews \\u2014 call read_matter_document(id) to read a document in full before using it\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 252
+     },
+     "observation": "{\"id\": 252, \"title\": \"Deposition pack \\u2014 Scheduling order excerpt: discovery cutoff\", \"doc_type\": \"court_order\", \"related_shape\": \"deposition-management\", \"body\": \"SCHEDULING ORDER (excerpt)\\n\\n2. FACT DISCOVERY. All fact discovery, INCLUDING depositions, shall be COMPLETED by FRIDAY, OCTOBER 30, 2026. 'Completed' means the deposition has been taken, not merely noticed.\\n\\n2.1 A deposition notice served on a party must be served at least 14 DAYS before the deposition date.\\n\\n2.2 A non-party witness may be compelled only by SUBPOENA under Rule 45; a notice alone has no effect on a non-party.\\n\\n2.3 No deposition may be scheduled after the fact-discovery cutoff absent a stipulation approved by the Court.\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 253
+     },
+     "observation": "{\"id\": 253, \"title\": \"Deposition pack \\u2014 Witness list with party status\", \"doc_type\": \"witness_list\", \"related_shape\": \"deposition-management\", \"body\": \"WITNESS LIST FOR DEPOSITION \\u2014 Meridian Grain v. Talvern\\n\\n1. R. Calloway \\u2014 Talvern Logistics VP Operations \\u2014 PARTY witness (officer of the defendant).\\n2. Dr. Priya Okafor \\u2014 retained expert (our side).\\n3. J. Ellery \\u2014 former Talvern dispatcher, now employed by an unrelated company \\u2014 NON-PARTY.\\n4. Silo Complex 4 records custodian, Talvern \\u2014 PARTY witness (employee of the defendant).\\n\\nCompulsion vocabulary (use exactly): notice_of_deposition | rule_45_subpoena\"}",
+     "ok": true
+    },
+    {
+     "tool": "litigation_hearings_review_create",
+     "requested_tool": "litigation_hearings_review_create",
+     "arguments": {
+      "litigation_hearings_id": "litigation_hearings_001",
+      "reviewer_role": "litigation-paralegal",
+      "outcome": "rule_45_subpoena",
+      "rationale": "J. Ellery is a non-party (former employee, now elsewhere); under paragraph 2.2 a notice has no effect and a Rule 45 subpoena is required."
+     },
+     "observation": "{\"status\": \"created\", \"table\": \"litigation_hearings_reviews\", \"id\": \"litigation_hearings_review_019\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_260",
+    "passed": true,
+    "reward": 1.0,
+    "explanation": "All task checks passed",
+    "failed_conditions": [],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": true,
+      "details": "reads=3, writes=1, read_first=True"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": true,
+      "details": "completed ordered workflow: query_matter_documents -> read_matter_document -> read_matter_document -> litigation_hearings_review_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": true,
+      "details": "all required input documents were read in full"
+     },
+     {
+      "name": "rows_inserted_into_litigation_hearings_reviews",
+      "passed": true,
+      "details": "litigation_hearings_reviews: 18 -> 19 rows (1 new, need >= 1)"
+     },
+     {
+      "name": "litigation_hearings_reviews_new_row_0_outcome_is_rule_45_subpoena",
+      "passed": true,
+      "details": "expected a new litigation_hearings_reviews row with outcome=rule_45_subpoena; got ['rule_45_subpoena']"
+     },
+     {
+      "name": "litigation_hearings_reviews_new_row_1_reviewer_role_is_litigation-paralegal",
+      "passed": true,
+      "details": "expected a new litigation_hearings_reviews row with reviewer_role=litigation-paralegal; got ['litigation-paralegal']"
+     },
+     {
+      "name": "no_new_litigation_hearings_reviews_row_with_outcome_notice_of_deposition",
+      "passed": true,
+      "details": "no fabricated outcome=notice_of_deposition row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "4/4 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "noop": {
+   "trace": [],
+   "verdict": {
+    "task_id": "task_260",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: state_changed, reads_before_writes, required_workflow_path, required_documents_read, rows_inserted_into_litigation_hearings_reviews, litigation_hearings_reviews_new_row_0_outcome_is_rule_45_subpoena, litigation_hearings_reviews_new_row_1_reviewer_role_is_litigation-paralegal",
+    "failed_conditions": [
+     "state_changed",
+     "reads_before_writes",
+     "required_workflow_path",
+     "required_documents_read",
+     "rows_inserted_into_litigation_hearings_reviews",
+     "litigation_hearings_reviews_new_row_0_outcome_is_rule_45_subpoena",
+     "litigation_hearings_reviews_new_row_1_reviewer_role_is_litigation-paralegal"
+    ],
+    "advisory_conditions": [
+     "all_tools_succeeded"
+    ],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": false,
+      "details": "NO state change \u2014 agent did nothing"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": false,
+      "details": "reads=0, writes=0, read_first=False"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints query_matter_documents -> read_matter_document -> read_matter_document -> litigation_hearings_review_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": false,
+      "details": "EVIDENCE GAP: matter_documents ['252', '253'] were never read with read_matter_document"
+     },
+     {
+      "name": "rows_inserted_into_litigation_hearings_reviews",
+      "passed": false,
+      "details": "litigation_hearings_reviews: 18 -> 18 rows (0 new, need >= 1)"
+     },
+     {
+      "name": "litigation_hearings_reviews_new_row_0_outcome_is_rule_45_subpoena",
+      "passed": false,
+      "details": "expected a new litigation_hearings_reviews row with outcome=rule_45_subpoena; got []"
+     },
+     {
+      "name": "litigation_hearings_reviews_new_row_1_reviewer_role_is_litigation-paralegal",
+      "passed": false,
+      "details": "expected a new litigation_hearings_reviews row with reviewer_role=litigation-paralegal; got []"
+     },
+     {
+      "name": "no_new_litigation_hearings_reviews_row_with_outcome_notice_of_deposition",
+      "passed": true,
+      "details": "no fabricated outcome=notice_of_deposition row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": false,
+      "details": "0/0 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "text_only": {
+   "trace": [
+    {
+     "tool": "query_matter_documents",
+     "requested_tool": "query_matter_documents",
+     "arguments": {
+      "title": "Deposition pack \u2014 Scheduling order excerpt: discovery cutoff"
+     },
+     "observation": "{\"table\": \"matter_documents\", \"count\": 1, \"returned\": 1, \"offset\": 0, \"limit\": 25, \"rows\": [{\"id\": 252, \"title\": \"Deposition pack \\u2014 Scheduling order excerpt: discovery cutoff\", \"doc_type\": \"court_order\", \"related_shape\": \"deposition-management\", \"body\": \"SCHEDULING ORDER (excerpt)\\n\\n2. FACT DISCOVERY. All fact discovery, INCLUDING depositions, shall be COMPLETED by FRIDAY, OCTOBER 30, 2026. 'Completed' means the deposition has been taken, not merely noticed.\\n\\n2.1 A deposition notice served o\\u2026[preview]\"}], \"has_more\": false, \"note\": \"body fields are previews \\u2014 call read_matter_document(id) to read a document in full before using it\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 252
+     },
+     "observation": "{\"id\": 252, \"title\": \"Deposition pack \\u2014 Scheduling order excerpt: discovery cutoff\", \"doc_type\": \"court_order\", \"related_shape\": \"deposition-management\", \"body\": \"SCHEDULING ORDER (excerpt)\\n\\n2. FACT DISCOVERY. All fact discovery, INCLUDING depositions, shall be COMPLETED by FRIDAY, OCTOBER 30, 2026. 'Completed' means the deposition has been taken, not merely noticed.\\n\\n2.1 A deposition notice served on a party must be served at least 14 DAYS before the deposition date.\\n\\n2.2 A non-party witness may be compelled only by SUBPOENA under Rule 45; a notice alone has no effect on a non-party.\\n\\n2.3 No deposition may be scheduled after the fact-discovery cutoff absent a stipulation approved by the Court.\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 253
+     },
+     "observation": "{\"id\": 253, \"title\": \"Deposition pack \\u2014 Witness list with party status\", \"doc_type\": \"witness_list\", \"related_shape\": \"deposition-management\", \"body\": \"WITNESS LIST FOR DEPOSITION \\u2014 Meridian Grain v. Talvern\\n\\n1. R. Calloway \\u2014 Talvern Logistics VP Operations \\u2014 PARTY witness (officer of the defendant).\\n2. Dr. Priya Okafor \\u2014 retained expert (our side).\\n3. J. Ellery \\u2014 former Talvern dispatcher, now employed by an unrelated company \\u2014 NON-PARTY.\\n4. Silo Complex 4 records custodian, Talvern \\u2014 PARTY witness (employee of the defendant).\\n\\nCompulsion vocabulary (use exactly): notice_of_deposition | rule_45_subpoena\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_260",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: state_changed, required_workflow_path, rows_inserted_into_litigation_hearings_reviews, litigation_hearings_reviews_new_row_0_outcome_is_rule_45_subpoena, litigation_hearings_reviews_new_row_1_reviewer_role_is_litigation-paralegal",
+    "failed_conditions": [
+     "state_changed",
+     "required_workflow_path",
+     "rows_inserted_into_litigation_hearings_reviews",
+     "litigation_hearings_reviews_new_row_0_outcome_is_rule_45_subpoena",
+     "litigation_hearings_reviews_new_row_1_reviewer_role_is_litigation-paralegal"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": false,
+      "details": "NO state change \u2014 agent did nothing"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": true,
+      "details": "reads=3, writes=0, read_first=True"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints litigation_hearings_review_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": true,
+      "details": "all required input documents were read in full"
+     },
+     {
+      "name": "rows_inserted_into_litigation_hearings_reviews",
+      "passed": false,
+      "details": "litigation_hearings_reviews: 18 -> 18 rows (0 new, need >= 1)"
+     },
+     {
+      "name": "litigation_hearings_reviews_new_row_0_outcome_is_rule_45_subpoena",
+      "passed": false,
+      "details": "expected a new litigation_hearings_reviews row with outcome=rule_45_subpoena; got []"
+     },
+     {
+      "name": "litigation_hearings_reviews_new_row_1_reviewer_role_is_litigation-paralegal",
+      "passed": false,
+      "details": "expected a new litigation_hearings_reviews row with reviewer_role=litigation-paralegal; got []"
+     },
+     {
+      "name": "no_new_litigation_hearings_reviews_row_with_outcome_notice_of_deposition",
+      "passed": true,
+      "details": "no fabricated outcome=notice_of_deposition row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "3/3 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "blind_write": {
+   "trace": [
+    {
+     "tool": "litigation_hearings_review_create",
+     "requested_tool": "litigation_hearings_review_create",
+     "arguments": {
+      "litigation_hearings_id": "litigation_hearings_001",
+      "reviewer_role": "litigation-paralegal",
+      "outcome": "rule_45_subpoena",
+      "rationale": "J. Ellery is a non-party (former employee, now elsewhere); under paragraph 2.2 a notice has no effect and a Rule 45 subpoena is required."
+     },
+     "observation": "{\"status\": \"created\", \"table\": \"litigation_hearings_reviews\", \"id\": \"litigation_hearings_review_019\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_260",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: reads_before_writes, no_shortcut_direct_update, required_workflow_path, required_documents_read",
+    "failed_conditions": [
+     "reads_before_writes",
+     "no_shortcut_direct_update",
+     "required_workflow_path",
+     "required_documents_read"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": false,
+      "details": "reads=0, writes=1, read_first=False"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": false,
+      "details": "SHORTCUT: wrote without reading first"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints query_matter_documents -> read_matter_document -> read_matter_document"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": false,
+      "details": "EVIDENCE GAP: matter_documents ['252', '253'] were never read with read_matter_document"
+     },
+     {
+      "name": "rows_inserted_into_litigation_hearings_reviews",
+      "passed": true,
+      "details": "litigation_hearings_reviews: 18 -> 19 rows (1 new, need >= 1)"
+     },
+     {
+      "name": "litigation_hearings_reviews_new_row_0_outcome_is_rule_45_subpoena",
+      "passed": true,
+      "details": "expected a new litigation_hearings_reviews row with outcome=rule_45_subpoena; got ['rule_45_subpoena']"
+     },
+     {
+      "name": "litigation_hearings_reviews_new_row_1_reviewer_role_is_litigation-paralegal",
+      "passed": true,
+      "details": "expected a new litigation_hearings_reviews row with reviewer_role=litigation-paralegal; got ['litigation-paralegal']"
+     },
+     {
+      "name": "no_new_litigation_hearings_reviews_row_with_outcome_notice_of_deposition",
+      "passed": true,
+      "details": "no fabricated outcome=notice_of_deposition row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "1/1 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "wrong_value": {
+   "trace": [
+    {
+     "tool": "query_matter_documents",
+     "requested_tool": "query_matter_documents",
+     "arguments": {
+      "title": "Deposition pack \u2014 Scheduling order excerpt: discovery cutoff"
+     },
+     "observation": "{\"table\": \"matter_documents\", \"count\": 1, \"returned\": 1, \"offset\": 0, \"limit\": 25, \"rows\": [{\"id\": 252, \"title\": \"Deposition pack \\u2014 Scheduling order excerpt: discovery cutoff\", \"doc_type\": \"court_order\", \"related_shape\": \"deposition-management\", \"body\": \"SCHEDULING ORDER (excerpt)\\n\\n2. FACT DISCOVERY. All fact discovery, INCLUDING depositions, shall be COMPLETED by FRIDAY, OCTOBER 30, 2026. 'Completed' means the deposition has been taken, not merely noticed.\\n\\n2.1 A deposition notice served o\\u2026[preview]\"}], \"has_more\": false, \"note\": \"body fields are previews \\u2014 call read_matter_document(id) to read a document in full before using it\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 252
+     },
+     "observation": "{\"id\": 252, \"title\": \"Deposition pack \\u2014 Scheduling order excerpt: discovery cutoff\", \"doc_type\": \"court_order\", \"related_shape\": \"deposition-management\", \"body\": \"SCHEDULING ORDER (excerpt)\\n\\n2. FACT DISCOVERY. All fact discovery, INCLUDING depositions, shall be COMPLETED by FRIDAY, OCTOBER 30, 2026. 'Completed' means the deposition has been taken, not merely noticed.\\n\\n2.1 A deposition notice served on a party must be served at least 14 DAYS before the deposition date.\\n\\n2.2 A non-party witness may be compelled only by SUBPOENA under Rule 45; a notice alone has no effect on a non-party.\\n\\n2.3 No deposition may be scheduled after the fact-discovery cutoff absent a stipulation approved by the Court.\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 253
+     },
+     "observation": "{\"id\": 253, \"title\": \"Deposition pack \\u2014 Witness list with party status\", \"doc_type\": \"witness_list\", \"related_shape\": \"deposition-management\", \"body\": \"WITNESS LIST FOR DEPOSITION \\u2014 Meridian Grain v. Talvern\\n\\n1. R. Calloway \\u2014 Talvern Logistics VP Operations \\u2014 PARTY witness (officer of the defendant).\\n2. Dr. Priya Okafor \\u2014 retained expert (our side).\\n3. J. Ellery \\u2014 former Talvern dispatcher, now employed by an unrelated company \\u2014 NON-PARTY.\\n4. Silo Complex 4 records custodian, Talvern \\u2014 PARTY witness (employee of the defendant).\\n\\nCompulsion vocabulary (use exactly): notice_of_deposition | rule_45_subpoena\"}",
+     "ok": true
+    },
+    {
+     "tool": "litigation_hearings_review_create",
+     "requested_tool": "litigation_hearings_review_create",
+     "arguments": {
+      "litigation_hearings_id": "litigation_hearings_001",
+      "reviewer_role": "litigation-paralegal XX-WRONG",
+      "outcome": "rule_45_subpoena XX-WRONG",
+      "rationale": "J. Ellery is a non-party (former employee, now elsewhere); under paragraph 2.2 a notice has no effect and a Rule 45 subpoena is required. XX-WRONG"
+     },
+     "observation": "{\"status\": \"created\", \"table\": \"litigation_hearings_reviews\", \"id\": \"litigation_hearings_review_019\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_260",
+    "passed": false,
+    "reward": 0.3333,
+    "explanation": "Failed: litigation_hearings_reviews_new_row_0_outcome_is_rule_45_subpoena, litigation_hearings_reviews_new_row_1_reviewer_role_is_litigation-paralegal",
+    "failed_conditions": [
+     "litigation_hearings_reviews_new_row_0_outcome_is_rule_45_subpoena",
+     "litigation_hearings_reviews_new_row_1_reviewer_role_is_litigation-paralegal"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": true,
+      "details": "reads=3, writes=1, read_first=True"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": true,
+      "details": "completed ordered workflow: query_matter_documents -> read_matter_document -> read_matter_document -> litigation_hearings_review_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": true,
+      "details": "all required input documents were read in full"
+     },
+     {
+      "name": "rows_inserted_into_litigation_hearings_reviews",
+      "passed": true,
+      "details": "litigation_hearings_reviews: 18 -> 19 rows (1 new, need >= 1)"
+     },
+     {
+      "name": "litigation_hearings_reviews_new_row_0_outcome_is_rule_45_subpoena",
+      "passed": false,
+      "details": "expected a new litigation_hearings_reviews row with outcome=rule_45_subpoena; got ['rule_45_subpoena xx-wrong']"
+     },
+     {
+      "name": "litigation_hearings_reviews_new_row_1_reviewer_role_is_litigation-paralegal",
+      "passed": false,
+      "details": "expected a new litigation_hearings_reviews row with reviewer_role=litigation-paralegal; got ['litigation-paralegal xx-wrong']"
+     },
+     {
+      "name": "no_new_litigation_hearings_reviews_row_with_outcome_notice_of_deposition",
+      "passed": true,
+      "details": "no fabricated outcome=notice_of_deposition row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "4/4 tool calls succeeded"
+     }
+    ]
+   }
+  }
+ }
+}

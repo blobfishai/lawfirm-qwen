@@ -1,0 +1,307 @@
+{
+ "task_id": "task_v3_008",
+ "world": "world-v15.json",
+ "episodes": {
+  "oracle": {
+   "trace": [
+    {
+     "tool": "documents_get",
+     "requested_tool": "documents_get",
+     "arguments": {
+      "id": 5
+     },
+     "observation": "{\"data\": {\"id\": 5, \"folder_id\": 16, \"workspace_id\": 1, \"name\": \"Settlement Model \\u2014 Fairview Works\", \"doc_class\": \"NOTE\", \"author\": \"Priya Lindqvist\", \"edit_date\": \"2026-03-10\", \"checked_out_by\": null, \"latest_version\": 1, \"body\": \"This document is synthetic simulation content. It sets out the parties' positions, the operative facts as pleaded, and the relief requested, with numbered paragraphs and defined terms used consistently throughout. This document is synthetic simulation content. It sets out the parties' positions, the operative facts as pleaded, and the relief requested, with numbered paragraphs and defined terms used consistently throughout. This document is synthetic simulation content. It sets out the parties' positions, the operative facts as pleaded, and the relief requested, with numbered paragraphs and defined terms used consistently throughout. \"}}",
+     "ok": true
+    },
+    {
+     "tool": "documents_checkout",
+     "requested_tool": "documents_checkout",
+     "arguments": {
+      "id": 5,
+      "checked_out_by": "aiko.tanaka"
+     },
+     "observation": "{\"data\": {\"id\": 5, \"updated\": \"dm_documents\", \"fields\": [\"checked_out_by\"]}}",
+     "ok": true
+    },
+    {
+     "tool": "documents_checkin",
+     "requested_tool": "documents_checkin",
+     "arguments": {
+      "id": 5,
+      "checked_out_by": "aiko.tanaka",
+      "latest_version": 2,
+      "body": "Settlement Model \u2014 revised assumptions per partner comments (v2)."
+     },
+     "observation": "{\"data\": {\"id\": 5, \"updated\": \"dm_documents\", \"fields\": [\"checked_out_by\", \"latest_version\", \"body\"]}}",
+     "ok": true
+    },
+    {
+     "tool": "document_versions_list",
+     "requested_tool": "document_versions_list",
+     "arguments": {
+      "document_id": 5
+     },
+     "observation": "{\"data\": {\"results\": [{\"id\": 87, \"document_id\": 5, \"version\": 5, \"author\": \"Aiko Kessler\", \"comment\": \"execution copy\", \"created_at\": \"2026-08-03\"}], \"total\": 1}}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_v3_008",
+    "passed": true,
+    "reward": 1.0,
+    "explanation": "All checks passed",
+    "failed_conditions": [],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": true,
+      "details": "completed ordered workflow: documents_get -> documents_checkout -> documents_checkin -> document_versions_list"
+     },
+     {
+      "name": "dm_documents_5_latest_version_is_2.0",
+      "passed": true,
+      "details": "dm_documents[5].latest_version = 2.0, expected 2.0"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows destroyed"
+     }
+    ]
+   }
+  },
+  "noop": {
+   "trace": [],
+   "verdict": {
+    "task_id": "task_v3_008",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: state_changed, required_workflow_path, dm_documents_5_latest_version_is_2.0",
+    "failed_conditions": [
+     "state_changed",
+     "required_workflow_path",
+     "dm_documents_5_latest_version_is_2.0"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": false,
+      "details": "NO state change"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints documents_get -> documents_checkout -> documents_checkin -> document_versions_list"
+     },
+     {
+      "name": "dm_documents_5_latest_version_is_2.0",
+      "passed": false,
+      "details": "dm_documents[5].latest_version = 1.0, expected 2.0"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows destroyed"
+     }
+    ]
+   }
+  },
+  "text_only": {
+   "trace": [
+    {
+     "tool": "documents_get",
+     "requested_tool": "documents_get",
+     "arguments": {
+      "id": 5
+     },
+     "observation": "{\"data\": {\"id\": 5, \"folder_id\": 16, \"workspace_id\": 1, \"name\": \"Settlement Model \\u2014 Fairview Works\", \"doc_class\": \"NOTE\", \"author\": \"Priya Lindqvist\", \"edit_date\": \"2026-03-10\", \"checked_out_by\": null, \"latest_version\": 1, \"body\": \"This document is synthetic simulation content. It sets out the parties' positions, the operative facts as pleaded, and the relief requested, with numbered paragraphs and defined terms used consistently throughout. This document is synthetic simulation content. It sets out the parties' positions, the operative facts as pleaded, and the relief requested, with numbered paragraphs and defined terms used consistently throughout. This document is synthetic simulation content. It sets out the parties' positions, the operative facts as pleaded, and the relief requested, with numbered paragraphs and defined terms used consistently throughout. \"}}",
+     "ok": true
+    },
+    {
+     "tool": "document_versions_list",
+     "requested_tool": "document_versions_list",
+     "arguments": {
+      "document_id": 5
+     },
+     "observation": "{\"data\": {\"results\": [{\"id\": 87, \"document_id\": 5, \"version\": 5, \"author\": \"Aiko Kessler\", \"comment\": \"execution copy\", \"created_at\": \"2026-08-03\"}], \"total\": 1}}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_v3_008",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: state_changed, required_workflow_path, dm_documents_5_latest_version_is_2.0",
+    "failed_conditions": [
+     "state_changed",
+     "required_workflow_path",
+     "dm_documents_5_latest_version_is_2.0"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": false,
+      "details": "NO state change"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints documents_checkout -> documents_checkin"
+     },
+     {
+      "name": "dm_documents_5_latest_version_is_2.0",
+      "passed": false,
+      "details": "dm_documents[5].latest_version = 1.0, expected 2.0"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows destroyed"
+     }
+    ]
+   }
+  },
+  "blind_write": {
+   "trace": [
+    {
+     "tool": "documents_checkout",
+     "requested_tool": "documents_checkout",
+     "arguments": {
+      "id": 5,
+      "checked_out_by": "aiko.tanaka"
+     },
+     "observation": "{\"data\": {\"id\": 5, \"updated\": \"dm_documents\", \"fields\": [\"checked_out_by\"]}}",
+     "ok": true
+    },
+    {
+     "tool": "documents_checkin",
+     "requested_tool": "documents_checkin",
+     "arguments": {
+      "id": 5,
+      "checked_out_by": "aiko.tanaka",
+      "latest_version": 2,
+      "body": "Settlement Model \u2014 revised assumptions per partner comments (v2)."
+     },
+     "observation": "{\"data\": {\"id\": 5, \"updated\": \"dm_documents\", \"fields\": [\"checked_out_by\", \"latest_version\", \"body\"]}}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_v3_008",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: required_workflow_path",
+    "failed_conditions": [
+     "required_workflow_path"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints documents_get -> document_versions_list"
+     },
+     {
+      "name": "dm_documents_5_latest_version_is_2.0",
+      "passed": true,
+      "details": "dm_documents[5].latest_version = 2.0, expected 2.0"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows destroyed"
+     }
+    ]
+   }
+  },
+  "wrong_value": {
+   "trace": [
+    {
+     "tool": "documents_get",
+     "requested_tool": "documents_get",
+     "arguments": {
+      "id": 5
+     },
+     "observation": "{\"data\": {\"id\": 5, \"folder_id\": 16, \"workspace_id\": 1, \"name\": \"Settlement Model \\u2014 Fairview Works\", \"doc_class\": \"NOTE\", \"author\": \"Priya Lindqvist\", \"edit_date\": \"2026-03-10\", \"checked_out_by\": null, \"latest_version\": 1, \"body\": \"This document is synthetic simulation content. It sets out the parties' positions, the operative facts as pleaded, and the relief requested, with numbered paragraphs and defined terms used consistently throughout. This document is synthetic simulation content. It sets out the parties' positions, the operative facts as pleaded, and the relief requested, with numbered paragraphs and defined terms used consistently throughout. This document is synthetic simulation content. It sets out the parties' positions, the operative facts as pleaded, and the relief requested, with numbered paragraphs and defined terms used consistently throughout. \"}}",
+     "ok": true
+    },
+    {
+     "tool": "documents_checkout",
+     "requested_tool": "documents_checkout",
+     "arguments": {
+      "id": 5,
+      "checked_out_by": "aiko.tanaka"
+     },
+     "observation": "{\"data\": {\"id\": 5, \"updated\": \"dm_documents\", \"fields\": [\"checked_out_by\"]}}",
+     "ok": true
+    },
+    {
+     "tool": "documents_checkin",
+     "requested_tool": "documents_checkin",
+     "arguments": {
+      "id": 5,
+      "checked_out_by": "aiko.tanaka XX-WRONG",
+      "latest_version": 4244.42,
+      "body": "Settlement Model \u2014 revised assumptions per partner comments (v2). XX-WRONG"
+     },
+     "observation": "{\"data\": {\"id\": 5, \"updated\": \"dm_documents\", \"fields\": [\"checked_out_by\", \"latest_version\", \"body\"]}}",
+     "ok": true
+    },
+    {
+     "tool": "document_versions_list",
+     "requested_tool": "document_versions_list",
+     "arguments": {
+      "document_id": 5
+     },
+     "observation": "{\"data\": {\"results\": [{\"id\": 87, \"document_id\": 5, \"version\": 5, \"author\": \"Aiko Kessler\", \"comment\": \"execution copy\", \"created_at\": \"2026-08-03\"}], \"total\": 1}}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_v3_008",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: dm_documents_5_latest_version_is_2.0",
+    "failed_conditions": [
+     "dm_documents_5_latest_version_is_2.0"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": true,
+      "details": "completed ordered workflow: documents_get -> documents_checkout -> documents_checkin -> document_versions_list"
+     },
+     {
+      "name": "dm_documents_5_latest_version_is_2.0",
+      "passed": false,
+      "details": "dm_documents[5].latest_version = 4244.42, expected 2.0"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows destroyed"
+     }
+    ]
+   }
+  }
+ }
+}

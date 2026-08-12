@@ -1,0 +1,543 @@
+{
+ "task_id": "task_304",
+ "world": "world-v15.json",
+ "episodes": {
+  "oracle": {
+   "trace": [
+    {
+     "tool": "query_matter_documents",
+     "requested_tool": "query_matter_documents",
+     "arguments": {
+      "title": "Damages protocol \u2014 Liability cap and recoverable heads of lo"
+     },
+     "observation": "{\"table\": \"matter_documents\", \"count\": 1, \"returned\": 1, \"offset\": 0, \"limit\": 25, \"rows\": [{\"id\": 302, \"title\": \"Damages protocol \\u2014 Liability cap and recoverable heads of loss\", \"doc_type\": \"damages_protocol\", \"related_shape\": \"multi-hop-damages\", \"body\": \"DAMAGES PROTOCOL (firm memo) \\u2014 master services agreement claims\\n\\nRECOVERABLE HEADS. Direct loss is recoverable. CONSEQUENTIAL loss is EXCLUDED by the\\nagreement's limitation clause UNLESS the liability memo for the matter records a finding o\\u2026[preview]\"}], \"has_more\": false, \"note\": \"body fields are previews \\u2014 call read_matter_document(id) to read a document in full before using it\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 302
+     },
+     "observation": "{\"id\": 302, \"title\": \"Damages protocol \\u2014 Liability cap and recoverable heads of loss\", \"doc_type\": \"damages_protocol\", \"related_shape\": \"multi-hop-damages\", \"body\": \"DAMAGES PROTOCOL (firm memo) \\u2014 master services agreement claims\\n\\nRECOVERABLE HEADS. Direct loss is recoverable. CONSEQUENTIAL loss is EXCLUDED by the\\nagreement's limitation clause UNLESS the liability memo for the matter records a finding of\\ngross negligence, in which case the carve-out applies and consequential loss is recoverable.\\nAmounts actually mitigated are credited against the claim and reduce it.\\n\\nLIABILITY CAP. Total recoverable damages are capped at TWO TIMES the fees paid to the\\nsupplier in the twelve months preceding the claim. The cap is applied to the recoverable\\nheads AFTER the mitigation credit and BEFORE prejudgment interest. Interest is not capped.\\n\\nORDER OF OPERATIONS (do not reorder):\\n  1. recoverable heads = direct + (consequential only if gross negligence) - mitigation credit\\n  2. capped = min(recoverable heads, 2 x fees paid in the preceding 12 months)\\n  3. claim = capped + prejudgment interest computed under the interest memo\\n\\nThe 'TOTAL CLAIMED' line on a damages worksheet is the client's opening position. It applies\\nneither the exclusion nor the cap and is never the figure filed.\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 303
+     },
+     "observation": "{\"id\": 303, \"title\": \"Damages protocol \\u2014 Prejudgment interest memo\", \"doc_type\": \"interest_memo\", \"related_shape\": \"multi-hop-damages\", \"body\": \"PREJUDGMENT INTEREST (firm memo)\\n\\nSimple interest at 6% per annum on the CAPPED principal.\\nAccrues from the date of breach to the computation date of 2026-08-01, inclusive of\\nneither endpoint adjustment: use exact elapsed days divided by a 365-day year.\\n\\n  interest = capped principal x 0.06 x (elapsed days / 365)\\n\\nRound the final filed figure to two decimal places.\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 307
+     },
+     "observation": "{\"id\": 307, \"title\": \"Damages worksheet \\u2014 Cedarline Manufacturing v. Ashford Supply\", \"doc_type\": \"damages_worksheet\", \"related_shape\": \"multi-hop-damages\", \"body\": \"DAMAGES WORKSHEET \\u2014 Cedarline Manufacturing v. Ashford Supply\\nDate of breach: 2025-09-30\\n\\nHeads of loss as pleaded:\\n  Direct loss ................................ $2,240,000.00\\n  Consequential loss (lost profits) .......... $1,180,000.00\\n  Less: amounts mitigated .................... $90,000.00\\n  TOTAL CLAIMED (client opening position) .... $3,330,000.00\\n\\nFees paid to the supplier in the 12 months preceding the claim: $780,000.00\\n\\nLiability memo finding: no finding of gross negligence is supported on the record; ordinary breach only.\"}",
+     "ok": true
+    },
+    {
+     "tool": "litigation_cases_amount_history_create",
+     "requested_tool": "litigation_cases_amount_history_create",
+     "arguments": {
+      "litigation_cases_id": "litigation_cases_004",
+      "claimed_amount": 1638213.7,
+      "changed_by_role": "litigation-associate",
+      "change_reason": "Heads 2,150,000.00 (consequential excluded), capped at 2x fees = 1,560,000.00 -> 1,560,000.00; plus 305 days' interest at 6% = 1,638,213.70."
+     },
+     "observation": "Request accepted and queued for processing. The record change will be reflected shortly.",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_304",
+    "passed": true,
+    "reward": 1.0,
+    "explanation": "All task checks passed",
+    "failed_conditions": [],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": true,
+      "details": "reads=4, writes=1, read_first=True"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": true,
+      "details": "completed ordered workflow: query_matter_documents -> read_matter_document -> read_matter_document -> read_matter_document -> litigation_cases_amount_history_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": true,
+      "details": "all required input documents were read in full"
+     },
+     {
+      "name": "rows_inserted_into_litigation_cases_amount_history",
+      "passed": true,
+      "details": "litigation_cases_amount_history: 8 -> 9 rows (1 new, need >= 1)"
+     },
+     {
+      "name": "litigation_cases_amount_history_new_row_0_claimed_amount_is_1638213.7",
+      "passed": true,
+      "details": "expected a new litigation_cases_amount_history row with claimed_amount=1638213.7; got ['1638213.7']"
+     },
+     {
+      "name": "litigation_cases_amount_history_new_row_1_changed_by_role_is_litigation-associate",
+      "passed": true,
+      "details": "expected a new litigation_cases_amount_history row with changed_by_role=litigation-associate; got ['litigation-associate']"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "5/5 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "noop": {
+   "trace": [],
+   "verdict": {
+    "task_id": "task_304",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: state_changed, reads_before_writes, required_workflow_path, required_documents_read, rows_inserted_into_litigation_cases_amount_history, litigation_cases_amount_history_new_row_0_claimed_amount_is_1638213.7, litigation_cases_amount_history_new_row_1_changed_by_role_is_litigation-associate",
+    "failed_conditions": [
+     "state_changed",
+     "reads_before_writes",
+     "required_workflow_path",
+     "required_documents_read",
+     "rows_inserted_into_litigation_cases_amount_history",
+     "litigation_cases_amount_history_new_row_0_claimed_amount_is_1638213.7",
+     "litigation_cases_amount_history_new_row_1_changed_by_role_is_litigation-associate"
+    ],
+    "advisory_conditions": [
+     "all_tools_succeeded"
+    ],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": false,
+      "details": "NO state change \u2014 agent did nothing"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": false,
+      "details": "reads=0, writes=0, read_first=False"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints query_matter_documents -> read_matter_document -> read_matter_document -> read_matter_document -> litigation_cases_amount_history_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": false,
+      "details": "EVIDENCE GAP: matter_documents ['302', '303', '307'] were never read with read_matter_document"
+     },
+     {
+      "name": "rows_inserted_into_litigation_cases_amount_history",
+      "passed": false,
+      "details": "litigation_cases_amount_history: 8 -> 8 rows (0 new, need >= 1)"
+     },
+     {
+      "name": "litigation_cases_amount_history_new_row_0_claimed_amount_is_1638213.7",
+      "passed": false,
+      "details": "expected a new litigation_cases_amount_history row with claimed_amount=1638213.7; got []"
+     },
+     {
+      "name": "litigation_cases_amount_history_new_row_1_changed_by_role_is_litigation-associate",
+      "passed": false,
+      "details": "expected a new litigation_cases_amount_history row with changed_by_role=litigation-associate; got []"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": false,
+      "details": "0/0 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "text_only": {
+   "trace": [
+    {
+     "tool": "query_matter_documents",
+     "requested_tool": "query_matter_documents",
+     "arguments": {
+      "title": "Damages protocol \u2014 Liability cap and recoverable heads of lo"
+     },
+     "observation": "{\"table\": \"matter_documents\", \"count\": 1, \"returned\": 1, \"offset\": 0, \"limit\": 25, \"rows\": [{\"id\": 302, \"title\": \"Damages protocol \\u2014 Liability cap and recoverable heads of loss\", \"doc_type\": \"damages_protocol\", \"related_shape\": \"multi-hop-damages\", \"body\": \"DAMAGES PROTOCOL (firm memo) \\u2014 master services agreement claims\\n\\nRECOVERABLE HEADS. Direct loss is recoverable. CONSEQUENTIAL loss is EXCLUDED by the\\nagreement's limitation clause UNLESS the liability memo for the matter records a finding o\\u2026[preview]\"}], \"has_more\": false, \"note\": \"body fields are previews \\u2014 call read_matter_document(id) to read a document in full before using it\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 302
+     },
+     "observation": "{\"id\": 302, \"title\": \"Damages protocol \\u2014 Liability cap and recoverable heads of loss\", \"doc_type\": \"damages_protocol\", \"related_shape\": \"multi-hop-damages\", \"body\": \"DAMAGES PROTOCOL (firm memo) \\u2014 master services agreement claims\\n\\nRECOVERABLE HEADS. Direct loss is recoverable. CONSEQUENTIAL loss is EXCLUDED by the\\nagreement's limitation clause UNLESS the liability memo for the matter records a finding of\\ngross negligence, in which case the carve-out applies and consequential loss is recoverable.\\nAmounts actually mitigated are credited against the claim and reduce it.\\n\\nLIABILITY CAP. Total recoverable damages are capped at TWO TIMES the fees paid to the\\nsupplier in the twelve months preceding the claim. The cap is applied to the recoverable\\nheads AFTER the mitigation credit and BEFORE prejudgment interest. Interest is not capped.\\n\\nORDER OF OPERATIONS (do not reorder):\\n  1. recoverable heads = direct + (consequential only if gross negligence) - mitigation credit\\n  2. capped = min(recoverable heads, 2 x fees paid in the preceding 12 months)\\n  3. claim = capped + prejudgment interest computed under the interest memo\\n\\nThe 'TOTAL CLAIMED' line on a damages worksheet is the client's opening position. It applies\\nneither the exclusion nor the cap and is never the figure filed.\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 303
+     },
+     "observation": "{\"id\": 303, \"title\": \"Damages protocol \\u2014 Prejudgment interest memo\", \"doc_type\": \"interest_memo\", \"related_shape\": \"multi-hop-damages\", \"body\": \"PREJUDGMENT INTEREST (firm memo)\\n\\nSimple interest at 6% per annum on the CAPPED principal.\\nAccrues from the date of breach to the computation date of 2026-08-01, inclusive of\\nneither endpoint adjustment: use exact elapsed days divided by a 365-day year.\\n\\n  interest = capped principal x 0.06 x (elapsed days / 365)\\n\\nRound the final filed figure to two decimal places.\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 307
+     },
+     "observation": "{\"id\": 307, \"title\": \"Damages worksheet \\u2014 Cedarline Manufacturing v. Ashford Supply\", \"doc_type\": \"damages_worksheet\", \"related_shape\": \"multi-hop-damages\", \"body\": \"DAMAGES WORKSHEET \\u2014 Cedarline Manufacturing v. Ashford Supply\\nDate of breach: 2025-09-30\\n\\nHeads of loss as pleaded:\\n  Direct loss ................................ $2,240,000.00\\n  Consequential loss (lost profits) .......... $1,180,000.00\\n  Less: amounts mitigated .................... $90,000.00\\n  TOTAL CLAIMED (client opening position) .... $3,330,000.00\\n\\nFees paid to the supplier in the 12 months preceding the claim: $780,000.00\\n\\nLiability memo finding: no finding of gross negligence is supported on the record; ordinary breach only.\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_304",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: state_changed, required_workflow_path, rows_inserted_into_litigation_cases_amount_history, litigation_cases_amount_history_new_row_0_claimed_amount_is_1638213.7, litigation_cases_amount_history_new_row_1_changed_by_role_is_litigation-associate",
+    "failed_conditions": [
+     "state_changed",
+     "required_workflow_path",
+     "rows_inserted_into_litigation_cases_amount_history",
+     "litigation_cases_amount_history_new_row_0_claimed_amount_is_1638213.7",
+     "litigation_cases_amount_history_new_row_1_changed_by_role_is_litigation-associate"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": false,
+      "details": "NO state change \u2014 agent did nothing"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": true,
+      "details": "reads=4, writes=0, read_first=True"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints litigation_cases_amount_history_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": true,
+      "details": "all required input documents were read in full"
+     },
+     {
+      "name": "rows_inserted_into_litigation_cases_amount_history",
+      "passed": false,
+      "details": "litigation_cases_amount_history: 8 -> 8 rows (0 new, need >= 1)"
+     },
+     {
+      "name": "litigation_cases_amount_history_new_row_0_claimed_amount_is_1638213.7",
+      "passed": false,
+      "details": "expected a new litigation_cases_amount_history row with claimed_amount=1638213.7; got []"
+     },
+     {
+      "name": "litigation_cases_amount_history_new_row_1_changed_by_role_is_litigation-associate",
+      "passed": false,
+      "details": "expected a new litigation_cases_amount_history row with changed_by_role=litigation-associate; got []"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "4/4 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "blind_write": {
+   "trace": [
+    {
+     "tool": "litigation_cases_amount_history_create",
+     "requested_tool": "litigation_cases_amount_history_create",
+     "arguments": {
+      "litigation_cases_id": "litigation_cases_004",
+      "claimed_amount": 1638213.7,
+      "changed_by_role": "litigation-associate",
+      "change_reason": "Heads 2,150,000.00 (consequential excluded), capped at 2x fees = 1,560,000.00 -> 1,560,000.00; plus 305 days' interest at 6% = 1,638,213.70."
+     },
+     "observation": "{\"status\": \"created\", \"table\": \"litigation_cases_amount_history\", \"id\": \"litigation_cases_amount_history_009\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_304",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: reads_before_writes, no_shortcut_direct_update, required_workflow_path, required_documents_read",
+    "failed_conditions": [
+     "reads_before_writes",
+     "no_shortcut_direct_update",
+     "required_workflow_path",
+     "required_documents_read"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": false,
+      "details": "reads=0, writes=1, read_first=False"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": false,
+      "details": "SHORTCUT: wrote without reading first"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints query_matter_documents -> read_matter_document -> read_matter_document -> read_matter_document"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": false,
+      "details": "EVIDENCE GAP: matter_documents ['302', '303', '307'] were never read with read_matter_document"
+     },
+     {
+      "name": "rows_inserted_into_litigation_cases_amount_history",
+      "passed": true,
+      "details": "litigation_cases_amount_history: 8 -> 9 rows (1 new, need >= 1)"
+     },
+     {
+      "name": "litigation_cases_amount_history_new_row_0_claimed_amount_is_1638213.7",
+      "passed": true,
+      "details": "expected a new litigation_cases_amount_history row with claimed_amount=1638213.7; got ['1638213.7']"
+     },
+     {
+      "name": "litigation_cases_amount_history_new_row_1_changed_by_role_is_litigation-associate",
+      "passed": true,
+      "details": "expected a new litigation_cases_amount_history row with changed_by_role=litigation-associate; got ['litigation-associate']"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "1/1 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "wrong_value": {
+   "trace": [
+    {
+     "tool": "query_matter_documents",
+     "requested_tool": "query_matter_documents",
+     "arguments": {
+      "title": "Damages protocol \u2014 Liability cap and recoverable heads of lo"
+     },
+     "observation": "{\"table\": \"matter_documents\", \"count\": 1, \"returned\": 1, \"offset\": 0, \"limit\": 25, \"rows\": [{\"id\": 302, \"title\": \"Damages protocol \\u2014 Liability cap and recoverable heads of loss\", \"doc_type\": \"damages_protocol\", \"related_shape\": \"multi-hop-damages\", \"body\": \"DAMAGES PROTOCOL (firm memo) \\u2014 master services agreement claims\\n\\nRECOVERABLE HEADS. Direct loss is recoverable. CONSEQUENTIAL loss is EXCLUDED by the\\nagreement's limitation clause UNLESS the liability memo for the matter records a finding o\\u2026[preview]\"}], \"has_more\": false, \"note\": \"body fields are previews \\u2014 call read_matter_document(id) to read a document in full before using it\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 302
+     },
+     "observation": "{\"id\": 302, \"title\": \"Damages protocol \\u2014 Liability cap and recoverable heads of loss\", \"doc_type\": \"damages_protocol\", \"related_shape\": \"multi-hop-damages\", \"body\": \"DAMAGES PROTOCOL (firm memo) \\u2014 master services agreement claims\\n\\nRECOVERABLE HEADS. Direct loss is recoverable. CONSEQUENTIAL loss is EXCLUDED by the\\nagreement's limitation clause UNLESS the liability memo for the matter records a finding of\\ngross negligence, in which case the carve-out applies and consequential loss is recoverable.\\nAmounts actually mitigated are credited against the claim and reduce it.\\n\\nLIABILITY CAP. Total recoverable damages are capped at TWO TIMES the fees paid to the\\nsupplier in the twelve months preceding the claim. The cap is applied to the recoverable\\nheads AFTER the mitigation credit and BEFORE prejudgment interest. Interest is not capped.\\n\\nORDER OF OPERATIONS (do not reorder):\\n  1. recoverable heads = direct + (consequential only if gross negligence) - mitigation credit\\n  2. capped = min(recoverable heads, 2 x fees paid in the preceding 12 months)\\n  3. claim = capped + prejudgment interest computed under the interest memo\\n\\nThe 'TOTAL CLAIMED' line on a damages worksheet is the client's opening position. It applies\\nneither the exclusion nor the cap and is never the figure filed.\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 303
+     },
+     "observation": "{\"id\": 303, \"title\": \"Damages protocol \\u2014 Prejudgment interest memo\", \"doc_type\": \"interest_memo\", \"related_shape\": \"multi-hop-damages\", \"body\": \"PREJUDGMENT INTEREST (firm memo)\\n\\nSimple interest at 6% per annum on the CAPPED principal.\\nAccrues from the date of breach to the computation date of 2026-08-01, inclusive of\\nneither endpoint adjustment: use exact elapsed days divided by a 365-day year.\\n\\n  interest = capped principal x 0.06 x (elapsed days / 365)\\n\\nRound the final filed figure to two decimal places.\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 307
+     },
+     "observation": "{\"id\": 307, \"title\": \"Damages worksheet \\u2014 Cedarline Manufacturing v. Ashford Supply\", \"doc_type\": \"damages_worksheet\", \"related_shape\": \"multi-hop-damages\", \"body\": \"DAMAGES WORKSHEET \\u2014 Cedarline Manufacturing v. Ashford Supply\\nDate of breach: 2025-09-30\\n\\nHeads of loss as pleaded:\\n  Direct loss ................................ $2,240,000.00\\n  Consequential loss (lost profits) .......... $1,180,000.00\\n  Less: amounts mitigated .................... $90,000.00\\n  TOTAL CLAIMED (client opening position) .... $3,330,000.00\\n\\nFees paid to the supplier in the 12 months preceding the claim: $780,000.00\\n\\nLiability memo finding: no finding of gross negligence is supported on the record; ordinary breach only.\"}",
+     "ok": true
+    },
+    {
+     "tool": "litigation_cases_amount_history_create",
+     "requested_tool": "litigation_cases_amount_history_create",
+     "arguments": {
+      "litigation_cases_id": "litigation_cases_004",
+      "claimed_amount": 1642456.12,
+      "changed_by_role": "litigation-associate XX-WRONG",
+      "change_reason": "Heads 2,150,000.00 (consequential excluded), capped at 2x fees = 1,560,000.00 -> 1,560,000.00; plus 305 days' interest at 6% = 1,638,213.70. XX-WRONG"
+     },
+     "observation": "Request accepted and queued for processing. The record change will be reflected shortly.",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_304",
+    "passed": false,
+    "reward": 0.3333,
+    "explanation": "Failed: litigation_cases_amount_history_new_row_0_claimed_amount_is_1638213.7, litigation_cases_amount_history_new_row_1_changed_by_role_is_litigation-associate",
+    "failed_conditions": [
+     "litigation_cases_amount_history_new_row_0_claimed_amount_is_1638213.7",
+     "litigation_cases_amount_history_new_row_1_changed_by_role_is_litigation-associate"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": true,
+      "details": "reads=4, writes=1, read_first=True"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": true,
+      "details": "completed ordered workflow: query_matter_documents -> read_matter_document -> read_matter_document -> read_matter_document -> litigation_cases_amount_history_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": true,
+      "details": "all required input documents were read in full"
+     },
+     {
+      "name": "rows_inserted_into_litigation_cases_amount_history",
+      "passed": true,
+      "details": "litigation_cases_amount_history: 8 -> 9 rows (1 new, need >= 1)"
+     },
+     {
+      "name": "litigation_cases_amount_history_new_row_0_claimed_amount_is_1638213.7",
+      "passed": false,
+      "details": "expected a new litigation_cases_amount_history row with claimed_amount=1638213.7; got ['1642456.12']"
+     },
+     {
+      "name": "litigation_cases_amount_history_new_row_1_changed_by_role_is_litigation-associate",
+      "passed": false,
+      "details": "expected a new litigation_cases_amount_history row with changed_by_role=litigation-associate; got ['litigation-associate xx-wrong']"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "5/5 tool calls succeeded"
+     }
+    ]
+   }
+  }
+ }
+}

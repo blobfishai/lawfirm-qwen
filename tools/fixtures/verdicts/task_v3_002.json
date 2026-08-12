@@ -1,0 +1,397 @@
+{
+ "task_id": "task_v3_002",
+ "world": "world-v15.json",
+ "episodes": {
+  "oracle": {
+   "trace": [
+    {
+     "tool": "matters_get",
+     "requested_tool": "matters_get",
+     "arguments": {
+      "id": 1
+     },
+     "observation": "{\"data\": {\"id\": 1, \"number\": \"00695-Talvern\", \"display_name\": \"Ironwood Ops Privacy Matter\", \"client_id\": 6, \"status\": \"open\", \"practice_area_id\": 2, \"responsible_attorney_id\": 4, \"originating_attorney_id\": 12, \"billing_method\": \"hourly\", \"open_date\": \"2026-10-24\", \"close_date\": null, \"description\": \"Securities engagement for Summit Holdings; scope per engagement letter.\", \"updated_at\": \"2026-06-02\"}}",
+     "ok": true
+    },
+    {
+     "tool": "time_entries_create",
+     "requested_tool": "time_entries_create",
+     "arguments": {
+      "matter_id": 1,
+      "user_id": 2,
+      "date": "2026-08-10",
+      "quantity_hours": 2.5,
+      "rate": 400,
+      "description": "Draft motion to dismiss section II; cite-check",
+      "utbms_task_code": "L240"
+     },
+     "observation": "{\"data\": {\"id\": 161, \"created\": \"pm_time_entries\", \"billable\": 1, \"billed\": 0, \"matter_id\": 1, \"user_id\": 2, \"date\": \"2026-08-10\", \"quantity_hours\": 2.5, \"rate\": 400, \"description\": \"Draft motion to dismiss section II; cite-check\", \"utbms_task_code\": \"L240\", \"total\": 1000.0, \"created_at\": \"2026-08-10T12:00:00Z\"}}",
+     "ok": true
+    },
+    {
+     "tool": "bills_update",
+     "requested_tool": "bills_update",
+     "arguments": {
+      "id": 3,
+      "state": "awaiting_approval"
+     },
+     "observation": "{\"data\": {\"id\": 3, \"updated\": \"pm_bills\", \"fields\": [\"state\"]}}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_v3_002",
+    "passed": true,
+    "reward": 1.0,
+    "explanation": "All checks passed",
+    "failed_conditions": [],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": true,
+      "details": "completed ordered workflow: matters_get -> time_entries_create -> bills_update"
+     },
+     {
+      "name": "rows_inserted_into_pm_time_entries",
+      "passed": true,
+      "details": "pm_time_entries: 160 -> 161 rows"
+     },
+     {
+      "name": "pm_time_entries_new_row_utbms_task_code_is_L240",
+      "passed": true,
+      "details": "expected new pm_time_entries row with utbms_task_code=L240; saw ['l240']"
+     },
+     {
+      "name": "pm_time_entries_new_row_quantity_hours_is_2.5",
+      "passed": true,
+      "details": "expected new pm_time_entries row with quantity_hours=2.5; saw ['2.5']"
+     },
+     {
+      "name": "pm_time_entries_new_row_total_is_1000.0",
+      "passed": true,
+      "details": "expected new pm_time_entries row with total=1000.0; saw ['1000.0']"
+     },
+     {
+      "name": "pm_bills_3_state_is_awaiting_approval",
+      "passed": true,
+      "details": "pm_bills[3].state = awaiting_approval, expected awaiting_approval"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows destroyed"
+     }
+    ]
+   }
+  },
+  "noop": {
+   "trace": [],
+   "verdict": {
+    "task_id": "task_v3_002",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: state_changed, required_workflow_path, rows_inserted_into_pm_time_entries, pm_time_entries_new_row_utbms_task_code_is_L240, pm_time_entries_new_row_quantity_hours_is_2.5, pm_time_entries_new_row_total_is_1000.0, pm_bills_3_state_is_awaiting_approval",
+    "failed_conditions": [
+     "state_changed",
+     "required_workflow_path",
+     "rows_inserted_into_pm_time_entries",
+     "pm_time_entries_new_row_utbms_task_code_is_L240",
+     "pm_time_entries_new_row_quantity_hours_is_2.5",
+     "pm_time_entries_new_row_total_is_1000.0",
+     "pm_bills_3_state_is_awaiting_approval"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": false,
+      "details": "NO state change"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints matters_get -> time_entries_create -> bills_update"
+     },
+     {
+      "name": "rows_inserted_into_pm_time_entries",
+      "passed": false,
+      "details": "pm_time_entries: 160 -> 160 rows"
+     },
+     {
+      "name": "pm_time_entries_new_row_utbms_task_code_is_L240",
+      "passed": false,
+      "details": "expected new pm_time_entries row with utbms_task_code=L240; saw []"
+     },
+     {
+      "name": "pm_time_entries_new_row_quantity_hours_is_2.5",
+      "passed": false,
+      "details": "expected new pm_time_entries row with quantity_hours=2.5; saw []"
+     },
+     {
+      "name": "pm_time_entries_new_row_total_is_1000.0",
+      "passed": false,
+      "details": "expected new pm_time_entries row with total=1000.0; saw []"
+     },
+     {
+      "name": "pm_bills_3_state_is_awaiting_approval",
+      "passed": false,
+      "details": "pm_bills[3].state = draft, expected awaiting_approval"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows destroyed"
+     }
+    ]
+   }
+  },
+  "text_only": {
+   "trace": [
+    {
+     "tool": "matters_get",
+     "requested_tool": "matters_get",
+     "arguments": {
+      "id": 1
+     },
+     "observation": "{\"data\": {\"id\": 1, \"number\": \"00695-Talvern\", \"display_name\": \"Ironwood Ops Privacy Matter\", \"client_id\": 6, \"status\": \"open\", \"practice_area_id\": 2, \"responsible_attorney_id\": 4, \"originating_attorney_id\": 12, \"billing_method\": \"hourly\", \"open_date\": \"2026-10-24\", \"close_date\": null, \"description\": \"Securities engagement for Summit Holdings; scope per engagement letter.\", \"updated_at\": \"2026-06-02\"}}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_v3_002",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: state_changed, required_workflow_path, rows_inserted_into_pm_time_entries, pm_time_entries_new_row_utbms_task_code_is_L240, pm_time_entries_new_row_quantity_hours_is_2.5, pm_time_entries_new_row_total_is_1000.0, pm_bills_3_state_is_awaiting_approval",
+    "failed_conditions": [
+     "state_changed",
+     "required_workflow_path",
+     "rows_inserted_into_pm_time_entries",
+     "pm_time_entries_new_row_utbms_task_code_is_L240",
+     "pm_time_entries_new_row_quantity_hours_is_2.5",
+     "pm_time_entries_new_row_total_is_1000.0",
+     "pm_bills_3_state_is_awaiting_approval"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": false,
+      "details": "NO state change"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints time_entries_create -> bills_update"
+     },
+     {
+      "name": "rows_inserted_into_pm_time_entries",
+      "passed": false,
+      "details": "pm_time_entries: 160 -> 160 rows"
+     },
+     {
+      "name": "pm_time_entries_new_row_utbms_task_code_is_L240",
+      "passed": false,
+      "details": "expected new pm_time_entries row with utbms_task_code=L240; saw []"
+     },
+     {
+      "name": "pm_time_entries_new_row_quantity_hours_is_2.5",
+      "passed": false,
+      "details": "expected new pm_time_entries row with quantity_hours=2.5; saw []"
+     },
+     {
+      "name": "pm_time_entries_new_row_total_is_1000.0",
+      "passed": false,
+      "details": "expected new pm_time_entries row with total=1000.0; saw []"
+     },
+     {
+      "name": "pm_bills_3_state_is_awaiting_approval",
+      "passed": false,
+      "details": "pm_bills[3].state = draft, expected awaiting_approval"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows destroyed"
+     }
+    ]
+   }
+  },
+  "blind_write": {
+   "trace": [
+    {
+     "tool": "time_entries_create",
+     "requested_tool": "time_entries_create",
+     "arguments": {
+      "matter_id": 1,
+      "user_id": 2,
+      "date": "2026-08-10",
+      "quantity_hours": 2.5,
+      "rate": 400,
+      "description": "Draft motion to dismiss section II; cite-check",
+      "utbms_task_code": "L240"
+     },
+     "observation": "{\"data\": {\"id\": 161, \"created\": \"pm_time_entries\", \"billable\": 1, \"billed\": 0, \"matter_id\": 1, \"user_id\": 2, \"date\": \"2026-08-10\", \"quantity_hours\": 2.5, \"rate\": 400, \"description\": \"Draft motion to dismiss section II; cite-check\", \"utbms_task_code\": \"L240\", \"total\": 1000.0, \"created_at\": \"2026-08-10T12:00:00Z\"}}",
+     "ok": true
+    },
+    {
+     "tool": "bills_update",
+     "requested_tool": "bills_update",
+     "arguments": {
+      "id": 3,
+      "state": "awaiting_approval"
+     },
+     "observation": "{\"data\": {\"id\": 3, \"updated\": \"pm_bills\", \"fields\": [\"state\"]}}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_v3_002",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: required_workflow_path",
+    "failed_conditions": [
+     "required_workflow_path"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints matters_get"
+     },
+     {
+      "name": "rows_inserted_into_pm_time_entries",
+      "passed": true,
+      "details": "pm_time_entries: 160 -> 161 rows"
+     },
+     {
+      "name": "pm_time_entries_new_row_utbms_task_code_is_L240",
+      "passed": true,
+      "details": "expected new pm_time_entries row with utbms_task_code=L240; saw ['l240']"
+     },
+     {
+      "name": "pm_time_entries_new_row_quantity_hours_is_2.5",
+      "passed": true,
+      "details": "expected new pm_time_entries row with quantity_hours=2.5; saw ['2.5']"
+     },
+     {
+      "name": "pm_time_entries_new_row_total_is_1000.0",
+      "passed": true,
+      "details": "expected new pm_time_entries row with total=1000.0; saw ['1000.0']"
+     },
+     {
+      "name": "pm_bills_3_state_is_awaiting_approval",
+      "passed": true,
+      "details": "pm_bills[3].state = awaiting_approval, expected awaiting_approval"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows destroyed"
+     }
+    ]
+   }
+  },
+  "wrong_value": {
+   "trace": [
+    {
+     "tool": "matters_get",
+     "requested_tool": "matters_get",
+     "arguments": {
+      "id": 1
+     },
+     "observation": "{\"data\": {\"id\": 1, \"number\": \"00695-Talvern\", \"display_name\": \"Ironwood Ops Privacy Matter\", \"client_id\": 6, \"status\": \"open\", \"practice_area_id\": 2, \"responsible_attorney_id\": 4, \"originating_attorney_id\": 12, \"billing_method\": \"hourly\", \"open_date\": \"2026-10-24\", \"close_date\": null, \"description\": \"Securities engagement for Summit Holdings; scope per engagement letter.\", \"updated_at\": \"2026-06-02\"}}",
+     "ok": true
+    },
+    {
+     "tool": "time_entries_create",
+     "requested_tool": "time_entries_create",
+     "arguments": {
+      "matter_id": 1,
+      "user_id": 2,
+      "date": "2026-08-10",
+      "quantity_hours": 2.5,
+      "rate": 400,
+      "description": "Draft motion to dismiss section II; cite-check",
+      "utbms_task_code": "L240"
+     },
+     "observation": "{\"data\": {\"id\": 161, \"created\": \"pm_time_entries\", \"billable\": 1, \"billed\": 0, \"matter_id\": 1, \"user_id\": 2, \"date\": \"2026-08-10\", \"quantity_hours\": 2.5, \"rate\": 400, \"description\": \"Draft motion to dismiss section II; cite-check\", \"utbms_task_code\": \"L240\", \"total\": 1000.0, \"created_at\": \"2026-08-10T12:00:00Z\"}}",
+     "ok": true
+    },
+    {
+     "tool": "bills_update",
+     "requested_tool": "bills_update",
+     "arguments": {
+      "id": 3,
+      "state": "awaiting_approval XX-WRONG"
+     },
+     "observation": "{\"data\": {\"id\": 3, \"updated\": \"pm_bills\", \"fields\": [\"state\"]}}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_v3_002",
+    "passed": false,
+    "reward": 0.8,
+    "explanation": "Failed: pm_bills_3_state_is_awaiting_approval",
+    "failed_conditions": [
+     "pm_bills_3_state_is_awaiting_approval"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": true,
+      "details": "completed ordered workflow: matters_get -> time_entries_create -> bills_update"
+     },
+     {
+      "name": "rows_inserted_into_pm_time_entries",
+      "passed": true,
+      "details": "pm_time_entries: 160 -> 161 rows"
+     },
+     {
+      "name": "pm_time_entries_new_row_utbms_task_code_is_L240",
+      "passed": true,
+      "details": "expected new pm_time_entries row with utbms_task_code=L240; saw ['l240']"
+     },
+     {
+      "name": "pm_time_entries_new_row_quantity_hours_is_2.5",
+      "passed": true,
+      "details": "expected new pm_time_entries row with quantity_hours=2.5; saw ['2.5']"
+     },
+     {
+      "name": "pm_time_entries_new_row_total_is_1000.0",
+      "passed": true,
+      "details": "expected new pm_time_entries row with total=1000.0; saw ['1000.0']"
+     },
+     {
+      "name": "pm_bills_3_state_is_awaiting_approval",
+      "passed": false,
+      "details": "pm_bills[3].state = awaiting_approval xx-wrong, expected awaiting_approval"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows destroyed"
+     }
+    ]
+   }
+  }
+ }
+}

@@ -1,0 +1,568 @@
+{
+ "task_id": "task_257",
+ "world": "world-v15.json",
+ "episodes": {
+  "oracle": {
+   "trace": [
+    {
+     "tool": "query_matter_documents",
+     "requested_tool": "query_matter_documents",
+     "arguments": {
+      "title": "Cite pack \u2014 Citation registry (firm-verified authorities)"
+     },
+     "observation": "{\"table\": \"matter_documents\", \"count\": 1, \"returned\": 1, \"offset\": 0, \"limit\": 25, \"rows\": [{\"id\": 245, \"title\": \"Cite pack \\u2014 Citation registry (firm-verified authorities)\", \"doc_type\": \"citation_registry\", \"related_shape\": \"citation-audit\", \"body\": \"VERIFIED CITATION REGISTRY (authorities confirmed against the reporter)\\n\\n821 Sim. 3d 926 \\u2014 Bluewater Components v. Talvern Logistics \\u2014 VERIFIED, good law.\\n493 Sim. 2d 715 \\u2014 Ironwood Ops v. Meridian Cloud \\u2014 VERIFIED, good law.\\n604 Sim. 3d 21\\u2026[preview]\"}], \"has_more\": false, \"note\": \"body fields are previews \\u2014 call read_matter_document(id) to read a document in full before using it\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 245
+     },
+     "observation": "{\"id\": 245, \"title\": \"Cite pack \\u2014 Citation registry (firm-verified authorities)\", \"doc_type\": \"citation_registry\", \"related_shape\": \"citation-audit\", \"body\": \"VERIFIED CITATION REGISTRY (authorities confirmed against the reporter)\\n\\n821 Sim. 3d 926 \\u2014 Bluewater Components v. Talvern Logistics \\u2014 VERIFIED, good law.\\n493 Sim. 2d 715 \\u2014 Ironwood Ops v. Meridian Cloud \\u2014 VERIFIED, good law.\\n604 Sim. 3d 210 \\u2014 Summit Holdings v. Argent Motors \\u2014 VERIFIED but SUPERSEDED IN PART by statute on the damages issue; do not cite for damages.\\n712 Sim. 2d 88 \\u2014 Fairview Works v. Corvess Analytics \\u2014 VERIFIED, good law.\\n\\nAny citation not appearing in this registry has NOT been verified and must not be relied upon in a filing.\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 246
+     },
+     "observation": "{\"id\": 246, \"title\": \"Cite pack \\u2014 Draft brief citation table (for audit)\", \"doc_type\": \"brief_cite_table\", \"related_shape\": \"citation-audit\", \"body\": \"TABLE OF AUTHORITIES \\u2014 draft opposition brief (for cite-check)\\n\\n1. 821 Sim. 3d 926 \\u2014 cited at 4, 11 (for the contract-interpretation standard)\\n2. 604 Sim. 3d 210 \\u2014 cited at 17 (FOR THE DAMAGES MEASURE)\\n3. 950 Sim. 4d 1180 \\u2014 cited at 19 (for the notice requirement)\\n4. 712 Sim. 2d 88 \\u2014 cited at 22 (for the waiver argument)\\n\\nDrafting associate note: citation 3 came from a research memo I no longer have; I could not locate it in the reporter.\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 247
+     },
+     "observation": "{\"id\": 247, \"title\": \"Cite pack \\u2014 Cite-check policy\", \"doc_type\": \"policy\", \"related_shape\": \"citation-audit\", \"body\": \"CITE-CHECK POLICY\\n\\nEvery authority in a filing must be checked against the verified citation registry before filing.\\n\\nA citation is UNSAFE and must be pulled from the brief if EITHER (a) it does not appear in the registry at all, OR (b) it appears in the registry but is superseded for the proposition it is cited for.\\n\\nRecord the audit outcome as a count of unsafe citations. Do not attempt to verify an absent citation from memory \\u2014 an unlocatable citation is unsafe by definition.\"}",
+     "ok": true
+    },
+    {
+     "tool": "litigation_filings_amount_history_create",
+     "requested_tool": "litigation_filings_amount_history_create",
+     "arguments": {
+      "litigation_filings_id": "litigation_filings_001",
+      "filing_cost": 2,
+      "changed_by_role": "cite-checker",
+      "change_reason": "950 Sim. 4d 1180 is absent from the registry; 604 Sim. 3d 210 is superseded for the damages proposition it is cited for. Two unsafe citations."
+     },
+     "observation": "{\"status\": \"created\", \"table\": \"litigation_filings_amount_history\", \"id\": \"litigation_filings_amount_history_019\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_257",
+    "passed": true,
+    "reward": 1.0,
+    "explanation": "All task checks passed",
+    "failed_conditions": [],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": true,
+      "details": "reads=4, writes=1, read_first=True"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": true,
+      "details": "completed ordered workflow: query_matter_documents -> read_matter_document -> read_matter_document -> read_matter_document -> litigation_filings_amount_history_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": true,
+      "details": "all required input documents were read in full"
+     },
+     {
+      "name": "rows_inserted_into_litigation_filings_amount_history",
+      "passed": true,
+      "details": "litigation_filings_amount_history: 18 -> 19 rows (1 new, need >= 1)"
+     },
+     {
+      "name": "litigation_filings_amount_history_new_row_0_filing_cost_is_2.0",
+      "passed": true,
+      "details": "expected a new litigation_filings_amount_history row with filing_cost=2.0; got ['2.0']"
+     },
+     {
+      "name": "litigation_filings_amount_history_new_row_1_changed_by_role_is_cite-checker",
+      "passed": true,
+      "details": "expected a new litigation_filings_amount_history row with changed_by_role=cite-checker; got ['cite-checker']"
+     },
+     {
+      "name": "no_new_litigation_filings_amount_history_row_with_filing_cost_1",
+      "passed": true,
+      "details": "no fabricated filing_cost=1 row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "5/5 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "noop": {
+   "trace": [],
+   "verdict": {
+    "task_id": "task_257",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: state_changed, reads_before_writes, required_workflow_path, required_documents_read, rows_inserted_into_litigation_filings_amount_history, litigation_filings_amount_history_new_row_0_filing_cost_is_2.0, litigation_filings_amount_history_new_row_1_changed_by_role_is_cite-checker",
+    "failed_conditions": [
+     "state_changed",
+     "reads_before_writes",
+     "required_workflow_path",
+     "required_documents_read",
+     "rows_inserted_into_litigation_filings_amount_history",
+     "litigation_filings_amount_history_new_row_0_filing_cost_is_2.0",
+     "litigation_filings_amount_history_new_row_1_changed_by_role_is_cite-checker"
+    ],
+    "advisory_conditions": [
+     "all_tools_succeeded"
+    ],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": false,
+      "details": "NO state change \u2014 agent did nothing"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": false,
+      "details": "reads=0, writes=0, read_first=False"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints query_matter_documents -> read_matter_document -> read_matter_document -> read_matter_document -> litigation_filings_amount_history_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": false,
+      "details": "EVIDENCE GAP: matter_documents ['245', '246', '247'] were never read with read_matter_document"
+     },
+     {
+      "name": "rows_inserted_into_litigation_filings_amount_history",
+      "passed": false,
+      "details": "litigation_filings_amount_history: 18 -> 18 rows (0 new, need >= 1)"
+     },
+     {
+      "name": "litigation_filings_amount_history_new_row_0_filing_cost_is_2.0",
+      "passed": false,
+      "details": "expected a new litigation_filings_amount_history row with filing_cost=2.0; got []"
+     },
+     {
+      "name": "litigation_filings_amount_history_new_row_1_changed_by_role_is_cite-checker",
+      "passed": false,
+      "details": "expected a new litigation_filings_amount_history row with changed_by_role=cite-checker; got []"
+     },
+     {
+      "name": "no_new_litigation_filings_amount_history_row_with_filing_cost_1",
+      "passed": true,
+      "details": "no fabricated filing_cost=1 row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": false,
+      "details": "0/0 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "text_only": {
+   "trace": [
+    {
+     "tool": "query_matter_documents",
+     "requested_tool": "query_matter_documents",
+     "arguments": {
+      "title": "Cite pack \u2014 Citation registry (firm-verified authorities)"
+     },
+     "observation": "{\"table\": \"matter_documents\", \"count\": 1, \"returned\": 1, \"offset\": 0, \"limit\": 25, \"rows\": [{\"id\": 245, \"title\": \"Cite pack \\u2014 Citation registry (firm-verified authorities)\", \"doc_type\": \"citation_registry\", \"related_shape\": \"citation-audit\", \"body\": \"VERIFIED CITATION REGISTRY (authorities confirmed against the reporter)\\n\\n821 Sim. 3d 926 \\u2014 Bluewater Components v. Talvern Logistics \\u2014 VERIFIED, good law.\\n493 Sim. 2d 715 \\u2014 Ironwood Ops v. Meridian Cloud \\u2014 VERIFIED, good law.\\n604 Sim. 3d 21\\u2026[preview]\"}], \"has_more\": false, \"note\": \"body fields are previews \\u2014 call read_matter_document(id) to read a document in full before using it\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 245
+     },
+     "observation": "{\"id\": 245, \"title\": \"Cite pack \\u2014 Citation registry (firm-verified authorities)\", \"doc_type\": \"citation_registry\", \"related_shape\": \"citation-audit\", \"body\": \"VERIFIED CITATION REGISTRY (authorities confirmed against the reporter)\\n\\n821 Sim. 3d 926 \\u2014 Bluewater Components v. Talvern Logistics \\u2014 VERIFIED, good law.\\n493 Sim. 2d 715 \\u2014 Ironwood Ops v. Meridian Cloud \\u2014 VERIFIED, good law.\\n604 Sim. 3d 210 \\u2014 Summit Holdings v. Argent Motors \\u2014 VERIFIED but SUPERSEDED IN PART by statute on the damages issue; do not cite for damages.\\n712 Sim. 2d 88 \\u2014 Fairview Works v. Corvess Analytics \\u2014 VERIFIED, good law.\\n\\nAny citation not appearing in this registry has NOT been verified and must not be relied upon in a filing.\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 246
+     },
+     "observation": "{\"id\": 246, \"title\": \"Cite pack \\u2014 Draft brief citation table (for audit)\", \"doc_type\": \"brief_cite_table\", \"related_shape\": \"citation-audit\", \"body\": \"TABLE OF AUTHORITIES \\u2014 draft opposition brief (for cite-check)\\n\\n1. 821 Sim. 3d 926 \\u2014 cited at 4, 11 (for the contract-interpretation standard)\\n2. 604 Sim. 3d 210 \\u2014 cited at 17 (FOR THE DAMAGES MEASURE)\\n3. 950 Sim. 4d 1180 \\u2014 cited at 19 (for the notice requirement)\\n4. 712 Sim. 2d 88 \\u2014 cited at 22 (for the waiver argument)\\n\\nDrafting associate note: citation 3 came from a research memo I no longer have; I could not locate it in the reporter.\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 247
+     },
+     "observation": "{\"id\": 247, \"title\": \"Cite pack \\u2014 Cite-check policy\", \"doc_type\": \"policy\", \"related_shape\": \"citation-audit\", \"body\": \"CITE-CHECK POLICY\\n\\nEvery authority in a filing must be checked against the verified citation registry before filing.\\n\\nA citation is UNSAFE and must be pulled from the brief if EITHER (a) it does not appear in the registry at all, OR (b) it appears in the registry but is superseded for the proposition it is cited for.\\n\\nRecord the audit outcome as a count of unsafe citations. Do not attempt to verify an absent citation from memory \\u2014 an unlocatable citation is unsafe by definition.\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_257",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: state_changed, required_workflow_path, rows_inserted_into_litigation_filings_amount_history, litigation_filings_amount_history_new_row_0_filing_cost_is_2.0, litigation_filings_amount_history_new_row_1_changed_by_role_is_cite-checker",
+    "failed_conditions": [
+     "state_changed",
+     "required_workflow_path",
+     "rows_inserted_into_litigation_filings_amount_history",
+     "litigation_filings_amount_history_new_row_0_filing_cost_is_2.0",
+     "litigation_filings_amount_history_new_row_1_changed_by_role_is_cite-checker"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": false,
+      "details": "NO state change \u2014 agent did nothing"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": true,
+      "details": "reads=4, writes=0, read_first=True"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints litigation_filings_amount_history_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": true,
+      "details": "all required input documents were read in full"
+     },
+     {
+      "name": "rows_inserted_into_litigation_filings_amount_history",
+      "passed": false,
+      "details": "litigation_filings_amount_history: 18 -> 18 rows (0 new, need >= 1)"
+     },
+     {
+      "name": "litigation_filings_amount_history_new_row_0_filing_cost_is_2.0",
+      "passed": false,
+      "details": "expected a new litigation_filings_amount_history row with filing_cost=2.0; got []"
+     },
+     {
+      "name": "litigation_filings_amount_history_new_row_1_changed_by_role_is_cite-checker",
+      "passed": false,
+      "details": "expected a new litigation_filings_amount_history row with changed_by_role=cite-checker; got []"
+     },
+     {
+      "name": "no_new_litigation_filings_amount_history_row_with_filing_cost_1",
+      "passed": true,
+      "details": "no fabricated filing_cost=1 row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "4/4 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "blind_write": {
+   "trace": [
+    {
+     "tool": "litigation_filings_amount_history_create",
+     "requested_tool": "litigation_filings_amount_history_create",
+     "arguments": {
+      "litigation_filings_id": "litigation_filings_001",
+      "filing_cost": 2,
+      "changed_by_role": "cite-checker",
+      "change_reason": "950 Sim. 4d 1180 is absent from the registry; 604 Sim. 3d 210 is superseded for the damages proposition it is cited for. Two unsafe citations."
+     },
+     "observation": "{\"status\": \"created\", \"table\": \"litigation_filings_amount_history\", \"id\": \"litigation_filings_amount_history_019\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_257",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: reads_before_writes, no_shortcut_direct_update, required_workflow_path, required_documents_read",
+    "failed_conditions": [
+     "reads_before_writes",
+     "no_shortcut_direct_update",
+     "required_workflow_path",
+     "required_documents_read"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": false,
+      "details": "reads=0, writes=1, read_first=False"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": false,
+      "details": "SHORTCUT: wrote without reading first"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints query_matter_documents -> read_matter_document -> read_matter_document -> read_matter_document"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": false,
+      "details": "EVIDENCE GAP: matter_documents ['245', '246', '247'] were never read with read_matter_document"
+     },
+     {
+      "name": "rows_inserted_into_litigation_filings_amount_history",
+      "passed": true,
+      "details": "litigation_filings_amount_history: 18 -> 19 rows (1 new, need >= 1)"
+     },
+     {
+      "name": "litigation_filings_amount_history_new_row_0_filing_cost_is_2.0",
+      "passed": true,
+      "details": "expected a new litigation_filings_amount_history row with filing_cost=2.0; got ['2.0']"
+     },
+     {
+      "name": "litigation_filings_amount_history_new_row_1_changed_by_role_is_cite-checker",
+      "passed": true,
+      "details": "expected a new litigation_filings_amount_history row with changed_by_role=cite-checker; got ['cite-checker']"
+     },
+     {
+      "name": "no_new_litigation_filings_amount_history_row_with_filing_cost_1",
+      "passed": true,
+      "details": "no fabricated filing_cost=1 row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "1/1 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "wrong_value": {
+   "trace": [
+    {
+     "tool": "query_matter_documents",
+     "requested_tool": "query_matter_documents",
+     "arguments": {
+      "title": "Cite pack \u2014 Citation registry (firm-verified authorities)"
+     },
+     "observation": "{\"table\": \"matter_documents\", \"count\": 1, \"returned\": 1, \"offset\": 0, \"limit\": 25, \"rows\": [{\"id\": 245, \"title\": \"Cite pack \\u2014 Citation registry (firm-verified authorities)\", \"doc_type\": \"citation_registry\", \"related_shape\": \"citation-audit\", \"body\": \"VERIFIED CITATION REGISTRY (authorities confirmed against the reporter)\\n\\n821 Sim. 3d 926 \\u2014 Bluewater Components v. Talvern Logistics \\u2014 VERIFIED, good law.\\n493 Sim. 2d 715 \\u2014 Ironwood Ops v. Meridian Cloud \\u2014 VERIFIED, good law.\\n604 Sim. 3d 21\\u2026[preview]\"}], \"has_more\": false, \"note\": \"body fields are previews \\u2014 call read_matter_document(id) to read a document in full before using it\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 245
+     },
+     "observation": "{\"id\": 245, \"title\": \"Cite pack \\u2014 Citation registry (firm-verified authorities)\", \"doc_type\": \"citation_registry\", \"related_shape\": \"citation-audit\", \"body\": \"VERIFIED CITATION REGISTRY (authorities confirmed against the reporter)\\n\\n821 Sim. 3d 926 \\u2014 Bluewater Components v. Talvern Logistics \\u2014 VERIFIED, good law.\\n493 Sim. 2d 715 \\u2014 Ironwood Ops v. Meridian Cloud \\u2014 VERIFIED, good law.\\n604 Sim. 3d 210 \\u2014 Summit Holdings v. Argent Motors \\u2014 VERIFIED but SUPERSEDED IN PART by statute on the damages issue; do not cite for damages.\\n712 Sim. 2d 88 \\u2014 Fairview Works v. Corvess Analytics \\u2014 VERIFIED, good law.\\n\\nAny citation not appearing in this registry has NOT been verified and must not be relied upon in a filing.\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 246
+     },
+     "observation": "{\"id\": 246, \"title\": \"Cite pack \\u2014 Draft brief citation table (for audit)\", \"doc_type\": \"brief_cite_table\", \"related_shape\": \"citation-audit\", \"body\": \"TABLE OF AUTHORITIES \\u2014 draft opposition brief (for cite-check)\\n\\n1. 821 Sim. 3d 926 \\u2014 cited at 4, 11 (for the contract-interpretation standard)\\n2. 604 Sim. 3d 210 \\u2014 cited at 17 (FOR THE DAMAGES MEASURE)\\n3. 950 Sim. 4d 1180 \\u2014 cited at 19 (for the notice requirement)\\n4. 712 Sim. 2d 88 \\u2014 cited at 22 (for the waiver argument)\\n\\nDrafting associate note: citation 3 came from a research memo I no longer have; I could not locate it in the reporter.\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 247
+     },
+     "observation": "{\"id\": 247, \"title\": \"Cite pack \\u2014 Cite-check policy\", \"doc_type\": \"policy\", \"related_shape\": \"citation-audit\", \"body\": \"CITE-CHECK POLICY\\n\\nEvery authority in a filing must be checked against the verified citation registry before filing.\\n\\nA citation is UNSAFE and must be pulled from the brief if EITHER (a) it does not appear in the registry at all, OR (b) it appears in the registry but is superseded for the proposition it is cited for.\\n\\nRecord the audit outcome as a count of unsafe citations. Do not attempt to verify an absent citation from memory \\u2014 an unlocatable citation is unsafe by definition.\"}",
+     "ok": true
+    },
+    {
+     "tool": "litigation_filings_amount_history_create",
+     "requested_tool": "litigation_filings_amount_history_create",
+     "arguments": {
+      "litigation_filings_id": "litigation_filings_001",
+      "filing_cost": 4244.42,
+      "changed_by_role": "cite-checker XX-WRONG",
+      "change_reason": "950 Sim. 4d 1180 is absent from the registry; 604 Sim. 3d 210 is superseded for the damages proposition it is cited for. Two unsafe citations. XX-WRONG"
+     },
+     "observation": "{\"status\": \"created\", \"table\": \"litigation_filings_amount_history\", \"id\": \"litigation_filings_amount_history_019\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_257",
+    "passed": false,
+    "reward": 0.3333,
+    "explanation": "Failed: litigation_filings_amount_history_new_row_0_filing_cost_is_2.0, litigation_filings_amount_history_new_row_1_changed_by_role_is_cite-checker",
+    "failed_conditions": [
+     "litigation_filings_amount_history_new_row_0_filing_cost_is_2.0",
+     "litigation_filings_amount_history_new_row_1_changed_by_role_is_cite-checker"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": true,
+      "details": "reads=4, writes=1, read_first=True"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": true,
+      "details": "completed ordered workflow: query_matter_documents -> read_matter_document -> read_matter_document -> read_matter_document -> litigation_filings_amount_history_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": true,
+      "details": "all required input documents were read in full"
+     },
+     {
+      "name": "rows_inserted_into_litigation_filings_amount_history",
+      "passed": true,
+      "details": "litigation_filings_amount_history: 18 -> 19 rows (1 new, need >= 1)"
+     },
+     {
+      "name": "litigation_filings_amount_history_new_row_0_filing_cost_is_2.0",
+      "passed": false,
+      "details": "expected a new litigation_filings_amount_history row with filing_cost=2.0; got ['4244.42']"
+     },
+     {
+      "name": "litigation_filings_amount_history_new_row_1_changed_by_role_is_cite-checker",
+      "passed": false,
+      "details": "expected a new litigation_filings_amount_history row with changed_by_role=cite-checker; got ['cite-checker xx-wrong']"
+     },
+     {
+      "name": "no_new_litigation_filings_amount_history_row_with_filing_cost_1",
+      "passed": true,
+      "details": "no fabricated filing_cost=1 row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "5/5 tool calls succeeded"
+     }
+    ]
+   }
+  }
+ }
+}

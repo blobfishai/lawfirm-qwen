@@ -1,0 +1,566 @@
+{
+ "task_id": "task_259",
+ "world": "world-v15.json",
+ "episodes": {
+  "oracle": {
+   "trace": [
+    {
+     "tool": "query_matter_documents",
+     "requested_tool": "query_matter_documents",
+     "arguments": {
+      "title": "Filing pack \u2014 Local Rules excerpt: electronic filing and red"
+     },
+     "observation": "{\"table\": \"matter_documents\", \"count\": 1, \"returned\": 1, \"offset\": 0, \"limit\": 25, \"rows\": [{\"id\": 250, \"title\": \"Filing pack \\u2014 Local Rules excerpt: electronic filing and redaction\", \"doc_type\": \"local_rules\", \"related_shape\": \"court-efiling\", \"body\": \"LOCAL RULES (excerpt)\\n\\nLR 5.2 REDACTION. A party filing any document containing the following must redact: full social-security numbers (leave last four digits), full birth dates (leave year), minors' names (leave initials), and full financ\\u2026[preview]\"}], \"has_more\": false, \"note\": \"body fields are previews \\u2014 call read_matter_document(id) to read a document in full before using it\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 250
+     },
+     "observation": "{\"id\": 250, \"title\": \"Filing pack \\u2014 Local Rules excerpt: electronic filing and redaction\", \"doc_type\": \"local_rules\", \"related_shape\": \"court-efiling\", \"body\": \"LOCAL RULES (excerpt)\\n\\nLR 5.2 REDACTION. A party filing any document containing the following must redact: full social-security numbers (leave last four digits), full birth dates (leave year), minors' names (leave initials), and full financial-account numbers (leave last four digits). The filer, not the Clerk, bears responsibility for redaction.\\n\\nLR 7.1 PAGE LIMITS. A brief in support of or in opposition to a dispositive motion shall not exceed 25 PAGES exclusive of caption, signature block, and certificate of service. Leave to exceed must be sought before filing.\\n\\nLR 5.4 FILING WINDOW. A document is timely if filed by 11:59 p.m. local time on the due date. A document filed after that time is docketed as of the NEXT BUSINESS DAY.\\n\\nFiling determination vocabulary (use exactly): file_as_is | redact_before_filing | seek_leave_before_filing\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 251
+     },
+     "observation": "{\"id\": 251, \"title\": \"Filing pack \\u2014 Draft brief for filing: opposition to motion to dismiss\", \"doc_type\": \"draft_filing\", \"related_shape\": \"court-efiling\", \"body\": \"DRAFT FOR FILING \\u2014 OPPOSITION TO DEFENDANT'S MOTION TO DISMISS\\nMatter: Meridian Grain Cooperative v. Talvern Logistics\\nDocument statistics: 22 pages of argument, plus caption (1 page), signature block, and certificate of service.\\n\\nContent note from the drafting associate: Exhibit C to the opposition reproduces the plaintiff's bank statement showing account number 4471-8890-2213-9964 in full, and paragraph 41 recites the date of birth of the plaintiff's warehouse manager (14 March 1979) in full.\\n\\nThe brief is otherwise final and approved by the supervising partner.\"}",
+     "ok": true
+    },
+    {
+     "tool": "litigation_filings_review_create",
+     "requested_tool": "litigation_filings_review_create",
+     "arguments": {
+      "litigation_filings_id": "litigation_filings_001",
+      "reviewer_role": "filing-clerk",
+      "outcome": "redact_before_filing",
+      "rationale": "22 pages is within the 25-page limit, so no leave is needed; but Exhibit C shows a full account number and para. 41 a full birth date, so LR 5.2 redaction is required before filing."
+     },
+     "observation": "{\"status\": \"created\", \"table\": \"litigation_filings_reviews\", \"id\": \"litigation_filings_review_020\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_259",
+    "passed": true,
+    "reward": 1.0,
+    "explanation": "All task checks passed",
+    "failed_conditions": [],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": true,
+      "details": "reads=3, writes=1, read_first=True"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": true,
+      "details": "completed ordered workflow: query_matter_documents -> read_matter_document -> read_matter_document -> litigation_filings_review_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": true,
+      "details": "all required input documents were read in full"
+     },
+     {
+      "name": "rows_inserted_into_litigation_filings_reviews",
+      "passed": true,
+      "details": "litigation_filings_reviews: 19 -> 20 rows (1 new, need >= 1)"
+     },
+     {
+      "name": "litigation_filings_reviews_new_row_0_outcome_is_redact_before_filing",
+      "passed": true,
+      "details": "expected a new litigation_filings_reviews row with outcome=redact_before_filing; got ['redact_before_filing']"
+     },
+     {
+      "name": "litigation_filings_reviews_new_row_1_reviewer_role_is_filing-clerk",
+      "passed": true,
+      "details": "expected a new litigation_filings_reviews row with reviewer_role=filing-clerk; got ['filing-clerk']"
+     },
+     {
+      "name": "no_new_litigation_filings_reviews_row_with_outcome_file_as_is",
+      "passed": true,
+      "details": "no fabricated outcome=file_as_is row"
+     },
+     {
+      "name": "no_new_litigation_filings_reviews_row_with_outcome_seek_leave_before_filing",
+      "passed": true,
+      "details": "no fabricated outcome=seek_leave_before_filing row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "4/4 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "noop": {
+   "trace": [],
+   "verdict": {
+    "task_id": "task_259",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: state_changed, reads_before_writes, required_workflow_path, required_documents_read, rows_inserted_into_litigation_filings_reviews, litigation_filings_reviews_new_row_0_outcome_is_redact_before_filing, litigation_filings_reviews_new_row_1_reviewer_role_is_filing-clerk",
+    "failed_conditions": [
+     "state_changed",
+     "reads_before_writes",
+     "required_workflow_path",
+     "required_documents_read",
+     "rows_inserted_into_litigation_filings_reviews",
+     "litigation_filings_reviews_new_row_0_outcome_is_redact_before_filing",
+     "litigation_filings_reviews_new_row_1_reviewer_role_is_filing-clerk"
+    ],
+    "advisory_conditions": [
+     "all_tools_succeeded"
+    ],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": false,
+      "details": "NO state change \u2014 agent did nothing"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": false,
+      "details": "reads=0, writes=0, read_first=False"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints query_matter_documents -> read_matter_document -> read_matter_document -> litigation_filings_review_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": false,
+      "details": "EVIDENCE GAP: matter_documents ['250', '251'] were never read with read_matter_document"
+     },
+     {
+      "name": "rows_inserted_into_litigation_filings_reviews",
+      "passed": false,
+      "details": "litigation_filings_reviews: 19 -> 19 rows (0 new, need >= 1)"
+     },
+     {
+      "name": "litigation_filings_reviews_new_row_0_outcome_is_redact_before_filing",
+      "passed": false,
+      "details": "expected a new litigation_filings_reviews row with outcome=redact_before_filing; got []"
+     },
+     {
+      "name": "litigation_filings_reviews_new_row_1_reviewer_role_is_filing-clerk",
+      "passed": false,
+      "details": "expected a new litigation_filings_reviews row with reviewer_role=filing-clerk; got []"
+     },
+     {
+      "name": "no_new_litigation_filings_reviews_row_with_outcome_file_as_is",
+      "passed": true,
+      "details": "no fabricated outcome=file_as_is row"
+     },
+     {
+      "name": "no_new_litigation_filings_reviews_row_with_outcome_seek_leave_before_filing",
+      "passed": true,
+      "details": "no fabricated outcome=seek_leave_before_filing row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": false,
+      "details": "0/0 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "text_only": {
+   "trace": [
+    {
+     "tool": "query_matter_documents",
+     "requested_tool": "query_matter_documents",
+     "arguments": {
+      "title": "Filing pack \u2014 Local Rules excerpt: electronic filing and red"
+     },
+     "observation": "{\"table\": \"matter_documents\", \"count\": 1, \"returned\": 1, \"offset\": 0, \"limit\": 25, \"rows\": [{\"id\": 250, \"title\": \"Filing pack \\u2014 Local Rules excerpt: electronic filing and redaction\", \"doc_type\": \"local_rules\", \"related_shape\": \"court-efiling\", \"body\": \"LOCAL RULES (excerpt)\\n\\nLR 5.2 REDACTION. A party filing any document containing the following must redact: full social-security numbers (leave last four digits), full birth dates (leave year), minors' names (leave initials), and full financ\\u2026[preview]\"}], \"has_more\": false, \"note\": \"body fields are previews \\u2014 call read_matter_document(id) to read a document in full before using it\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 250
+     },
+     "observation": "{\"id\": 250, \"title\": \"Filing pack \\u2014 Local Rules excerpt: electronic filing and redaction\", \"doc_type\": \"local_rules\", \"related_shape\": \"court-efiling\", \"body\": \"LOCAL RULES (excerpt)\\n\\nLR 5.2 REDACTION. A party filing any document containing the following must redact: full social-security numbers (leave last four digits), full birth dates (leave year), minors' names (leave initials), and full financial-account numbers (leave last four digits). The filer, not the Clerk, bears responsibility for redaction.\\n\\nLR 7.1 PAGE LIMITS. A brief in support of or in opposition to a dispositive motion shall not exceed 25 PAGES exclusive of caption, signature block, and certificate of service. Leave to exceed must be sought before filing.\\n\\nLR 5.4 FILING WINDOW. A document is timely if filed by 11:59 p.m. local time on the due date. A document filed after that time is docketed as of the NEXT BUSINESS DAY.\\n\\nFiling determination vocabulary (use exactly): file_as_is | redact_before_filing | seek_leave_before_filing\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 251
+     },
+     "observation": "{\"id\": 251, \"title\": \"Filing pack \\u2014 Draft brief for filing: opposition to motion to dismiss\", \"doc_type\": \"draft_filing\", \"related_shape\": \"court-efiling\", \"body\": \"DRAFT FOR FILING \\u2014 OPPOSITION TO DEFENDANT'S MOTION TO DISMISS\\nMatter: Meridian Grain Cooperative v. Talvern Logistics\\nDocument statistics: 22 pages of argument, plus caption (1 page), signature block, and certificate of service.\\n\\nContent note from the drafting associate: Exhibit C to the opposition reproduces the plaintiff's bank statement showing account number 4471-8890-2213-9964 in full, and paragraph 41 recites the date of birth of the plaintiff's warehouse manager (14 March 1979) in full.\\n\\nThe brief is otherwise final and approved by the supervising partner.\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_259",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: state_changed, required_workflow_path, rows_inserted_into_litigation_filings_reviews, litigation_filings_reviews_new_row_0_outcome_is_redact_before_filing, litigation_filings_reviews_new_row_1_reviewer_role_is_filing-clerk",
+    "failed_conditions": [
+     "state_changed",
+     "required_workflow_path",
+     "rows_inserted_into_litigation_filings_reviews",
+     "litigation_filings_reviews_new_row_0_outcome_is_redact_before_filing",
+     "litigation_filings_reviews_new_row_1_reviewer_role_is_filing-clerk"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": false,
+      "details": "NO state change \u2014 agent did nothing"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": true,
+      "details": "reads=3, writes=0, read_first=True"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints litigation_filings_review_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": true,
+      "details": "all required input documents were read in full"
+     },
+     {
+      "name": "rows_inserted_into_litigation_filings_reviews",
+      "passed": false,
+      "details": "litigation_filings_reviews: 19 -> 19 rows (0 new, need >= 1)"
+     },
+     {
+      "name": "litigation_filings_reviews_new_row_0_outcome_is_redact_before_filing",
+      "passed": false,
+      "details": "expected a new litigation_filings_reviews row with outcome=redact_before_filing; got []"
+     },
+     {
+      "name": "litigation_filings_reviews_new_row_1_reviewer_role_is_filing-clerk",
+      "passed": false,
+      "details": "expected a new litigation_filings_reviews row with reviewer_role=filing-clerk; got []"
+     },
+     {
+      "name": "no_new_litigation_filings_reviews_row_with_outcome_file_as_is",
+      "passed": true,
+      "details": "no fabricated outcome=file_as_is row"
+     },
+     {
+      "name": "no_new_litigation_filings_reviews_row_with_outcome_seek_leave_before_filing",
+      "passed": true,
+      "details": "no fabricated outcome=seek_leave_before_filing row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "3/3 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "blind_write": {
+   "trace": [
+    {
+     "tool": "litigation_filings_review_create",
+     "requested_tool": "litigation_filings_review_create",
+     "arguments": {
+      "litigation_filings_id": "litigation_filings_001",
+      "reviewer_role": "filing-clerk",
+      "outcome": "redact_before_filing",
+      "rationale": "22 pages is within the 25-page limit, so no leave is needed; but Exhibit C shows a full account number and para. 41 a full birth date, so LR 5.2 redaction is required before filing."
+     },
+     "observation": "{\"status\": \"created\", \"table\": \"litigation_filings_reviews\", \"id\": \"litigation_filings_review_020\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_259",
+    "passed": false,
+    "reward": 0.0,
+    "explanation": "Failed: reads_before_writes, no_shortcut_direct_update, required_workflow_path, required_documents_read",
+    "failed_conditions": [
+     "reads_before_writes",
+     "no_shortcut_direct_update",
+     "required_workflow_path",
+     "required_documents_read"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": false,
+      "details": "reads=0, writes=1, read_first=False"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": false,
+      "details": "SHORTCUT: wrote without reading first"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": false,
+      "details": "INCOMPLETE WORKFLOW: missing ordered checkpoints query_matter_documents -> read_matter_document -> read_matter_document"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": false,
+      "details": "EVIDENCE GAP: matter_documents ['250', '251'] were never read with read_matter_document"
+     },
+     {
+      "name": "rows_inserted_into_litigation_filings_reviews",
+      "passed": true,
+      "details": "litigation_filings_reviews: 19 -> 20 rows (1 new, need >= 1)"
+     },
+     {
+      "name": "litigation_filings_reviews_new_row_0_outcome_is_redact_before_filing",
+      "passed": true,
+      "details": "expected a new litigation_filings_reviews row with outcome=redact_before_filing; got ['redact_before_filing']"
+     },
+     {
+      "name": "litigation_filings_reviews_new_row_1_reviewer_role_is_filing-clerk",
+      "passed": true,
+      "details": "expected a new litigation_filings_reviews row with reviewer_role=filing-clerk; got ['filing-clerk']"
+     },
+     {
+      "name": "no_new_litigation_filings_reviews_row_with_outcome_file_as_is",
+      "passed": true,
+      "details": "no fabricated outcome=file_as_is row"
+     },
+     {
+      "name": "no_new_litigation_filings_reviews_row_with_outcome_seek_leave_before_filing",
+      "passed": true,
+      "details": "no fabricated outcome=seek_leave_before_filing row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "1/1 tool calls succeeded"
+     }
+    ]
+   }
+  },
+  "wrong_value": {
+   "trace": [
+    {
+     "tool": "query_matter_documents",
+     "requested_tool": "query_matter_documents",
+     "arguments": {
+      "title": "Filing pack \u2014 Local Rules excerpt: electronic filing and red"
+     },
+     "observation": "{\"table\": \"matter_documents\", \"count\": 1, \"returned\": 1, \"offset\": 0, \"limit\": 25, \"rows\": [{\"id\": 250, \"title\": \"Filing pack \\u2014 Local Rules excerpt: electronic filing and redaction\", \"doc_type\": \"local_rules\", \"related_shape\": \"court-efiling\", \"body\": \"LOCAL RULES (excerpt)\\n\\nLR 5.2 REDACTION. A party filing any document containing the following must redact: full social-security numbers (leave last four digits), full birth dates (leave year), minors' names (leave initials), and full financ\\u2026[preview]\"}], \"has_more\": false, \"note\": \"body fields are previews \\u2014 call read_matter_document(id) to read a document in full before using it\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 250
+     },
+     "observation": "{\"id\": 250, \"title\": \"Filing pack \\u2014 Local Rules excerpt: electronic filing and redaction\", \"doc_type\": \"local_rules\", \"related_shape\": \"court-efiling\", \"body\": \"LOCAL RULES (excerpt)\\n\\nLR 5.2 REDACTION. A party filing any document containing the following must redact: full social-security numbers (leave last four digits), full birth dates (leave year), minors' names (leave initials), and full financial-account numbers (leave last four digits). The filer, not the Clerk, bears responsibility for redaction.\\n\\nLR 7.1 PAGE LIMITS. A brief in support of or in opposition to a dispositive motion shall not exceed 25 PAGES exclusive of caption, signature block, and certificate of service. Leave to exceed must be sought before filing.\\n\\nLR 5.4 FILING WINDOW. A document is timely if filed by 11:59 p.m. local time on the due date. A document filed after that time is docketed as of the NEXT BUSINESS DAY.\\n\\nFiling determination vocabulary (use exactly): file_as_is | redact_before_filing | seek_leave_before_filing\"}",
+     "ok": true
+    },
+    {
+     "tool": "read_matter_document",
+     "requested_tool": "read_matter_document",
+     "arguments": {
+      "id": 251
+     },
+     "observation": "{\"id\": 251, \"title\": \"Filing pack \\u2014 Draft brief for filing: opposition to motion to dismiss\", \"doc_type\": \"draft_filing\", \"related_shape\": \"court-efiling\", \"body\": \"DRAFT FOR FILING \\u2014 OPPOSITION TO DEFENDANT'S MOTION TO DISMISS\\nMatter: Meridian Grain Cooperative v. Talvern Logistics\\nDocument statistics: 22 pages of argument, plus caption (1 page), signature block, and certificate of service.\\n\\nContent note from the drafting associate: Exhibit C to the opposition reproduces the plaintiff's bank statement showing account number 4471-8890-2213-9964 in full, and paragraph 41 recites the date of birth of the plaintiff's warehouse manager (14 March 1979) in full.\\n\\nThe brief is otherwise final and approved by the supervising partner.\"}",
+     "ok": true
+    },
+    {
+     "tool": "litigation_filings_review_create",
+     "requested_tool": "litigation_filings_review_create",
+     "arguments": {
+      "litigation_filings_id": "litigation_filings_001",
+      "reviewer_role": "filing-clerk XX-WRONG",
+      "outcome": "redact_before_filing XX-WRONG",
+      "rationale": "22 pages is within the 25-page limit, so no leave is needed; but Exhibit C shows a full account number and para. 41 a full birth date, so LR 5.2 redaction is required before filing. XX-WRONG"
+     },
+     "observation": "{\"status\": \"created\", \"table\": \"litigation_filings_reviews\", \"id\": \"litigation_filings_review_020\"}",
+     "ok": true
+    }
+   ],
+   "verdict": {
+    "task_id": "task_259",
+    "passed": false,
+    "reward": 0.3333,
+    "explanation": "Failed: litigation_filings_reviews_new_row_0_outcome_is_redact_before_filing, litigation_filings_reviews_new_row_1_reviewer_role_is_filing-clerk",
+    "failed_conditions": [
+     "litigation_filings_reviews_new_row_0_outcome_is_redact_before_filing",
+     "litigation_filings_reviews_new_row_1_reviewer_role_is_filing-clerk"
+    ],
+    "advisory_conditions": [],
+    "assertions": [
+     {
+      "name": "state_changed",
+      "passed": true,
+      "details": "world state changed"
+     },
+     {
+      "name": "reads_before_writes",
+      "passed": true,
+      "details": "reads=3, writes=1, read_first=True"
+     },
+     {
+      "name": "no_shortcut_direct_update",
+      "passed": true,
+      "details": "inspected data before writing"
+     },
+     {
+      "name": "required_workflow_path",
+      "passed": true,
+      "details": "completed ordered workflow: query_matter_documents -> read_matter_document -> read_matter_document -> litigation_filings_review_create"
+     },
+     {
+      "name": "required_documents_read",
+      "passed": true,
+      "details": "all required input documents were read in full"
+     },
+     {
+      "name": "rows_inserted_into_litigation_filings_reviews",
+      "passed": true,
+      "details": "litigation_filings_reviews: 19 -> 20 rows (1 new, need >= 1)"
+     },
+     {
+      "name": "litigation_filings_reviews_new_row_0_outcome_is_redact_before_filing",
+      "passed": false,
+      "details": "expected a new litigation_filings_reviews row with outcome=redact_before_filing; got ['redact_before_filing xx-wrong']"
+     },
+     {
+      "name": "litigation_filings_reviews_new_row_1_reviewer_role_is_filing-clerk",
+      "passed": false,
+      "details": "expected a new litigation_filings_reviews row with reviewer_role=filing-clerk; got ['filing-clerk xx-wrong']"
+     },
+     {
+      "name": "no_new_litigation_filings_reviews_row_with_outcome_file_as_is",
+      "passed": true,
+      "details": "no fabricated outcome=file_as_is row"
+     },
+     {
+      "name": "no_new_litigation_filings_reviews_row_with_outcome_seek_leave_before_filing",
+      "passed": true,
+      "details": "no fabricated outcome=seek_leave_before_filing row"
+     },
+     {
+      "name": "no_offtask_table_changes",
+      "passed": true,
+      "details": "no off-task tables were modified"
+     },
+     {
+      "name": "no_rows_destroyed",
+      "passed": true,
+      "details": "no rows were destroyed in any table"
+     },
+     {
+      "name": "no_undeclared_rows_created",
+      "passed": true,
+      "details": "all created rows were declared by task insert effects"
+     },
+     {
+      "name": "all_tools_succeeded",
+      "passed": true,
+      "details": "4/4 tool calls succeeded"
+     }
+    ]
+   }
+  }
+ }
+}
