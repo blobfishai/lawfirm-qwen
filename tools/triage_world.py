@@ -18,6 +18,7 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_WORLD = ROOT / "world" / "blobfish" / "world-v19.json"
+DEFAULT_PROTOCOL = "v19-systems-bounded-context-v1"
 REFUSAL_RE = re.compile(
     r"\b(cannot assist|can't assist|cannot help with|unable to (help|assist)|"
     r"i (must|have to) (decline|refuse)|against my (guidelines|principles))\b",
@@ -35,7 +36,8 @@ def final_text(episode: dict[str, Any]) -> str:
 
 
 def usable(episode: dict[str, Any], world_version: int,
-           expected_tool_scope: str | None = None) -> tuple[bool, str]:
+           expected_tool_scope: str | None = None,
+           expected_protocol: str | None = None) -> tuple[bool, str]:
     if episode.get("infraError"):
         return False, "infrastructure"
     if (episode.get("toolCalls") or 0) == 0 and REFUSAL_RE.search(final_text(episode)):
@@ -46,6 +48,8 @@ def usable(episode: dict[str, Any], world_version: int,
         actual_scope = (episode.get("toolScope") or {}).get("mode")
         if actual_scope != expected_tool_scope:
             return False, "wrong_tool_scope"
+    if expected_protocol is not None and episode.get("measurementProtocol") != expected_protocol:
+        return False, "wrong_measurement_protocol"
     return True, "measured"
 
 
@@ -99,7 +103,8 @@ def read_episode(path: Path) -> dict[str, Any]:
 
 
 def load_episodes(path: Path, world_version: int,
-                  expected_tool_scope: str | None = None) -> tuple[dict[str, list[dict]], Counter]:
+                  expected_tool_scope: str | None = None,
+                  expected_protocol: str | None = None) -> tuple[dict[str, list[dict]], Counter]:
     by_task: dict[str, list[dict]] = defaultdict(list)
     exclusions: Counter = Counter()
     if not path.exists():
@@ -114,7 +119,9 @@ def load_episodes(path: Path, world_version: int,
         if not task_id:
             exclusions["missing_task_id"] += 1
             continue
-        is_usable, reason = usable(episode, world_version, expected_tool_scope)
+        is_usable, reason = usable(
+            episode, world_version, expected_tool_scope, expected_protocol,
+        )
         if not is_usable:
             exclusions[reason] += 1
             continue
@@ -123,11 +130,14 @@ def load_episodes(path: Path, world_version: int,
 
 
 def build_report(world_path: Path, episodes_path: Path, expected: int,
-                 expected_tool_scope: str | None = None) -> dict[str, Any]:
+                 expected_tool_scope: str | None = None,
+                 expected_protocol: str | None = None) -> dict[str, Any]:
     raw = json.loads(world_path.read_text())
     world = raw.get("world", raw)
     version = int(world["version"])
-    by_task, exclusions = load_episodes(episodes_path, version, expected_tool_scope)
+    by_task, exclusions = load_episodes(
+        episodes_path, version, expected_tool_scope, expected_protocol,
+    )
     labels = {}
     unknown_episode_tasks = sorted(set(by_task) - {task["task_id"] for task in world["tasks"]})
     for task in world["tasks"]:
@@ -141,6 +151,7 @@ def build_report(world_path: Path, episodes_path: Path, expected: int,
         "episodes_path": episodes_path.relative_to(ROOT).as_posix() if episodes_path.is_relative_to(ROOT) else str(episodes_path),
         "expected_episodes_per_task": expected,
         "tool_scope": expected_tool_scope,
+        "measurement_protocol": expected_protocol,
         "tasks": len(world["tasks"]),
         "tasks_fully_measured": measured,
         "episodes_required": len(world["tasks"]) * expected,
@@ -191,6 +202,7 @@ def markdown(report: dict[str, Any]) -> str:
         f"- Complete: **{'yes' if report['complete'] else 'no'}**",
         f"- Episode source: `{report['episodes_path']}`",
         f"- Tool-scope protocol: `{report['tool_scope'] or 'unrestricted'}`",
+        f"- Measurement protocol: `{report['measurement_protocol'] or 'unversioned'}`",
         "",
         "| Label | Tasks | Rule |",
         "|---|---:|---|",
@@ -247,6 +259,7 @@ def main() -> int:
     parser.add_argument("--episodes", type=Path)
     parser.add_argument("--expected", type=int, default=3)
     parser.add_argument("--tool-scope", choices=("all", "systems"), default="systems")
+    parser.add_argument("--protocol", default=DEFAULT_PROTOCOL)
     parser.add_argument("--json-out", type=Path,
                         default=ROOT / "data" / "triage" / "world-v19.json")
     parser.add_argument("--md-out", type=Path, default=ROOT / "docs" / "TRIAGE-v19.md")
@@ -258,6 +271,7 @@ def main() -> int:
                                  args.engine / args.namespace)
     report = build_report(
         args.world.resolve(), episodes.resolve(), args.expected, args.tool_scope,
+        args.protocol,
     )
     remaining = report["episodes_required"] - report["usable_episodes"]
     report["cost_projection"] = project_cost(episodes, remaining)

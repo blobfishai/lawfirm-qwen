@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, join, relative, resolve } from "node:path";
 import { classifyEpisode } from "./lib/sweep-health.mjs";
 import { listJsonRecordFiles, readJsonRecordFile } from "./lib/episode-record.mjs";
+import { MEASUREMENT_PROTOCOL } from "./lib/measurement-protocol.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const argv = process.argv.slice(2);
@@ -16,6 +17,7 @@ const ENGINE = opt("--engine", null);
 if (!ENGINE) { console.error("--engine required"); process.exit(1); }
 const NAMESPACE = opt("--namespace", "v19-triage");
 const EXPECTED_TOOL_SCOPE = opt("--tool-scope", "systems");
+const EXPECTED_PROTOCOL = opt("--protocol", MEASUREMENT_PROTOCOL.id);
 const WORLD_PATH = resolve(ROOT, opt("--world", "world/blobfish/world-v19.json"));
 const EPISODE_DIR = resolve(ROOT, opt(
   "--episodes", `data/leaderboard/episodes/${ENGINE}/${NAMESPACE}`,
@@ -121,9 +123,11 @@ for (const task of [...world.tasks].sort((left, right) => left.task_id.localeCom
   const kinds = all.map((record) => classifyEpisode(record));
   const versionMismatches = all.filter((record) => record.worldVersion !== world.version).length;
   const scopeMismatches = all.filter((record) => record.toolScope?.mode !== EXPECTED_TOOL_SCOPE).length;
+  const protocolMismatches = all.filter((record) => record.measurementProtocol !== EXPECTED_PROTOCOL).length;
   const eligible = all.filter((record, index) =>
     record.worldVersion === world.version
       && record.toolScope?.mode === EXPECTED_TOOL_SCOPE
+      && record.measurementProtocol === EXPECTED_PROTOCOL
       && !["infra_error", "refusal", "not_measured"].includes(kinds[index]));
   const passes = eligible.filter((record) => record.passed === true).length;
   const n = eligible.length;
@@ -166,6 +170,7 @@ for (const task of [...world.tasks].sort((left, right) => left.task_id.localeCom
       refusal: kinds.filter((kind) => kind === "refusal").length,
       versionMismatch: versionMismatches,
       toolScopeMismatch: scopeMismatches,
+      measurementProtocolMismatch: protocolMismatches,
     },
     zeroCallFailures: eligible.filter((record) =>
       (record.toolCalls ?? 0) === 0 && record.passed !== true).length,
@@ -225,6 +230,7 @@ const report = {
   namespace: NAMESPACE || null,
   worldVersion: world.version,
   toolScope: EXPECTED_TOOL_SCOPE,
+  measurementProtocol: EXPECTED_PROTOCOL,
   worldFile: relativeSource(WORLD_PATH),
   triageFile: relativeSource(TRIAGE_PATH),
   builtFrom: relativeSource(EPISODE_DIR),
@@ -246,6 +252,7 @@ const report = {
     infrastructureExcluded: infrastructureCount,
     versionMismatchesExcluded: rows.reduce((sum, row) => sum + row.exclusions.versionMismatch, 0),
     toolScopeMismatchesExcluded: rows.reduce((sum, row) => sum + row.exclusions.toolScopeMismatch, 0),
+    measurementProtocolMismatchesExcluded: rows.reduce((sum, row) => sum + row.exclusions.measurementProtocolMismatch, 0),
     zeroCallFailures: rows.reduce((sum, row) => sum + row.zeroCallFailures, 0),
   },
   headline: {

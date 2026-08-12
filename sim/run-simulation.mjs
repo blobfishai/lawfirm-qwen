@@ -21,6 +21,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { McpClient } from "./lib/mcp-client.mjs";
 import { compactToolHistory, CONTEXT_POLICY } from "./lib/context-policy.mjs";
+import { MEASUREMENT_PROTOCOL } from "./lib/measurement-protocol.mjs";
 import { scopeTools, turnBudget } from "./lib/tool-scope.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -350,6 +351,8 @@ async function main() {
     engine: ENGINE.id,
     model: ENGINE.model,
     mcpMode,
+    measurementProtocol: MEASUREMENT_PROTOCOL.id,
+    measurementProtocolConfig: MEASUREMENT_PROTOCOL,
     toolScope: scoped.metadata,
     contextPolicy: CONTEXT_POLICY,
     worldVersion: world.version ?? null,

@@ -482,7 +482,7 @@ one deterministic specialist distractor. Scoping remains at whole-system
 granularity, so it never reveals the exact reference walk and it does not alter
 any vendor schema. The turn allowance is now bounded by
 `min(50, max(10, ceil(reference_calls * 1.25) + 5))`. Triage and leaderboard
-builders reject records from a different scope. Long episodes retain the 12
+builders reject records from a different scope or protocol version. Long episodes retain the 12
 most recent tool results verbatim and deterministically compact older results
 to 1,000 characters (six/300 under context pressure), while preserving every
 assistant/tool protocol link and the full immutable episode trace. Episode records can be stored
