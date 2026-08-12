@@ -29,12 +29,12 @@ jobs:
           timeout 60 bash -c 'until curl -sf $BASE/health >/dev/null; do sleep 1; done'
       - name: Oracle (require 100%)
         run: python3 world/local/oracle.py --base $BASE --world $WORLD
-      - name: Discrimination (require 0 broken keys/guards)
+      - name: Discrimination (report; exit 1 = known no-key leaks, judged next step)
         run: |
           python3 world/local/discriminate.py --base $BASE --world $WORLD \
-            --out /tmp/discrimination.json
+            --out /tmp/discrimination.json || true
       - name: Assert no discrimination failures
-        run: python3 tools/check_discrimination.py /tmp/discrimination.json --budget 119
+        run: python3 tools/check_discrimination.py /tmp/discrimination.json --budget 119 --expect-tasks 291
 
   fixtures-and-gates:
     runs-on: ubuntu-latest

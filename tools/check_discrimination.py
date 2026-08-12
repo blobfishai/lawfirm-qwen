@@ -17,9 +17,22 @@ def main() -> int:
     ap.add_argument("report")
     ap.add_argument("--budget", type=int, default=119,
                     help="allowed wrong_value leaks (the no-answer-key set)")
+    ap.add_argument("--expect-tasks", type=int, default=0,
+                    help="fail unless the report covers exactly this many tasks "
+                         "(catches partial/crashed sweeps)")
     args = ap.parse_args()
 
-    s = json.load(open(args.report))["summary"]
+    report = json.load(open(args.report))
+    s = report["summary"]
+    if args.expect_tasks and s.get("tasks") != args.expect_tasks:
+        print(f"partial report: {s.get('tasks')} tasks != {args.expect_tasks}")
+        return 1
+    errors = [r["task_id"] for r in report.get("rows", [])
+              if any(isinstance(r.get(m), dict) and r[m].get("error")
+                     for m in s.get("modes", []))]
+    if errors:
+        print(f"harness errors in {len(errors)} tasks: {errors[:10]}")
+        return 1
     bad = s["discrimination_failures"]
     blind = [b for b in bad if b["mode"] == "wrong_value"]
     behavioral = [b for b in bad if b["mode"] != "wrong_value"]
