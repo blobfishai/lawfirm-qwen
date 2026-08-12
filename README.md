@@ -1,4 +1,4 @@
-# lawfirm-qwen — Eve Litigation Law Firm (SIMULATED) Simulation World
+# legal-agent-simulation — Eve Litigation Law Firm (SIMULATED) Simulation World
 
 > **Simulation only.** Every matter, client, document, attorney, and figure in
 > this repo is synthetic test data. "Harvey-LAB-anchored" names a task-shape
@@ -173,7 +173,7 @@ argument, grounded in a 29-benchmark survey of the legal-eval field, is in
 [`docs/WHY-BEYOND-HARVEY-LAB.md`](docs/WHY-BEYOND-HARVEY-LAB.md); the survey
 itself is [`data/research/legal-eval-inventory.md`](data/research/legal-eval-inventory.md).
 
-| | Harvey LAB | lawfirm-qwen world |
+| | Harvey LAB | legal-agent-simulation world |
 |---|---|---|
 | Environment | file sandbox, no state | 74-table live SQLite, 102 executable tools |
 | Grading | LLM judge, all-pass rubric | deterministic VCode, per-assertion, anti-hack vetoes |

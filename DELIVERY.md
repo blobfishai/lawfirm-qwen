@@ -1,4 +1,4 @@
-# lawfirm-qwen — delivery note
+# legal-agent-simulation — delivery note
 
 An executable law-firm world for evaluating agents, with deterministic grading,
 a proven capability boundary, and every claim traceable to something you can

@@ -12,7 +12,7 @@ support and is explicit about what it is not yet entitled to claim.
 There are **two incompatible architectures** for evaluating legal agents, and we
 built one of them without having read the other.
 
-| | Harvey LAB | lawfirm-qwen |
+| | Harvey LAB | legal-agent-simulation |
 |---|---|---|
 | agent surface | 6 filesystem tools (`bash`, `read`, `write`, `edit`, `glob`, `grep`) in a Docker sandbox | 91 domain tools + 88 vendor-API-mirrored tools over SQLite |
 | the "legal system" is | a read-only folder of `.docx`/`.xlsx`/`.eml` | a database of matters, dockets, invoices, documents |
