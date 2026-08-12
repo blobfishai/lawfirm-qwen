@@ -1,6 +1,6 @@
 # tasks/ — one folder per task: definition, verifier, and its own seed bundle
 
-Materialized from `world/blobfish/world-v13.json` by `node sim/build-catalog.mjs`
+Materialized from `world/blobfish/world-v14.json` by `node sim/build-catalog.mjs`
 (seed bundles derived by `world/expansion/derive-task-seeds.mjs`). Do not edit directly.
 
 ```

@@ -4,10 +4,9 @@
   "model": "deepseek-chat",
   "mcpMode": "bridge",
   "passed": false,
-  "reward": 0,
+  "reward": 0.6667,
   "failedConditions": [
-    "legal_matters_evidence_records_new_row_0_content_digest_is_EV-05",
-    "no_new_legal_matters_evidence_records_row_with_content_digest_EV-03"
+    "legal_matters_evidence_records_new_row_0_content_digest_is_EV-05"
   ],
   "advisoryConditions": [],
   "assertions": [
@@ -44,7 +43,7 @@
     {
       "name": "legal_matters_evidence_records_new_row_0_content_digest_is_EV-05",
       "passed": false,
-      "details": "expected a new legal_matters_evidence_records row with content_digest=EV-05; got ['ev-03']"
+      "details": "expected a new legal_matters_evidence_records row with content_digest=EV-05; got ['ev-04']"
     },
     {
       "name": "legal_matters_evidence_records_new_row_1_evidence_type_is_defendant_frame_key_event",
@@ -53,8 +52,8 @@
     },
     {
       "name": "no_new_legal_matters_evidence_records_row_with_content_digest_EV-03",
-      "passed": false,
-      "details": "FABRICATION: 1 new legal_matters_evidence_records row(s) claim content_digest=EV-03 but the source materials do not support it"
+      "passed": true,
+      "details": "no fabricated content_digest=EV-03 row"
     },
     {
       "name": "no_offtask_table_changes",
@@ -74,31 +73,43 @@
     {
       "name": "all_tools_succeeded",
       "passed": true,
-      "details": "7/8 tool calls succeeded"
+      "details": "8/9 tool calls succeeded"
     }
   ],
-  "toolCalls": 8,
+  "toolCalls": 9,
   "turnsUsed": 5,
   "maxTurns": 50,
   "usage": {
-    "prompt": 71392,
-    "completion": 1818,
-    "total": 73210
+    "prompt": 122742,
+    "completion": 1798,
+    "total": 124540
   },
-  "costUsd": 0.02128,
-  "log": "/Users/samuelchien/dev/lawfirm-qwen/sim/logs/run-2026-08-11T18-50-24-825Z.jsonl",
-  "finishedAt": "2026-08-11T18:50:43.722Z",
+  "costUsd": 0.03512,
+  "log": "/Users/samuelchien/dev/lawfirm-qwen/sim/logs/run-2026-08-11T19-31-23-489Z.jsonl",
+  "finishedAt": "2026-08-11T19:31:42.550Z",
   "steps": [
     {
       "turn": 1,
-      "tool": "query_documents",
+      "tool": "query_matter_documents",
       "args": {
-        "query": "chronology framing memo"
+        "limit": 50
       },
-      "argBytes": 36,
+      "argBytes": 13,
       "argParseError": false,
-      "ok": false,
-      "observation": "{\"error\": \"unknown_filter\", \"message\": \"agent_documents: no such filter ['query']. Supported filters: ['limit', 'offset']. The call was NOT executed \\u2014 re-issue it with a supported filter.\", \"supported_filters\": [\"limit\", \"offset\"]}",
+      "ok": true,
+      "observation": "{\"table\": \"matter_documents\", \"count\": 352, \"returned\": 50, \"offset\": 0, \"limit\": 50, \"rows\": [{\"id\": 1, \"title\": \"Deal materials \\u2014 antitrust-competition analyze: Analyze Antitrust Risk and HSR Filing Strategy fo\", \"doc_type\": \"input_materials\", \"related_shape\": \"harvey_lab/antitrust-competition/analyze-antitrust-hsr-strategy\", \"body\": \"MATTER FILE 1 \\u2014 ANTITRUST COMPETITION\\nantitrust-competition analyze: Analyze Antitrust Risk and HSR Filing Strategy for PE Acquisition with Horizontal Overlap\\n\\n\\nBACKGROUND. The client engagement covers this antitrust competition matter; the\\u2026[",
+      "thought": null
+    },
+    {
+      "turn": 1,
+      "tool": "workspaces_search",
+      "args": {
+        "name": "Halcyon"
+      },
+      "argBytes": 19,
+      "argParseError": false,
+      "ok": true,
+      "observation": "{\"data\": {\"results\": [{\"id\": 2, \"name\": \"Halcyon Therapeutics Employment Matter\", \"matter_number\": \"00285-Argent\", \"owner\": \"Marcus Beaumont\"}, {\"id\": 7, \"name\": \"Halcyon Therapeutics Financing Matter\", \"matter_number\": \"00876-Northgale\", \"owner\": \"Omar Marchetti\"}, {\"id\": 11, \"name\": \"Northgale Industries Acquisition Matter\", \"matter_number\": \"00300-Halcyon\", \"owner\": \"Celine Calloway\"}, {\"id\": 13, \"name\": \"Halcyon Therapeutics Arbitration Matter\", \"matter_number\": \"00192-Summit\", \"owner\": \"Felix Novak\"}, {\"id\": 15, \"name\": \"Halcyon Therapeutics Employment Matter\", \"matter_number\": \"00449-Sil",
       "thought": null
     },
     {
@@ -117,36 +128,39 @@
       "turn": 2,
       "tool": "query_matter_documents",
       "args": {
-        "id": 12
+        "title": "Brightwater Marine",
+        "limit": 20
       },
-      "argBytes": 10,
+      "argBytes": 44,
       "argParseError": false,
       "ok": true,
-      "observation": "{\"table\": \"matter_documents\", \"count\": 1, \"returned\": 1, \"offset\": 0, \"limit\": 25, \"rows\": [{\"id\": 12, \"title\": \"Deal materials \\u2014 employment-labor analyze: Analyze Counterparty Markup of Executive Employment Ag\", \"doc_type\": \"input_materials\", \"related_shape\": \"harvey_lab/employment-labor/analyze-counterparty-markup-of-executive-employment-agreement\", \"body\": \"MATTER FILE 12 \\u2014 EMPLOYMENT LABOR\\nemployment-labor analyze: Analyze Counterparty Markup of Executive Employment Agreement \\u2014 Redline Analysis Memorandum\\n\\n\\nBACKGROUND. The client engagement covers this employment labor m",
+      "observation": "{\"table\": \"matter_documents\", \"count\": 4, \"returned\": 4, \"offset\": 0, \"limit\": 20, \"rows\": [{\"id\": 285, \"title\": \"Covenant compliance certificate \\u2014 Brightwater Marine Services (Q2 2026)\", \"doc_type\": \"compliance_certificate\", \"related_shape\": \"banking-finance-covenants\", \"body\": \"COMPLIANCE CERTIFICATE \\u2014 Brightwater Marine Services\\nDelivered under the credit agreement for the quarter ended 30 June 2026.\\n\\nCURRENT QUARTER (tested period \\u2014 quarter ended 30 June 2026):\\n  Total Funded Debt .......... $198,000,000.00\\n  Co\\u2026[preview]\"}, {\"id\": 297, \"title\": \"Transaction summar",
       "thought": null
     },
     {
       "turn": 2,
       "tool": "query_matter_documents",
       "args": {
-        "title": "chronology"
+        "title": "chronology",
+        "limit": 20
       },
-      "argBytes": 23,
+      "argBytes": 36,
       "argParseError": false,
       "ok": true,
-      "observation": "{\"table\": \"matter_documents\", \"count\": 2, \"returned\": 2, \"offset\": 0, \"limit\": 25, \"rows\": [{\"id\": 185, \"title\": \"Hallucination-traps pack \\u2014 Litigation case chronology (Northgate Terminal dispute) missing the limitations accrual date\", \"doc_type\": \"input\", \"related_shape\": \"hallucination-traps\", \"body\": \"CASE CHRONOLOGY AND LIMITATIONS WORKSHEET\\nCase: Northgate Terminal Partners LLC v. Fenwright Marine Construction, Inc.\\nPrepared by: Litigation support, for the limitations review\\nGoverning period: The parties agree the applicable limitation\\u2026[preview]\"}, {\"id\": 339, \"title\": \"Chron",
+      "observation": "{\"table\": \"matter_documents\", \"count\": 2, \"returned\": 2, \"offset\": 0, \"limit\": 20, \"rows\": [{\"id\": 185, \"title\": \"Hallucination-traps pack \\u2014 Litigation case chronology (Northgate Terminal dispute) missing the limitations accrual date\", \"doc_type\": \"input\", \"related_shape\": \"hallucination-traps\", \"body\": \"CASE CHRONOLOGY AND LIMITATIONS WORKSHEET\\nCase: Northgate Terminal Partners LLC v. Fenwright Marine Construction, Inc.\\nPrepared by: Litigation support, for the limitations review\\nGoverning period: The parties agree the applicable limitation\\u2026[preview]\"}, {\"id\": 339, \"title\": \"Chron",
       "thought": null
     },
     {
       "turn": 2,
       "tool": "query_matter_documents",
       "args": {
-        "title": "event schedule"
+        "title": "Halcyon Coatings",
+        "limit": 20
       },
-      "argBytes": 27,
+      "argBytes": 42,
       "argParseError": false,
-      "ok": true,
-      "observation": "{\"table\": \"matter_documents\", \"count\": 2, \"returned\": 2, \"offset\": 0, \"limit\": 25, \"rows\": [{\"id\": 340, \"title\": \"Event schedule \\u2014 Brightwater Marine v. Halcyon Coatings (supply dispute)\", \"doc_type\": \"event_schedule\", \"related_shape\": \"posture-dependent-chronology\", \"body\": \"EVENT SCHEDULE \\u2014 Brightwater Marine Services (buyer) v. Halcyon Coatings (supplier)\\n\\nContractual notice provision: the buyer must give written notice of nonconformity within\\nsixty (60) days of discovery. Limitation period for the claim: two\\u2026[preview]\"}, {\"id\": 341, \"title\": \"Event schedule \\u2014 Ironwoo",
+      "ok": false,
+      "observation": "ERROR rate_limited: upstream service throttled this call. Retry the operation.",
       "thought": null
     },
     {
@@ -178,13 +192,13 @@
       "tool": "legal_matters_evidence_create",
       "args": {
         "legal_matters_id": "legal_matters_012",
-        "content_digest": "EV-03",
         "evidence_type": "defendant_frame_key_event",
+        "source_uri": "matter_document/340",
+        "content_digest": "EV-04",
         "owner_role": "litigation-counsel",
-        "status": "confirmed",
-        "source_uri": "matter_documents/340"
+        "status": "confirmed"
       },
-      "argBytes": 211,
+      "argBytes": 210,
       "argParseError": false,
       "ok": true,
       "observation": "{\"status\": \"created\", \"table\": \"legal_matters_evidence_records\", \"id\": \"legal_matters_evidence_010\"}",
@@ -195,7 +209,7 @@
       "tool": "_final_answer",
       "ok": true,
       "thought": null,
-      "observation": "I have recorded the key event for the defending party.\n\n**Summary:**\n\nI acted for **Halcyon Coatings** (the defending party) in *Brightwater Marine v. Halcyon Coatings*. \n\nPer the chronology framing memo, the defensive frame requires tagging the event that most strongly **breaks an element of the claim, opens a limitation/notice/jurisdiction defence, or supports an affirmative defence**.\n\nFrom the event schedule, I identified **EV-03** (2024-01-22 — \"Buyer's maintenance log records coating delamination on vessel 3. No notice sent to supplier\") as the single most significant event for the defen"
+      "observation": "I have recorded the key evidence event.\n\n## Summary\n\nI acted for **Halcyon Coatings**, the **defending party** in *Brightwater Marine Services v. Halcyon Coatings*.\n\n**Framing rule applied (defensive frame):** The most significant event is the one that most strongly BREAKS an element of the claim, opens a limitation/notice/jurisdiction defence, or supports an affirmative defence.\n\n**Analysis of the event schedule:**\n- **EV-02** (adhesion at specification) — arguably helps defendant, but it's the supplier's own inspection at delivery.\n- **EV-03** (delamination recorded, **no notice sent**) — op"
     }
   ]
 }
