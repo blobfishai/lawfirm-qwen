@@ -94,10 +94,10 @@ for (const pd of PACK_DIRS) {
   }
 }
 
-const WORLD_CANDIDATES = ["world-v17.json", "world-v16.json", "world-v15.json"];
+const WORLD_CANDIDATES = ["world-v18.json", "world-v17.json", "world-v16.json", "world-v15.json"];
 const worldFile = WORLD_CANDIDATES.map((name) => join(ROOT, "world/blobfish", name))
   .find((path) => existsSync(path));
-if (!worldFile) throw new Error("no world-v15/v16/v17 artifact found");
+if (!worldFile) throw new Error("no world-v15/v16/v17/v18 artifact found");
 const raw = JSON.parse(readFileSync(worldFile, "utf8"));
 const world = raw.world ?? raw;
 const famOf = (t) => (t.provenance?.source_workflow ?? "").split(":")[1]?.split("/")[0]?.trim()
@@ -141,7 +141,8 @@ if (existsSync(BUNDLES)) {
 // deterministic file+state tasks (or records an explicit quarantine reason).
 const V17_REPORT = join(ROOT, "world", "v17", "build-report.json");
 let v17Report = null;
-if (world.world_id === "legal-agent-simulation-world-v17" && existsSync(V17_REPORT)) {
+if (["legal-agent-simulation-world-v17", "legal-agent-simulation-world-v18"].includes(world.world_id)
+    && existsSync(V17_REPORT)) {
   v17Report = JSON.parse(readFileSync(V17_REPORT, "utf8"));
   const accounting = v17Report.lab_source_accounting ?? {};
   const hostedPractice = (accounting.represented_by_migrated_graph_task ?? 0)
@@ -194,7 +195,7 @@ out.push(`World artifact audited: \`${worldFile.slice(ROOT.length + 1)}\`.`);
 if (v17Report) {
   const compiler = v17Report.lab_compiler ?? {};
   out.push("");
-  out.push("## Harvey LAB deterministic coverage (world-v17)");
+  out.push(`## Harvey LAB deterministic coverage (${world.world_id.replace("legal-agent-simulation-", "")})`);
   out.push("");
   out.push(`- Practice source tasks accounted for: **${(v17Report.lab_source_accounting?.accounted ?? 0).toLocaleString()} / 1,760**`);
   out.push(`- Practice tasks quarantined with a published reason: **${(v17Report.lab_quarantined_tasks ?? 0).toLocaleString()}**`);
