@@ -11,6 +11,7 @@ import argparse
 from collections import Counter, defaultdict
 import gzip
 import json
+import math
 from pathlib import Path
 import re
 from typing import Any
@@ -19,6 +20,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_WORLD = ROOT / "world" / "blobfish" / "world-v19.json"
 DEFAULT_PROTOCOL = "v19-all-tools-fixed50-context-v4"
+PROVIDER_HALT_PROOF = ROOT / "data" / "leaderboard" / "provider-halt-proof-v19.json"
 REFUSAL_RE = re.compile(
     r"\b(cannot assist|can't assist|cannot help with|unable to (help|assist)|"
     r"i (must|have to) (decline|refuse)|against my (guidelines|principles))\b",
@@ -185,7 +187,7 @@ def project_cost(history_path: Path, remaining: int) -> dict[str, Any] | None:
         "historical_episode_count": len(costs),
         "historical_mean_usd_per_episode": round(mean, 6),
         "remaining_episode_estimate_usd": round(mean * remaining, 2),
-        "warning": "Empirical projection from older, shorter tasks; not a spend ceiling. Program envelope remains $2,000.",
+        "warning": "Empirical projection from completed episodes; task mix may shift. Program envelope remains $2,000.",
     }
 
 
@@ -235,17 +237,28 @@ def markdown(report: dict[str, Any]) -> str:
             "node sim/run-leaderboard.mjs --engines deepseek-chat --tasks all --episodes 3 \\",
             "  --world-file world/blobfish/world-v19.json --label v19-triage \\",
             "  --episode-namespace v19-triage --resume --retry-ungraded --compress-episodes \\",
-            "  --tool-scope all --max-cost-usd 1500 --max-episode-cost-usd 10",
+            "  --concurrency 32 --tool-scope all --max-cost-usd 1500 --max-episode-cost-usd 5 --canary-every 25",
             "python3 tools/triage_world.py --engine deepseek-chat --namespace v19-triage",
             "```",
             "",
         ])
         if projection:
             lines.extend([
-                f"Empirical projection from {projection['historical_episode_count']} older episodes: "
+                f"Empirical projection from {projection['historical_episode_count']} completed v19 episodes: "
                 f"**${projection['remaining_episode_estimate_usd']:.2f}** remaining at "
                 f"${projection['historical_mean_usd_per_episode']:.4f}/episode. This is not a ceiling; "
                 "the approved planning envelope is $2,000.",
+                "",
+            ])
+        if report.get("external_blocker"):
+            blocker = report["external_blocker"]
+            lines.extend([
+                "### External blocker",
+                "",
+                f"DeepSeek returned **HTTP {blocker['provider_status']} — {blocker['message']}**. "
+                f"The runner halted and counted no failed model episode. Proof: `{blocker['proof']}`. "
+                f"Recommended top-up from the empirical remainder plus 25% buffer: "
+                f"**${blocker['recommended_top_up_usd']}**.",
                 "",
             ])
     return "\n".join(lines)
@@ -275,6 +288,17 @@ def main() -> int:
     )
     remaining = report["episodes_required"] - report["usable_episodes"]
     report["cost_projection"] = project_cost(episodes, remaining)
+    if not report["complete"] and PROVIDER_HALT_PROOF.exists():
+        proof = json.loads(PROVIDER_HALT_PROOF.read_text())
+        halted_by = str(proof.get("haltedBy") or "")
+        if "HTTP 402" in halted_by and "Insufficient Balance" in halted_by:
+            estimate = (report.get("cost_projection") or {}).get("remaining_episode_estimate_usd", 0)
+            report["external_blocker"] = {
+                "provider_status": 402,
+                "message": "Insufficient Balance",
+                "proof": PROVIDER_HALT_PROOF.relative_to(ROOT).as_posix(),
+                "recommended_top_up_usd": math.ceil(estimate * 1.25 / 50) * 50,
+            }
     args.json_out.parent.mkdir(parents=True, exist_ok=True)
     args.md_out.parent.mkdir(parents=True, exist_ok=True)
     args.json_out.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")

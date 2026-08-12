@@ -575,3 +575,32 @@ maximum (`data/leaderboard/protocol-proof/deepseek-chat/v19-all-tools-fixed50-co
 
 **Blast radius:** eight valid but provisional v3 records and two missing records; none
 entered the production namespace or any leaderboard denominator.
+
+## Bug 22 — terminal provider billing errors fanned out as generic infrastructure retries (FIXED)
+
+**Symptom:** the production v4 sweep reached 327 valid records, then the graded
+denominator stopped while the scheduler advanced from 327 to 400 jobs in seconds.
+Every new DeepSeek request was failing with HTTP 402 `Insufficient Balance`, but child
+stdout/stderr were discarded and the parent treated every missing episode record as a
+generic retryable infrastructure failure.
+
+**Diagnosis:** `run-leaderboard.mjs` ignored child diagnostics, retried all
+infrastructure failures once, and had no terminal-provider error class. Concurrency
+therefore amplified one external account-state change into dozens of redundant calls.
+No failed child wrote an episode, so none entered a model denominator or incurred a
+reported token charge; 327 previously completed records remain valid and immutable.
+
+**Fix:** child stdout/stderr now feed a bounded 4KB diagnostic tail. HTTP
+400/401/402/403/404/422 failures are terminal; the first one halts the sweep without a
+retry, writes the reason to sweep health, and exits with code 5. Timeouts and 5xx errors
+retain one retry. A live proof against the exhausted account records one passing oracle
+canary, one infrastructure classification, HTTP 402, zero model-failure credit, and
+zero reported spend in `data/leaderboard/provider-halt-proof-v19.json`; the pure CI gate
+also pins transient and timeout branches.
+
+**Checkpoint:** `data/leaderboard/calibration-checkpoint-v19.json` hashes all 327 v4
+episodes: 13 passes, $30.14736 actual spend, 99.11% cache-hit rate, $612.63 empirically
+projected remaining spend, and 6,645 missing episode slots. It also reports the 141
+turn-ceiling outcomes separately from infrastructure (61 were error-heavy in their last
+ten calls). M7.2 remains open until the same DeepSeek denominator reaches 6,972/6,972;
+switching engines would require a clean restart, never score mixing.

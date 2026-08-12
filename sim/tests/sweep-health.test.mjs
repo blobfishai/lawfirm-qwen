@@ -26,7 +26,8 @@ const health = summarizeSweepHealth({
   results: [
     { toolCalls: 0, finalText: "I cannot help with that.", durationMs: 10 },
     { toolCalls: 0, finalText: "No tools used.", durationMs: 20 },
-    { toolCalls: 1, durationMs: 30, steps: [{ tool: "x", observation: "rate_limited" }] },
+    { toolCalls: 1, durationMs: 30, turnsUsed: 50, maxTurns: 50,
+      steps: [{ tool: "x", observation: "rate_limited" }] },
     { infraError: true, durationMs: 40, failedConditions: ["verifier crashed"] },
   ],
   canaries: [{ tid: "task_ok", ok: true }],
@@ -40,6 +41,7 @@ assert.deepEqual(health.classes, {
 });
 assert.deepEqual(health.wallClockMs, { measured: 4, p50: 20, p95: 40, max: 40 });
 assert.equal(health.verifierCrashes, 1);
+assert.deepEqual(health.turnCeiling, { eligibleEpisodes: 1, hits: 1, rate: 1 });
 assert.equal(health.friction.hits, 1);
 assert.equal(health.friction.driftAlert, true);
 assert.deepEqual(health.canaries.tasks, ["task_ok"]);

@@ -37,6 +37,8 @@ def main() -> int:
                     "passed": passed,
                     "reward": 1 if passed else 0,
                     "toolCalls": 2,
+                    "turnsUsed": 50 if index == 3 else 2,
+                    "maxTurns": 50,
                     "toolScope": {"mode": "all"},
                     "measurementProtocol": "v19-all-tools-fixed50-context-v4",
                     "steps": [{"tool": "read", "observation": "{}"}],
@@ -142,6 +144,13 @@ def main() -> int:
         assert report["laneSplit"]["eligibleEpisodes"] == 3
         assert report["laneSplit"]["filePassStateFail"] == 1
         assert report["pagingDiscipline"]["eligibleEpisodes"] == 30
+        assert report["turnCeiling"] == {
+            "tasksWithEvidence": 10,
+            "eligibleEpisodes": 30,
+            "hits": 10,
+            "rate": 33.3,
+            "note": "A ceiling hit is a terminal model outcome, reported separately from infrastructure timeouts.",
+        }
         assert report["retrieval"] == {
             "tasksWithEvidence": 1,
             "meanPrecision": 50.0,
@@ -165,6 +174,7 @@ def main() -> int:
         page_text = page_first.decode()
         assert "Ten-capability reliability grid" in page_text
         assert "Lane split" in page_text and "Retrieval P / R" in page_text
+        assert "Turn ceiling" in page_text
         assert "fixture_01" in page_text and "e1</a>" in page_text
 
     print("leaderboard-v2 gate: byte-identical rebuild, pass^3, 10 capabilities, lane split, paging, P/R, contamination and refusal clean")

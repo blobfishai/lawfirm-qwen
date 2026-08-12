@@ -61,6 +61,11 @@ export function summarizeSweepHealth({
     record.advisoryConditions,
     record.steps,
   ]))).length;
+  const turnBudgetRecords = results.filter((record) =>
+    classifyEpisode(record) === "graded"
+      && Number.isFinite(record.turnsUsed) && Number.isFinite(record.maxTurns));
+  const turnCeilingHits = turnBudgetRecords.filter((record) =>
+    record.turnsUsed >= record.maxTurns).length;
   return {
     engine,
     label,
@@ -73,6 +78,12 @@ export function summarizeSweepHealth({
       tasks: canaries.map((canary) => canary.tid),
     },
     verifierCrashes,
+    turnCeiling: {
+      eligibleEpisodes: turnBudgetRecords.length,
+      hits: turnCeilingHits,
+      rate: turnBudgetRecords.length
+        ? +(turnCeilingHits / turnBudgetRecords.length).toFixed(4) : null,
+    },
     wallClockMs: {
       measured: durations.length,
       p50: percentile(durations, 0.5),

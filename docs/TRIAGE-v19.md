@@ -3,7 +3,7 @@
 > Difficulty labels come only from three model episodes on this exact world version. Oracle success and task metadata are never substituted for missing measurements.
 
 - Tasks fully measured: **0/2324**
-- Usable episodes: **0/6972**
+- Usable episodes: **327/6972**
 - Complete: **no**
 - Episode source: `data/leaderboard/episodes/deepseek-chat/v19-triage`
 - Tool-scope protocol: `all`
@@ -20,12 +20,18 @@
 
 ## Gate status
 
-**M7.2 remains open.** 6972 usable episodes are still required. Run:
+**M7.2 remains open.** 6645 usable episodes are still required. Run:
 
 ```bash
 node sim/run-leaderboard.mjs --engines deepseek-chat --tasks all --episodes 3 \
   --world-file world/blobfish/world-v19.json --label v19-triage \
   --episode-namespace v19-triage --resume --retry-ungraded --compress-episodes \
-  --tool-scope all --max-cost-usd 1500 --max-episode-cost-usd 10
+  --concurrency 32 --tool-scope all --max-cost-usd 1500 --max-episode-cost-usd 5 --canary-every 25
 python3 tools/triage_world.py --engine deepseek-chat --namespace v19-triage
 ```
+
+Empirical projection from 327 completed v19 episodes: **$612.63** remaining at $0.0922/episode. This is not a ceiling; the approved planning envelope is $2,000.
+
+### External blocker
+
+DeepSeek returned **HTTP 402 — Insufficient Balance**. The runner halted and counted no failed model episode. Proof: `data/leaderboard/provider-halt-proof-v19.json`. Recommended top-up from the empirical remainder plus 25% buffer: **$800**.

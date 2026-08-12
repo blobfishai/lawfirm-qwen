@@ -40,6 +40,7 @@ const modelRows = reports.map((report) => `<tr>
   <td>${report.coverage.tasksMeasured}/${report.coverage.tasksDefined}</td>
   <td>${metric(report.laneSplit.rate)}</td>
   <td>${metric(report.pagingDiscipline.completeRate)}</td>
+  <td>${metric(report.turnCeiling?.rate)}</td>
   <td>${metric(report.retrieval.meanPrecision)} / ${metric(report.retrieval.meanRecall)}</td>
   <td>${metric(report.contaminatedLab.passCubed)}</td>
   <td>${report.refusal.episodes}</td>
@@ -69,11 +70,11 @@ h1,h2{font-family:Georgia,serif;margin-bottom:8px}h1{font-size:2.25rem}.lede{max
 </style></head><body><main class="wrap">
 <div class="tag">legal-agent-simulation · world-v19 · deterministic lane</div>
 <h1>Legal Agent Leaderboard v2</h1>
-<p class="lede">Reliability is reported as pass³ on the empirically observed boundary set. File, system-state, paging, retrieval, contamination, refusal, and infrastructure channels stay separate; no LLM-judge score enters this page. Model episodes use the recorded <code>${esc(reports[0].measurementProtocol ?? "unknown")}</code> protocol.</p>
+<p class="lede">Reliability is reported as pass³ on the empirically observed boundary set. File, system-state, paging, retrieval, turn-ceiling, contamination, refusal, and infrastructure channels stay separate; no LLM-judge score enters this page. Model episodes use the recorded <code>${esc(reports[0].measurementProtocol ?? "unknown")}</code> protocol.</p>
 <div class="notice"><strong>Measurement status:</strong> ${reports.every((report) => report.headline.status === "measured") ? `<span class="ok">boundary set measured</span>` : "calibration incomplete — null metrics are shown as —, never zero-filled."}</div>
 <div class="grid">${reports.map((report) => `<div class="card"><small>${esc(report.label)}</small><b>${metric(report.headline.passCubed)}</b><span>boundary pass³ · ${report.headline.tasks} tasks</span></div>`).join("")}</div>
-<h2>Model instruments</h2><div class="scroll"><table><thead><tr><th>Model</th><th>Boundary pass³</th><th>Boundary n</th><th>Coverage</th><th>Lane split</th><th>Paging complete</th><th>Retrieval P / R</th><th>Public LAB pass³</th><th>Refusals</th><th>Proof</th></tr></thead><tbody>${modelRows}</tbody></table></div>
-<p class="method">Lane split means file-pass and state-fail (or the inverse) and is calculated only where Harbor emitted both lane verdicts. Retrieval always reports precision with recall. Public verbatim LAB tasks have their own contamination-caveated column.</p>
+<h2>Model instruments</h2><div class="scroll"><table><thead><tr><th>Model</th><th>Boundary pass³</th><th>Boundary n</th><th>Coverage</th><th>Lane split</th><th>Paging complete</th><th>Turn ceiling</th><th>Retrieval P / R</th><th>Public LAB pass³</th><th>Refusals</th><th>Proof</th></tr></thead><tbody>${modelRows}</tbody></table></div>
+<p class="method">Lane split means file-pass and state-fail (or the inverse) and is calculated only where Harbor emitted both lane verdicts. Retrieval always reports precision with recall. Turn ceiling is a terminal model outcome and remains separate from infrastructure timeout. Public verbatim LAB tasks have their own contamination-caveated column.</p>
 <h2>Ten-capability reliability grid</h2><div class="scroll"><table><thead><tr><th>Primary capability</th>${reports.map((report) => `<th>${esc(report.label)}<small>pass³ · measured/defined</small></th>`).join("")}</tr></thead><tbody>${capabilityRows}</tbody></table></div>
 <h2>Task-level proof</h2><p class="method">Every measured row links directly to its episode JSON or deterministic JSON.GZ archive. Expand a model to audit any displayed aggregate.</p>${taskDetails}
 </main></body></html>\n`;

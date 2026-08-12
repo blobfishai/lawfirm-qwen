@@ -140,6 +140,8 @@ for (const task of [...world.tasks].sort((left, right) => left.task_id.localeCom
   }
   const pagingRows = eligible.map((record) => verdictValue(record, "paging_complete", "pagingComplete"))
     .filter((value) => typeof value === "boolean");
+  const turnRows = eligible.filter((record) =>
+    Number.isFinite(record.turnsUsed) && Number.isFinite(record.maxTurns));
   // Grounded drafting verifiers also expose criterion-level precision/recall.
   // The leaderboard's retrieval instrument must not silently mix that signal
   // with gold-set corpus retrieval, so only type-4 tasks enter this channel.
@@ -183,6 +185,10 @@ for (const task of [...world.tasks].sort((left, right) => left.task_id.localeCom
       eligibleEpisodes: pagingRows.length,
       completeEpisodes: pagingRows.filter(Boolean).length,
     },
+    turnCeiling: {
+      eligibleEpisodes: turnRows.length,
+      hits: turnRows.filter((record) => record.turnsUsed >= record.maxTurns).length,
+    },
     retrieval: {
       eligibleEpisodes: retrievalRows.length,
       precision: mean(retrievalRows.map((record) => verdictValue(record, "precision"))),
@@ -219,6 +225,7 @@ for (let type = 1; type <= 10; type++) {
 const laneRows = rows.filter((row) => row.lane.eligibleEpisodes);
 const retrievalRows = rows.filter((row) => row.retrieval.eligibleEpisodes);
 const pagingRows = rows.filter((row) => row.paging.eligibleEpisodes);
+const turnRows = rows.filter((row) => row.turnCeiling.eligibleEpisodes);
 const allEpisodeCount = rows.reduce((sum, row) => sum + row.episodesFound, 0);
 const refusalCount = rows.reduce((sum, row) => sum + row.exclusions.refusal, 0);
 const infrastructureCount = rows.reduce((sum, row) => sum + row.exclusions.infrastructure, 0);
@@ -285,6 +292,14 @@ const report = {
     completeRate: percent(pagingRows.flatMap((row) => Array(row.paging.eligibleEpisodes).fill(0)
       .map((_, index) => index < row.paging.completeEpisodes ? 1 : 0))),
   },
+  turnCeiling: {
+    tasksWithEvidence: turnRows.length,
+    eligibleEpisodes: turnRows.reduce((sum, row) => sum + row.turnCeiling.eligibleEpisodes, 0),
+    hits: turnRows.reduce((sum, row) => sum + row.turnCeiling.hits, 0),
+    rate: percent(turnRows.flatMap((row) => Array(row.turnCeiling.eligibleEpisodes).fill(0)
+      .map((_, index) => index < row.turnCeiling.hits ? 1 : 0))),
+    note: "A ceiling hit is a terminal model outcome, reported separately from infrastructure timeouts.",
+  },
   retrieval: {
     tasksWithEvidence: retrievalRows.length,
     meanPrecision: percent(retrievalRows.map((row) => row.retrieval.precision)),
@@ -305,5 +320,6 @@ writeFileSync(OUT, JSON.stringify(report, null, 1) + "\n");
 console.log(`leaderboard-v2 [${ENGINE}]: ${measured.length}/${rows.length} tasks measured; `
   + `boundary pass^3 ${report.headline.passCubed ?? "—"}; capabilities classified ${Object.keys(capability).length}/10; `
   + `lane ${report.laneSplit.eligibleEpisodes} eps; paging ${report.pagingDiscipline.eligibleEpisodes} eps; `
+  + `turn ceiling ${report.turnCeiling.hits}/${report.turnCeiling.eligibleEpisodes}; `
   + `retrieval P/R ${report.retrieval.meanPrecision ?? "—"}/${report.retrieval.meanRecall ?? "—"}`);
 console.log(`→ ${OUT}`);

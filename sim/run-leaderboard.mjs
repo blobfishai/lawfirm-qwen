@@ -31,6 +31,9 @@ import {
   compressJsonRecord, findJsonRecord, readJsonRecordFile, removeJsonRecord,
 } from "./lib/episode-record.mjs";
 import { MEASUREMENT_PROTOCOL } from "./lib/measurement-protocol.mjs";
+import {
+  appendDiagnosticTail, classifyInfrastructureFailure,
+} from "./lib/infrastructure-failure.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const config = JSON.parse(readFileSync(join(ROOT, "config", "world.config.json"), "utf8"));
@@ -153,6 +156,9 @@ function runEpisode(engine, taskId, ep) {
   if (AGG_ONLY) return Promise.resolve({ taskId, notMeasured: true });
   removeJsonRecord(out);
   return new Promise((resolve) => {
+    let childStdout = "";
+    let childStderr = "";
+    let timedOut = false;
     const child = spawn("node", [
       "sim/run-simulation.mjs", "--task", taskId, "--engine", engine,
       "--episode-out", out, "--mcp", MCP_MODE, "--tool-scope", TOOL_SCOPE,
@@ -164,19 +170,32 @@ function runEpisode(engine, taskId, ep) {
         BLOBFISH_LOCAL: "1",
         ...(LOCAL_BASE ? { BLOBFISH_LOCAL_BASE: LOCAL_BASE } : {}),
       },
-      stdio: ["ignore", "ignore", "ignore"],
+      stdio: ["ignore", "pipe", "pipe"],
     });
+    child.stdout.on("data", (chunk) => { childStdout = appendDiagnosticTail(childStdout, chunk); });
+    child.stderr.on("data", (chunk) => { childStderr = appendDiagnosticTail(childStderr, chunk); });
     // Wall-clock opportunity is part of the measurement protocol and must not
     // leak the oracle walk length. It is distinct from the uniform 50-turn
     // action budget and only classifies a genuinely stuck process as infra.
     const timeoutMinutes = MEASUREMENT_PROTOCOL.wallClockTimeoutMinutes;
-    const timer = setTimeout(() => { try { child.kill("SIGKILL"); } catch { /* gone */ } }, timeoutMinutes * 60 * 1000);
-    child.on("exit", () => {
+    const timer = setTimeout(() => {
+      timedOut = true;
+      try { child.kill("SIGKILL"); } catch { /* gone */ }
+    }, timeoutMinutes * 60 * 1000);
+    child.on("exit", (exitCode, signal) => {
       clearTimeout(timer);
       let rec = null;
       try { rec = JSON.parse(readFileSync(out, "utf8")); } catch { /* infra */ }
       if (rec && COMPRESS_EPISODES) compressJsonRecord(out);
-      resolve(rec ?? { taskId, engine, infraError: true });
+      if (rec) return resolve(rec);
+      const failure = classifyInfrastructureFailure({
+        stderr: childStderr, stdout: childStdout, timedOut,
+      });
+      return resolve({
+        taskId, engine, infraError: true, infrastructureFailure: failure,
+        childExitCode: exitCode, childSignal: signal,
+        stderrTail: childStderr || null, stdoutTail: childStdout || null,
+      });
     });
   });
 }
@@ -223,6 +242,14 @@ class SpendLimit extends Error {
   constructor(message) { super(message); }
 }
 
+class TerminalProviderFailure extends Error {
+  constructor(taskId, failure) {
+    super(`terminal provider failure on ${taskId}: HTTP ${failure.status ?? "?"} ${failure.detail ?? failure.kind}`);
+    this.taskId = taskId;
+    this.failure = failure;
+  }
+}
+
 async function measureEngine(engine, ids) {
   const jobs = [];
   // Episode-major scheduling gives every task one observation before any task
@@ -244,11 +271,18 @@ async function measureEngine(engine, ids) {
     }
   }
   async function worker(wid) {
-    await new Promise((r) => setTimeout(r, wid * 1200));
+    if (!AGG_ONLY) await new Promise((r) => setTimeout(r, wid * 1200));
     while (idx < jobs.length && !halted) {
       const { t, ep } = jobs[idx++];
       let r = await runEpisode(engine, t, ep);
-      if (r.infraError) r = await runEpisode(engine, t, ep); // one infra retry
+      if (r.infraError && r.infrastructureFailure?.terminal) {
+        halted = new TerminalProviderFailure(t, r.infrastructureFailure);
+      } else if (r.infraError) {
+        r = await runEpisode(engine, t, ep); // one transient-infrastructure retry
+        if (r.infraError && r.infrastructureFailure?.terminal) {
+          halted = new TerminalProviderFailure(t, r.infrastructureFailure);
+        }
+      }
       results.push({ ...r, taskId: r.taskId ?? t, episode: ep });
       done++;
       const episodeCost = Number(r.costUsd ?? 0);
@@ -268,11 +302,17 @@ async function measureEngine(engine, ids) {
         const c = await runCanary(ids);
         canaries.push(c);
         if (!c.ok) { halted = new CanaryFailure(c.tid); break; }
+        writeSweepHealth(engine, ids, results, canaries, { inProgress: true }, true);
       }
       if (done % 10 === 0 || done === jobs.length) {
         const p = results.filter((x) => x.passed).length;
+        const graded = results.filter((x) =>
+          !["infra_error", "refusal", "not_measured"].includes(classifyEpisode(x))).length;
         const cost = results.reduce((a, x) => a + (x.costUsd ?? 0), 0);
-        console.log(`[${engine}] ${done}/${jobs.length} episodes | pass ${p}/${results.filter((x) => !x.infraError).length} | $${cost.toFixed(2)}`);
+        console.log(`[${engine}] ${done}/${jobs.length} episodes | pass ${p}/${graded} graded | $${cost.toFixed(2)}`);
+        if (!AGG_ONLY) {
+          writeSweepHealth(engine, ids, results, canaries, { inProgress: true }, true);
+        }
       }
     }
   }
@@ -296,14 +336,14 @@ async function measureEngine(engine, ids) {
 // that is not a refusal remains a model failure under the benchmark's
 // zero-call rule. The pure summary functions live in sim/lib so CI can test
 // every classification without model calls.
-function writeSweepHealth(engine, ids, results, canaries, extra = {}) {
+function writeSweepHealth(engine, ids, results, canaries, extra = {}, quiet = false) {
   const expected = world.friction?.tool_failure_signature_rate ?? null;
   const health = summarizeSweepHealth({
     engine, label: LABEL, taskSet: TASKSET, results, canaries,
     expectedFrictionRate: expected, extra,
   });
   const p = HEALTH_OUT ? join(ROOT, HEALTH_OUT)
-    : join(RES_DIR, `${engine}@${LABEL}.sweep-health.json`);
+    : join(RES_DIR, `${engine}@${LABEL}${AGG_ONLY ? ".aggregate" : ""}.sweep-health.json`);
   mkdirSync(dirname(p), { recursive: true });
   writeFileSync(p, JSON.stringify(health, null, 1));
   const alerts = [
@@ -312,8 +352,10 @@ function writeSweepHealth(engine, ids, results, canaries, extra = {}) {
     health.canaries.failed ? "CANARY FAILED" : null,
     extra.haltedBy ? "HALTED" : null,
   ].filter(Boolean);
-  console.log(`[${engine}] sweep-health: ${JSON.stringify(health.classes)} | friction ${health.friction.rate ?? "n/a"} (expect ${expected ?? "n/a"})${alerts.length ? " | ⚠ " + alerts.join(", ") : ""}`);
-  console.log(`→ ${p}`);
+  if (!quiet) {
+    console.log(`[${engine}] sweep-health: ${JSON.stringify(health.classes)} | friction ${health.friction.rate ?? "n/a"} (expect ${expected ?? "n/a"})${alerts.length ? " | ⚠ " + alerts.join(", ") : ""}`);
+    console.log(`→ ${p}`);
+  }
   return health;
 }
 
@@ -438,6 +480,7 @@ for (const engine of ENGINES) {
   } catch (e) {
     if (e instanceof CanaryFailure) { console.error(`✖ ${e.message}`); process.exit(3); }
     if (e instanceof SpendLimit) { console.error(`✖ ${e.message}`); process.exit(4); }
+    if (e instanceof TerminalProviderFailure) { console.error(`✖ ${e.message}`); process.exit(5); }
     throw e;
   }
   writeSweepHealth(engine, ids, results, canaries);
