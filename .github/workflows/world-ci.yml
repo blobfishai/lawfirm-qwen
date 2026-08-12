@@ -1,0 +1,66 @@
+# M0.3 — the trust chain on every change to the world.
+# A PR that breaks a verifier, a guard, a fixture, or the Harbor packaging
+# goes red with a named cause. Jobs run in parallel; each under ~20 min.
+name: world-ci
+
+on:
+  push:
+    branches: [master]
+    paths: ["world/**", "mcp/**", "tools/**", "harbor/**", ".github/workflows/world-ci.yml"]
+  pull_request:
+    paths: ["world/**", "mcp/**", "tools/**", "harbor/**", ".github/workflows/world-ci.yml"]
+
+env:
+  WORLD: world/blobfish/world-v15.json
+  BASE: http://127.0.0.1:8974
+
+jobs:
+  oracle-and-discrimination:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: Serve world
+        run: |
+          python3 world/local/server.py --port 8974 --world $WORLD \
+            --v2-contracts mcp/v3/contracts &
+          timeout 60 bash -c 'until curl -sf $BASE/health >/dev/null; do sleep 1; done'
+      - name: Oracle (require 100%)
+        run: python3 world/local/oracle.py --base $BASE --world $WORLD
+      - name: Discrimination (require 0 broken keys/guards)
+        run: |
+          python3 world/local/discriminate.py --base $BASE --world $WORLD \
+            --out /tmp/discrimination.json
+      - name: Assert no discrimination failures
+        run: python3 tools/check_discrimination.py /tmp/discrimination.json --budget 119
+
+  fixtures-and-gates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: Serve world
+        run: |
+          python3 world/local/server.py --port 8974 --world $WORLD \
+            --v2-contracts mcp/v3/contracts &
+          timeout 60 bash -c 'until curl -sf $BASE/health >/dev/null; do sleep 1; done'
+      - name: Golden fixtures (1455 episodes replay identically)
+        run: python3 tools/check_fixtures.py --base $BASE
+      - name: Gate-the-gates (6/6 badbank rejected)
+        run: python3 tools/check_gates.py --world $WORLD --port 8975
+
+  harbor-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: Generate tasks + build world image
+        run: python3 harbor/generate.py --build-image
+      - name: Solve + no-op smoke (3 tasks)
+        run: bash tools/harbor_smoke.sh
