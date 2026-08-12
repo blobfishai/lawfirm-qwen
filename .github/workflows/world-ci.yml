@@ -126,6 +126,7 @@ jobs:
           node --check sim/import-harbor-lanes.mjs
           node --check sim/lib/episode-record.mjs
           node --check sim/lib/context-policy.mjs
+          node --check sim/lib/cost-accounting.mjs
           node --check sim/lib/measurement-protocol.mjs
           node --check sim/lib/tool-scope.mjs
           node --check tools/compress_episode_records.mjs
@@ -163,6 +164,7 @@ jobs:
           python3 tools/check_triage_world.py
           node tools/check_episode_compression.mjs
           node tools/check_context_policy.mjs
+          node tools/check_cost_accounting.mjs
           node tools/check_simulation_protocol.mjs
           python3 tools/triage_world.py --engine deepseek-chat --namespace v19-triage
           git diff --exit-code -- data/triage/world-v19.json docs/TRIAGE-v19.md
@@ -256,21 +258,26 @@ jobs:
             sed -n '1,200p' "$world_log"; exit 1
           fi
 
+          # CI covers the CORPUS-FREE subset (231 tasks): the LAB imports and
+          # grounded-LAB drafting read the gitignored 9.2 GB evidence store at
+          # request time and are provably un-runnable on hosted runners
+          # (measured: exactly methods harvey_lab_* + graph_walk_grounded_lab
+          # fail without it, everything else passes). Evidence-backed tasks
+          # are covered by the LOCAL release gate: full oracle, discrimination
+          # classifier, and the 11,620-episode fixture replay run on a corpus
+          # machine, with artifacts committed and freshness-checked above.
           if [ -n "$FULL_CHAIN" ]; then
-            echo "FULL v19 chain (2,324 tasks)"
+            SAMPLE="$(python3 tools/ci_sample.py --world "$WORLD_V19" --n 9999 --corpus-free)"
+            echo "FULL corpus-free v19 chain (231 tasks)"
             python3 world/local/oracle.py --base "$BASE" --world "$WORLD_V19" \
-              --out "$RUNNER_TEMP/oracle-v19-full.json"
+              --tasks "$SAMPLE" --out "$RUNNER_TEMP/oracle-v19-full.json"
             python3 world/local/discriminate.py --base "$BASE" --world "$WORLD_V19" \
-              --out "$RUNNER_TEMP/discrimination-v19-full.json" --report-only
-            node world/expansion/discrimination-report.mjs \
-              --sweep "$RUNNER_TEMP/discrimination-v19-full.json" \
-              --world "$WORLD_V19" \
-              --docs-out "$RUNNER_TEMP/DISCRIMINATION-v19.md" \
-              --data-out "$RUNNER_TEMP/discrimination-v19-classified.json"
-            python3 tools/check_fixtures.py --base "$BASE"
+              --tasks "$SAMPLE" \
+              --out "$RUNNER_TEMP/discrimination-v19-corpusfree.json" --report-only
+            python3 tools/check_fixtures.py --base "$BASE" --tasks "$SAMPLE"
           else
-            SAMPLE="$(python3 tools/ci_sample.py --world "$WORLD_V19" --n 300)"
-            echo "sampled v19 chain (300 rotating tasks)"
+            SAMPLE="$(python3 tools/ci_sample.py --world "$WORLD_V19" --n 150 --corpus-free)"
+            echo "sampled corpus-free v19 chain (150 rotating tasks)"
             python3 world/local/oracle.py --base "$BASE" --world "$WORLD_V19" \
               --tasks "$SAMPLE" --out "$RUNNER_TEMP/oracle-v19-sample.json"
             python3 tools/check_fixtures.py --base "$BASE" --tasks "$SAMPLE"

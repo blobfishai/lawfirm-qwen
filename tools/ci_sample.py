@@ -23,11 +23,24 @@ def main() -> None:
     ap.add_argument("--world", default="world/blobfish/world-v19.json")
     ap.add_argument("--n", type=int, default=300)
     ap.add_argument("--seed", default=None)
+    ap.add_argument("--corpus-free", action="store_true",
+                    help="only tasks runnable without the gitignored evidence "
+                         "store (9.2 GB, absent on CI runners); measured: the "
+                         "LAB imports and grounded-LAB drafting need it, the "
+                         "other 231 tasks do not")
     args = ap.parse_args()
 
+    EVIDENCE_BACKED = {
+        "harvey_lab_determinate_import",
+        "harvey_lab_firm_knowledge_deterministic",
+        "graph_walk_grounded_lab",
+    }
     raw = json.load(open(args.world))
     world = raw.get("world", raw)
-    ids = [t["task_id"] for t in world["tasks"]]
+    tasks = world["tasks"]
+    if args.corpus_free:
+        tasks = [t for t in tasks if t.get("method") not in EVIDENCE_BACKED]
+    ids = [t["task_id"] for t in tasks]
     iso = dt.date.today().isocalendar()
     seed = args.seed or f"{iso[0]}-W{iso[1]:02d}"
     ranked = sorted(ids, key=lambda i: hashlib.sha256(f"{seed}:{i}".encode()).hexdigest())

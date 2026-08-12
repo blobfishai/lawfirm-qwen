@@ -12,7 +12,12 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 WORLD_REPORT = ROOT / "world/v19/build-report.json"
 V17_REPORT = ROOT / "world/v17/build-report.json"
-INGEST_REPORT = ROOT / "world/corpus/lab/ingest-report.json"
+# Prefer the live corpus report; fall back to the committed twin (identical by
+# construction — lab_ingest writes both) so the matrix builds on CI runners
+# where the gitignored corpus is absent.
+_CORPUS_REPORT = ROOT / "world/corpus/lab/ingest-report.json"
+_COMMITTED_REPORT = ROOT / "world/ingest/lab-ingest-report.json"
+INGEST_REPORT = _CORPUS_REPORT if _CORPUS_REPORT.exists() else _COMMITTED_REPORT
 ORACLE_BASE = ROOT / "data/oracle-v18.json"
 ORACLE_M6 = ROOT / "data/oracle-v19-m6.json"
 DISC_BASE = ROOT / "data/discrimination-v18.json"
