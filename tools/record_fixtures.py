@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import argparse
 import gzip
+import hashlib
 import json
 import os
 import sys
@@ -113,6 +114,11 @@ def main() -> int:
 
     os.makedirs(args.out, exist_ok=True)
     world_name = os.path.basename(args.world)
+    # Fixtures are keyed to world CONTENT, not filename: a rebuilt world with
+    # the same name must invalidate them (learned live — a verifier was
+    # regenerated between recording and replay and filename-keyed resume
+    # happily skipped the stale fixture).
+    world_sha = hashlib.sha256(open(args.world, "rb").read()).hexdigest()
 
     def fixture_current(tid: str) -> bool:
         for suffix, opener in ((".json.gz", gzip.open), (".json", open)):
@@ -120,7 +126,7 @@ def main() -> int:
             if os.path.exists(p):
                 try:
                     with opener(p, "rt") as f:
-                        return json.load(f).get("world") == world_name
+                        return json.load(f).get("world_sha256") == world_sha
                 except Exception:
                     return False
         return False
@@ -149,7 +155,8 @@ def main() -> int:
             n_bad_oracle += 1
             print(f"  !! {tid}: ORACLE EPISODE DID NOT PASS — fixture suspect",
                   file=sys.stderr)
-        payload = {"task_id": tid, "world": world_name, "episodes": episodes}
+        payload = {"task_id": tid, "world": world_name,
+                   "world_sha256": world_sha, "episodes": episodes}
         # NO sort_keys: argument insertion order must be preserved exactly —
         # the server echoes rows in merge order, so alphabetizing recorded
         # args makes replayed observation strings diverge spuriously.
