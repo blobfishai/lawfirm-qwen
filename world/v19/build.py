@@ -195,8 +195,12 @@ def _capstone(index: int, values: tuple[str | int, ...]) -> tuple[dict, dict]:
                "dm_documents", "pm_communications", "ws_messages"]
     phase_vcodes = {
         phase["name"]: compile_vcode(task_id, phase["walk"], phase["assertions"])
-        for phase in phases
+        for phase in phases[:-1]
     }
+    # The final checkpoint is also the cumulative verifier.  Earlier phase
+    # passes cannot mask later collateral damage or rollback.
+    phase_vcodes[phases[-1]["name"]] = compile_vcode(
+        task_id, walk, all_assertions, allowed_tables=allowed, min_success_calls=50)
 
     pre_args = copy.deepcopy(reference_args)
     calendar_index = walk.index("calendar_events_insert")
@@ -321,14 +325,16 @@ def _multiturn(index: int) -> tuple[dict, dict]:
     walk = [tool for phase in phases for tool in phase["walk"]]
     reference_args = [args for phase in phases for args in phase["reference_args"]]
     allowed = ["pm_tasks"] if group in {"fragment", "correction", "withdrawal"} else ["dm_documents"]
+    final_vcode = compile_vcode(task_id, walk, final_assertions, allowed_tables=allowed)
+    phase_vcodes = {
+        phases[0]["name"]: compile_vcode(task_id, phases[0]["walk"], phases[0]["assertions"]),
+        phases[1]["name"]: final_vcode,
+    }
     verifier = {
         "task_id": task_id,
         "assertions": [a["name"] for a in final_assertions] + ["required_path", "no_collateral_damage"],
-        "vcode": compile_vcode(task_id, walk, final_assertions, allowed_tables=allowed),
-        "phase_vcodes": {
-            phase["name"]: compile_vcode(task_id, phase["walk"], phase["assertions"])
-            for phase in phases
-        },
+        "vcode": final_vcode,
+        "phase_vcodes": phase_vcodes,
         "generated_by": "world/v19/build.py",
     }
     task = {

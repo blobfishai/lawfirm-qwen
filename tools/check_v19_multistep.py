@@ -13,6 +13,8 @@ REPORT = ROOT / "world" / "v19" / "build-report.json"
 ORACLE = ROOT / "data" / "oracle-v19-m6.json"
 SWEEP = ROOT / "data" / "discrimination-v19-m6.json"
 PRECORRECTION = ROOT / "data" / "precorrection-v19.json"
+REPLAY = ROOT / "data" / "capstone-replay-v19.json"
+HARBOR = ROOT / "data" / "harbor-v19-multistep-smoke.json"
 
 
 def main() -> int:
@@ -64,6 +66,14 @@ def main() -> int:
     precorrection = json.loads(PRECORRECTION.read_text("utf-8"))
     assert precorrection["tasks"] == precorrection["rejected"] == 35
     assert precorrection["incorrectly_passed"] == []
+    replay = json.loads(REPLAY.read_text("utf-8"))
+    assert replay["tasks"] == 5 and replay["runs"] == 15
+    assert replay["all_passed"] is True and replay["all_bit_identical"] is True
+    harbor = json.loads(HARBOR.read_text("utf-8"))
+    assert len(harbor["capstone"]["steps"]) == 5
+    assert len(harbor["multi_turn"]["steps"]) == 2
+    assert harbor["capstone"]["reward"]["reward"] == 1.0
+    assert harbor["multi_turn"]["reward"]["reward"] == 1.0
     print("v19 M6: 5×50-call capstones and 30 native multi-turn tasks pass oracle, "
           "reject adversarial modes, and reject every superseded-instruction walk")
     return 0
