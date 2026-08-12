@@ -90,6 +90,13 @@ class OracleSession:
                 self.trace.append({"tool": tool, "requested_tool": tool, "arguments": args,
                                    "observation": text, "ok": False})
                 return False, text
+            if res.get("error") is not None:
+                text = json.dumps(res["error"], sort_keys=True)
+                self.trace.append({
+                    "tool": tool, "requested_tool": tool, "arguments": args,
+                    "observation": text[:4000], "ok": False,
+                })
+                return False, text
             r = res.get("result") or {}
             text = "".join(c.get("text", "") for c in r.get("content", []))
             ok = not r.get("isError")

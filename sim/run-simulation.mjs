@@ -299,7 +299,8 @@ async function main() {
 
   const refWalk = Array.isArray(task.walk) ? task.walk.length : 0;
   const maxTurns = maxTurnsFlag ? Number(maxTurnsFlag) : Math.max(config.engine.maxAgentTurns, refWalk * 3 + 6);
-  const { usage, toolCallCount, steps, turnsUsed } = await runAgent(mcp, llmTools, messages, { maxTurns });
+  const startedAtMs = Date.now();
+  const { usage, toolCallCount, finalText, steps, turnsUsed } = await runAgent(mcp, llmTools, messages, { maxTurns });
 
   const v = await mcp.verify(taskId);
   log({ type: "verify", taskId, result: v.text });
@@ -339,11 +340,13 @@ async function main() {
     contamination: task.contamination ?? task.metadata?.contamination ?? null,
     method: task.method ?? null,
     toolCalls: toolCallCount,
+    finalText,
     turnsUsed,
     maxTurns,
     usage,
     costUsd,
     log: LOG,
+    durationMs: Date.now() - startedAtMs,
     finishedAt: new Date().toISOString(),
   };
   if (jsonOutFlag) writeFileSync(jsonOutFlag, JSON.stringify(record, null, 2));

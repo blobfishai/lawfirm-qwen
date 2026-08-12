@@ -86,11 +86,14 @@ jobs:
             tools/conformance/sync_specs.py \
             tools/check_discrimination.py \
             tools/check_harbor_result.py \
-            tools/check_harbor_multistep.py
+            tools/check_harbor_multistep.py \
+            tools/check_sweep_health.py
           node --check world/expansion/discrimination-report.mjs
           node --check sim/compare-v16-boundary.mjs
           node --check sim/run-leaderboard.mjs
           node --check sim/run-simulation.mjs
+          node --check sim/lib/sweep-health.mjs
+          node --check sim/tests/sweep-health.test.mjs
           python3 world/migrate/gen1_to_v16.py --check
           python3 tools/check_product_surface.py
           node sim/compare-v16-boundary.mjs
@@ -117,6 +120,8 @@ jobs:
           python3 world/v19/build.py
           git diff --exit-code -- world/blobfish/world-v19.json world/v19/build-report.json
           python3 tools/check_v19_multistep.py
+          python3 tools/check_sweep_health.py --proof data/leaderboard/canary-proof-v19.json
+          git diff --exit-code -- data/leaderboard/canary-proof-v19.json
           python3 tools/check_pagination.py
           python3 tools/check_query_dsl.py
           python3 -m unittest discover -s world/manifest/tests -v

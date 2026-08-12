@@ -108,11 +108,14 @@ def main() -> None:
         if msg.get("method") == "tools/call":
             params = msg.get("params") or {}
             r = res.get("result") or {}
-            text = "".join(c.get("text", "") for c in r.get("content", []))
+            rpc_error = res.get("error")
+            text = (json.dumps(rpc_error, sort_keys=True) if rpc_error is not None else
+                    "".join(c.get("text", "") for c in r.get("content", [])))
             record({
                 "tool": params.get("name"), "requested_tool": params.get("name"),
                 "arguments": params.get("arguments") or {},
-                "observation": text[:4000], "ok": not r.get("isError"),
+                "observation": text[:4000],
+                "ok": rpc_error is None and not r.get("isError"),
             })
         return res
 
@@ -124,8 +127,10 @@ def main() -> None:
                            "method": "tools/call",
                            "params": {"name": name, "arguments": args}})
             r = res.get("result") or {}
-            text = "".join(c.get("text", "") for c in r.get("content", []))
-            ok = not r.get("isError")
+            rpc_error = res.get("error")
+            text = (json.dumps(rpc_error, sort_keys=True) if rpc_error is not None else
+                    "".join(c.get("text", "") for c in r.get("content", [])))
+            ok = rpc_error is None and not r.get("isError")
             transient = any(marker in text for marker in (
                 "rate_limited", "stale_reference", "rate_limit",
                 "RESOURCE_EXHAUSTED", "HOURLY_APIINVOCATION_LIMIT_EXCEEDED",

@@ -373,6 +373,32 @@ its saved per-episode assertions; it is not silently regraded under the current
 two-matter world. Any cross-version comparison must use the task/world version
 recorded with the episode.
 
+## Bug 16 — top-level JSON-RPC errors looked like successful oracle calls (FIXED)
+
+**Symptom:** an oracle reference step that named an unknown or unavailable tool
+could receive a valid JSON-RPC `error` envelope, yet the trace recorded
+`ok: true` with an empty observation. The Harbor solve shim had the same
+interpretation. A verifier that did not independently require that step could
+therefore let an unsolvable reference walk appear healthy.
+
+**Diagnosis:** both clients inspected only `result.isError`. JSON-RPC protocol
+errors live in the mutually exclusive top-level `error` member, so an absent
+`result` was coerced to `{}` and then treated as success.
+
+**Fix:** `OracleSession.call`, Harbor trace forwarding, and the Harbor reference
+solver now fail any top-level `error` and preserve its body in the trace. The
+M7.1 gate calls a deliberately nonexistent tool and asserts failure. It also
+runs the leaderboard canary against a clean world and a copy with a seeded
+failing verifier: the clean probe exits 0; the corrupted probe exits 3 after
+**zero model episodes**. Pure fixtures cover refusal/zero-call/infra
+classification, friction rate, verifier crashes, and wall-clock percentiles.
+The committed proof is `data/leaderboard/canary-proof-v19.json`.
+
+**Blast radius:** reference/admission confidence, not previously saved model
+verdicts. No shipped reference walk names an unknown tool, so the M0 golden
+fixtures remain byte-identical; the defect mattered when evolving or partially
+migrating a world.
+
 ## What survived the audit (real model behavior, with evidence)
 
 1. **Side-copy writes (DeepSeek, 34 episodes).** The model files the

@@ -25,6 +25,7 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync, rmSync } from "node
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
+import { classifyEpisode, summarizeSweepHealth } from "./lib/sweep-health.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const config = JSON.parse(readFileSync(join(ROOT, "config", "world.config.json"), "utf8"));
@@ -39,6 +40,8 @@ const LABEL_EXPLICIT = argv.includes("--label");
 const TASKSET = opt("--tasks", "scored");
 const RESUME = argv.includes("--resume"); // skip episodes whose record already exists
 const AGG_ONLY = argv.includes("--aggregate-only"); // no API calls: aggregate existing episode files
+const CANARY_PROBE = argv.includes("--canary-probe"); // one oracle check, no model calls
+const HEALTH_OUT = opt("--health-out", null);
 const WORLD_FILE = opt("--world-file", null);      // e.g. world/blobfish/world-expanded.json
 const LOCAL_BASE = opt("--local-base", null);      // e.g. http://127.0.0.1:8972
 const MCP_MODE = opt("--mcp", "bridge");           // bridge | multi (per-system MCP servers)
@@ -159,17 +162,27 @@ const CANARY_EVERY = Number(opt("--canary-every", "25")); // 0 disables
 const CANARY_BASE = LOCAL_BASE ?? config.blobfish.localBase;
 let canarySeq = 0;
 
+if (!Number.isInteger(CANARY_EVERY) || CANARY_EVERY < 0) {
+  console.error("--canary-every must be a non-negative integer");
+  process.exit(1);
+}
+
 function runCanary(ids) {
   // Deterministic rotation through the task set — same canaries every run.
   const tid = ids[(canarySeq++ * 7) % ids.length];
+  const out = join(ROOT, "data", "leaderboard", `.canary-${process.pid}-${canarySeq}.json`);
   return new Promise((resolve) => {
     const child = spawn("python3", [
       "world/local/oracle.py", "--base", CANARY_BASE,
       "--world", join(ROOT, WORLD_FILE ?? config.blobfish.world),
-      "--tasks", tid, "--out", join(ROOT, "data", "leaderboard", ".canary-last.json"),
+      "--tasks", tid, "--out", out,
     ], { cwd: ROOT, stdio: ["ignore", "ignore", "ignore"] });
     const timer = setTimeout(() => { try { child.kill("SIGKILL"); } catch { /* gone */ } }, 120_000);
-    child.on("exit", (code) => { clearTimeout(timer); resolve({ tid, ok: code === 0 }); });
+    child.on("exit", (code) => {
+      clearTimeout(timer);
+      rmSync(out, { force: true });
+      resolve({ tid, ok: code === 0 });
+    });
   });
 }
 
@@ -183,6 +196,16 @@ async function measureEngine(engine, ids) {
   const results = [];
   const canaries = [];
   let idx = 0, done = 0, halted = null;
+  // Probe before the first paid episode, then interleave every N episodes.
+  if (!AGG_ONLY && CANARY_EVERY) {
+    const initial = await runCanary(ids);
+    canaries.push(initial);
+    if (!initial.ok) {
+      const failure = new CanaryFailure(initial.tid);
+      writeSweepHealth(engine, ids, results, canaries, { haltedBy: failure.message });
+      throw failure;
+    }
+  }
   async function worker(wid) {
     await new Promise((r) => setTimeout(r, wid * 1200));
     while (idx < jobs.length && !halted) {
@@ -212,63 +235,27 @@ async function measureEngine(engine, ids) {
 }
 
 // ---------------------------------------------------------------- health
-// M7.1: sweep-health — the run reports on its own trustworthiness. Refusals
-// and zero-call episodes are classified so they are never read as graded
-// failures; the observed friction-hit rate is a sensitive harness-bug
-// detector because the schedule is deterministic.
-const REFUSAL_RE = /\b(cannot assist|can't assist|cannot help with|unable to (help|assist)|i (must|have to) (decline|refuse)|against my (guidelines|principles))\b/i;
-
-function classifyEpisode(r) {
-  if (r.notMeasured) return "not_measured";
-  if (r.infraError) return "infra_error";
-  const calls = r.toolCalls ?? 0;
-  if (calls === 0) {
-    const text = JSON.stringify(r.log ?? r.steps ?? "");
-    return REFUSAL_RE.test(text) ? "refusal" : "zero_call";
-  }
-  return "graded";
-}
-
-function frictionStats(results) {
-  let hits = 0, calls = 0;
-  for (const r of results) {
-    for (const s of r.steps ?? []) {
-      if (s.observation === undefined && s.text === undefined) continue;
-      calls++;
-      const obs = String(s.observation ?? s.text ?? "");
-      if (obs.includes("rate_limited") || obs.includes("stale_reference")) hits++;
-    }
-  }
-  return { hits, calls, rate: calls ? +(hits / calls).toFixed(4) : null };
-}
-
+// Refusals are reported separately from graded failures. A zero-call episode
+// that is not a refusal remains a model failure under the benchmark's
+// zero-call rule. The pure summary functions live in sim/lib so CI can test
+// every classification without model calls.
 function writeSweepHealth(engine, ids, results, canaries, extra = {}) {
-  const classes = {};
-  for (const r of results) classes[classifyEpisode(r)] = (classes[classifyEpisode(r)] ?? 0) + 1;
-  const friction = frictionStats(results);
   const expected = world.friction?.tool_failure_signature_rate ?? null;
-  const verifierCrashes = results.filter((r) =>
-    JSON.stringify(r.log ?? "").includes("verifier crashed")).length;
-  const health = {
-    engine, label: LABEL, taskSet: TASKSET,
-    episodes: results.length,
-    classes,
-    canaries: { run: canaries.length, failed: canaries.filter((c) => !c.ok).length },
-    verifierCrashes,
-    friction: { ...friction, expectedRate: expected,
-                driftAlert: expected !== null && friction.rate !== null
-                  && Math.abs(friction.rate - expected) > 0.005 },
-    ...extra,
-  };
-  const p = join(RES_DIR, `${engine}@${LABEL}.sweep-health.json`);
+  const health = summarizeSweepHealth({
+    engine, label: LABEL, taskSet: TASKSET, results, canaries,
+    expectedFrictionRate: expected, extra,
+  });
+  const p = HEALTH_OUT ? join(ROOT, HEALTH_OUT)
+    : join(RES_DIR, `${engine}@${LABEL}.sweep-health.json`);
+  mkdirSync(dirname(p), { recursive: true });
   writeFileSync(p, JSON.stringify(health, null, 1));
   const alerts = [
     health.friction.driftAlert ? "FRICTION DRIFT" : null,
-    verifierCrashes ? `${verifierCrashes} VERIFIER CRASHES` : null,
+    health.verifierCrashes ? `${health.verifierCrashes} VERIFIER CRASHES` : null,
     health.canaries.failed ? "CANARY FAILED" : null,
     extra.haltedBy ? "HALTED" : null,
   ].filter(Boolean);
-  console.log(`[${engine}] sweep-health: ${JSON.stringify(classes)} | friction ${friction.rate ?? "n/a"} (expect ${expected ?? "n/a"})${alerts.length ? " | ⚠ " + alerts.join(", ") : ""}`);
+  console.log(`[${engine}] sweep-health: ${JSON.stringify(health.classes)} | friction ${health.friction.rate ?? "n/a"} (expect ${expected ?? "n/a"})${alerts.length ? " | ⚠ " + alerts.join(", ") : ""}`);
   console.log(`→ ${p}`);
   return health;
 }
@@ -279,6 +266,7 @@ function aggregate(engine, ids, results) {
     const b = (byTask[r.taskId] ??= { episodes: 0, passes: 0, rewards: [], toolCalls: [], cost: 0, infra: 0, failedConditions: {} });
     if (r.notMeasured) continue;
     if (r.infraError) { b.infra++; continue; }
+    if (classifyEpisode(r) === "refusal") { b.refusals = (b.refusals ?? 0) + 1; continue; }
     b.episodes++;
     if (r.passed) b.passes++;
     b.rewards.push(r.reward ?? 0);
@@ -306,6 +294,7 @@ function aggregate(engine, ids, results) {
       failedConditions: b.failedConditions,
       costUsd: +b.cost.toFixed(4),
       infraErrors: b.infra,
+      refusals: b.refusals ?? 0,
     };
   });
 
@@ -339,8 +328,8 @@ function aggregate(engine, ids, results) {
     taskSet: TASKSET,
     tasksMeasured: measured.length,
     overall: {
-      score: +(measured.reduce((a, r) => a + r.passRate, 0) / measured.length * 100).toFixed(1),
-      meanReward: +(measured.reduce((a, r) => a + (r.meanReward ?? 0), 0) / measured.length * 100).toFixed(1),
+      score: measured.length ? +(measured.reduce((a, r) => a + r.passRate, 0) / measured.length * 100).toFixed(1) : null,
+      meanReward: measured.length ? +(measured.reduce((a, r) => a + (r.meanReward ?? 0), 0) / measured.length * 100).toFixed(1) : null,
       passAll: measured.filter((r) => r.passRate === 1).length,
       flakyCount: measured.filter((r) => r.class === "FLAKY").length,
       failAll: measured.filter((r) => r.passRate === 0).length,
@@ -348,8 +337,9 @@ function aggregate(engine, ids, results) {
       flakySetScore: flakyRows.length ? +(flakyRows.reduce((a, r) => a + r.passRate, 0) / flakyRows.length * 100).toFixed(1) : null,
       flakySetPassAllRate: flakyRows.length ? +(flakyRows.filter((r) => r.passRate === 1).length / flakyRows.length * 100).toFixed(1) : null,
       totalCostUsd: +rows.reduce((a, r) => a + r.costUsd, 0).toFixed(2),
-      avgToolCalls: +(measured.reduce((a, r) => a + (r.avgToolCalls ?? 0), 0) / measured.length).toFixed(1),
+      avgToolCalls: measured.length ? +(measured.reduce((a, r) => a + (r.avgToolCalls ?? 0), 0) / measured.length).toFixed(1) : null,
       infraErrors: rows.reduce((a, r) => a + r.infraErrors, 0),
+      refusals: rows.reduce((a, r) => a + r.refusals, 0),
     },
     byPracticeArea: groupScore((r) => r.practiceArea),
     byShape: groupScore((r) => r.shape),
@@ -364,7 +354,23 @@ function aggregate(engine, ids, results) {
 }
 
 const ids = taskIds();
+if (!ids.length) {
+  console.error("task selection is empty");
+  process.exit(1);
+}
 console.log(`Leaderboard '${LABEL}': engines=[${ENGINES.join(", ")}] tasks=${ids.length} (${TASKSET}) x ${EPISODES} episodes`);
+
+if (CANARY_PROBE) {
+  const canary = await runCanary(ids);
+  const health = writeSweepHealth(
+    ENGINES[0], ids, [], [canary],
+    canary.ok ? { probe: true } : {
+      probe: true,
+      haltedBy: `oracle canary failed on ${canary.tid} — harness broken, sweep halted`,
+    },
+  );
+  process.exit(health.canaries.failed ? 3 : 0);
+}
 
 for (const engine of ENGINES) {
   if (!config.models[engine]) { console.error(`Unknown engine '${engine}' — skipping`); continue; }
