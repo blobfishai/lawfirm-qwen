@@ -182,6 +182,62 @@ those two prove the task is *satisfiable* and *bound*, not that it is *correct*.
 rather than asserted, so it cannot drift from what the runtime counts. Re-run
 after the fix: 3/3.
 
+## Bug 12 — a third of `structural` is keyed off filenames, and its headline score measures that, not the model (FOUND; NOT YET FIXED)
+
+*Defects 9–11 are described in `HANDOFF.md` but were never written up here; this
+keeps their numbering rather than renumbering around the gap.*
+
+`structural` was reported as the hardest generated family by a distance — 13%
+recall, 5% precision. It is two families wearing one label.
+
+Of its 32 tasks, **11 (waves 1–16)** carry `computed: "filename evidence of X
+without Y"`: their gold was derived by matching folder names against the
+*flattened filenames* in `world/corpus/ch/text/`, which drop the folder path.
+**21 (waves 20–23)** read the `folder` column of `index.sqlite`, as the current
+generator does. Five tasks name folders — `Disclosure Schedules`, `Signature
+Pages` — that do not appear anywhere in the index, and in three of those the
+absent folder is the *positive* term, so no answer can score above zero.
+
+Simulating a perfect agent against each key, with no model in the loop:
+
+| | recall | precision | exactly right |
+|---|---|---|---|
+| waves 20–23, exact top-level reconstruction | 100.0 | 100.0 | **21/21** |
+| waves 1–16, same perfect reconstruction | 38.2 | 8.8 | **0/11** |
+
+The modern tasks are perfectly answerable — median **3** tool calls, max 12,
+against a 40-turn budget. The legacy ones are unreachable by any strategy,
+because the key describes a corpus layout that the index does not have.
+
+Then the sampling: of the four `structural` tasks in the 15-task pilot, **three
+were legacy** (waves 16, 2, 2). The 13%/5% line is mostly a measurement of
+broken answer keys.
+
+There is a real difficulty underneath, and it should be kept. `corpus_files_list`
+filters `folder LIKE '%X%'` while the gold uses the top-level folder, and the
+corpus contains `Engagement` alongside `Engagement & Administration`,
+`Correspondence` alongside `Correspondence/Client`. An agent that trusts the
+filter's membership gets 88.8 recall / 57.3 precision and **0/21 exact**; one
+that re-filters on the exact `folder` string the tool already returns in every
+row gets 100/100. That is a genuine trap about believing a query's semantics
+over its output, and it is worth measuring.
+
+*Fix, not yet applied:* retire or regenerate the 11 filename-derived tasks,
+rescore `structural` on waves 20–23 only, and re-run the family before any
+conclusion about its difficulty is quoted. Until then the 13%/5% figure should
+not be cited.
+
+*Scope — the other families were checked and are clean.* `conjunction`,
+`exclusion` and `client_roll` derive their keys from document bodies, and
+`corpus_search` reads those same files with the same lowercased-substring
+semantics. Reproducing 9 sampled keys from the tool's semantics returned the
+gold set element-for-element, 9 of 9. The index also matches the corpus on
+disk exactly — 9,288 files each way, no rows with `chars = 0`, no
+`parse_error` — so nothing the generator saw is hidden from the tool.
+`superlative` is **unchecked**: its key rests on per-file hit counts rather
+than set membership, and that needs its own pass. Structural was the only
+family whose key was computed from a source the agent cannot query.
+
 ## What survived the audit (real model behavior, with evidence)
 
 1. **Side-copy writes (DeepSeek, 34 episodes).** The model files the

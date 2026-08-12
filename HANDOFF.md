@@ -77,11 +77,17 @@ Per generator kind on the 15-task stratified sample:
 | exclusion | 86 | 42 | 76 |
 | superlative | 100 | 63 | 3 |
 | client_roll | 33 | 33 | 3 |
-| **structural** | **13** | **5** | 85 |
+| ~~structural~~ | ~~13~~ | ~~5~~ | ~~85~~ |
 
-`structural` is the hardest by a distance and `conjunction` produces the worst
-over-inclusion. Both are worth expanding; `superlative` is nearly solved and
-should be grown or dropped.
+**Do not quote the `structural` row.** It is not a model measurement — a third
+of that family has answer keys derived from filenames rather than the folder
+index, three of the four tasks sampled here were from that broken third, and a
+*perfect* agent scores 0/11 on them. See `docs/AUDIT.md` Bug 12. The sound
+21 tasks are answerable in a median of 3 tool calls, so the family's real
+difficulty is unknown until it is re-run.
+
+`conjunction` produces the worst over-inclusion and is worth expanding.
+`superlative` is nearly solved and should be grown or dropped.
 
 ## Next steps, in order
 
@@ -91,10 +97,22 @@ should be grown or dropped.
 2. **Triage the 726 generated tasks** at scale (the 15-task sample above is a
    pilot). Keep the flaky band, grow what passes, retire what nothing can do.
    ~$0.9/task, so a 100-task stratified run is ~$90.
-3. **Verify `structural` before trusting it.** 13% recall may be a genuinely
-   hard family or a mis-specified one — check by hand whether the folder
-   taxonomy in `index.sqlite` matches what an agent can actually observe
-   through `corpus_files_list`. This is exactly the shape of defects 8 and 9.
+3. ~~Verify `structural` before trusting it.~~ **Done — it was both.**
+   `docs/AUDIT.md` Bug 12 has the evidence. 11 of 32 tasks (waves 1–16) are
+   keyed off filenames and unanswerable by any strategy; the other 21 (waves
+   20–23) are exactly answerable in a median of 3 calls. What remains is the
+   repair, and it gates step 2: **retire or regenerate the 11, then re-run the
+   family.** Triaging 726 tasks at ~$90 while a known-broken third sits in the
+   pool spends real money on noise.
+
+   The other families were audited the same way and are **sound**:
+   `conjunction`, `exclusion` and `client_roll` reproduce exactly from
+   `corpus_search` semantics (9 of 9 sampled tasks, gold set reproduced
+   element-for-element), and the index matches the corpus on disk exactly —
+   9,288 files both ways, no zero-char rows, no parse errors. `superlative`
+   is **not** yet checked; its key depends on per-file hit counts rather than
+   set membership, so it needs its own pass. The whole audit cost nothing but
+   sqlite queries and one corpus scan.
 4. **Port more sources.** `world/port/adapters/` — one file per repo answering
    five questions (tasks, seeded data, tools, verifier, workflow). ACORD is the
    best next candidate: it ships graded relevance judgments, the only source
