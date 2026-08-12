@@ -437,3 +437,27 @@ migrating a world.
 
 *Measurement spend: DeepSeek ≈ $50 (465 episodes + re-runs), Haiku ≈ $45
 (388 episodes, stopped). No further model spend without explicit go-ahead.*
+
+## Bug 17 — the public LAB comparison overstated scope after the judge-lane amendment (FIXED)
+
+**Symptom:** `WHY-BEYOND-HARVEY-LAB.md` still described a 156-task, Gen-1 world and
+could be read as claiming parity with LAB's complete rubric judgment. That was no
+longer the implemented architecture: world-v19 hosts 2,009 of 2,010 LAB tasks,
+determinizes 65,596 of 111,814 practice criteria, and deliberately does not run a
+prose-quality judge.
+
+**Diagnosis:** the narrative was handwritten before the v16–v19 migration and had no
+executable dependency on the import, ingest, oracle, discrimination, file-lane, or
+triage reports. The §0G amendment removed the judge lane from the headline, but no
+gate forced the claim language to change with it.
+
+**Fix:** `tools/build_superset_matrix.py` now derives both the machine-readable matrix
+and the public write-up from committed proof artifacts. The checker fails if the
+dropped 46,218 criteria, absent judge lane, parse failures, contamination boundary,
+iManage ceiling, or incomplete calibration disappears. The claim is narrowed to a
+strict operational superset of the deterministically admitted LAB subset—not a
+superset of LAB's prose-quality judgment.
+
+**Blast radius:** documentation and external claims only; task rewards and prior model
+episodes are unchanged. M7 remains open until the three-episode world-v19 calibration
+report is complete.
