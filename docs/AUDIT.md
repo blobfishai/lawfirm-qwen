@@ -1,9 +1,9 @@
 # Results Audit — is it the model, or is it a bug?
 
 Every failure cluster in the measured runs was treated as a suspected harness
-bug until proven otherwise. Three real defects were found; two materially
-changed scores and were fixed + requantified. Everything reported in
-`reports/` is post-audit.
+bug until proven otherwise. The defects below record their measured blast
+radius, remediation, and whether historical scores changed. Everything
+reported in `reports/` is post-audit unless a section says otherwise.
 
 ## Bug 1 — output-cap truncation masquerading as "emission collapse" (FIXED)
 
@@ -312,6 +312,66 @@ quality of an argument. And reward is the fraction of core assertions passed, so
 `asdf` still scores **0.8** while failing — for anything consuming reward as a
 training signal that is too generous, and grounding probably belongs with the
 guards that veto to 0.
+
+## Bug 14 — same-world server startup could publish a partial SQLite seed (FIXED)
+
+**Symptom:** the M0.3 sustained replay first produced an intermittent
+`oracle_error` on `task_314`; later in the same process, fixture sessions began
+failing with `database disk image is malformed` and then connection refusals.
+The abandoned session database was 167,936 bytes while the complete seed was
+2,129,920 bytes. A fresh server passed `task_314` three of three times and the
+full fixture bank, excluding a task/verifier defect.
+
+**Diagnosis:** Bug 2 namespaced state by world, but two processes serving the
+*same* world still shared one `seed.db`. Startup removed and rebuilt that file
+in place. A concurrent session `shutil.copyfile` could therefore observe the
+database between schema creation and completion. Per-world namespacing stopped
+cross-version contamination; it did not make same-version publication atomic.
+
+**Fix:** `build_seed_db` now creates a private
+`seed.db.<pid>.<uuid>.tmp`, adds both Gen-1 and contract tables, runs
+`PRAGMA integrity_check`, and atomically publishes it with `os.replace`.
+Session construction removes its destination if copying or task seeding fails.
+`tools/check_atomic_seed.py` blocks a writer before publication and proves a
+reader sees the complete old seed followed by the complete new seed—never the
+intermediate database. Post-fix sustained replay: oracle 291/291,
+discrimination 291/291 with zero harness errors, fixtures 1,455/1,455
+byte-identical, badbank 6/6 rejected.
+
+**Blast radius:** infrastructure availability only; the malformed session never
+produced a task verdict. The new classifier treats any missing/malformed episode
+as `HARNESS-ERROR`, so this class can no longer be misreported as model failure.
+
+## Bug 15 — multi-row verifiers allowed pins to come from different rows (FIXED)
+
+**Symptom:** after the M0 classifier switched from stale assertion metadata to
+the assertions actually executed by VCode, `task_v3_013` and `task_v3_015`
+became `BROKEN-KEY`: a corrupted terminal note still passed.
+
+**Diagnosis:** `build-v3-tasks.mjs` generated one independent search across all
+new rows for each pinned field. On a three-note task, an earlier correct row
+could satisfy `subject=EXPENSE POLICY REVIEW` while a different row satisfied
+`matter_id=19`; no single row had to satisfy the declared insert. The world
+document's `assertions` arrays also omitted these generated pin checks, so the
+old report classified both tasks as having no answer key instead of exposing
+the defect.
+
+**Fix:** every declared insert now compiles to one same-row predicate containing
+all of its pins; each diagnostic check evaluates that predicate. The v3 builder
+has `--refresh-only`, can update the 15 generated verifiers in the canonical
+world without altering tasks or seeds, and emits complete assertion manifests.
+The discrimination classifier derives assertion names from executable VCode,
+reports metadata drift separately, and exits non-zero on broken keys. The two
+fixed tasks pass their oracle and reject no-op, text-only, blind-write, and
+wrong-value episodes. Full post-fix result: **174 discriminating, 117 declared
+no-answer-key, 0 broken keys, 0 broken guards, 0 harness errors**.
+
+**Historical measurement impact:** task_v3_013's three recorded model passes
+contain the correct three matter/subject pairs and remain passes. The archived
+task_v3_015 result used an older four-matter key and is already represented by
+its saved per-episode assertions; it is not silently regraded under the current
+two-matter world. Any cross-version comparison must use the task/world version
+recorded with the episode.
 
 ## What survived the audit (real model behavior, with evidence)
 

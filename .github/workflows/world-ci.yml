@@ -1,66 +1,143 @@
-# M0.3 — the trust chain on every change to the world.
-# A PR that breaks a verifier, a guard, a fixture, or the Harbor packaging
-# goes red with a named cause. Jobs run in parallel; each under ~20 min.
+# M0.3 — every world change runs the complete local trust chain.
 name: world-ci
 
 on:
   push:
     branches: [master]
-    paths: ["world/**", "mcp/**", "tools/**", "harbor/**", ".github/workflows/world-ci.yml"]
   pull_request:
-    paths: ["world/**", "mcp/**", "tools/**", "harbor/**", ".github/workflows/world-ci.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: world-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   WORLD: world/blobfish/world-v15.json
   BASE: http://127.0.0.1:8974
+  HARBOR_VERSION: 0.21.0
+  PYTHONDONTWRITEBYTECODE: "1"
 
 jobs:
-  oracle-and-discrimination:
+  deterministic-trust-chain:
+    name: oracle, discrimination, fixtures, badbank
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with: { python-version: "3.12" }
-      - name: Serve world
-        run: |
-          python3 world/local/server.py --port 8974 --world $WORLD \
-            --v2-contracts mcp/v3/contracts &
-          timeout 60 bash -c 'until curl -sf $BASE/health >/dev/null; do sleep 1; done'
-      - name: Oracle (require 100%)
-        run: python3 world/local/oracle.py --base $BASE --world $WORLD
-      - name: Discrimination (report; exit 1 = known no-key leaks, judged next step)
-        run: |
-          python3 world/local/discriminate.py --base $BASE --world $WORLD \
-            --out /tmp/discrimination.json || true
-      - name: Assert no discrimination failures
-        run: python3 tools/check_discrimination.py /tmp/discrimination.json --budget 119 --expect-tasks 291
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-  fixtures-and-gates:
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with: { python-version: "3.12" }
-      - name: Serve world
+      - name: Validate scripts
         run: |
-          python3 world/local/server.py --port 8974 --world $WORLD \
-            --v2-contracts mcp/v3/contracts &
-          timeout 60 bash -c 'until curl -sf $BASE/health >/dev/null; do sleep 1; done'
-      - name: Golden fixtures (1455 episodes replay identically)
-        run: python3 tools/check_fixtures.py --base $BASE
-      - name: Gate-the-gates (6/6 badbank rejected)
-        run: python3 tools/check_gates.py --world $WORLD --port 8975
+          python3 -m py_compile \
+            world/local/server.py \
+            world/local/discriminate.py \
+            tools/check_atomic_seed.py \
+            tools/check_discrimination.py \
+            tools/check_harbor_result.py
+          node --check world/expansion/discrimination-report.mjs
+          python3 tools/check_atomic_seed.py
+
+      - name: Run deterministic trust chain
+        run: |
+          set -euo pipefail
+          world_log="$RUNNER_TEMP/world.log"
+          python3 world/local/server.py --port 8974 --world "$WORLD" \
+            --v2-contracts mcp/v3/contracts >"$world_log" 2>&1 &
+          world_pid=$!
+          cleanup() {
+            kill "$world_pid" 2>/dev/null || true
+            wait "$world_pid" 2>/dev/null || true
+          }
+          trap cleanup EXIT
+
+          ready=0
+          for attempt in {1..40}; do
+            if curl --fail --silent "$BASE/health" >/dev/null; then
+              ready=1
+              break
+            fi
+            sleep 0.25
+          done
+          if [ "$ready" -ne 1 ]; then
+            sed -n '1,200p' "$world_log"
+            exit 1
+          fi
+
+          python3 world/local/oracle.py --base "$BASE" --world "$WORLD" \
+            --out "$RUNNER_TEMP/oracle-report.json"
+          python3 world/local/discriminate.py --base "$BASE" --world "$WORLD" \
+            --out world/local/discrimination-report.json --report-only
+          node world/expansion/discrimination-report.mjs --world "$WORLD"
+          python3 tools/check_fixtures.py --base "$BASE"
+
+          cleanup
+          trap - EXIT
+          python3 tools/check_gates.py --world "$WORLD" --port 8975
+
+      - name: Require committed audit artifacts to be current
+        run: |
+          git diff --exit-code -- \
+            world/local/discrimination-report.json \
+            data/discrimination.json \
+            docs/DISCRIMINATION.md
 
   harbor-smoke:
+    name: Harbor oracle and no-op smoke
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with: { python-version: "3.12" }
-      - name: Generate tasks + build world image
-        run: python3 harbor/generate.py --build-image
-      - name: Solve + no-op smoke (3 tasks)
-        run: bash tools/harbor_smoke.sh
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+
+      - name: Configure Docker Buildx
+        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
+
+      - name: Generate smoke tasks
+        run: |
+          python3 harbor/generate.py \
+            --world "$WORLD" \
+            --out dist/harbor-ci \
+            --tasks task_003,task_v3_001,task_194 \
+            --image-tag legal-agent-sim-world:ci
+
+      - name: Build cached world image
+        run: |
+          solve_token="$(<dist/harbor-ci/world-image/solve-token.txt)"
+          docker buildx build --load \
+            --tag legal-agent-sim-world:ci \
+            --build-arg "SOLVE_TOKEN=$solve_token" \
+            --cache-from type=gha,scope=world-v15 \
+            --cache-to type=gha,mode=max,scope=world-v15 \
+            dist/harbor-ci/world-image
+
+      - name: Oracle must pass all three tasks
+        run: |
+          uvx --from "harbor==$HARBOR_VERSION" harbor run \
+            --path dist/harbor-ci/tasks \
+            --agent oracle \
+            --jobs-dir jobs/world-ci \
+            --job-name m0-harbor-oracle \
+            --n-concurrent 3 --quiet --yes
+          python3 tools/check_harbor_result.py \
+            --job jobs/world-ci/m0-harbor-oracle \
+            --tasks task_003 task_v3_001 task_194 \
+            --reward 1 --passed 1
+
+      - name: No-op must fail all three tasks
+        run: |
+          uvx --from "harbor==$HARBOR_VERSION" harbor run \
+            --path dist/harbor-ci/tasks \
+            --agent nop \
+            --jobs-dir jobs/world-ci \
+            --job-name m0-harbor-nop \
+            --n-concurrent 3 --quiet --yes
+          python3 tools/check_harbor_result.py \
+            --job jobs/world-ci/m0-harbor-nop \
+            --tasks task_003 task_v3_001 task_194 \
+            --reward 0 --passed 0

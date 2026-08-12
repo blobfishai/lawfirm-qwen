@@ -27,7 +27,12 @@ identical to the admitted reference run.
 
 Run (server must be up, with --v2-contracts for the v3 surface):
   python3 world/local/discriminate.py --base http://localhost:8791 \
-      --world world/blobfish/world-v13.json
+      --world world/blobfish/world-v15.json --report-only
+
+``--report-only`` records raw adversarial outcomes without treating an
+expected wrong-value acceptance on a task with no answer key as a harness
+failure.  Feed that report to ``world/expansion/discrimination-report.mjs``;
+the classifier is the CI policy gate for broken keys and guards.
 """
 from __future__ import annotations
 
@@ -134,9 +139,14 @@ def episode(base, world, task, verifier, mode):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--base", default="http://localhost:8791")
-    ap.add_argument("--world", default="world/blobfish/world-v13.json")
+    ap.add_argument("--world", default="world/blobfish/world-v15.json")
     ap.add_argument("--tasks", default="")
     ap.add_argument("--out", default="world/local/discrimination-report.json")
+    ap.add_argument(
+        "--report-only",
+        action="store_true",
+        help="write raw outcomes for the classifier; fail only on harness errors",
+    )
     a = ap.parse_args()
 
     raw = json.load(open(a.world))
@@ -148,7 +158,7 @@ def main():
         tasks = [t for t in tasks if t["task_id"] in want]
 
     MODES = ["noop", "text_only", "blind_write", "wrong_value"]
-    rows, leaks = [], []
+    rows, leaks, harness_errors = [], [], []
     for n, t in enumerate(tasks, 1):
         tid = t["task_id"]
         rec = {"task_id": tid}
@@ -156,7 +166,9 @@ def main():
             try:
                 r = episode(a.base, world, t, verifiers.get(tid), m)
             except Exception as e:  # a harness error is not a task verdict
-                rec[m] = {"error": str(e)[:120]}
+                err = {"task_id": tid, "mode": m, "error": str(e)[:120]}
+                rec[m] = {"error": err["error"]}
+                harness_errors.append(err)
                 continue
             rec[m] = r
             if r["passed"]:
@@ -174,6 +186,7 @@ def main():
         "modes": MODES,
         "discrimination_failures": leaks,
         "wrong_value_inconclusive": incon,
+        "harness_errors": harness_errors,
     }
     json.dump({"summary": summary, "rows": rows}, open(a.out, "w"), indent=1)
 
@@ -191,8 +204,15 @@ def main():
         print("tasks that accept wrong behavior:")
         for l in leaks[:40]:
             print(f"  {l['task_id']}  mode={l['mode']}  reward={l['reward']}")
+    if harness_errors:
+        print()
+        print("harness errors:")
+        for error in harness_errors[:40]:
+            print(f"  {error['task_id']}  mode={error['mode']}  error={error['error']}")
     print(f"\nreport: {a.out}")
-    return 1 if leaks else 0
+    if harness_errors:
+        return 2
+    return 0 if a.report_only else (1 if leaks else 0)
 
 
 if __name__ == "__main__":

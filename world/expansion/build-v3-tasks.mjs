@@ -15,22 +15,35 @@
  *        python3 world/local/oracle.py --base http://127.0.0.1:8979 --world world/blobfish/world-v3.json --tasks <v3 ids>
  */
 import { readFileSync, writeFileSync } from "node:fs";
-import { join, dirname } from "node:path";
+import { join, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
-const raw = JSON.parse(readFileSync(join(ROOT, "world", "blobfish", "world-lawnative.json"), "utf8"));
+const opt = (name, fallback) => {
+  const index = process.argv.indexOf(name);
+  return resolve(ROOT, index === -1 ? fallback : process.argv[index + 1]);
+};
+const WORLD_IN = opt("--in", "world/blobfish/world-lawnative.json");
+const WORLD_OUT = opt("--out", "world/blobfish/world-v3.json");
+const REFRESH_ONLY = process.argv.includes("--refresh-only");
+const raw = JSON.parse(readFileSync(WORLD_IN, "utf8"));
 const world = raw.world ?? raw;
+const previousVerifierRevision = world.v3_task_pack?.verifier_revision ?? 1;
 
 const py = (s) => JSON.stringify(String(s));
 const pyNorm = (v) => (typeof v === "number" ? (Number.isInteger(v) ? v.toFixed(1) : String(v)) : String(v));
 
 function vcode(taskId, family, walk, inserts, updates) {
   const insertBlocks = inserts.map((c, i) => {
+    // Every pin for one declared insert must bind to the SAME new row. The
+    // former per-field search let row A satisfy `subject` while row B
+    // satisfied `matter_id`, so malformed multi-row work could pass.
+    const rowMatches = c.pinned.map(([f, v]) =>
+      `_norm(r.get(${py(f)})) == _norm(${py(pyNorm(v))})`).join(" and ") || "True";
     const pins = c.pinned.map(([f, v], j) => `
-    _p${i}_${j} = [r for r in _new_${i} if _norm(r.get(${py(f)})) == _norm(${py(pyNorm(v))})]
+    _p${i}_${j} = [r for r in _new_${i} if ${rowMatches}]
     chk(${py(`${c.table}_new_row_${f}_is_${String(pyNorm(v)).slice(0, 36)}`)}, len(_p${i}_${j}) > 0,
-        f"expected new ${c.table} row with ${f}=${String(pyNorm(v)).slice(0, 50)}; saw " + str([_norm(r.get(${py(f)})) for r in _new_${i}][:6]))`).join("");
+        f"expected one new ${c.table} row matching every declared pin (including ${f}=${String(pyNorm(v)).slice(0, 50)}); saw " + str([_norm(r.get(${py(f)})) for r in _new_${i}][:6]))`).join("");
     return `
     _bi_${i} = _ids(initial_state.get(${py(c.table)}, []))
     _af_${i} = final_state.get(${py(c.table)}, [])
@@ -303,8 +316,10 @@ const TASKS = [
 ];
 
 // ---------------------------------------------------------------- assemble
+let added = 0;
+let refreshed = 0;
 for (const t of TASKS) {
-  world.tasks.push({
+  const generatedTask = {
     task_id: t.id,
     outcome_class: "eligible_action",
     prompt: t.prompt,
@@ -323,22 +338,52 @@ for (const t of TASKS) {
     difficulty_tier: "medium",
     acceptance_label: "pending_calibration",
     v3: { family: t.family, dialect_surface: true },
-  });
-  world.verifiers.push({
+  };
+  const taskIndex = world.tasks.findIndex((task) => task.task_id === t.id);
+  if (taskIndex === -1) {
+    if (REFRESH_ONLY) throw new Error(`cannot refresh missing task ${t.id}`);
+    world.tasks.push(generatedTask);
+    added++;
+  } else {
+    // Preserve later lineage additions (especially per-task seed bundles).
+    // The structured TASKS manifest remains the verifier source of truth.
+    refreshed++;
+  }
+
+  const assertions = [
+    "state_changed", "required_workflow_path",
+    ...t.inserts.flatMap((insert) => [
+      `rows_inserted_into_${insert.table}`,
+      ...insert.pinned.map(([field, value]) =>
+        `${insert.table}_new_row_${field}_is_${String(pyNorm(value)).slice(0, 36)}`),
+    ]),
+    ...t.updates.flatMap((update) => update.pinned.map(([field, value]) =>
+      `${update.table}_${update.id}_${field}_is_${String(pyNorm(value)).slice(0, 30)}`)),
+    "no_rows_destroyed",
+  ];
+  const generatedVerifier = {
     task_id: t.id,
-    assertions: ["state_changed", "required_workflow_path",
-      ...t.inserts.map((x) => `rows_inserted_into_${x.table}`),
-      ...t.updates.flatMap((u) => u.pinned.map(([f]) => `${u.table}_${u.id}_${f}`)),
-      "no_rows_destroyed"],
+    assertions,
     vcode: vcode(t.id, t.family, t.walk, t.inserts, t.updates),
     generated_by: "world/expansion/build-v3-tasks.mjs",
-  });
+  };
+  const verifierIndex = world.verifiers.findIndex((verifier) => verifier.task_id === t.id);
+  if (verifierIndex === -1) {
+    if (REFRESH_ONLY) throw new Error(`cannot refresh missing verifier ${t.id}`);
+    world.verifiers.push(generatedVerifier);
+  } else {
+    world.verifiers[verifierIndex] = {
+      ...world.verifiers[verifierIndex],
+      ...generatedVerifier,
+    };
+  }
 }
 world.v3_task_pack = {
   generated_at: "2026-08-10",
   tasks: TASKS.map((t) => t.id),
-  note: "Workflow tasks graded on the v3 real-API-mirrored surfaces; answer keys pinned against the deterministic v3 seed.",
+  verifier_revision: 2,
+  note: "Workflow tasks graded on the v3 real-API-mirrored surfaces; answer keys are same-row bound against the deterministic v3 seed.",
 };
-world.version = (world.version ?? 21) + 1;
-writeFileSync(join(ROOT, "world", "blobfish", "world-v3.json"), JSON.stringify(raw, null, 1));
-console.log(`world-v3.json: ${world.tasks.length} tasks (+${TASKS.length} v3 workflow), ${world.verifiers.length} verifiers`);
+world.version = (world.version ?? 21) + ((added > 0 || previousVerifierRevision < 2) ? 1 : 0);
+writeFileSync(WORLD_OUT, JSON.stringify(raw, null, 1));
+console.log(`${WORLD_OUT}: ${world.tasks.length} tasks (${added} added, ${refreshed} refreshed), ${world.verifiers.length} verifiers`);

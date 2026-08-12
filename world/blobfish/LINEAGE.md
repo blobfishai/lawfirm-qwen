@@ -22,6 +22,7 @@ the step that made it — each pack is a *generator*, not static data.
 | growth pack | → `world-v13.json` | 286 → 288 | `packs-grow/build-grow-pack.mjs` then `assemble.mjs` |
 | corpus tools | → `world-v14.json` | 288 | `node world/expansion/add-corpus-tools.mjs` |
 | grounded drafting | → `world-v15.json` | 288 → 291 | `assemble.mjs --in world/blobfish/world-v14.json --out world/blobfish/world-v15.json --packs-dir world/expansion/packs-grounded` |
+| v3 verifier revision 2 | `world-v15.json` → in place | 291 → 291 | `node world/expansion/build-v3-tasks.mjs --in world/blobfish/world-v15.json --out world/blobfish/world-v15.json --refresh-only` (same-row pin binding; tasks and seeds preserved) |
 
 After any rebuild: re-derive seeds and re-prove.
 
@@ -30,5 +31,6 @@ node world/expansion/derive-task-seeds.mjs --world world/blobfish/world-v15.json
 python3 world/local/server.py --world world/blobfish/world-v15.json \
     --v2-contracts mcp/v3/contracts --port 8791          # --v2-contracts is REQUIRED
 python3 world/local/oracle.py       --base http://localhost:8791 --world world/blobfish/world-v15.json
-python3 world/local/discriminate.py --base http://localhost:8791 --world world/blobfish/world-v15.json
+python3 world/local/discriminate.py --base http://localhost:8791 --world world/blobfish/world-v15.json --report-only
+node world/expansion/discrimination-report.mjs --world world/blobfish/world-v15.json
 ```

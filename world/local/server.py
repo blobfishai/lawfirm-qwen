@@ -73,12 +73,20 @@ def load_world(path: str) -> dict:
     return raw.get("world", raw)
 
 
-def build_seed_db(world: dict) -> None:
+def build_seed_db(world: dict, v2=None) -> None:
+    """Build a complete seed and publish it atomically.
+
+    Multiple local servers may legitimately run the same world on different
+    ports.  Building SEED_DB in place lets one server copy another server's
+    partially written database.  A private temporary build plus os.replace
+    guarantees readers observe either the previous complete seed or the new
+    complete seed, never an intermediate file.
+    """
     os.makedirs(STATE_DIR, exist_ok=True)
     os.makedirs(SESS_DIR, exist_ok=True)
-    if os.path.exists(SEED_DB):
-        os.remove(SEED_DB)
-    conn = sqlite3.connect(SEED_DB)
+    pending = f"{SEED_DB}.{os.getpid()}.{uuid.uuid4().hex}.tmp"
+    conn = sqlite3.connect(pending)
+    build_ok = False
     try:
         for table in world["tables"]:
             cols = table["columns"]
@@ -103,8 +111,27 @@ def build_seed_db(world: dict) -> None:
                     f'INSERT INTO "{table["name"]}" ({cq}) VALUES ({ph})', vals
                 )
         conn.commit()
+        if v2 is not None:
+            v2.create_and_seed(conn)
+        integrity = conn.execute("PRAGMA integrity_check").fetchone()[0]
+        if integrity != "ok":
+            raise sqlite3.DatabaseError(f"new seed failed integrity check: {integrity}")
+        build_ok = True
     finally:
         conn.close()
+        if not build_ok:
+            try:
+                os.remove(pending)
+            except OSError:
+                pass
+    try:
+        os.replace(pending, SEED_DB)
+    except Exception:
+        try:
+            os.remove(pending)
+        except OSError:
+            pass
+        raise
 
 
 def snapshot(db_path: str) -> dict:
@@ -858,12 +885,19 @@ class Session:
         self.id = sid
         self.task_id = (task or {}).get("task_id")
         self.db_path = os.path.join(SESS_DIR, f"{sid}.db")
-        shutil.copyfile(SEED_DB, self.db_path)
-        self.call_index = 0
-        self.write_count = 0
-        seed = (task or {}).get("seed") or {}
-        if seed:
-            self._apply_seed(seed, md_rows_by_id or {}, table_defs or {})
+        try:
+            shutil.copyfile(SEED_DB, self.db_path)
+            self.call_index = 0
+            self.write_count = 0
+            seed = (task or {}).get("seed") or {}
+            if seed:
+                self._apply_seed(seed, md_rows_by_id or {}, table_defs or {})
+        except Exception:
+            try:
+                os.remove(self.db_path)
+            except OSError:
+                pass
+            raise
 
     def _apply_seed(self, seed: dict, md_rows_by_id: dict, table_defs: dict) -> None:
         conn = sqlite3.connect(self.db_path)
@@ -1147,16 +1181,12 @@ def main():
                   else args.world.replace(".json", "-with-v2.json"))
     world = load_world(args.world)
     print(f"[local-world] loading {args.world} (state: {STATE_DIR})", file=sys.stderr)
-    build_seed_db(world)
     v2 = None
     if args.v2_contracts:
         from v2runtime import V2Runtime
         v2 = V2Runtime(args.v2_contracts)
-        conn = sqlite3.connect(SEED_DB)
-        try:
-            v2.create_and_seed(conn)
-        finally:
-            conn.close()
+    build_seed_db(world, v2=v2)
+    if v2 is not None:
         print(f"[local-world] v2 contracts: {len(v2.contracts)} products, "
               f"{len(v2.tools)} tools, {len(v2.tables)} tables seeded", file=sys.stderr)
     initial_state = snapshot(SEED_DB)

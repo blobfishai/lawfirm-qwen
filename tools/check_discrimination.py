@@ -1,48 +1,51 @@
 #!/usr/bin/env python3
-"""CI assertion over the discrimination report.
+"""Compatibility entry point for the canonical discrimination classifier.
 
-Behavioral guards (noop / text_only / blind_write) must NEVER leak.
-wrong_value leaks are the known no-answer-key population (119 tasks until
-M4.3 closes them) — the budget must not grow.
-
-Usage: python3 tools/check_discrimination.py /tmp/discrimination.json [--budget 119]
+The former checker allowed a numeric wrong-value leak budget. That could hide a
+BROKEN-KEY because raw sweep output alone cannot distinguish an intentionally
+unkeyed task from a claimed key that does not bind. The world-aware classifier
+is now the only admission policy.
 """
+from __future__ import annotations
+
 import argparse
-import json
+import subprocess
 import sys
+import tempfile
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[1]
+CLASSIFIER = ROOT / "world" / "expansion" / "discrimination-report.mjs"
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser()
-    ap.add_argument("report")
-    ap.add_argument("--budget", type=int, default=119,
-                    help="allowed wrong_value leaks (the no-answer-key set)")
-    ap.add_argument("--expect-tasks", type=int, default=0,
-                    help="fail unless the report covers exactly this many tasks "
-                         "(catches partial/crashed sweeps)")
-    args = ap.parse_args()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("report", type=Path)
+    parser.add_argument(
+        "--world", type=Path, default=ROOT / "world" / "blobfish" / "world-v15.json"
+    )
+    args = parser.parse_args()
 
-    report = json.load(open(args.report))
-    s = report["summary"]
-    if args.expect_tasks and s.get("tasks") != args.expect_tasks:
-        print(f"partial report: {s.get('tasks')} tasks != {args.expect_tasks}")
-        return 1
-    errors = [r["task_id"] for r in report.get("rows", [])
-              if any(isinstance(r.get(m), dict) and r[m].get("error")
-                     for m in s.get("modes", []))]
-    if errors:
-        print(f"harness errors in {len(errors)} tasks: {errors[:10]}")
-        return 1
-    bad = s["discrimination_failures"]
-    blind = [b for b in bad if b["mode"] == "wrong_value"]
-    behavioral = [b for b in bad if b["mode"] != "wrong_value"]
-    print(f"discrimination failures: {len(bad)} "
-          f"(wrong_value/no-key: {len(blind)}, behavioral: {len(behavioral)})")
-    for b in behavioral[:20]:
-        print(f"  BEHAVIORAL LEAK {b['task_id']} mode={b['mode']}")
-    if len(blind) > args.budget:
-        print(f"  wrong_value leaks grew past budget: {len(blind)} > {args.budget}")
-    return 1 if behavioral or len(blind) > args.budget else 0
+    with tempfile.TemporaryDirectory(prefix="legal-agent-discrimination-") as tmp:
+        output = Path(tmp)
+        completed = subprocess.run(
+            [
+                "node",
+                str(CLASSIFIER),
+                "--sweep",
+                str(args.report.resolve()),
+                "--world",
+                str(args.world.resolve()),
+                "--docs-out",
+                str(output / "DISCRIMINATION.md"),
+                "--data-out",
+                str(output / "discrimination.json"),
+            ],
+            cwd=ROOT,
+            check=False,
+        )
+    return completed.returncode
 
 
 if __name__ == "__main__":

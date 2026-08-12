@@ -1,82 +1,158 @@
 #!/usr/bin/env node
 /**
- * Classifies the discrimination sweep (world/local/discriminate.py).
+ * Classify a raw discrimination sweep and enforce the admission policy.
  *
- * A corrupted write payload that still passes is only a BUG when the task
- * claims an answer key. Two very different things look identical in the raw
- * sweep output:
+ * `world/local/discriminate.py --report-only` deliberately records all raw
+ * adversarial acceptances.  A wrong-value acceptance is a defect only when a
+ * verifier claims a determinate answer key; prose/state-only tasks are instead
+ * reported as `no-answer-key`.  Behavioral leaks, missing episodes, malformed
+ * reports, and claimed-but-unenforced keys are CI failures.
  *
- *   BROKEN KEY   the verifier has pinned-value assertions (`*_is_<value>`,
- *                required_documents_read, forbidden-row traps) and the
- *                corrupted write passed anyway — the key does not bind.
- *                This is a defect.
- *
- *   NO KEY       the verifier has no pinned-value assertion at all. It grades
- *                the workflow, the reads and the insertion, but nothing about
- *                WHAT was written. Corrupting free prose cannot be detected by
- *                construction, so this is not a bug — it is a statement about
- *                how much the task actually grades, and it belongs in the
- *                headline as a quality number.
- *
- * Emits docs/DISCRIMINATION.md + data/discrimination.json.
- * Run: node world/expansion/discrimination-report.mjs
+ * Emits docs/DISCRIMINATION.md + data/discrimination.json and exits non-zero
+ * on BROKEN-GUARD, BROKEN-KEY, or HARNESS-ERROR.
  */
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
-import { join, dirname } from "node:path";
+import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
-const SWEEP = join(ROOT, "world", "local", "discrimination-report.json");
-if (!existsSync(SWEEP)) {
-  console.error("no sweep output — run world/local/discriminate.py first");
-  process.exit(1);
-}
-const sweep = JSON.parse(readFileSync(SWEEP, "utf8"));
-const raw = JSON.parse(readFileSync(join(ROOT, "world/blobfish/world-v13.json"), "utf8"));
-const world = raw.world ?? raw;
-const taskById = Object.fromEntries(world.tasks.map((t) => [t.task_id, t]));
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 
-/** Assertions that bind an actual answer, as opposed to structure/guards. */
+function option(name, fallback) {
+  const index = process.argv.indexOf(name);
+  return resolve(ROOT, index === -1 ? fallback : process.argv[index + 1]);
+}
+
+const SWEEP = option("--sweep", "world/local/discrimination-report.json");
+const WORLD = option("--world", "world/blobfish/world-v15.json");
+const DOC_OUT = option("--docs-out", "docs/DISCRIMINATION.md");
+const DATA_OUT = option("--data-out", "data/discrimination.json");
+
+for (const [label, path] of [["sweep", SWEEP], ["world", WORLD]]) {
+  if (!existsSync(path)) {
+    console.error(`missing ${label}: ${path}`);
+    process.exit(2);
+  }
+}
+
+const sweep = JSON.parse(readFileSync(SWEEP, "utf8"));
+const raw = JSON.parse(readFileSync(WORLD, "utf8"));
+const world = raw.world ?? raw;
+const taskById = Object.fromEntries(world.tasks.map((task) => [task.task_id, task]));
+const verifierById = Object.fromEntries(
+  (world.verifiers ?? []).map((verifier) => [verifier.task_id, verifier]),
+);
+
+/** Assertions that bind an answer, rather than workflow structure or damage guards. */
 const KEY_RE = /(_is_|_equals_|required_documents_read|no_forbidden_|_absent$|_count_is)/;
 const STRUCTURAL = new Set([
   "state_changed", "reads_before_writes", "no_shortcut_direct_update",
   "required_workflow_path", "no_offtask_table_changes", "no_rows_destroyed",
   "no_undeclared_rows_created", "audit_logs_append_only", "all_tools_succeeded",
 ]);
+const MODES = ["noop", "text_only", "blind_write", "wrong_value"];
+const globalErrors = [];
+const assertionManifestDrift = [];
 
 function keyAssertions(taskId) {
-  const p = join(ROOT, "tasks", taskId, "verifier.py");
-  if (!existsSync(p)) return [];
-  const src = readFileSync(p, "utf8");
-  return [...src.matchAll(/chk\(\s*"([a-z_0-9]+)"/g)].map((m) => m[1])
-    .filter((n) => !STRUCTURAL.has(n) && !/^rows_inserted_into_/.test(n))
-    .filter((n) => KEY_RE.test(n));
+  const verifier = verifierById[taskId];
+  if (!verifier || typeof verifier.vcode !== "string") {
+    globalErrors.push(`verifier ${taskId} is missing executable VCode`);
+    return [];
+  }
+  const declared = Array.isArray(verifier.assertions) ? verifier.assertions : [];
+  // V15's assertion metadata predates several verifier templates and is
+  // incomplete for 149 tasks. The executed VCode is authoritative. Every chk
+  // call in the shipped world uses a JSON string literal, so extract those
+  // names and fail closed if a future dynamic call cannot be accounted for.
+  const executed = [...verifier.vcode.matchAll(/chk\(\s*("(?:\\.|[^"\\])*")/g)]
+    .map((match) => JSON.parse(match[1]));
+  const callCount = (verifier.vcode.match(/\bchk\s*\(/g) ?? []).length - 1;
+  if (executed.length !== callCount) {
+    globalErrors.push(
+      `verifier ${taskId} has ${callCount} chk calls but ${executed.length} literal assertion names`,
+    );
+  }
+  const missing = [...new Set(executed)].filter((name) => !declared.includes(name));
+  if (missing.length) {
+    assertionManifestDrift.push({ task: taskId, missing: missing.slice(0, 12) });
+  }
+  return [...new Set([...declared, ...executed])]
+    .filter((name) => typeof name === "string")
+    .filter((name) => !STRUCTURAL.has(name) && !/^rows_inserted_into_/.test(name))
+    .filter((name) => KEY_RE.test(name));
 }
 
-const MODES = ["noop", "text_only", "blind_write", "wrong_value"];
-const rows = sweep.rows.map((r) => {
-  const keys = keyAssertions(r.task_id);
-  const wv = r.wrong_value ?? {};
-  const accepted = MODES.filter((m) => (r[m] ?? {}).passed);
-  const anchor = (taskById[r.task_id]?.provenance?.source_workflow ?? "").split(":")[0] || "graph-walk";
+const rawRows = Array.isArray(sweep.rows) ? sweep.rows : [];
+const sweepRowsById = new Map();
+for (const row of rawRows) {
+  if (!row || typeof row.task_id !== "string") {
+    globalErrors.push("sweep contains a row without task_id");
+    continue;
+  }
+  if (sweepRowsById.has(row.task_id)) {
+    globalErrors.push(`sweep contains duplicate row for ${row.task_id}`);
+  }
+  if (!taskById[row.task_id]) {
+    globalErrors.push(`sweep contains unknown task ${row.task_id}`);
+  }
+  sweepRowsById.set(row.task_id, row);
+}
+if (rawRows.length !== world.tasks.length) {
+  globalErrors.push(`sweep row count ${rawRows.length} != world task count ${world.tasks.length}`);
+}
+if (sweep.summary?.tasks !== rawRows.length) {
+  globalErrors.push(`sweep summary count ${sweep.summary?.tasks} != row count ${rawRows.length}`);
+}
+for (const error of sweep.summary?.harness_errors ?? []) {
+  globalErrors.push(
+    `raw harness error: ${error.task_id ?? "unknown"}/${error.mode ?? "unknown"}: ${error.error ?? "unknown"}`,
+  );
+}
+
+const rows = world.tasks.map((task) => {
+  const rawRow = sweepRowsById.get(task.task_id);
+  const keys = keyAssertions(task.task_id);
+  const anchor = (task.provenance?.source_workflow ?? "").split(":")[0] || "graph-walk";
+  if (!rawRow) {
+    return {
+      task: task.task_id, anchor, verdict: "HARNESS-ERROR", keys: keys.length,
+      accepted: [], keyNames: keys.slice(0, 4), errors: ["missing sweep row"],
+    };
+  }
+
+  const errors = MODES.flatMap((mode) => {
+    const episode = rawRow[mode];
+    if (!episode || typeof episode.passed !== "boolean") {
+      return [`${mode}: ${episode?.error ?? "missing or malformed episode"}`];
+    }
+    return [];
+  });
+  const accepted = MODES.filter((mode) => rawRow[mode]?.passed === true);
+  const wrongValue = rawRow.wrong_value ?? {};
   let verdict = "discriminating";
-  if (accepted.some((m) => m !== "wrong_value")) verdict = "BROKEN-GUARD";
-  else if (wv.passed && keys.length) verdict = "BROKEN-KEY";
-  else if (wv.passed) verdict = "no-answer-key";
-  else if (wv.write_errored) verdict = "key-inconclusive";
-  return { task: r.task_id, anchor, verdict, keys: keys.length, accepted,
-    keyNames: keys.slice(0, 4) };
+  if (errors.length) verdict = "HARNESS-ERROR";
+  else if (accepted.some((mode) => mode !== "wrong_value")) verdict = "BROKEN-GUARD";
+  else if (wrongValue.passed && keys.length) verdict = "BROKEN-KEY";
+  else if (wrongValue.passed) verdict = "no-answer-key";
+  else if (wrongValue.write_errored) verdict = "key-inconclusive";
+  return {
+    task: task.task_id, anchor, verdict, keys: keys.length, accepted,
+    keyNames: keys.slice(0, 4), ...(errors.length ? { errors } : {}),
+  };
 });
 
-const by = (v) => rows.filter((r) => r.verdict === v);
-const counts = Object.fromEntries(
-  ["discriminating", "no-answer-key", "key-inconclusive", "BROKEN-KEY", "BROKEN-GUARD"]
-    .map((v) => [v, by(v).length]));
+const VERDICTS = [
+  "discriminating", "no-answer-key", "key-inconclusive",
+  "BROKEN-KEY", "BROKEN-GUARD", "HARNESS-ERROR",
+];
+const by = (verdict) => rows.filter((row) => row.verdict === verdict);
+const counts = Object.fromEntries(VERDICTS.map((verdict) => [verdict, by(verdict).length]));
 
 const anchorRoll = {};
-for (const r of rows) {
-  const a = (anchorRoll[r.anchor] ??= { n: 0, weak: 0 });
-  a.n++; if (r.verdict === "no-answer-key") a.weak++;
+for (const row of rows) {
+  const anchor = (anchorRoll[row.anchor] ??= { n: 0, weak: 0 });
+  anchor.n++;
+  if (row.verdict === "no-answer-key") anchor.weak++;
 }
 
 const out = [];
@@ -84,11 +160,12 @@ out.push("# Discrimination audit — does each task reject wrong behavior?");
 out.push("");
 out.push("The oracle proves a task is *satisfiable*: its reference walk executes and passes. That is");
 out.push("half of admission. A task that ALSO passes when the agent does nothing, reads without");
-out.push("writing, writes without reading, or writes the wrong value grades nothing — and measuring a");
-out.push("model on it spends money to learn noise.");
+out.push("writing, or writes the wrong value grades nothing — and measuring a model on it spends");
+out.push("money to learn noise.");
 out.push("");
 out.push("`world/local/discriminate.py` drives four adversarial episodes per task against the live");
-out.push("world and records whether the verifier rejects each:");
+out.push("world. This classifier distinguishes an unenforced claimed key from a task that declares");
+out.push("no determinate content key:");
 out.push("");
 out.push("| Mode | What the fake agent does |");
 out.push("|---|---|");
@@ -101,40 +178,66 @@ out.push(`## Result over ${rows.length} tasks`);
 out.push("");
 out.push("| Verdict | Tasks | Meaning |");
 out.push("|---|---|---|");
-out.push(`| discriminating | ${counts["discriminating"]} | rejects all four |`);
-out.push(`| no-answer-key | ${counts["no-answer-key"]} | rejects the three behavioral modes; has no pinned-value assertion, so a corrupted payload cannot be caught **by construction** |`);
-out.push(`| key-inconclusive | ${counts["key-inconclusive"]} | the corrupted write was rejected by the tool itself (enum/constraint), so the episode proves nothing about the key |`);
+out.push(`| discriminating | ${counts["discriminating"]} | rejects all four modes |`);
+out.push(`| no-answer-key | ${counts["no-answer-key"]} | rejects behavioral modes; declares no pinned content assertion, so corrupted prose is not mechanically rejected |`);
+out.push(`| key-inconclusive | ${counts["key-inconclusive"]} | the corrupted write was rejected by the tool itself, so the verifier key was not exercised |`);
 out.push(`| **BROKEN-KEY** | ${counts["BROKEN-KEY"]} | claims an answer key, yet a corrupted write still passes — a defect |`);
-out.push(`| **BROKEN-GUARD** | ${counts["BROKEN-GUARD"]} | accepts no-op, text-only or blind-write — a defect |`);
+out.push(`| **BROKEN-GUARD** | ${counts["BROKEN-GUARD"]} | accepts no-op, text-only, or blind-write — a defect |`);
+out.push(`| **HARNESS-ERROR** | ${counts["HARNESS-ERROR"]} | an episode is missing or malformed — no task verdict may be inferred |`);
 out.push("");
-if (counts["BROKEN-KEY"] || counts["BROKEN-GUARD"]) {
-  out.push("### Defects");
+out.push(`Assertion-manifest diagnostic: ${assertionManifestDrift.length} verifier(s) omit one or more`);
+out.push("literal `chk` names from metadata. Classification uses the executed VCode; M1.3 must regenerate");
+out.push("those manifests before Gen-1 removal.");
+out.push("");
+
+if (counts["BROKEN-KEY"] || counts["BROKEN-GUARD"] || counts["HARNESS-ERROR"] || globalErrors.length) {
+  out.push("### Admission blockers");
   out.push("");
-  out.push("| Task | Verdict | Accepted modes | Key assertions |");
+  out.push("| Task | Verdict | Accepted modes / error | Key assertions |");
   out.push("|---|---|---|---|");
-  for (const r of [...by("BROKEN-GUARD"), ...by("BROKEN-KEY")]) {
-    out.push(`| ${r.task} | ${r.verdict} | ${r.accepted.join(", ")} | ${r.keyNames.join(", ") || "—"} |`);
+  for (const row of [...by("BROKEN-GUARD"), ...by("BROKEN-KEY"), ...by("HARNESS-ERROR")]) {
+    const detail = row.errors?.join("; ") || row.accepted.join(", ");
+    out.push(`| ${row.task} | ${row.verdict} | ${detail || "—"} | ${row.keyNames.join(", ") || "—"} |`);
+  }
+  for (const error of globalErrors) {
+    out.push(`| *(global)* | HARNESS-ERROR | ${error} | — |`);
   }
   out.push("");
 }
+
 out.push("### What `no-answer-key` means for measurement");
 out.push("");
 out.push("These tasks still grade real behavior — the workflow path, evidence-before-write, the");
-out.push("insertion, and the anti-hack guards all bind. What they do not grade is the CONTENT of the");
-out.push("deliverable. For a prose deliverable (a memo, a report) that is unavoidable: there is no");
-out.push("exact string to pin. For a determinate answer (a number, a status, an enum) it is a gap, and");
-out.push("the fix is to pin the value in the verifier rather than to drop the task.");
+out.push("insertion, and anti-hack guards all bind. They do not grade the CONTENT of the deliverable.");
+out.push("That is an explicit coverage gap, not a silent pass: grounded assertions introduced in M4");
+out.push("must convert these tasks to content-discriminating tasks before the v17 headline set.");
 out.push("");
 out.push("| Anchor | Tasks | No answer key |");
 out.push("|---|---|---|");
-for (const [a, v] of Object.entries(anchorRoll).sort((x, y) => y[1].n - x[1].n)) {
-  out.push(`| ${a} | ${v.n} | ${v.weak} |`);
+for (const [anchor, value] of Object.entries(anchorRoll).sort((a, b) => b[1].n - a[1].n)) {
+  out.push(`| ${anchor} | ${value.n} | ${value.weak} |`);
 }
 out.push("");
-out.push("*Regenerate: serve the world with `--v2-contracts mcp/v3/contracts`, then*");
-out.push("*`python3 world/local/discriminate.py && node world/expansion/discrimination-report.mjs`.*");
+out.push("*Regenerate: serve world-v15 with `--v2-contracts mcp/v3/contracts`, then run*");
+out.push("*`python3 world/local/discriminate.py --report-only` and*");
+out.push("*`node world/expansion/discrimination-report.mjs`.*");
 
-writeFileSync(join(ROOT, "docs", "DISCRIMINATION.md"), out.join("\n") + "\n");
-writeFileSync(join(ROOT, "data", "discrimination.json"),
-  JSON.stringify({ counts, rows, anchorRoll }, null, 1));
-console.log(`discrimination: ${JSON.stringify(counts)} -> docs/DISCRIMINATION.md`);
+const report = {
+  world: WORLD.slice(ROOT.length + 1),
+  sweep: SWEEP.slice(ROOT.length + 1),
+  counts,
+  rows,
+  anchorRoll,
+  globalErrors,
+  assertionManifestDrift,
+};
+writeFileSync(DOC_OUT, `${out.join("\n")}\n`);
+writeFileSync(DATA_OUT, JSON.stringify(report, null, 1));
+
+const blockers = counts["BROKEN-KEY"] + counts["BROKEN-GUARD"]
+  + counts["HARNESS-ERROR"] + globalErrors.length;
+console.log(`discrimination: ${JSON.stringify(counts)} -> ${DOC_OUT}`);
+if (blockers) {
+  console.error(`discrimination admission failed: ${blockers} blocker(s)`);
+  process.exitCode = 1;
+}
