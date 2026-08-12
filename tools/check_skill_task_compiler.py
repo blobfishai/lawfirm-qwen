@@ -22,6 +22,12 @@ def fail(message: str) -> None:
 
 
 def main() -> int:
+    if not SOURCE.exists():
+        # Gitignored research corpus is absent on CI runners; this gate is
+        # only computable where the corpus lives (parity-audit defect class).
+        print("corpus absent (gitignored research/repos/) — skill-compiler gate skipped; "
+              "committed artifacts left as-is.")
+        return 0
     subprocess.run(
         [sys.executable, str(ROOT / "world/ecosystem/compile_skills.py"), "--check"],
         cwd=ROOT,

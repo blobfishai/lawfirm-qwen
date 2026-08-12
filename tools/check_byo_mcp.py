@@ -167,6 +167,12 @@ def run_proof() -> dict[str, Any]:
 
 
 def main() -> int:
+    if not LEGAL_MCP.exists():
+        # Gitignored research corpus is absent on CI runners; this gate is
+        # only computable where the corpus lives (parity-audit defect class).
+        print("corpus absent (gitignored research/repos/) — BYO-MCP proof gate skipped; "
+              "committed artifacts left as-is.")
+        return 0
     parser = argparse.ArgumentParser()
     parser.add_argument("--write-proof", action="store_true")
     parser.add_argument("--check-proof", action="store_true")

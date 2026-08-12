@@ -360,6 +360,12 @@ def expected_outputs() -> dict[Path, str]:
 
 
 def main() -> int:
+    if not SOURCE.exists():
+        # Gitignored research corpus is absent on CI runners; this gate is
+        # only computable where the corpus lives (parity-audit defect class).
+        print("corpus absent (gitignored research/repos/) — MCP schema diff skipped; "
+              "committed artifacts left as-is.")
+        return 0
     parser = argparse.ArgumentParser()
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args()

@@ -439,6 +439,14 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--check", action="store_true", help="fail if committed artifacts differ")
     args = parser.parse_args()
+    if not SOURCE_REPO.exists():
+        # The 175-skill census source is the gitignored research corpus and is
+        # absent on CI runners. The census is only recomputable where the
+        # corpus lives — regenerating without it would replace real artifacts
+        # with empty ones (same class as the parity-audit CI defect).
+        print("skill corpus absent (gitignored research/repos/) — census not "
+              "recomputable here; committed artifacts left as-is.")
+        return 0
     outputs = expected_outputs()
     if args.check:
         stale = [str(path.relative_to(ROOT)) for path, value in outputs.items()
