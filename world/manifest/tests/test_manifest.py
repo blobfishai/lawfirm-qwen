@@ -104,6 +104,19 @@ class NormalizationTests(unittest.TestCase):
         self.assertIn("$54M", variants)
         self.assertIn("fifty-four million", variants)
 
+    def test_prefixed_section_variants_do_not_double_prefix(self):
+        variants = fact_variants({"kind": "section", "value": "Section 7.2(b)"})
+        self.assertIn("7.2(b)", variants)
+        self.assertIn("§ 7.2(b)", variants)
+        self.assertNotIn("Section Section 7.2(b)", variants)
+
+    def test_integer_money_variants_preserve_significant_zeroes(self):
+        variants = fact_variants({"kind": "money", "value": "$500M"})
+        self.assertIn("$500M", variants)
+        self.assertIn("$500,000,000", variants)
+        self.assertNotIn("5M", variants)
+        self.assertNotIn("$5M", variants)
+
 
 class ManifestCompilerTests(unittest.TestCase):
     def test_three_golden_manifests_render_byte_identically(self):

@@ -167,7 +167,13 @@ def equivalent(left: Any, right: Any, kind: str = "string") -> bool:
 
 
 def _decimal_display(number: Decimal) -> str:
-    return f"{number:f}".rstrip("0").rstrip(".") or "0"
+    text = f"{number:f}"
+    # Only zeroes after a decimal point are insignificant.  Stripping every
+    # trailing zero turns 500,000,000 into "5" and lets a $500M assertion
+    # match an unrelated 5M value.
+    if "." in text:
+        text = text.rstrip("0").rstrip(".")
+    return text or "0"
 
 
 def fact_variants(fact: dict[str, Any]) -> list[str]:
@@ -201,7 +207,8 @@ def fact_variants(fact: dict[str, Any]) -> list[str]:
             variants.extend((date.isoformat(), date.strftime("%B %-d, %Y"),
                              date.strftime("%b %-d, %Y"), date.strftime("%-m/%-d/%Y")))
     if kind == "section":
-        variants.extend((f"Section {value}", f"§ {value}"))
+        locator = re.sub(r"^(?:section|sec\.?|§)\s*", "", normalized_text(value), flags=re.I)
+        variants.extend((locator, f"Section {locator}", f"§ {locator}"))
     seen: set[str] = set()
     out: list[str] = []
     for variant in variants:

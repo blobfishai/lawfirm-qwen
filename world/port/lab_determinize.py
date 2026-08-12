@@ -33,19 +33,20 @@ from world.manifest.normalization import (  # noqa: E402
 DEFAULT_STORE = ROOT / "world" / "corpus" / "lab"
 DEFAULT_OUT = ROOT / "world" / "port" / "determinate" / "lab-assertions.jsonl"
 DEFAULT_REPORT = ROOT / "world" / "port" / "determinate" / "lab-report.json"
-COMPILER_VERSION = "1"
+COMPILER_VERSION = "3"
 MIN_ANCHOR_CHARS = 4
 
 GENERIC = {
     "high", "medium", "low", "yes", "no", "pass", "fail", "client", "agency",
-    "agreement", "memo", "redline", "document", "section", "risk", "issue",
+    "agreement", "agreements", "memo", "memos", "redline", "redlines",
+    "document", "documents", "section", "sections", "risk", "risks", "issue", "issues",
 }
 MONTH = r"(?:January|February|March|April|May|June|July|August|September|October|November|December|Jan\.?|Feb\.?|Mar\.?|Apr\.?|Jun\.?|Jul\.?|Aug\.?|Sep\.?|Sept\.?|Oct\.?|Nov\.?|Dec\.?)"
-
-
-def source_search_text(value: Any) -> str:
-    """Cheap source-only folding; grade-time normalization remains stricter."""
-    return str(value or "").casefold().replace("\u00a0", " ").replace("–", "-").replace("—", "-")
+UNSUPPORTED_LOGIC = re.compile(
+    r"\band/or\b|\beither\b|\bor\b|\bwithin\b|\bbetween\b|\bapprox(?:imately)?\b|"
+    r"\bat\s+least\b|\bat\s+most\b|\bno\s+(?:more|less)\s+than\b|[<>]=?",
+    flags=re.I,
+)
 
 
 @dataclass(frozen=True)
@@ -66,37 +67,85 @@ def pass_clause(match_criteria: str) -> str:
     return re.sub(r"^\s*PASS\s+if\s+", "", text, flags=re.I).strip()
 
 
+def mechanically_required_text(match_criteria: str) -> str:
+    """Return only mechanically conjunctive PASS text.
+
+    Whitespace-prefixed parentheticals are explanatory in LAB criteria far
+    more often than operative (for example, a fee followed by the transaction
+    tier that explains it).  Attached legal locators such as ``7.2(b)`` stay.
+    Alternative/range logic is rejected instead of being mistranslated into a
+    stricter all-anchor requirement.
+    """
+    text = pass_clause(match_criteria)
+    output: list[str] = []
+    index = 0
+    while index < len(text):
+        if text[index] == "(" and index > 0 and text[index - 1].isspace():
+            depth = 1
+            index += 1
+            while index < len(text) and depth:
+                depth += text[index] == "("
+                depth -= text[index] == ")"
+                index += 1
+            output.append(" ")
+            continue
+        output.append(text[index])
+        index += 1
+    return re.sub(r"\s+", " ", "".join(output)).strip()
+
+
 def _spans(pattern: str, text: str, kind: str, source: str, group: int = 0) -> list[Candidate]:
     return [Candidate(kind, match.group(group).strip(" `\"'.,;:"), source)
             for match in re.finditer(pattern, text, flags=re.I)]
 
 
 def extract_candidates(match_criteria: str, title: str = "") -> list[Candidate]:
-    text = pass_clause(match_criteria)
+    text = mechanically_required_text(match_criteria)
     found: list[Candidate] = []
     # Typed values are higher-signal than free prose and normalize reliably.
-    found += _spans(r"[$€£]\s*\d[\d,]*(?:\.\d+)?\s*(?:k|m|mm|b|bn|t|thousand|million|billion|trillion)?", text, "money", "money")
+    found += _spans(
+        r"[$€£]\s*\d[\d,]*(?:\.\d+)?(?:\s*(?:trillion|billion|million|thousand|mm|bn|[kmbt]))?(?!\w)",
+        text, "money", "money",
+    )
     found += _spans(r"(?<![\w.])\d+(?:\.\d+)?\s*%", text, "percentage", "percentage")
     found += _spans(rf"\b{MONTH}\s+\d{{1,2}},?\s+\d{{4}}\b|\b\d{{4}}-\d{{2}}-\d{{2}}\b", text, "date", "date")
-    found += _spans(r"(?:Section|Sec\.?|§)\s*[A-Za-z0-9][A-Za-z0-9.()\-]*", text, "section", "section")
-    found += _spans(r"\b[A-Z]{1,8}-\d{2,}(?:\.\d+)?\b", text, "string", "identifier")
+    # A section citation must contain a locator digit.  Without this guard the
+    # regex can read the ordinary plural word "sections" as "Section s" and
+    # manufacture a meaningless anchor that occurs throughout the evidence.
     found += _spans(
-        r"(?<![\w$])\d+(?:\.\d+)?\s+(?:business\s+days?|calendar\s+days?|days?|months?|years?|"
-        r"basis\s+points?|MSAs?|categories|acquisitions?|renewals?|arbitrators?|occurrences?)\b",
+        r"(?:(?:Section|Sec\.?)\s+|§\s*)(?=[A-Za-z0-9.()\-]*\d)[A-Za-z0-9][A-Za-z0-9.()\-]*",
+        text, "section", "section",
+    )
+    found += _spans(r"\b[A-Z]{1,8}-\d{2,}(?:\.\d+)?\b", text, "string", "identifier")
+    found += _spans(r"\b[A-Z]{1,12}_\d{2,}(?:\.\d+)?\b", text, "string", "identifier")
+    found += _spans(
+        r"(?<![\w$€£,])\d{1,3}(?:,\d{3})+(?:\.\d+)?"
+        r"(?!\s+(?:business\s+days?|calendar\s+days?|days?|months?|years?|basis\s+points?|"
+        r"MSAs?|categories|acquisitions?|renewals?|arbitrators?|occurrences?|countries|states|"
+        r"matters|documents|employees|markets|customers|parties|topics|changes|prongs|tiers)\b)(?!\w)",
+        text, "number", "comma_number",
+    )
+    found += _spans(
+        r"(?<![\w$€£])\d+(?:\.\d+)?\s*(?:trillion|billion|million|thousand)(?!\w)",
+        text, "number", "scaled_number",
+    )
+    found += _spans(
+        r"(?<![\w$€£,])\d[\d,]*(?:\.\d+)?\s+(?:business\s+days?|calendar\s+days?|days?|months?|years?|"
+        r"basis\s+points?|MSAs?|categories|acquisitions?|renewals?|arbitrators?|occurrences?|"
+        r"countries|states|matters|documents|employees|markets|customers|parties|topics|changes|prongs|tiers)\b",
         text, "string", "number_with_unit",
     )
+    if not re.search(rf"\b{MONTH}\s+\d{{1,2}},?\s+\d{{4}}\b|\b\d{{4}}-\d{{2}}-\d{{2}}\b", text, flags=re.I):
+        found += _spans(r"\b(?:19|20)\d{2}\b", text, "string", "year")
     # Quoted source language and defined terms are useful only when nontrivial.
     for match in re.finditer(r"[\"'‘’“”]([^\"'‘’“”]{4,160})[\"'‘’“”]", text):
-        value = match.group(1).strip()
+        value = match.group(1).strip(" \t\r\n`\"'.,;:")
         if len(value.split()) >= 2 and normalized_text(value) not in GENERIC:
             found.append(Candidate("string", value, "quoted_phrase"))
 
-    # Titles often carry the exact issue id/value while prose contains broad
-    # alternatives. Reuse only typed candidates, never arbitrary title words.
-    found += _spans(r"[$€£]\s*\d[\d,]*(?:\.\d+)?\s*(?:k|m|mm|b|bn|t|thousand|million|billion|trillion)?", title, "money", "title_money")
-    found += _spans(r"(?<![\w.])\d+(?:\.\d+)?\s*%", title, "percentage", "title_percentage")
-    found += _spans(rf"\b{MONTH}\s+\d{{1,2}},?\s+\d{{4}}\b|\b\d{{4}}-\d{{2}}-\d{{2}}\b", title, "date", "title_date")
-    found += _spans(r"(?:Section|Sec\.?|§)\s*[A-Za-z0-9][A-Za-z0-9.()\-]*", title, "section", "title_section")
+    # Do not pull values from the title.  A qualitative PASS clause paired
+    # with a numeric title is not itself a mechanically checkable criterion;
+    # treating it as one silently changes the rubric's meaning.
 
     unique: list[Candidate] = []
     seen: set[tuple[str, str]] = set()
@@ -125,31 +174,33 @@ def load_task_evidence(connection: sqlite3.Connection, store: Path, task_id: str
             continue
         text = (store / text_path).read_text("utf-8", errors="replace")
         evidence.append({"file_id": file_id, "relative_path": relative_path,
-                         # Normalizing a 50K-character agreement once per
-                         # criterion made a full compile quadratic. Cache it
-                         # once per task and compare only small anchor variants.
-                         "normalized": source_search_text(text)})
+                         # Cache grade-equivalent normalization once per file;
+                         # doing it once per criterion makes the compile
+                         # quadratic on long agreements.
+                         "normalized": normalized_text(text)})
     return evidence
 
 
 def source_hits(candidate: Candidate, evidence: list[dict[str, Any]]) -> list[dict[str, str]]:
-    needles = [source_search_text(variant) for variant in fact_variants(candidate.fact())]
-    needles = [needle for needle in needles if needle]
+    variants = fact_variants(candidate.fact())
     hits = []
     for document in evidence:
         search_text = document.get("normalized")
         if search_text is None:
-            search_text = source_search_text(document.get("text", ""))
-        # Source validation is an occurrence proof, not grade-time matching.
-        # ``in`` runs in optimized C and is safe here because candidates are
-        # typed/quoted; the emitted verifier retains strict word boundaries.
-        if any(needle in search_text for needle in needles):
+            search_text = normalized_text(document.get("text", ""))
+        # Source validation uses the same token boundaries as grade time.  A
+        # value such as "$54M" must not be validated merely because "$54MM"
+        # appears in a source.
+        if _anchor_present_normalized(search_text, variants):
             hits.append({"file_id": document["file_id"], "relative_path": document["relative_path"]})
     return hits
 
 
 def _anchor_present(text: str, anchors: Iterable[str]) -> bool:
-    haystack = normalized_text(text)
+    return _anchor_present_normalized(normalized_text(text), anchors)
+
+
+def _anchor_present_normalized(haystack: str, anchors: Iterable[str]) -> bool:
     return any(
         needle and re.search(r"(?<![\w])" + re.escape(needle) + r"(?![\w])", haystack)
         for needle in (normalized_text(anchor) for anchor in anchors)
@@ -157,6 +208,9 @@ def _anchor_present(text: str, anchors: Iterable[str]) -> bool:
 
 
 def compile_criterion(criterion: dict[str, Any], evidence: list[dict[str, Any]]) -> tuple[dict | None, str]:
+    required_text = mechanically_required_text(str(criterion.get("match_criteria") or ""))
+    if UNSUPPORTED_LOGIC.search(required_text):
+        return None, "unsupported alternative, approximation, or range logic"
     candidates = extract_candidates(str(criterion.get("match_criteria") or ""), str(criterion.get("title") or ""))
     assertions = []
     for candidate in candidates:
@@ -172,12 +226,30 @@ def compile_criterion(criterion: dict[str, Any], evidence: list[dict[str, Any]])
         })
     if not assertions:
         return None, "no mechanically typed PASS-clause anchor found in task evidence"
-    # Mechanical discrimination: source-grounded reference output passes; a
-    # payload containing only corrupted placeholders cannot satisfy any anchor.
+    # Mechanical discrimination: source-grounded reference output passes and,
+    # for every individual assertion, replacing just that assertion with a
+    # type-compatible wrong value makes that assertion fail while the others
+    # remain present.  This catches weak/sub-string anchors instead of merely
+    # proving that an unrelated placeholder fails.
     reference = " | ".join(assertion["value"] for assertion in assertions)
-    corrupted = " | ".join(f"CORRUPTED-{index}" for index, _ in enumerate(assertions, 1))
     good_passes = all(_anchor_present(reference, assertion["variants"]) for assertion in assertions)
-    corrupt_fails = not all(_anchor_present(corrupted, assertion["variants"]) for assertion in assertions)
+    corruption_checks = []
+    for index, assertion in enumerate(assertions):
+        corrupted_values = [row["value"] for row in assertions]
+        corrupted_values[index] = {
+            "money": "$987654321.09",
+            "percentage": "98.765%",
+            "date": "January 1, 1900",
+            "section": "Section 9999.999(z)",
+        }.get(assertion["kind"], f"CORRUPTED-ANCHOR-{index + 1}")
+        corrupted = " | ".join(corrupted_values)
+        target_failed = not _anchor_present(corrupted, assertion["variants"])
+        other_survive = all(
+            _anchor_present(corrupted, other["variants"])
+            for other_index, other in enumerate(assertions) if other_index != index
+        )
+        corruption_checks.append(target_failed and other_survive)
+    corrupt_fails = bool(corruption_checks) and all(corruption_checks)
     if not good_passes or not corrupt_fails:
         return None, "compiled assertion failed local oracle/discrimination"
     return {
@@ -302,7 +374,10 @@ def build(store: Path, output: Path, report_path: Path, family: str, limit: int 
         "policy": {
             "judge_calls": 0,
             "grade_time": "pure code",
-            "admitted_criterion": "typed PASS-clause anchor occurs in task evidence and rejects corruption",
+            "admitted_criterion": (
+                "conjunctive typed PASS-clause anchors occur in task evidence and each rejects isolated corruption"
+            ),
+            "unsupported_logic": "alternative, approximation, and range criteria are dropped, never over-constrained",
             "dropped_criteria_reported": True,
         },
     }
