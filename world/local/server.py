@@ -431,8 +431,15 @@ def make_handler(world: dict, friction: Friction, initial_state: dict,
             final_state = snapshot(sess.db_path)
             ns: dict = {}
             try:
-                exec(v["vcode"], ns)  # shipped verifier code, executed verbatim
+                phase = body.get("phase")
+                phase_vcodes = v.get("phase_vcodes") or {}
+                if phase is not None and phase not in phase_vcodes:
+                    return self._json(400, {"error": f"unknown verifier phase {phase!r}"})
+                vcode = phase_vcodes[phase] if phase is not None else v["vcode"]
+                exec(vcode, ns)  # shipped verifier code, executed verbatim
                 verdict = ns["verify"](copy.deepcopy(baseline_for(sess)), final_state, trace)
+                if phase is not None:
+                    verdict["phase"] = phase
                 diagnostic = paging_diagnostic(trace)
                 verdict["paging_discipline"] = diagnostic
                 verdict.setdefault("paging_complete", diagnostic["paging_complete"])

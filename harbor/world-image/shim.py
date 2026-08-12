@@ -65,6 +65,10 @@ def main() -> None:
         sys.exit(f"[shim] task {TASK_ID!r} not found in world doc")
     verifier = next((v for v in world.get("verifiers") or []
                      if v["task_id"] == TASK_ID), {})
+    phase_defs = ((task.get("multi_step") or {}).get("phases") or [])
+    phase_by_name = {phase["name"]: phase for phase in phase_defs}
+    phase_order = [phase["name"] for phase in phase_defs]
+    completed_phases: list[str] = []
 
     # ---- wait for the world server, then open the trial session ----------
     for _ in range(240):
@@ -132,13 +136,20 @@ def main() -> None:
                 return ok, text
         return False, text
 
-    def solve() -> dict:
+    def solve(phase: str | None = None) -> dict:
         """The oracle reference walk (oracle.run_task, minus verify/close)."""
         state = {"read_bodies": []}
         tables = {t["name"] for t in world["tables"]}
         pin = oracle.pinned_update(verifier or {}, tables)
-        walk = oracle.vcode_walk(verifier or {}) or task.get("walk") or []
-        ref_args = task.get("reference_args")
+        if phase is not None:
+            phase_def = phase_by_name.get(phase)
+            if phase_def is None:
+                raise ValueError(f"unknown phase {phase!r}")
+            walk = phase_def.get("walk") or []
+            ref_args = phase_def.get("reference_args")
+        else:
+            walk = oracle.vcode_walk(verifier or {}) or task.get("walk") or []
+            ref_args = task.get("reference_args")
         steps = []
         for step_i, tool_name in enumerate(walk):
             try:
@@ -161,14 +172,40 @@ def main() -> None:
             if ok and tool_name in ("documents_download", "drive_files_get"):
                 state["read_bodies"].append(text)
             steps.append({"step": step_i, "tool": tool_name, "ok": ok})
-        return {"task_id": TASK_ID, "steps": steps,
+        return {"task_id": TASK_ID, "phase": phase, "steps": steps,
                 "all_ok": all(s["ok"] for s in steps)}
 
-    def verify() -> dict:
+    def verify(phase: str | None = None) -> dict:
+        if phase is not None:
+            if phase not in phase_by_name:
+                raise ValueError(f"unknown phase {phase!r}")
+            expected = next((name for name in phase_order if name not in completed_phases), None)
+            if phase != expected:
+                raise ValueError(f"out-of-order phase {phase!r}; expected {expected!r}")
         with lock:
-            body = {"trace": list(trace)}
-        return http("POST", f"/verify/{TASK_ID}", body,
-                    session=session_id, token=access_token)
+            request_body = {"trace": list(trace)}
+            if phase is not None:
+                request_body["phase"] = phase
+        verdict = http("POST", f"/verify/{TASK_ID}", request_body,
+                       session=session_id, token=access_token)
+        if phase is not None and verdict.get("passed"):
+            with lock:
+                if phase not in completed_phases:
+                    completed_phases.append(phase)
+        return verdict
+
+    def step_state() -> dict:
+        with lock:
+            current = next((name for name in phase_order if name not in completed_phases), None)
+            definition = phase_by_name.get(current) or {}
+            return {
+                "multi_step": bool(phase_order),
+                "current": current,
+                "index": (phase_order.index(current) + 1) if current else len(phase_order),
+                "total": len(phase_order),
+                "completed": list(completed_phases),
+                "instruction": definition.get("instruction") if current else None,
+            }
 
     class Handler(BaseHTTPRequestHandler):
         protocol_version = "HTTP/1.1"
@@ -201,6 +238,8 @@ def main() -> None:
             if self.path == "/trace":
                 with lock:
                     return self._json(200, {"trace": list(trace)})
+            if self.path == "/step":
+                return self._json(200, step_state())
             if self.path == "/mcp":
                 # No SSE stream: plain JSON responses only (spec-permitted).
                 return self._json(405, {"error": "SSE not supported; POST JSON-RPC"})
@@ -219,7 +258,9 @@ def main() -> None:
                     return self._json(502, {"error": f"world unreachable: {e}"})
             if self.path == "/verify":
                 try:
-                    return self._json(200, verify())
+                    return self._json(200, verify(body.get("phase")))
+                except ValueError as e:
+                    return self._json(409, {"error": str(e), "step": step_state()})
                 except Exception as e:  # noqa: BLE001
                     return self._json(500, {"error": f"verify failed: {e!r}"})
             if self.path == "/solve":
@@ -229,7 +270,9 @@ def main() -> None:
                         supplied_hash, ORACLE_PROOF_SHA256):
                     return self._json(403, {"error": "forbidden"})
                 try:
-                    return self._json(200, solve())
+                    return self._json(200, solve(body.get("phase")))
+                except ValueError as e:
+                    return self._json(400, {"error": str(e)})
                 except Exception as e:  # noqa: BLE001
                     return self._json(500, {"error": f"solve failed: {e!r}"})
             return self._json(404, {"error": "not_found"})

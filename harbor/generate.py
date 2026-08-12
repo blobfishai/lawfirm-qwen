@@ -69,10 +69,12 @@ def contract_tool_count() -> int:
 # Per-task files
 # ---------------------------------------------------------------------------
 
-def instruction_md(task: dict) -> str:
-    prompt = (task.get("prompt") or "").strip()
+def instruction_md(task: dict, phase: dict | None = None) -> str:
+    prompt = ((phase or {}).get("instruction") or task.get("prompt") or "").strip()
     parts = [prompt]
-    session = task.get("session") or []
+    # Harbor-native multi-step tasks deliver one instruction per step.  The
+    # flattened addendum remains only for single-instruction harnesses.
+    session = [] if phase is not None else (task.get("session") or [])
     followups = [s.get("user_text") for s in session if s.get("user_text")]
     if followups:
         parts.append(
@@ -150,8 +152,13 @@ def task_toml(task: dict, image_tag: str, world_version) -> str:
         task.get("difficulty_tier"), task.get("complexity"),
         (prov.get("source_workflow") or "").split("/")[-1] or None,
     ] if k]
+    multi_step = task.get("multi_step") or {}
     lines = [
-        'schema_version = "1.4"', "",
+        'schema_version = "1.4"',
+    ]
+    if multi_step:
+        lines.append(f'multi_step_reward_strategy = {toml_str(multi_step.get("reward_strategy") or "mean")}')
+    lines += ["",
         "[task]",
         f'name = "legal-agent-simulation/{tid.replace("_", "-")}"',
         f'version = "{world_version}.0.0"',
@@ -191,6 +198,13 @@ def task_toml(task: dict, image_tag: str, world_version) -> str:
         'url = "http://world:8972/mcp"',
         "",
     ]
+    for phase in multi_step.get("phases") or []:
+        lines.extend([
+            "[[steps]]",
+            f'name = {toml_str(phase["name"])}',
+            f'min_reward = {float(phase.get("min_reward", 1.0))}',
+            "",
+        ])
     return "\n".join(lines)
 
 
@@ -269,9 +283,10 @@ def validated_deliverables(task: dict) -> list[str]:
     return clean
 
 
-def test_sh(task: dict) -> str:
+def test_sh(task: dict, phase: str | None = None) -> str:
     expected = json.dumps(validated_deliverables(task))
     file_assertions = json.dumps((task.get("file_lane") or {}).get("assertions") or {})
+    verify_body = json.dumps({"phase": phase} if phase else {})
     return f"""\
 #!/bin/bash
 # Verifier: ask the world container for the trial verdict (shipped VCode,
@@ -397,7 +412,7 @@ verdict, out = None, {{"reward": 0.0, "passed": 0.0}}
 try:
     req = urllib.request.Request(verify_url, method="POST")
     req.add_header("Content-Type", "application/json")
-    with urllib.request.urlopen(req, data=b"{{}}", timeout=150) as res:
+    with urllib.request.urlopen(req, data={verify_body!r}.encode(), timeout=150) as res:
         verdict = json.loads(res.read().decode() or "{{}}")
     out["reward"] = round(float(verdict.get("reward") or 0.0), 4)
     out["passed"] = 1.0 if verdict.get("passed") else 0.0
@@ -466,7 +481,7 @@ def oracle_file_outputs(task: dict) -> dict[str, str]:
             for name, lines in outputs.items()}
 
 
-def solve_sh(token: str, task: dict | None = None) -> str:
+def solve_sh(token: str, task: dict | None = None, phase: str | None = None) -> str:
     import base64
     payload = base64.b64encode(json.dumps(oracle_file_outputs(task or {})).encode()).decode()
     file_writer = f"""\
@@ -514,7 +529,9 @@ PYEOF
 # file; the world image contains its SHA-256 digest and this file is never
 # present during ordinary agent runs.
 set -e
-{file_writer}curl -fsS -X POST -H "X-Solve-Token: {token}" http://world:8972/solve
+{file_writer}curl -fsS -X POST -H "X-Solve-Token: {token}" \
+  -H "Content-Type: application/json" --data {json.dumps(json.dumps({"phase": phase} if phase else {}))} \
+  http://world:8972/solve
 echo
 """
 
@@ -660,7 +677,10 @@ def main() -> None:
         d = os.path.join(tasks_root, tid)
         if os.path.isdir(d):
             shutil.rmtree(d)
-        write(os.path.join(d, "instruction.md"), instruction_md(task))
+        multi_step = task.get("multi_step") or {}
+        phases = multi_step.get("phases") or []
+        if not phases:
+            write(os.path.join(d, "instruction.md"), instruction_md(task))
         write(os.path.join(d, "task.toml"),
               task_toml(task, args.image_tag, world.get("version")))
         if task.get("file_lane"):
@@ -672,9 +692,18 @@ def main() -> None:
         write(os.path.join(d, "environment", "tool"), tool_src, executable=True)
         write(os.path.join(d, "environment", "docker-compose.yaml"),
               compose_yaml(tid, args.image_tag, bool(task.get("file_lane"))))
-        write(os.path.join(d, "tests", "test.sh"), test_sh(task), executable=True)
-        write(os.path.join(d, "solution", "solve.sh"), solve_sh(token, task),
-              executable=True)
+        if phases:
+            for phase in phases:
+                step_dir = os.path.join(d, "steps", phase["name"])
+                write(os.path.join(step_dir, "instruction.md"), instruction_md(task, phase))
+                write(os.path.join(step_dir, "tests", "test.sh"),
+                      test_sh(task, phase["name"]), executable=True)
+                write(os.path.join(step_dir, "solution", "solve.sh"),
+                      solve_sh(token, task, phase["name"]), executable=True)
+        else:
+            write(os.path.join(d, "tests", "test.sh"), test_sh(task), executable=True)
+            write(os.path.join(d, "solution", "solve.sh"), solve_sh(token, task),
+                  executable=True)
 
     write(os.path.join(out, "README.md"), f"""\
 # legal-agent-simulation — Harbor tasks
