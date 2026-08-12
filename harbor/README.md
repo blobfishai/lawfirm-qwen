@@ -29,6 +29,8 @@ The verifier copies non-symlink output files to `/logs/artifacts` and emits
 `file-lane.json`. At this evidence-only milestone, `file_passed` means the
 exact non-empty output filename contract was satisfied
 (`grade_kind=output_contract_only`), not that prose quality passed a rubric.
+Once v17B attaches source-validated anchors, the same artifact switches to
+`grade_kind=determinate` and reports criterion-level grounding separately.
 `reward.json` retains the deterministic world reward and adds the separate
 file/state diagnostics; the lanes are never averaged. Deterministic content
 assertions are added during v17B admission. `python3

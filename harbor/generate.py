@@ -270,15 +270,18 @@ def validated_deliverables(task: dict) -> list[str]:
 
 def test_sh(task: dict) -> str:
     expected = json.dumps(validated_deliverables(task))
+    file_assertions = json.dumps((task.get("file_lane") or {}).get("assertions") or {})
     return f"""\
 #!/bin/bash
 # Verifier: ask the world container for the trial verdict (shipped VCode,
 # executed against the session's final state + the recorded tool trace),
 # then emit the Harbor reward file.
 python3 - <<'PYEOF'
-import json, os, shutil, urllib.request
+import json, os, re, shutil, unicodedata, urllib.request, zipfile
+from xml.etree import ElementTree as ET
 
 expected = {expected}
+file_assertions = {file_assertions}
 logs_root = os.environ.get("HARBOR_LOGS", "/logs")
 artifact_root = os.path.join(logs_root, "artifacts")
 verifier_root = os.path.join(logs_root, "verifier")
@@ -308,7 +311,81 @@ def valid_expected_file(name):
         not os.path.islink(candidate) and os.path.isfile(candidate) and
         os.path.getsize(candidate) > 0
     )
-file_passed = None if not expected else all(valid_expected_file(name) for name in expected)
+file_contract_passed = None if not expected else all(valid_expected_file(name) for name in expected)
+
+def normalize(value):
+    value = unicodedata.normalize("NFKC", str(value or "")).casefold()
+    value = value.replace("\\u00a0", " ").replace("–", "-").replace("—", "-")
+    return re.sub(r"\\s+", " ", value).strip()
+
+def has_anchor(text, anchor):
+    needle = normalize(anchor)
+    return bool(needle and re.search(r"(?<![\\w])" + re.escape(needle) + r"(?![\\w])", text))
+
+def output_text(path):
+    suffix = os.path.splitext(path)[1].lower()
+    if suffix in (".txt", ".md", ".json"):
+        return open(path, encoding="utf-8", errors="replace").read()
+    if suffix == ".xlsx":
+        import openpyxl
+        workbook = openpyxl.load_workbook(path, read_only=True, data_only=False)
+        values = []
+        for sheet in workbook.worksheets:
+            for row in sheet.iter_rows(values_only=True):
+                values.extend(str(value) for value in row if value is not None)
+        workbook.close()
+        return "\\n".join(values)
+    if suffix in (".docx", ".pptx"):
+        values = []
+        with zipfile.ZipFile(path) as archive:
+            prefix = "word/" if suffix == ".docx" else "ppt/"
+            for name in sorted(archive.namelist()):
+                if name.startswith(prefix) and name.endswith(".xml"):
+                    root = ET.fromstring(archive.read(name))
+                    values.extend(node.text or "" for node in root.iter()
+                                  if node.tag.rsplit("}}", 1)[-1] == "t")
+        return "\\n".join(values)
+    if suffix == ".pdf":
+        from pypdf import PdfReader
+        return "\\n".join(page.extract_text() or "" for page in PdfReader(path).pages)
+    return open(path, "rb").read().decode("utf-8", errors="replace")
+
+file_criterion_results = []
+file_parse_errors = []
+if file_contract_passed and file_assertions:
+    criteria_to_check = []
+    if isinstance(file_assertions, dict):
+        for name, criteria in file_assertions.items():
+            criteria_to_check.extend({{**criterion, "deliverables": [name]}} for criterion in criteria)
+    else:
+        criteria_to_check = file_assertions
+    text_by_file = {{}}
+    for name in sorted({{name for criterion in criteria_to_check
+                         for name in criterion.get("deliverables") or []}}):
+        try:
+            text_by_file[name] = normalize(output_text(os.path.join(output_root, name)))
+        except Exception as error:
+            file_parse_errors.append({{"path": name, "error": repr(error)}})
+            text_by_file[name] = ""
+    for criterion in criteria_to_check:
+        targets = criterion.get("deliverables") or expected
+        text = "\\n".join(text_by_file.get(name, "") for name in targets)
+        missing = []
+        for group in criterion.get("anchor_groups") or []:
+            if not any(has_anchor(text, anchor) for anchor in group):
+                missing.append(group)
+        file_criterion_results.append({{
+            "criterion_id": criterion.get("criterion_id"),
+            "deliverables": targets,
+            "passed": not missing,
+            "missing_anchor_groups": missing,
+        }})
+file_content_passed = (None if not file_assertions else
+                       bool(file_criterion_results) and
+                       not file_parse_errors and
+                       all(row["passed"] for row in file_criterion_results))
+file_passed = (file_contract_passed if file_content_passed is None else
+               bool(file_contract_passed and file_content_passed))
 
 verdict, out = None, {{"reward": 0.0, "passed": 0.0}}
 try:
@@ -324,10 +401,14 @@ except Exception as e:  # world unreachable / verifier crash -> reward 0
 state_passed = bool(out["passed"])
 lane = {{
     "enabled": bool(expected),
-    "grade_kind": "output_contract_only",
+    "grade_kind": "determinate" if file_assertions else "output_contract_only",
     "expected": expected,
     "artifacts": artifacts,
     "rejected_artifacts": rejected_artifacts,
+    "file_contract_passed": file_contract_passed,
+    "file_content_passed": file_content_passed,
+    "file_criterion_results": file_criterion_results,
+    "file_parse_errors": file_parse_errors,
     "file_passed": file_passed,
     "state_passed": state_passed,
     "lane_split": None if file_passed is None else file_passed != state_passed,
@@ -421,7 +502,7 @@ def assemble_world_image(out: str, world_path: str) -> str:
     img = os.path.join(out, "world-image")
     os.makedirs(img, exist_ok=True)
     local = os.path.join(ROOT, "world", "local")
-    for name in ("server.py", "oracle.py", "v2runtime.py", "v3dialects.py"):
+    for name in ("server.py", "oracle.py", "v2runtime.py", "v3dialects.py", "evidence.py"):
         shutil.copyfile(os.path.join(local, name), os.path.join(img, name))
     for name in ("shim.py", "start.sh", "Dockerfile"):
         shutil.copyfile(os.path.join(HERE, "world-image", name),
@@ -432,6 +513,24 @@ def assemble_world_image(out: str, world_path: str) -> str:
     if os.path.isdir(dst):
         shutil.rmtree(dst)
     shutil.copytree(contracts, dst)
+    evidence_destination = Path(img) / "corpus"
+    if evidence_destination.exists():
+        shutil.rmtree(evidence_destination)
+    evidence_destination.mkdir()
+    world = load_world(world_path)
+    evidence_kinds = sorted({
+        str((task.get("evidence_store") or {}).get("kind"))
+        for task in world.get("tasks") or [] if task.get("evidence_store")
+    })
+    for kind in evidence_kinds:
+        if kind not in {"lab", "ch"}:
+            raise RuntimeError(f"unsupported packaged evidence kind: {kind}")
+        source_index = Path(ROOT) / "world" / "corpus" / kind / "index.sqlite"
+        if not source_index.is_file():
+            raise RuntimeError(f"{kind} evidence index missing: {source_index}")
+        target = evidence_destination / kind
+        target.mkdir()
+        link_or_copy(str(source_index), str(target / "index.sqlite"))
     return img
 
 

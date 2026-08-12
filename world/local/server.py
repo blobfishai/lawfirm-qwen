@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Product-contract runtime for the legal-agent simulation world.
 
-World v16 embeds product-table state, tasks and VCode verifiers. Every exposed
+The selected world embeds product-table state, tasks and VCode verifiers. Every exposed
 tool is loaded from a cited contract in ``mcp/v3/contracts``; this server has
 no synthesized name-family dispatcher. Fidelity and task solvability are
 proved independently by the conformance suite and oracle.
@@ -35,6 +35,9 @@ import sqlite3
 import sys
 import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
+
+from evidence import ExternalEvidence
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(BASE))
@@ -208,6 +211,7 @@ class Session:
             shutil.copyfile(SEED_DB, self.db_path)
             self.call_index = 0
             self.write_count = 0
+            self.evidence = ExternalEvidence.for_task(task, Path(ROOT))
             seed = (task or {}).get("seed") or {}
             if seed:
                 self._apply_seed(seed, document_rows_by_id or {}, table_defs or {})
@@ -401,7 +405,7 @@ def make_handler(world: dict, friction: Friction, initial_state: dict,
                         "worldId": world.get("world_id"),
                         "company": (world.get("thesis") or {}).get("company")
                                    or "Eve Litigation (SIMULATED)",
-                        "runtime": "local — world-v16 + product contracts",
+                        "runtime": f"local — world-v{world.get('version')} + product contracts",
                     },
                 })
             if method.startswith("notifications/"):
@@ -436,7 +440,8 @@ def make_handler(world: dict, friction: Friction, initial_state: dict,
                                     "isError": True})
                 conn = sqlite3.connect(sess.db_path)
                 try:
-                    ok, text = v2.call(conn, name, args)
+                    external = sess.evidence.call(name, args) if sess.evidence else None
+                    ok, text = external if external is not None else v2.call(conn, name, args)
                 finally:
                     conn.close()
                 if ok and is_write:

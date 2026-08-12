@@ -107,6 +107,64 @@ def main() -> int:
         except RuntimeError as error:
             assert "unsafe deliverable path" in str(error)
 
+        grounded = {
+            **task,
+            "task_id": "lab_file_lane_grounded",
+            "file_lane": {
+                **task["file_lane"],
+                "deliverables": ["grounded.md"],
+                "grading": "determinate",
+                "assertions": [{
+                    "criterion_id": "C-001",
+                    "deliverables": ["grounded.md"],
+                    "anchor_groups": [["$54M", "$54 million"], ["Section 7.2(b)"]],
+                }],
+            },
+        }
+        grounded_script = base / "grounded-test.sh"
+        grounded_script.write_text(generator.test_sh(grounded))
+        grounded_script.chmod(0o755)
+        (output / "antitrust-risk-memo.docx").unlink()
+        (output / "grounded.md").write_text("Approved amount: $54M under Section 7.2(b).")
+        subprocess.run(["bash", str(grounded_script)], env=environment, check=True,
+                       capture_output=True, text=True)
+        grounded_lane = json.loads((logs / "verifier" / "file-lane.json").read_text())
+        assert grounded_lane["grade_kind"] == "determinate" and grounded_lane["file_passed"] is True
+        (output / "grounded.md").write_text("Approved amount: $53M under Section 7.2(b).")
+        subprocess.run(["bash", str(grounded_script)], env=environment, check=True,
+                       capture_output=True, text=True)
+        wrong_lane = json.loads((logs / "verifier" / "file-lane.json").read_text())
+        assert wrong_lane["file_contract_passed"] is True and wrong_lane["file_content_passed"] is False
+        assert wrong_lane["file_passed"] is False
+        (output / "grounded.md").write_text("Approved amount: $54MM under Section 7.2(b).")
+        subprocess.run(["bash", str(grounded_script)], env=environment, check=True,
+                       capture_output=True, text=True)
+        collision_lane = json.loads((logs / "verifier" / "file-lane.json").read_text())
+        assert collision_lane["file_content_passed"] is False
+
+        cross_file = {
+            **grounded,
+            "task_id": "lab_file_lane_cross_file",
+            "file_lane": {
+                **grounded["file_lane"],
+                "deliverables": ["grounded.md", "annex.md"],
+                "assertions": [{
+                    "criterion_id": "C-002",
+                    "deliverables": ["grounded.md", "annex.md"],
+                    "anchor_groups": [["source-grounded finding"]],
+                }],
+            },
+        }
+        cross_script = base / "cross-test.sh"
+        cross_script.write_text(generator.test_sh(cross_file))
+        cross_script.chmod(0o755)
+        (output / "grounded.md").write_text("See the annex.")
+        (output / "annex.md").write_text("Source-grounded finding.")
+        subprocess.run(["bash", str(cross_script)], env=environment, check=True,
+                       capture_output=True, text=True)
+        cross_lane = json.loads((logs / "verifier" / "file-lane.json").read_text())
+        assert cross_lane["file_content_passed"] is True
+
         live_task = (ROOT / "research" / "repos" / "harveyai@harvey-labs" / "tasks" /
                      "antitrust-competition" / "analyze-antitrust-hsr-strategy")
         if (live_task / "task.json").is_file():
