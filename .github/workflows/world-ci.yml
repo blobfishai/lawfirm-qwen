@@ -15,7 +15,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  WORLD: world/blobfish/world-v15.json
+  WORLD: world/blobfish/world-v16.json
   BASE: http://127.0.0.1:8974
   HARBOR_VERSION: 0.21.0
   PYTHONDONTWRITEBYTECODE: "1"
@@ -37,12 +37,21 @@ jobs:
           python3 -m py_compile \
             world/local/server.py \
             world/local/discriminate.py \
+            world/migrate/gen1_to_v16.py \
+            world/migrate/verifier.py \
             tools/check_atomic_seed.py \
+            tools/check_product_surface.py \
             tools/conformance/run.py \
             tools/conformance/sync_specs.py \
             tools/check_discrimination.py \
             tools/check_harbor_result.py
           node --check world/expansion/discrimination-report.mjs
+          node --check sim/compare-v16-boundary.mjs
+          node --check sim/run-leaderboard.mjs
+          node --check sim/run-simulation.mjs
+          python3 world/migrate/gen1_to_v16.py --check
+          python3 tools/check_product_surface.py
+          node sim/compare-v16-boundary.mjs
           python3 tools/check_atomic_seed.py
           python3 tools/conformance/sync_specs.py --check
           python3 tools/conformance/run.py --check
@@ -75,11 +84,16 @@ jobs:
 
           python3 tools/conformance/live.py --base "$BASE" --check
           python3 world/local/oracle.py --base "$BASE" --world "$WORLD" \
-            --out "$RUNNER_TEMP/oracle-report.json"
+            --out data/oracle-v16.json
           python3 world/local/discriminate.py --base "$BASE" --world "$WORLD" \
-            --out world/local/discrimination-report.json --report-only
-          node world/expansion/discrimination-report.mjs --world "$WORLD"
+            --out data/discrimination-v16.json --report-only
+          node world/expansion/discrimination-report.mjs \
+            --sweep data/discrimination-v16.json \
+            --world "$WORLD" \
+            --docs-out docs/DISCRIMINATION-v16.md \
+            --data-out data/discrimination-v16-classified.json
           python3 tools/check_fixtures.py --base "$BASE"
+          BLOBFISH_LOCAL_BASE="$BASE" node mcp/test-multi-server.mjs
 
           cleanup
           trap - EXIT
@@ -88,9 +102,12 @@ jobs:
       - name: Require committed audit artifacts to be current
         run: |
           git diff --exit-code -- \
-            world/local/discrimination-report.json \
-            data/discrimination.json \
-            docs/DISCRIMINATION.md
+            data/oracle-v16.json \
+            data/discrimination-v16.json \
+            data/discrimination-v16-classified.json \
+            docs/DISCRIMINATION-v16.md \
+            data/migration/v16-boundary-shift.json \
+            docs/V16-BOUNDARY-SHIFT.md
 
   harbor-smoke:
     name: Harbor oracle and no-op smoke
@@ -120,8 +137,8 @@ jobs:
           docker buildx build --load \
             --tag legal-agent-sim-world:ci \
             --build-arg "SOLVE_TOKEN=$solve_token" \
-            --cache-from type=gha,scope=world-v15 \
-            --cache-to type=gha,mode=max,scope=world-v15 \
+            --cache-from type=gha,scope=world-v16 \
+            --cache-to type=gha,mode=max,scope=world-v16 \
             dist/harbor-ci/world-image
 
       - name: Oracle must pass all three tasks

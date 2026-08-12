@@ -13,16 +13,16 @@ Each of the world's tasks becomes one Harbor task directory:
       tests/test.sh                 POST /verify -> /logs/verifier/reward.json
       solution/solve.sh             token-gated POST /solve (oracle reference walk)
 
-The world itself (runtime + world doc + v2 contracts + shim) is ONE shared
+The world itself (runtime + world doc + product contracts + shim) is ONE shared
 Docker image (dist/harbor/world-image/, built with --build-image); per-task
 compose files select the task via the TASK_ID env var. The agent container
 never contains world.json, so verifier code and reference walks are not
 readable by the agent.
 
 Usage:
-  python3 harbor/generate.py [--world world/blobfish/world-v15.json]
+  python3 harbor/generate.py [--world world/blobfish/world-v16.json]
                              [--out dist/harbor] [--tasks task_003,task_010]
-                             [--build-image] [--image-tag legal-agent-sim-world:v15]
+                             [--build-image] [--image-tag legal-agent-sim-world:v16]
 """
 from __future__ import annotations
 
@@ -50,6 +50,17 @@ def load_world(path: str) -> dict:
     with open(path) as f:
         raw = json.load(f)
     return raw.get("world", raw)
+
+
+def contract_tool_count() -> int:
+    contracts = os.path.join(ROOT, "mcp", "v3", "contracts")
+    total = 0
+    for name in sorted(os.listdir(contracts)):
+        if not name.endswith(".json"):
+            continue
+        with open(os.path.join(contracts, name)) as f:
+            total += len(json.load(f).get("tools") or [])
+    return total
 
 
 # ---------------------------------------------------------------------------
@@ -84,7 +95,7 @@ Two equivalent ways to use the tools:
    ```bash
    tool list                        # every tool: name + description
    tool schema <name>               # input schema for one tool
-   tool call <name> '<json-args>'   # e.g. tool call read_matter_document '{{"id": 12}}'
+   tool call <name> '<json-args>'   # e.g. tool call documents_download '{{"id": 12}}'
    ```
 
 2. MCP (streamable-http, JSON-RPC `tools/list` / `tools/call`) at
@@ -96,14 +107,14 @@ Rules:
 - Complete the task using the tools. Be precise with record ids and values.
 - Read input documents in full before drafting deliverables from them.
 - Deliverables must be produced in the systems of record via tools (for
-  example `draft_matter_document`); work only described in chat text does not
+  example `documents_create`); work only described in chat text does not
   count as done.
 - Transient tool errors (`rate_limited`, `stale_reference`) are recoverable —
   retry the same call. Ambiguous write acknowledgements ("queued for
   processing") may still have applied: re-read the record instead of writing
   twice.
-- Query tools page their results: when a response says `has_more`, you have
-  NOT seen every match — continue with `offset`.
+- When a list/search response exposes a next-page token or URL, continue until
+  the relevant result set has been exhausted.
 
 When the work is complete, finish your session; grading is automatic.
 """)
@@ -124,7 +135,7 @@ def task_toml(task: dict, image_tag: str, world_version) -> str:
         'schema_version = "1.4"', "",
         "[task]",
         f'name = "legal-agent-simulation/{tid.replace("_", "-")}"',
-        f'version = "15.{world_version}.0"',
+        f'version = "{world_version}.0.0"',
         f"description = {toml_str(goal or tid)}",
         "authors = []",
         f"keywords = {json.dumps(keywords)}",
@@ -277,17 +288,18 @@ def assemble_world_image(out: str, world_path: str) -> str:
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--world", default=os.path.join(ROOT, "world", "blobfish",
-                                                    "world-v15.json"))
+                                                    "world-v16.json"))
     ap.add_argument("--out", default=os.path.join(ROOT, "dist", "harbor"))
     ap.add_argument("--tasks", default="", help="comma-separated task_id filter")
     ap.add_argument("--image-tag",
-                    default="ghcr.io/blobfishai/legal-agent-sim-world:v15",
+                    default="ghcr.io/blobfishai/legal-agent-sim-world:v16",
                     help="world image reference baked into every task's compose "
                          "file; --build-image tags the local build with it")
     ap.add_argument("--build-image", action="store_true")
     args = ap.parse_args()
 
     world = load_world(args.world)
+    runtime_tool_count = contract_tool_count()
     wanted = {t for t in args.tasks.split(",") if t}
     tasks = [t for t in world["tasks"] if not wanted or t["task_id"] in wanted]
     if wanted and len(tasks) != len(wanted):
@@ -333,7 +345,7 @@ def main() -> None:
 
 ## One-time setup
 
-Build the shared world image (world runtime + world doc + v2 contracts):
+Build the shared world image (world runtime + world doc + product contracts):
 
 ```bash
 python3 harbor/generate.py --build-image        # tags {args.image_tag}
@@ -352,8 +364,10 @@ Multi-container tasks require Harbor's **docker** environment provider
 ## Architecture
 
 - `world` service (shared image `{args.image_tag}`): the executable law-firm
-  world — 72-table SQLite hydrated from the world doc, {len(world["tools"])} synthesized +
-  v2 product tools, deterministic seeded friction, shipped VCode verifiers.
+  world — {len(world["tables"])} product-system tables hydrated from the world
+  doc, {runtime_tool_count} contract-defined tools and zero synthesized
+  name-family tools,
+  deterministic seeded friction, and shipped VCode verifiers.
   A per-trial shim creates the task's session, records the tool trace, and
   exposes `POST /mcp` (JSON-RPC), `POST /verify`, and token-gated `POST /solve`.
 - `main` (agent container): python + curl + the `tool` CLI. It contains no

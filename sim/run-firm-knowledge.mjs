@@ -177,7 +177,7 @@ else list = list.slice(0, LIMIT);
 
 const tools = await toolSchemas();
 if (tools.length !== CORPUS_TOOLS.length) {
-  console.error(`expected ${CORPUS_TOOLS.length} corpus tools, server offered ${tools.length} — is world-v15 served?`);
+  console.error(`expected ${CORPUS_TOOLS.length} corpus tools, server offered ${tools.length} — is the expected corpus surface served?`);
   process.exit(1);
 }
 

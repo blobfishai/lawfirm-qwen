@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Catalog builder — materializes browsable per-file folders from the
- * canonical sources (world-v15.json, data/leaderboard/episodes/,
+ * canonical sources (world-v16.json, data/leaderboard/episodes/,
  * data/flake/flaky-trajectories.json). Idempotent: wipes and rebuilds.
  *
  *   tasks/       task_001.json … one file per task definition
@@ -19,12 +19,11 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
-// Canonical world. This read world-v13.json, deleted with the other
-// intermediate snapshots (world/blobfish/LINEAGE.md), so `tasks/` and
-// `verifiers/` could not be rebuilt at all — the script died on ENOENT.
+// Canonical product-only world; override explicitly to rebuild a historical
+// catalog from a lineage snapshot.
 const WORLD = process.argv.includes("--world")
   ? process.argv[process.argv.indexOf("--world") + 1]
-  : "world/blobfish/world-v15.json";
+  : "world/blobfish/world-v16.json";
 const worldRaw = JSON.parse(readFileSync(join(ROOT, WORLD), "utf8"));
 const world = worldRaw.world ?? worldRaw;
 

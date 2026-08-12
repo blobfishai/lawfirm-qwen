@@ -114,7 +114,7 @@ List productions with status.
 
 *Mirrors:* POST production set
 
-Stage a production set with a Bates prefix.
+Stage a production set with a Bates prefix. Production jobs run ASYNC: poll jobs_get until status is completed before relying on the result.
 
 **Who uses it & why:** Lit support stages Production 003 with the DEF Bates prefix for Friday.
 
@@ -192,4 +192,18 @@ Issue a litigation hold to a custodian.
 | `issued_at` | string | yes | same |
 
 **Op:** `create` on `ed_holds`
+
+## `jobs_get`
+
+*Mirrors:* GET /Relativity.REST/api/relativity-infrastructure/v1/workspaces/{id}/jobs — long-running job status (Relativity jobs are asynchronous)
+
+Poll a production job. Status advances staged -> running -> completed; results are reliable only once completed.
+
+**Who uses it & why:** Lit support polls the Friday production until it completes before serving.
+
+| Param (real API name) | Type | Required | Internal field |
+|---|---|---|---|
+| `id` | integer | no | same |
+
+**Op:** `job_poll` on `ed_productions`
 

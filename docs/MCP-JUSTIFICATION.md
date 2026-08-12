@@ -24,9 +24,10 @@ The world's thesis (verbatim topic from the world document):
 | bill | practice-management (bills, trust) + ebilling (LEDES/UTBMS) |
 | document substrate of every stage | dms + workspace |
 
-Two tool generations exist: **v2** (`mcp/v2/contracts/`, internal parameter
-style) and **v3** (`mcp/v3/contracts/`, a vendor-shaped surface whose remaining
-wire differences are now machine-reported rather than described as 1:1).
+The canonical v16 runtime exposes only `mcp/v3/contracts/`: a vendor-shaped
+surface whose remaining wire differences are machine-reported rather than
+described as 1:1. The older `mcp/v2/contracts/` files are retained solely as
+lineage inputs; the runtime and task bank do not expose them.
 
 ### Conformance status (pinned 2026-08-12)
 

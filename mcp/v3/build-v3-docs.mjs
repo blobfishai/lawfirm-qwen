@@ -26,16 +26,16 @@ const ENVELOPE = {
 const esc = (s) => String(s ?? "").replace(/\|/g, "\\|").replace(/\n/g, " ");
 
 const index = [
-  "# v3 mock services — 1:1 real-API wire format",
+  "# v3 mock services — vendor-shaped, conformance measured",
   "",
-  "Each product's tools take the **real API's parameter names** and return the",
-  "**real API's response envelope**, executed against SQLite. This is the",
-  "fidelity copy of the v2 surface (v2 kept intact as the measured-history",
-  "surface). Serve with:",
+  "Each product tool maps to a cited vendor operation and executes against",
+  "session-private SQLite. Mapping is not exactness: input, response, pagination,",
+  "encoding, and error conformance are tracked separately in `docs/CONFORMANCE.md`.",
+  "Serve the canonical product-only world with:",
   "",
   "```bash",
   "python3 world/local/server.py --port 8979 \\",
-  "  --world world/blobfish/world-v3.json --v2-contracts mcp/v3/contracts",
+  "  --world world/blobfish/world-v16.json --v2-contracts mcp/v3/contracts",
   "```",
   "",
   "| Product | Dialect | Tools | Real API mirrored |",

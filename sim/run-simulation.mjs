@@ -7,7 +7,7 @@
  * Usage:
  *   node sim/run-simulation.mjs [--task task_127] [--engine deepseek-chat]
  *        [--json-out out.json] [--episode-out episode.json]
- *        [--world-file world/blobfish/world.json] [--max-turns N]
+ *        [--world-file world/blobfish/world-v16.json] [--max-turns N]
  *
  * Engines resolve from config/world.config.json:
  *   --engine <id>   a config.models entry (baseUrl/baseUrlEnv + apiKeyEnv)
@@ -252,7 +252,12 @@ async function main() {
   } else {
     const client = new McpClient(config.mcp.command, config.mcp.args, {
       cwd: ROOT,
-      env: { ...process.env, BLOBFISH_LOCAL: process.env.BLOBFISH_LOCAL ?? "1", BLOBFISH_TASK_ID: taskId },
+      env: {
+        ...process.env,
+        BLOBFISH_LOCAL: process.env.BLOBFISH_LOCAL ?? "1",
+        BLOBFISH_LOCAL_BASE: localBase,
+        BLOBFISH_TASK_ID: taskId,
+      },
     });
     const init = await client.start();
     const HARNESS = new Set(["verify_task", "reset_session"]);
@@ -302,6 +307,10 @@ async function main() {
     engine: ENGINE.id,
     model: ENGINE.model,
     mcpMode,
+    worldVersion: world.version ?? null,
+    worldFile: worldFileFlag ?? config.blobfish.world,
+    worldId: world.world_id ?? null,
+    localBase,
     passed,
     reward: v.data?.reward ?? 0,
     failedConditions: v.data?.failed_conditions ?? [],

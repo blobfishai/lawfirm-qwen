@@ -31,8 +31,14 @@ def _vcode(task_id: str, body: str) -> str:
     )
 
 
-DRAFT_ARGS = {"title": "Badbank memo", "doc_type": "memo",
-              "body": "Badbank reference deliverable body."}
+DRAFT_ARGS = {
+    "folder_id": 1,
+    "workspace_id": 1,
+    "name": "Badbank memo",
+    "doc_class": "memo",
+    "author": "badbank@simulated-firm.example",
+    "body": "Badbank reference deliverable body.",
+}
 
 
 def build() -> tuple[list, list, dict]:
@@ -43,13 +49,13 @@ def build() -> tuple[list, list, dict]:
     tasks.append({
         "task_id": "bad_001",
         "prompt": 'File a memo titled "Badbank memo" to the matter record.',
-        "walk": ["draft_matter_document"],
+        "walk": ["documents_create"],
         "reference_args": [dict(DRAFT_ARGS)],
     })
     verifiers.append({"task_id": "bad_001", "assertions": ["beta_memo_exists"],
                       "vcode": _vcode("bad_001", """
-    rows = final_state.get("matter_documents") or []
-    hit = any((r.get("title") or "") == "Beta memo" for r in rows)
+    rows = final_state.get("dm_documents") or []
+    hit = any((r.get("name") or "") == "Beta memo" for r in rows)
     return {"task_id": task_id, "passed": bool(hit),
             "reward": 1.0 if hit else 0.0,
             "failed_conditions": [] if hit else ["beta_memo_exists"],
@@ -80,7 +86,7 @@ def build() -> tuple[list, list, dict]:
     tasks.append({
         "task_id": "bad_003",
         "prompt": 'File a memo titled "Badbank memo" to the matter record.',
-        "walk": ["read_matter_document", "draft_matter_document"],
+        "walk": ["documents_download", "documents_create"],
         "reference_args": [{"id": 1}, dict(DRAFT_ARGS)],
     })
     verifiers.append({"task_id": "bad_003", "assertions": [],
@@ -95,12 +101,12 @@ def build() -> tuple[list, list, dict]:
     tasks.append({
         "task_id": "bad_004",
         "prompt": 'Read the deal file, then file a memo titled "Badbank memo".',
-        "walk": ["read_matter_document", "draft_matter_document"],
+        "walk": ["documents_download", "documents_create"],
         "reference_args": [{"id": 1}, dict(DRAFT_ARGS)],
     })
     verifiers.append({"task_id": "bad_004", "assertions": ["deal_file_read"],
                       "vcode": _vcode("bad_004", """
-    hit = any(e.get("tool") == "read_matter_document" and e.get("ok")
+    hit = any(e.get("tool") == "documents_download" and e.get("ok")
               for e in (trace or []))
     return {"task_id": task_id, "passed": bool(hit),
             "reward": 1.0 if hit else 0.0,
@@ -114,13 +120,13 @@ def build() -> tuple[list, list, dict]:
     tasks.append({
         "task_id": "bad_005",
         "prompt": 'Read the deal file, then file a memo titled "Badbank memo".',
-        "walk": ["read_matter_document", "draft_matter_document"],
+        "walk": ["documents_download", "documents_create"],
         "reference_args": [{"id": 1}, dict(DRAFT_ARGS)],
     })
     verifiers.append({"task_id": "bad_005", "assertions": ["rows_inserted"],
                       "vcode": _vcode("bad_005", """
-    rows = final_state.get("matter_documents") or []
-    base = initial_state.get("matter_documents") or []
+    rows = final_state.get("dm_documents") or []
+    base = initial_state.get("dm_documents") or []
     hit = len(rows) > len(base)
     return {"task_id": task_id, "passed": bool(hit),
             "reward": 1.0 if hit else 0.0,
@@ -133,20 +139,20 @@ def build() -> tuple[list, list, dict]:
     # -- bad_006: prompt/verifier drift (task_016's defect) ------------------
     tasks.append({
         "task_id": "bad_006",
-        "prompt": ('Update the flagged record "matter_documents_9" by filing a '
+        "prompt": ('Update the flagged record "dm_documents_9" by filing a '
                    'memo titled "Badbank memo" against it.'),
-        "walk": ["read_matter_document", "draft_matter_document"],
+        "walk": ["documents_download", "documents_create"],
         "reference_args": [{"id": 1}, dict(DRAFT_ARGS)],
     })
     verifiers.append({"task_id": "bad_006",
-                      "assertions": ["matter_documents_1_title_is_badbank"],
+                      "assertions": ["dm_documents_1_name_is_badbank"],
                       "vcode": _vcode("bad_006", """
-    rows = final_state.get("matter_documents") or []
-    hit = any((r.get("title") or "") == "Badbank memo" for r in rows)
+    rows = final_state.get("dm_documents") or []
+    hit = any((r.get("name") or "") == "Badbank memo" for r in rows)
     return {"task_id": task_id, "passed": bool(hit),
             "reward": 1.0 if hit else 0.0,
-            "failed_conditions": [] if hit else ["matter_documents_1_title_is_badbank"],
-            "assertions": [{"name": "matter_documents_1_title_is_badbank",
+            "failed_conditions": [] if hit else ["dm_documents_1_name_is_badbank"],
+            "assertions": [{"name": "dm_documents_1_name_is_badbank",
                             "passed": bool(hit)}]}
 """)})
     expect["bad_006"] = {"gate": "lint", "why": "prompt names id 9, verifier pins id 1"}

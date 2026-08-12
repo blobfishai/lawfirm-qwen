@@ -17,7 +17,7 @@ future change to server.py, the verifiers, or the world document.
 
 Run (server must be up with --v2-contracts):
   python3 tools/record_fixtures.py --base http://127.0.0.1:8974 \
-      --world world/blobfish/world-v15.json
+      --world world/blobfish/world-v16.json
 """
 from __future__ import annotations
 
@@ -58,7 +58,7 @@ def oracle_episode(base: str, world: dict, task: dict, verifier: dict) -> dict:
                 elif pin["field"] in args:
                     args[pin["field"]] = pin["value"]
             ok, text = sess.call(tool, args)
-            if ok and tool in ("read_matter_document", "read_file"):
+            if ok and tool in ("documents_download", "drive_files_get"):
                 state["read_bodies"].append(text)
         verdict = sess.verify(task["task_id"])
         return {"trace": sess.trace, "verdict": verdict}
@@ -89,7 +89,7 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--base", default="http://127.0.0.1:8974")
     ap.add_argument("--world", default=os.path.join(
-        ROOT, "world", "blobfish", "world-v15.json"))
+        ROOT, "world", "blobfish", "world-v16.json"))
     ap.add_argument("--out", default=os.path.join(HERE, "fixtures", "verdicts"))
     ap.add_argument("--tasks", default="", help="comma-separated task_id filter")
     args = ap.parse_args()

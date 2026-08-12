@@ -137,7 +137,7 @@ def main() -> None:
                               "ok": False, "error": f"derive_args: {e!r}"})
                 continue
             ok, text = call_tool(tool_name, args)
-            if ok and tool_name in ("read_matter_document", "read_file"):
+            if ok and tool_name in ("documents_download", "drive_files_get"):
                 state["read_bodies"].append(text)
             steps.append({"step": step_i, "tool": tool_name, "ok": ok})
         return {"task_id": TASK_ID, "steps": steps,

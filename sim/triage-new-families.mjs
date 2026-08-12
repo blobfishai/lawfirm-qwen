@@ -21,12 +21,10 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const argv = process.argv.slice(2);
 const ENGINE = argv.includes("--engine") ? argv[argv.indexOf("--engine") + 1] : "deepseek-chat";
 
-// Canonical world. This read world-v13.json, which was deleted with the other
-// intermediate snapshots (world/blobfish/LINEAGE.md) — the script had been
-// failing on ENOENT before it printed anything. The canonical world carries
-// all 56 of the task_271..326 family tasks this triage looks at.
+// Canonical product-only world. The migrated task ids retain the family
+// identity used by this historical triage view.
 const WORLD = argv.includes("--world")
-  ? argv[argv.indexOf("--world") + 1] : "world/blobfish/world-v15.json";
+  ? argv[argv.indexOf("--world") + 1] : "world/blobfish/world-v16.json";
 const raw = JSON.parse(readFileSync(join(ROOT, WORLD), "utf8"));
 const world = raw.world ?? raw;
 const familyOf = (t) => (t.provenance?.source_workflow ?? "").split(":")[1]?.split("/")[0]?.trim()

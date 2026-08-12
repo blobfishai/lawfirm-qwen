@@ -16,53 +16,34 @@ now **fully self-hosting** — the entire world runs offline from this repo.
 
 Three things live here:
 
-1. **The world** — canonical `world-v13.json`: **288 tasks**, **352 seeded
-   matter documents**, 70 tables + 38 product tables, **183 tools** across two
-   generations (95 legacy incl. the async analysis queue + 88 v3 mirroring real vendor APIs), one verifier
-   per task, **288/288 oracle-proven**, 0 domain-lint flags. Every runnable
-   eval and workflow in the 101-item domain registry is hosted — **zero
-   hostable gaps remain** ([`docs/COVERAGE.md`](docs/COVERAGE.md)).
+1. **The product-only world** — canonical `world-v16.json`: **291 tasks**,
+   **39 product-system tables / 2,754 seeded rows**, **92 contract-defined
+   tools**, zero synthesized name-family tools, and one deterministic verifier
+   per task. The migration reconciles every legacy row and rewrites every walk
+   through committed ID and check-grammar manifests.
 
-   Admission takes two proofs, not one. The oracle proves each task is
-   *satisfiable*; a **discrimination sweep** proves it *rejects wrong
-   behavior* — four adversarial episodes per task (no-op, text-only,
-   blind-write, and the reference walk with a corrupted payload). **All
-   288 reject the three behavioral modes; 169 also reject a wrong answer**,
-   and of the 119 that cannot, 110 are prose deliverables where no exact
-   string exists to pin. Zero broken keys, zero broken guards — every
-   verifier that claims an answer key enforces it
-   ([`docs/DISCRIMINATION.md`](docs/DISCRIMINATION.md)). That sweep retired 38
-   tasks whose prompt named its own tool walk and whose verifier pinned
-   nothing — replaced one-for-one by `packs-v4`, which grades a covenant
-   breach, a claim's priority, a damages computation, an HSR fee tier and an
-   arbitral institution against documents that carry the facts.
+   Admission takes two proofs. The oracle proves all **291/291** reference
+   executions are satisfiable. The discrimination sweep classifies **174**
+   tasks as content-discriminating and **117** as explicitly lacking a
+   determinate answer key, with **0 broken keys, 0 broken guards, and 0 harness
+   errors** ([v16 report](docs/DISCRIMINATION-v16.md)). Golden fixtures freeze
+   five verdicts per task; a six-defect badbank continuously tests the gates.
 
-   **Harvey LAB tasks run here.** `world/expansion/packs-lab/` hosts LAB task
-   content directly: the documents are extracted **verbatim** from the real
-   `.docx`/`.xlsx`/`.eml` bytes by `research/lab_extract.py` (10/10 parsed,
-   ~193k characters), and the questions are re-cut to the determinate
-   decisions the source rubric already asserts, so they grade without an LLM
-   judge. What is lost is prose quality; what is gained is a checkable answer
-   key — all four LAB-derived tasks pass the oracle and reject all four
-   adversarial modes. Provenance (repo, commit, source task, license) travels
-   in the pack.
+   “Mirrors a vendor” is deliberately not treated as “exact.” The conformance
+   registry covers all 92 tools and publishes unresolved schema, pagination,
+   error, and partner-gated gaps; the current measured status is in
+   [`docs/CONFORMANCE.md`](docs/CONFORMANCE.md) and
+   [`docs/MCP-JUSTIFICATION.md`](docs/MCP-JUSTIFICATION.md).
 
-   The domain corpus that grounds this is **46 cloned repos** under
-   `research/repos/` (manifest: `research/repos-manifest.tsv`), with the
-   question-driven research in [`research/QUESTIONS.md`](research/QUESTIONS.md)
-   and the framing in [`research/THESIS.md`](research/THESIS.md).
-
-2. **The boundary proof** — 21 tasks with direct mixed-outcome evidence (same
-   model, same prompt, 3 episodes, sometimes passes / sometimes fails) and a
-   per-episode trace corpus explaining *why*. See
-   [`docs/FAILURE-REPORT.md`](docs/FAILURE-REPORT.md).
-3. **Audited model measurements** — models measured as agents in the world,
-   3 episodes/task, deterministic scoring, failure-mode classification per
-   model, and an adversarial audit that hunted harness bugs before trusting
-   any number (three found, quantified, fixed — see
-   [`docs/AUDIT.md`](docs/AUDIT.md)). Reports in
-   [`reports/`](reports/); coverage proof in
-   [`docs/COVERAGE.md`](docs/COVERAGE.md).
+2. **The evidence and eval supply chain** — task packs, real source documents,
+   and a 46-repository legal-domain research corpus under `research/repos/`.
+   The v17 work imports Harvey LAB’s documents and task harness into a separate
+   file lane while deterministic state/grounding checks remain the headline
+   score.
+3. **Audited measurements** — deterministic episode traces, pass^k,
+   discrimination artifacts, and per-model failure-mode reports. Historical
+   v15 boundary results remain available, but absolute model outcomes must be
+   re-measured on the migrated v16 tool surface before comparison.
 
 ## Architecture
 
@@ -76,41 +57,41 @@ Three things live here:
                                              ▼
                              ┌───────────────────────────────────────────────┐
                              │ mcp/ — the firm stack as MCP servers          │
-                             │  8 per-system servers (practice mgmt, docket, │
-                             │  DMS, billing, discovery, office, HR, know-   │
-                             │  ledge) via serve-system.mjs + systems.json,  │
-                             │  or the legacy single bridge (measurement     │
-                             │  default; --mcp multi switches per run)       │
+                             │  6 per-system servers: Clio, CourtListener,   │
+                             │  iManage, Relativity, Google Workspace, and   │
+                             │  LEDES via serve-system.mjs + systems.json,   │
+                             │  or one bridge exposing the same 92 tools     │
                              └───────────────┬───────────────────────────────┘
                                              │ sessions · /mcp · /verify
                                              ▼
                              ┌───────────────────────────────────────────────┐
                              │ world/local/server.py — local world runtime   │
-                             │ hydrates world/blobfish/world*.json → SQLite  │
-                             │ 102 synthesized tools · VCode verifiers ·     │
+                             │ hydrates world-v16.json → session SQLite      │
+                             │ 92 contract tools · zero synthesized tools ·  │
+                             │ VCode verifiers ·                             │
                              │ seeded friction (rate_limited/stale_reference,│
                              │ ambiguous acks, write cap) — all deterministic│
                              └───────────────────────────────────────────────┘
 ```
 
 The original hosted world (`sbx_206712ec47f741d3`) no longer resolves on
-blobfish.ai. `world/local/server.py` resurrects it from the complete world
-document shipped in this repo; fidelity is proven by
-`world/local/oracle.py` — **231/231 tasks execute their reference walks and
-pass their shipped verifiers** (`world/local/oracle-expanded-full.json`).
+blobfish.ai. `world/local/server.py` runs the migrated local world from the
+complete v16 document and six product contracts. Solvability is proved by
+`data/oracle-v16.json`; API fidelity is a separate, fail-closed conformance
+measurement rather than an inference from oracle success.
 
 ## The world
 
 | | |
 |---|---|
-| World doc | canonical chain: `world.json` (original 156) → `world-expanded.json` (231, eval packs) → `world-lawnative.json` (230, ERP purge) → **`world-v3.json` (245, + v3 workflow tasks — the canonical world)** |
-| Tables | 74 (matters, dockets, conflicts, evidence records, billing, **matter_documents** with 211 seeded files: deal materials, counterparty markups, contracts, merger agreements, SPAs, discovery corpora, rule memos, computation exhibits, distractors) |
-| Tools | 102 executable (read/query/create/update/draft families; behavior synthesized deterministically from tool specs; admitted iff the reference walk passes the verifier) |
-| Tasks | 231 — 146 Harvey-LAB-anchored, 8 LegalAgentBench, 2 graph-walk, 75 eval-anchored expansion |
-| Verifiers | 231 VCode programs: per-assertion verdicts, graded reward, anti-hack vetoes (workflow shortcut, fabrication, collateral damage), advisory tool-health |
+| World doc | **`world/blobfish/world-v16.json`**; lineage and deterministic compiler artifacts live under `world/migrate/` |
+| Tables | 39 product-system tables, 2,754 rows; DMS, practice management, court records, e-discovery, workspace, and e-billing share one private per-session state |
+| Tools | 92, all loaded from `mcp/v3/contracts/*.json`; the runtime rejects any world that still embeds Gen-1 tools |
+| Tasks | 291 — 117 graph walks, 159 eval-anchored expansions, 15 native product workflows |
+| Verifiers | 291 VCode programs regenerated from explicit check grammar where migrated; per-assertion reward plus anti-hack vetoes |
 | Friction | seeded + deterministic: 3% injected `rate_limited`/`stale_reference`, 15% ambiguous write-acks, per-session write cap |
 | Boundary evidence | 21 proven-flaky tasks, 57 shipped episode traces, 2 push ledgers |
-| Quarantine | `task_016` (prompt/verifier drift) — runnable, excluded from headline scores |
+| Admission | 291/291 oracle; 174 discriminating + 117 no-answer-key; 0 broken keys/guards |
 
 ### Eval-anchored expansion (75 tasks, 81 documents)
 
@@ -138,26 +119,27 @@ the same check grammar as the originals. Admission = oracle pass.
 
 ```bash
 # 1. Serve the world locally (no API keys needed)
-npm run world:serve                      # original 156-task world on :8971
-python3 world/local/server.py --port 8972 --world world/blobfish/world-expanded.json
+npm run world:serve                      # canonical v16 world on :8971
 
-# 2. Prove fidelity (reference walks vs shipped verifiers)
-npm run oracle                           # expect 156/156
-python3 world/local/oracle.py --base http://127.0.0.1:8972 \
-  --world world/blobfish/world-expanded.json          # expect 231/231
+# 2. Prove solvability and rejection behavior
+npm run oracle                           # expect 291/291
+python3 world/local/discriminate.py --base http://127.0.0.1:8971 --report-only
 
-# 3. One episode with a real model (.env: DEEPSEEK_API_KEY / ANTHROPIC_API_KEY / QWEN_*)
+# 3. Check the separately measured API-conformance contract
+python3 tools/conformance/run.py --check
+
+# 4. One episode with a real model (.env: DEEPSEEK_API_KEY / ANTHROPIC_API_KEY / QWEN_*)
 node sim/run-simulation.mjs --task task_127 --engine deepseek-chat
 
-# 4. The leaderboard (N episodes × tasks × models; resumable)
+# 5. The leaderboard (N episodes × tasks × models; resumable)
 node sim/run-leaderboard.mjs --engines deepseek-chat,claude-haiku-4-5 \
   --tasks scored --episodes 3 --resume
 
-# 5. Failure-mode reports + the leaderboard page
+# 6. Failure-mode reports + the leaderboard page
 node sim/build-failure-report.mjs --all
 node docs/leaderboard/build-page.mjs
 
-# 6. Harbor format (github.com/harbor-framework/harbor) — one Harbor task per
+# 7. Harbor format (github.com/harbor-framework/harbor) — one Harbor task per
 #    world task, agent/world isolated in separate containers (see harbor/README.md)
 python3 harbor/generate.py --build-image
 uvx harbor run -p "dist/harbor/tasks/task_005" -a oracle   # reward 1.0
@@ -213,8 +195,8 @@ config/world.config.json          engine + model registry · world paths · quar
 mcp/blobfish-lawfirm-bridge.mjs   stdio ⇄ world-server bridge + harness tools
 world/local/server.py             local world runtime (sessions, tools, verifiers, friction)
 world/local/oracle.py             reference-walk fidelity prover
-world/blobfish/world.json         original world document (complete: tables, rows, tools, tasks, verifiers)
-world/blobfish/world-expanded.json  + 75 eval-anchored tasks, 81 documents
+world/blobfish/world-v16.json     canonical product-only world (tables, rows, tasks, verifiers)
+world/migrate/                    deterministic Gen-1 → product compiler and manifests
 world/expansion/packs/*.json      content packs (documents + answer-keyed task specs)
 world/expansion/assemble.mjs      pack compiler (tasks + generated verifiers, append-only)
 sim/run-simulation.mjs            one episode (any registry engine)

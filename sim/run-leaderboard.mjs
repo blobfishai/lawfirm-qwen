@@ -7,6 +7,7 @@
  *   node sim/run-leaderboard.mjs --engines deepseek-chat,claude-haiku-4-5
  *        [--tasks scored|all|flaky|boundary|task_001,task_002]
  *        [--episodes 3] [--concurrency 6] [--label run1]
+ *        [--episode-namespace run1]
  *
  * Task sets:
  *   scored    all tasks minus config.scoring.quarantinedTasks (default)
@@ -34,12 +35,21 @@ const ENGINES = opt("--engines", "").split(",").filter(Boolean);
 const EPISODES = Number(opt("--episodes", "3"));
 const CONCURRENCY = Number(opt("--concurrency", "6"));
 const LABEL = opt("--label", "leaderboard");
+const LABEL_EXPLICIT = argv.includes("--label");
 const TASKSET = opt("--tasks", "scored");
 const RESUME = argv.includes("--resume"); // skip episodes whose record already exists
 const AGG_ONLY = argv.includes("--aggregate-only"); // no API calls: aggregate existing episode files
 const WORLD_FILE = opt("--world-file", null);      // e.g. world/blobfish/world-expanded.json
 const LOCAL_BASE = opt("--local-base", null);      // e.g. http://127.0.0.1:8972
 const MCP_MODE = opt("--mcp", "bridge");           // bridge | multi (per-system MCP servers)
+const EPISODE_NAMESPACE = opt(
+  "--episode-namespace", LABEL_EXPLICIT ? LABEL : "",
+);
+
+if (EPISODE_NAMESPACE && !/^[A-Za-z0-9._-]+$/.test(EPISODE_NAMESPACE)) {
+  console.error("--episode-namespace must contain only letters, digits, dot, underscore, or hyphen");
+  process.exit(1);
+}
 
 if (!ENGINES.length) {
   console.error(`--engines required. Registry: ${Object.keys(config.models ?? {}).join(", ")}`);
@@ -83,7 +93,7 @@ function practiceArea(task) {
 }
 function shape(task) {
   const walk = task.walk ?? [];
-  if (walk.includes("draft_matter_document")) return "document-drafting";
+  if (walk.includes("documents_create")) return "document-drafting";
   if (walk.some((t) => t.endsWith("_records_agent"))) return "records-research";
   if (walk.some((t) => t.startsWith("update_"))) return "record-update";
   if (walk.some((t) => t.endsWith("_create"))) return "workflow-chain";
@@ -101,7 +111,12 @@ const RES_DIR = join(ROOT, "data", "leaderboard", "results");
 mkdirSync(RES_DIR, { recursive: true });
 
 function runEpisode(engine, taskId, ep) {
-  const dir = join(EP_DIR, engine);
+  // A measured migration comparison must never overwrite the historical
+  // episodes it is meant to compare against. An explicit label therefore
+  // becomes an episode namespace unless the caller overrides it.
+  const dir = EPISODE_NAMESPACE
+    ? join(EP_DIR, engine, EPISODE_NAMESPACE)
+    : join(EP_DIR, engine);
   mkdirSync(dir, { recursive: true });
   const out = join(dir, `${taskId}-t${ep}.json`);
   if ((RESUME || AGG_ONLY) && existsSync(out)) {
@@ -216,6 +231,10 @@ function aggregate(engine, ids, results) {
     label: spec.label ?? engine,
     model: spec.model ?? engine,
     measuredAt: new Date().toISOString(),
+    runLabel: LABEL,
+    episodeNamespace: EPISODE_NAMESPACE || null,
+    worldVersion: world.version ?? null,
+    worldFile: WORLD_FILE ?? config.blobfish.world,
     episodesPerTask: EPISODES,
     taskSet: TASKSET,
     tasksMeasured: measured.length,
@@ -256,8 +275,11 @@ for (const engine of ENGINES) {
   // 255-byte limit (ENAMETOOLONG) AFTER every episode has been paid for — the
   // run is lost at the last step. Use the run label when the set is a long
   // explicit list, and keep the full list inside the file.
-  const setTag = (TASKSET === "scored") ? null
+  const taskSetTag = (TASKSET === "scored") ? null
     : (TASKSET.length <= 40 ? TASKSET : (LABEL || `set-${TASKSET.split(",").length}tasks`));
+  const setTag = LABEL_EXPLICIT
+    ? [taskSetTag, LABEL].filter(Boolean).join("@")
+    : taskSetTag;
   const outPath = join(RES_DIR, setTag ? `${engine}@${setTag}.json` : `${engine}.json`);
   writeFileSync(outPath, JSON.stringify(agg, null, 1));
   console.log(`${engine}: score ${agg.overall.score} | reward ${agg.overall.meanReward} | flaky-set ${agg.overall.flakySetScore} | $${agg.overall.totalCostUsd}`);

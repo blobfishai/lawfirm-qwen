@@ -5,14 +5,14 @@ For every task in the world document, executes the task's reference walk
 (tool order from `walk`, arguments derived from the task's prompt and
 `relevant_data`) against the local server over the same HTTP surface the
 MCP bridge uses, then scores the rollout with the task's shipped VCode
-verifier. A task counts as locally-runnable only if the oracle walk passes.
+verifier. A task counts as locally runnable only if the oracle walk passes.
 
 This mirrors the world's own admission bar ("a task ships iff its reference
 execution passes the verifier") and doubles as the integration test for the
-synthesized tool implementations.
+product-contract runtime.
 
 Run:  python3 world/local/oracle.py [--base http://127.0.0.1:8971]
-                                    [--world world/blobfish/world.json]
+                                    [--world world/blobfish/world-v16.json]
                                     [--tasks task_001,task_002]
 """
 from __future__ import annotations
@@ -38,10 +38,15 @@ def http(base: str, method: str, path: str, body=None, session=None):
 
 
 class OracleSession:
-    def __init__(self, base: str, task_id: str | None = None):
+    def __init__(self, base: str, task_id: str | None = None,
+                 profile: str | None = None):
         self.base = base
-        self.sid = http(base, "POST", "/sessions",
-                        {"task_id": task_id} if task_id else {})["session_id"]
+        session_request = {}
+        if task_id:
+            session_request["task_id"] = task_id
+        if profile:
+            session_request["profile"] = profile
+        self.sid = http(base, "POST", "/sessions", session_request)["session_id"]
         self.trace: list[dict] = []
         self._rpc_id = 0
 
@@ -259,7 +264,7 @@ def run_task(base, world, task, verifier):
                 elif pin["field"] in args:
                     args[pin["field"]] = pin["value"]
             ok, text = sess.call(tool_name, args)
-            if ok and tool_name in ("read_matter_document", "read_file"):
+            if ok and tool_name in ("documents_download", "drive_files_get"):
                 state["read_bodies"].append(text)
         verdict = sess.verify(task["task_id"])
         return verdict
@@ -268,7 +273,7 @@ def run_task(base, world, task, verifier):
 
 
 def world_tool_targets(world, tool_name):
-    t = next((x for x in world["tools"] if x["name"] == tool_name), None)
+    t = next((x for x in world.get("tools", []) if x["name"] == tool_name), None)
     return set((t or {}).get("target_tables") or [])
 
 
@@ -276,7 +281,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--base", default="http://127.0.0.1:8971")
     ap.add_argument("--world", default=os.path.join(
-        ROOT, "lawfirm-qwen", "world", "blobfish", "world.json"))
+        ROOT, "world", "blobfish", "world-v16.json"))
     ap.add_argument("--tasks", default="")
     ap.add_argument("--out", default="")
     args = ap.parse_args()
@@ -284,7 +289,7 @@ def main():
     world_path = args.world
     if not os.path.exists(world_path):
         world_path = os.path.join(os.path.dirname(os.path.dirname(
-            os.path.abspath(__file__))), "blobfish", "world.json")
+            os.path.abspath(__file__))), "blobfish", "world-v16.json")
     with open(world_path) as f:
         raw = json.load(f)
     world = raw.get("world", raw)

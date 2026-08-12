@@ -72,7 +72,7 @@ def drift_lint(task: dict, verifier: dict) -> bool:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--world", default=os.path.join(
-        ROOT, "world", "blobfish", "world-v15.json"))
+        ROOT, "world", "blobfish", "world-v16.json"))
     ap.add_argument("--port", type=int, default=8975)
     args = ap.parse_args()
     base = f"http://127.0.0.1:{args.port}"

@@ -229,7 +229,10 @@ def load_contract_documents() -> dict[str, dict[str, Any]]:
 
 
 def call_one(base: str, name: str, arguments: dict[str, object]) -> tuple[bool, str]:
-    session = OracleSession(base)
+    # Contract probes measure the underlying endpoint response. Benchmark
+    # friction (429/stale references/ambiguous acks/write caps) is exercised by
+    # golden episodes and must not replace the response being schema-checked.
+    session = OracleSession(base, profile="contract")
     try:
         return session.call(name, arguments, retries=2)
     finally:
@@ -275,6 +278,7 @@ def build_report(base: str) -> tuple[dict[str, Any], list[str]]:
     passed = [item for item in applicable if item["schema"]["passed"]]
     report = {
         "schema_version": 1,
+        "session_profile": "contract (fault-injection overlay disabled)",
         "specs_as_of": manifest.get("as_of"),
         "summary": {
             "contract_tools": len(contracts),

@@ -12,7 +12,7 @@ which now writes to `dist/harbor-legacy`.)
 
 ```bash
 python3 harbor/generate.py --build-image   # 291 tasks -> dist/harbor/tasks/,
-                                           # shared image legal-agent-sim-world:v15
+                                           # shared image legal-agent-sim-world:v16
 ```
 
 `dist/` is gitignored; the generated tree is a build artifact. Regeneration is
@@ -32,7 +32,7 @@ networking); cloud providers (Daytona/Modal/E2B) are not supported for these.
 
 ## Ship
 
-Tasks reference the world image as `ghcr.io/blobfishai/legal-agent-sim-world:v15`,
+Tasks reference the world image as `ghcr.io/blobfishai/legal-agent-sim-world:v16`,
 so a published image makes every task dir self-sufficient (no local build).
 Both shipping steps need interactive auth, so they are manual:
 
@@ -40,7 +40,7 @@ Both shipping steps need interactive auth, so they are manual:
 # 1. Push the world image (one-time; needs the write:packages scope)
 gh auth refresh -h github.com -s write:packages
 gh auth token | docker login ghcr.io -u <github-user> --password-stdin
-docker push ghcr.io/blobfishai/legal-agent-sim-world:v15
+docker push ghcr.io/blobfishai/legal-agent-sim-world:v16
 # then make the package public: https://github.com/orgs/blobfishai/packages
 
 # 2. Publish tasks to the Harbor registry (hub.harborframework.com)
@@ -60,13 +60,14 @@ main (agent)                          world (shared image, TASK_ID env)
     http://world:8972/mcp               └─ POST /solve   oracle walk (token-gated)
                                         server.py :8971 (world runtime,
                                         SQLite session, seeded friction,
-                                        v2 contracts)
+                                        product contracts)
 ```
 
 - The **shim** creates the trial's session (per-task seeded baseline), records
   every `tools/call` into the trace exactly as `sim/run-simulation.mjs` does,
   and runs verification server-side — so the agent container never contains
-  `world.json` (tasks, walks, verifier code, answer keys).
+  `world.json` (tasks, walks, verifier code, answer keys). The canonical source
+  is `world/blobfish/world-v16.json`.
 - `tests/test.sh` writes `reward.json` with two metrics: `reward` (the
   verifier's graded fraction, anti-hack vetoes to 0) and `passed` (strict
   pass/fail — the world's headline metric).

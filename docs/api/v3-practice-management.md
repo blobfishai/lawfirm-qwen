@@ -10,7 +10,7 @@
 | get | `{"data": {...}}` |
 | create/update | `{"data": {...}}` |
 
-**Tables (SQLite):** `pm_users`, `pm_practice_areas`, `pm_contacts`, `pm_matters`, `pm_time_entries`, `pm_expense_entries`, `pm_bills`, `pm_bill_line_items`, `pm_trust_transactions`, `pm_calendar_entries`, `pm_tasks`, `pm_notes`, `pm_communications`
+**Tables (SQLite):** `pm_users`, `pm_practice_areas`, `pm_contacts`, `pm_matters`, `pm_time_entries`, `pm_expense_entries`, `pm_bills`, `pm_bill_line_items`, `pm_trust_transactions`, `pm_calendar_entries`, `pm_tasks`, `pm_notes`, `pm_communications`, `pm_audit_events`
 
 ## `matters_list`
 
@@ -647,4 +647,21 @@ List the firm's practice areas.
 | `limit` | integer | no | same |
 
 **Op:** `list` on `pm_practice_areas`
+
+## `audit_events_list`
+
+*Mirrors:* internal audit feed — NO public Clio equivalent (Clio exposes no audit-log API); fidelity ceiling documented, kept because controlled-change verifiers pin these rows
+
+List controlled-change audit events for a record.
+
+**Who uses it & why:** A partner reviews who changed the invoice amount and why.
+
+| Param (real API name) | Type | Required | Internal field |
+|---|---|---|---|
+| `record_table` | string | no | same |
+| `record_id` | integer | no | same |
+| `actor_role` | string | no | same |
+| `limit` | integer | no | same |
+
+**Op:** `list` on `pm_audit_events`
 

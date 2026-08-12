@@ -9,18 +9,16 @@ of topology.
 
 | Server | Product (SIMULATED) | Tools |
 |---|---|---|
-| `practice-management` | LexOperis PM (Clio-class) | 16 — matters, conflicts, ops assistants |
-| `litigation-docketing` | CourtDock | 42 — cases, filings, dockets, hearings, courts, deadlines |
-| `discovery-platform` | DiscoParse (Relativity-class) | 7 — discovery requests + workflows |
-| `billing` | LedgerBill | 9 — invoice reviews, ledgers, billing workflows |
-| `dms` | MatterVault (iManage-class) | 4 — matter documents: search, read, draft, retitle |
-| `office-suite` | Fieldstone Workspace | 7 — working docs, sheets, calendar, files |
-| `hr-directory` | StaffDesk | 9 — employees, departments, assignments |
-| `knowledge-assistant` | Cortex Notes | 8 — memory, knowledge, playbooks, schedules |
+| `practice-management` | LexOperis PM (Clio Manage v4) | 37 — matters, contacts, time, billing, trust, calendars, tasks, communications, audit |
+| `docket-records` | CourtDock Records (CourtListener v4) | 13 — courts, dockets, RECAP, opinions, citations, alerts |
+| `dms` | MatterVault DMS (iManage Work) | 12 — workspaces, folders, documents, versions, checkout/checkin, full text |
+| `ediscovery` | DiscoParse (Relativity REST) | 12 — review, coding, holds, privilege logs, productions, async jobs |
+| `workspace` | Fieldstone Workspace (Google APIs) | 10 — Sheets, Drive, Gmail, Calendar |
+| `ebilling` | LedgerBill (LEDES/UTBMS) | 8 — invoices, lines, validation, appeals |
 
-**102 tools total** — the partition is validated (every world tool in exactly
+**92 tools total** — the partition is validated (every runtime tool in exactly
 one system) and integration-tested end to end by `mcp/test-multi-server.mjs`
-(spawns all 8, checks the aggregated surface, drives a reference walk across
+(spawns all 6, checks the aggregated surface, drives a reference walk across
 servers, requires the verifier to pass on the merged trace).
 
 ## Files
@@ -31,8 +29,8 @@ servers, requires the verifier to pass on the merged trace).
   several servers join one episode; without it each server opens its own
   session (right for interactive exploration).
 - `test-multi-server.mjs` — the topology integration test (`npm run mcp:test`).
-- `blobfish-lawfirm-bridge.mjs` — the legacy single-surface bridge
-  (all 102 tools + `verify_task`/`reset_session` harness tools). Every
+- `blobfish-lawfirm-bridge.mjs` — the single-surface bridge
+  (all 92 tools + `verify_task`/`reset_session` harness tools). Historical
   measured episode to date used this surface; it remains the measurement
   default (`sim/run-simulation.mjs --mcp bridge`).
 
@@ -40,12 +38,12 @@ servers, requires the verifier to pass on the merged trace).
 
 ```bash
 npm run world:serve                 # the world runtime (state substrate)
-npm run mcp:test                    # prove the 8-server topology end to end
+npm run mcp:test                    # prove the 6-server topology end to end
 
 # an episode over the per-system stack:
 node sim/run-simulation.mjs --task task_127 --engine deepseek-chat --mcp multi
 
-# interactive: .mcp.json registers all 8 servers with Claude Code
+# interactive: .mcp.json registers all 6 servers with Claude Code
 ```
 
 The measurement default stays `bridge` so leaderboard protocol never changes

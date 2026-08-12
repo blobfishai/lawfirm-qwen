@@ -3,8 +3,8 @@
  * Multi-server integration test — proves the per-system MCP topology works
  * end to end: spawns every system server against the running world runtime
  * with one shared session, checks the aggregated tool surface equals the
- * world's 102 tools, drives a real task's reference walk through the servers
- * that own each tool (task_001 spans practice-management), and requires the
+ * product runtime's tools, drives a real task's reference walk through the
+ * servers that own each tool, and requires the
  * shipped verifier to PASS on the merged trace.
  *
  * Prereq: npm run world:serve   (world/local/server.py on :8971)
@@ -28,6 +28,12 @@ const fail = (msg) => { console.error(`FAIL: ${msg}`); process.exit(1); };
 const sess = await fetch(`${BASE}/sessions`, { method: "POST", body: "{}", headers: { "Content-Type": "application/json" } }).then((r) => r.json());
 const sessionId = sess.session_id ?? fail("could not create session — is the world server up?");
 console.log(`session ${sessionId} @ ${BASE}`);
+const upstreamList = await fetch(`${BASE}/mcp`, {
+  method: "POST",
+  headers: { "Content-Type": "application/json", "Mcp-Session-Id": sessionId },
+  body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/list", params: {} }),
+}).then((r) => r.json());
+const upstreamNames = new Set((upstreamList.result?.tools ?? []).map((tool) => tool.name));
 
 const clients = {};
 const route = {};
@@ -47,7 +53,9 @@ for (const sysName of Object.keys(systems)) {
   toolCount += tools.length;
   console.log(`  ${sysName}: ${tools.length} tools`);
 }
-if (toolCount !== world.tools.length) fail(`aggregated ${toolCount} tools; world has ${world.tools.length}`);
+if (toolCount !== upstreamNames.size) fail(`aggregated ${toolCount} tools; product runtime has ${upstreamNames.size}`);
+const missing = [...upstreamNames].filter((name) => !route[name]);
+if (missing.length) fail(`unrouted product tools: ${missing.join(", ")}`);
 console.log(`aggregated surface: ${toolCount} tools across ${Object.keys(systems).length} servers ✓`);
 
 // cross-system sanity: a DMS read and a docketing list through different servers
@@ -59,17 +67,13 @@ async function call(name, args) {
   console.log(`  [${r.sys}] ${name}(${JSON.stringify(args).slice(0, 60)}) → ${res.ok ? "ok" : "ERR"}`);
   return res;
 }
-await call("query_matter_documents", { limit: 2 });
-await call("litigation_deadlines_list", { limit: 2 });
+await call("documents_search", { anywhere: "memo", limit: 2 });
+await call("dockets_list", { limit: 2 });
 
-// full reference walk of task_001 through the servers, then verify
-const task = world.tasks.find((t) => t.task_id === "task_001");
-const vwalk = ["legal_matters_list", "legal_matters_get", "legal_matters_amount_history_create"];
-const args = [
-  { limit: 50 },
-  { id: "legal_matters_001" },
-  { legal_matters_id: "legal_matters_001", fee_budget: 125000, changed_by_role: "partner", change_reason: "Multi-server MCP integration test reference run." },
-];
+// full reference walk of one migrated task through the servers, then verify
+const task = world.tasks.find((t) => t.task_id === "task_v3_001");
+const vwalk = task.walk;
+const args = task.reference_args;
 console.log(`reference walk: ${task.task_id}`);
 for (let i = 0; i < vwalk.length; i++) {
   const r = await call(vwalk[i], args[i]);

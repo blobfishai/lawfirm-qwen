@@ -171,3 +171,32 @@ List folders in a workspace.
 
 **Op:** `list` on `dm_folders`
 
+## `documents_download`
+
+*Mirrors:* GET /api/v2/customers/{c}/libraries/{l}/documents/{id}/download — iManage Work document download
+
+Download a document: the FULL body text, not the profile preview.
+
+**Who uses it & why:** An associate pulls the full executed agreement text before drafting.
+
+| Param (real API name) | Type | Required | Internal field |
+|---|---|---|---|
+| `id` | integer | no | same |
+
+**Op:** `get` on `dm_documents`
+
+## `documents_search_fulltext`
+
+*Mirrors:* POST /api/v2/customers/{c}/libraries/{l}/documents/search (anyword/fulltext) — iManage Work search
+
+Full-text search over document bodies and names. Paged; page until has_more is false.
+
+**Who uses it & why:** Find every document mentioning the escrow release condition.
+
+| Param (real API name) | Type | Required | Internal field |
+|---|---|---|---|
+| `query` | string | no | same |
+| `limit` | integer | no | same |
+
+**Op:** `search` on `dm_documents`
+

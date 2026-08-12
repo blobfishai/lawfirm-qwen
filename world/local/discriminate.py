@@ -25,9 +25,9 @@ reason and proves nothing about the answer key.
 Reuses the oracle's own session and argument derivation so the walks are
 identical to the admitted reference run.
 
-Run (server must be up, with --v2-contracts for the v3 surface):
+Run (server must be up with the product contracts):
   python3 world/local/discriminate.py --base http://localhost:8791 \
-      --world world/blobfish/world-v15.json --report-only
+      --world world/blobfish/world-v16.json --report-only
 
 ``--report-only`` records raw adversarial outcomes without treating an
 expected wrong-value acceptance on a task with no answer key as a harness
@@ -109,7 +109,7 @@ def realize(sess, world, task, plan, pin, state, *, skip_writes=False,
         ok, text = sess.call(tool, a)
         if corrupt_last_write and i == last_write_idx and not ok:
             write_errored = True
-        if ok and tool in ("read_matter_document", "read_file"):
+        if ok and tool in ("documents_download", "drive_files_get"):
             state["read_bodies"].append(text)
     return write_errored
 
@@ -139,7 +139,7 @@ def episode(base, world, task, verifier, mode):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--base", default="http://localhost:8791")
-    ap.add_argument("--world", default="world/blobfish/world-v15.json")
+    ap.add_argument("--world", default="world/blobfish/world-v16.json")
     ap.add_argument("--tasks", default="")
     ap.add_argument("--out", default="world/local/discrimination-report.json")
     ap.add_argument(

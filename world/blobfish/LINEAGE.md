@@ -30,8 +30,9 @@ After any rebuild: re-derive seeds and re-prove.
 
 ```bash
 python3 world/migrate/gen1_to_v16.py --check
+python3 tools/check_product_surface.py
 python3 world/local/server.py --world world/blobfish/world-v16.json \
-    --v2-contracts mcp/v3/contracts --port 8791          # --v2-contracts is REQUIRED
+    --v2-contracts mcp/v3/contracts --port 8791          # explicit; same as the default
 python3 world/local/oracle.py       --base http://localhost:8791 --world world/blobfish/world-v16.json
 python3 world/local/discriminate.py --base http://localhost:8791 --world world/blobfish/world-v16.json \
     --out data/discrimination-v16.json --report-only
@@ -39,4 +40,5 @@ node world/expansion/discrimination-report.mjs \
     --sweep data/discrimination-v16.json --world world/blobfish/world-v16.json \
     --docs-out docs/DISCRIMINATION-v16.md \
     --data-out data/discrimination-v16-classified.json
+node sim/compare-v16-boundary.mjs
 ```

@@ -23,9 +23,9 @@ function option(name, fallback) {
 }
 
 const SWEEP = option("--sweep", "world/local/discrimination-report.json");
-const WORLD = option("--world", "world/blobfish/world-v15.json");
-const DOC_OUT = option("--docs-out", "docs/DISCRIMINATION.md");
-const DATA_OUT = option("--data-out", "data/discrimination.json");
+const WORLD = option("--world", "world/blobfish/world-v16.json");
+const DOC_OUT = option("--docs-out", "docs/DISCRIMINATION-v16.md");
+const DATA_OUT = option("--data-out", "data/discrimination-v16-classified.json");
 
 for (const [label, path] of [["sweep", SWEEP], ["world", WORLD]]) {
   if (!existsSync(path)) {

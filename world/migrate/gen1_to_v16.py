@@ -24,7 +24,7 @@ import re
 import sqlite3
 import sys
 import tempfile
-from collections import defaultdict
+from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any
 
@@ -33,7 +33,6 @@ ROOT = Path(__file__).resolve().parents[2]
 WORLD_V15 = ROOT / "world" / "blobfish" / "world-v15.json"
 WORLD_V16 = ROOT / "world" / "blobfish" / "world-v16.json"
 CONTRACTS = ROOT / "mcp" / "v3" / "contracts"
-FIXTURES = ROOT / "tools" / "fixtures" / "verdicts"
 ID_MANIFEST = ROOT / "world" / "migrate" / "id-manifest.json"
 REFERENCE_ARGS = ROOT / "world" / "migrate" / "v15-reference-args.json"
 CHECK_MANIFEST = ROOT / "world" / "migrate" / "check-manifest.json"
@@ -194,6 +193,7 @@ def allocate_mappings(
 
 def allocate_virtual_parents(
     tasks: list[dict[str, Any]],
+    reference_args: dict[str, dict[str, Any]],
     entries: list[dict[str, Any]],
     by_old: dict[str, dict[str, dict[str, Any]]],
     product_by_name: dict[str, dict[str, Any]],
@@ -207,9 +207,9 @@ def allocate_virtual_parents(
     """
     needed: set[str] = set()
     for task in tasks:
-        fixture = json.loads((FIXTURES / f"{task['task_id']}.json").read_text())
-        for step in fixture["episodes"]["oracle"]["trace"]:
-            value = (step.get("arguments") or {}).get("legal_matters_id")
+        reference = reference_args[task["task_id"]]
+        for arguments in reference["arguments"]:
+            value = arguments.get("legal_matters_id")
             if value is not None and str(value) not in by_old["matters"]:
                 needed.add(str(value))
     next_id = max(int(row["id"]) for row in product_by_name["pm_matters"]["sample_rows"]) + 1
@@ -473,36 +473,45 @@ def materialize_legacy_rows(
     return converted
 
 
-def bootstrap_reference_args(tasks: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+def load_reference_args(
+    tasks: list[dict[str, Any]], source_world_sha256: str
+) -> dict[str, dict[str, Any]]:
+    """Load the immutable v15 oracle inputs captured before fixture migration.
+
+    Golden fixtures intentionally follow the canonical world and therefore
+    cannot be a compiler input: regenerating them for v16 must not make v16
+    impossible to rebuild. The committed manifest is the one-way migration
+    boundary and is validated against the exact v15 source bytes.
+    """
+    if not REFERENCE_ARGS.exists():
+        raise FileNotFoundError(
+            f"missing immutable migration input: {REFERENCE_ARGS.relative_to(ROOT)}"
+        )
+    manifest = json.loads(REFERENCE_ARGS.read_text())
+    if manifest.get("schema") != "lawfirm.reference-arguments.v1":
+        raise ValueError("unsupported reference-arguments manifest schema")
+    if manifest.get("source_world_sha256") != source_world_sha256:
+        raise ValueError("reference-arguments manifest does not match world-v15 bytes")
+    captured = manifest.get("tasks") or {}
+    expected_ids = {task["task_id"] for task in tasks}
+    if set(captured) != expected_ids:
+        missing = sorted(expected_ids - set(captured))
+        extra = sorted(set(captured) - expected_ids)
+        raise ValueError(
+            f"reference-arguments task coverage mismatch; missing={missing[:5]} "
+            f"extra={extra[:5]}"
+        )
     output: dict[str, dict[str, Any]] = {}
     for task in tasks:
         task_id = task["task_id"]
-        fixture_path = FIXTURES / f"{task_id}.json"
-        if not fixture_path.exists():
-            if len(task.get("reference_args") or []) != len(task.get("walk") or []):
-                raise FileNotFoundError(f"no fixture/reference arguments for {task_id}")
-            output[task_id] = {
-                "walk": copy.deepcopy(task["walk"]),
-                "arguments": copy.deepcopy(task["reference_args"]),
-            }
-            continue
-        fixture = json.loads(fixture_path.read_text())
-        trace = fixture["episodes"]["oracle"]["trace"]
-        remaining: dict[str, int] = defaultdict(int)
-        for tool in task.get("walk") or []:
-            remaining[tool] += 1
-        walk: list[str] = []
-        args: list[dict[str, Any]] = []
-        for step in trace:
-            requested = step.get("requested_tool") or step.get("tool")
-            if step.get("ok") and remaining.get(requested, 0) > 0:
-                walk.append(requested)
-                args.append(copy.deepcopy(step.get("arguments") or {}))
-                remaining[requested] -= 1
-        missing = [tool for tool, count in remaining.items() for _ in range(count)]
-        if missing:
-            raise ValueError(f"could not recover oracle trace for {task_id}: missing {missing}")
-        output[task_id] = {"walk": walk, "arguments": args}
+        reference = captured[task_id]
+        walk = reference.get("walk") or []
+        arguments = reference.get("arguments") or []
+        if Counter(walk) != Counter(task.get("walk") or []):
+            raise ValueError(f"captured walk membership drift for {task_id}")
+        if len(arguments) != len(walk):
+            raise ValueError(f"captured argument count mismatch for {task_id}")
+        output[task_id] = copy.deepcopy(reference)
     return output
 
 
@@ -999,17 +1008,20 @@ def migrate_task(
 
 def build() -> dict[Path, str]:
     source_bytes = WORLD_V15.read_bytes()
+    source_sha256 = sha256_bytes(source_bytes)
     world = json.loads(source_bytes)
     legacy_tables = world["tables"]
     world_tool_by_name = {tool["name"]: tool for tool in world["tools"]}
     runtime, product_tables, product_by_name = load_product_seed()
     entries, by_old = allocate_mappings(legacy_tables, product_by_name)
-    allocate_virtual_parents(world["tasks"], entries, by_old, product_by_name)
+    source_reference_args = load_reference_args(world["tasks"], source_sha256)
+    allocate_virtual_parents(
+        world["tasks"], source_reference_args, entries, by_old, product_by_name
+    )
     converted = materialize_legacy_rows(
         legacy_tables, entries, by_old, product_by_name
     )
     materialize_virtual_parents(entries, product_by_name)
-    source_reference_args = bootstrap_reference_args(world["tasks"])
     pack_index = load_pack_index()
 
     migrated_tasks: list[dict[str, Any]] = []
@@ -1066,7 +1078,7 @@ def build() -> dict[Path, str]:
     target["surface_migration"] = {
         "schema": "lawfirm.surface-migration.v1",
         "source_world": "world-v15.json",
-        "source_sha256": sha256_bytes(source_bytes),
+        "source_sha256": source_sha256,
         "compiler": "world/migrate/gen1_to_v16.py",
         "legacy_tools_removed": len(world_tool_by_name),
         "product_tools_runtime": len(runtime.tools),
@@ -1135,13 +1147,6 @@ def build() -> dict[Path, str]:
         "tables": by_table,
         "mappings": entries,
     }
-    reference_manifest = {
-        "schema": "lawfirm.reference-arguments.v1",
-        "source_world": "world-v15.json",
-        "source_world_sha256": sha256_bytes(source_bytes),
-        "source": "M0 golden oracle traces (successful calls aligned to each task walk)",
-        "tasks": source_reference_args,
-    }
     check_manifest = {
         "schema": "lawfirm.check-manifest.v1",
         "target_world": "world-v16.json",
@@ -1177,7 +1182,6 @@ def build() -> dict[Path, str]:
     outputs = {
         WORLD_V16: pretty(target),
         ID_MANIFEST: pretty(id_manifest),
-        REFERENCE_ARGS: pretty(reference_manifest),
         CHECK_MANIFEST: pretty(check_manifest),
         RECONCILIATION: pretty(reconciliation),
     }

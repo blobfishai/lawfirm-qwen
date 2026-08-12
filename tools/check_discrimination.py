@@ -23,7 +23,7 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("report", type=Path)
     parser.add_argument(
-        "--world", type=Path, default=ROOT / "world" / "blobfish" / "world-v15.json"
+        "--world", type=Path, default=ROOT / "world" / "blobfish" / "world-v16.json"
     )
     args = parser.parse_args()
 

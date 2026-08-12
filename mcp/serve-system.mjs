@@ -3,7 +3,7 @@
  * Per-system MCP server — exposes ONE firm system's tool subset over stdio.
  *
  *   node mcp/serve-system.mjs --system dms
- *   node mcp/serve-system.mjs --system litigation-docketing
+ *   node mcp/serve-system.mjs --system docket-records
  *
  * Systems (one MCP server per product the firm runs) are defined in
  * mcp/systems.json; every server fronts the same local world runtime
