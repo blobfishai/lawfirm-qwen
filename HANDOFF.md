@@ -17,10 +17,15 @@ picking the work back up.
 
 ## In flight when this was written
 
-Nothing is running. The C&H measurement reached **135/201** and stopped at
-`fk_173`; the server it was pointed at has been shut down. Resume with the
-commands below — it picks up where it left off, since episodes with real tool
+The C&H measurement is **running again** on the remaining 115 tasks, resumed
+with the commands below. It had reached 135 of the bank's **250** tasks and
+stopped at `fk_173`. Resume is safe at any point — episodes with real tool
 calls are kept and zero-call records are re-run.
+
+Note the denominator: `world/blobfish/firm-knowledge-tasks.json` has a
+`taskList` of **250**, not the 201 an earlier revision of this file claimed.
+Count remaining with the snippet in "Things that will bite you" rather than
+trusting a number written here — it drifts.
 
 Aggregate over the 135 graded tasks: 30% all-pass, mean recall 0.40, mean
 precision 0.30 (defined on the 85 that returned anything), 813 total
@@ -87,6 +92,25 @@ should be grown or dropped.
 
 ## Things that will bite you
 
+- Progress counts in this file go stale. Compute the real one — it counts a
+  task as done only if the episode made tool calls, which is exactly what the
+  runner's resume logic does:
+
+  ```bash
+  python3 -c "
+  import json, glob
+  ids = [t['task_id'] for t in
+         json.load(open('world/blobfish/firm-knowledge-tasks.json'))['taskList']]
+  done = {d['task_id'] for f in glob.glob('data/firm-knowledge/deepseek-chat/fk_*.json')
+          for d in [json.load(open(f))] if d.get('tool_calls', 0) > 0}
+  print(f'{len(done)}/{len(ids)} done, {len([i for i in ids if i not in done])} remaining')"
+  ```
+
+- `data/firm-knowledge/<engine>/_summary.json` is **not** a summary of that
+  directory. The runner overwrites it with the results of its last invocation
+  only, whatever family those were — right now it holds 15 `cw_*` records from
+  the generated-wave pilot, sitting in a directory otherwise full of `fk_*`
+  results. Read the per-task files, not this.
 - `oracle.py --world` defaults to `world/blobfish/world.json`, the retired
   156-task world — **always pass `--world world/blobfish/world-v14.json`**.
   Driving the old task list against a v14 server reports 117/156 with 39
