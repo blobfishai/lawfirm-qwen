@@ -1,32 +1,44 @@
-"""VCode verifier for task_164 (expansion: cuad-clause-extraction)
+"""Generated v16 verifier for task_164.
 
-Task: Run a full CUAD-style clause review of the EXECUTED supply agreement between the component
-Tools (walk): query_matter_documents -> read_matter_document -> litigation_cases_evidence_create -> litigation_cases_evidence_create -> litigation_cases_evidence_create -> litigation_cases_evidence_create -> litigation_cases_evidence_create -> litigation_cases_evidence_create -> litigation_cases_evidence_create -> litigation_cases_evidence_create -> litigation_cases_evidence_create -> litigation_cases_evidence_create -> litigation_cases_evidence_create
-Checks: pinned-field state diff + behavioral (state changed, read-before-write,
-        no shortcut, required reads) + fabrication guards + tool-success advisory.
-
-initial_state / final_state are {table: [row, ...]} snapshots taken before and
-after the rollout; trace is the list of executed steps.
+Source: explicit check_grammar embedded beside this VCode. Regenerate with
+world/migrate/gen1_to_v16.py; never patch this string directly.
 """
+import json
 
-READ_TOOLS = ["query_matter_documents","read_matter_document"]
-WRITE_TOOLS = ["litigation_cases_evidence_create"]
+READ_TOOLS = ['documents_search_fulltext', 'documents_download']
+WRITE_TOOLS = ['notes_create']
 
 def _rows(state, table):
     return state.get(table, []) if isinstance(state, dict) else []
 
-def _by_id(rows):
-    out = {}
-    for r in rows:
-        if isinstance(r, dict) and r.get("id") is not None:
-            out[str(r["id"])] = r
-    return out
+def _ids(rows):
+    return {str(r.get("id")) for r in rows if isinstance(r, dict) and r.get("id") is not None}
+
+def _new_rows(initial_state, final_state, table):
+    before = _ids(_rows(initial_state, table))
+    return [r for r in _rows(final_state, table) if str(r.get("id")) not in before]
 
 def _norm(value):
     if value is None: return "null"
     if value is True: return "true"
     if value is False: return "false"
-    return str(value).strip().lower()
+    text = str(value).strip().lower()
+    try:
+        return repr(float(text))
+    except (TypeError, ValueError):
+        return text
+
+def _payload(row, field):
+    value = row.get(field)
+    if isinstance(value, dict): return value
+    try:
+        parsed = json.loads(value or "{}")
+        return parsed if isinstance(parsed, dict) else {}
+    except (TypeError, ValueError):
+        return {}
+
+def _payload_text(row, payload_field, field):
+    return str(_payload(row, payload_field).get(field) or "")
 
 def verify(initial_state, final_state, trace):
     results, failed = [], []
@@ -37,249 +49,250 @@ def verify(initial_state, final_state, trace):
     successful_steps = [s for s in trace if s.get("tool") != "_final_answer" and s.get("ok")]
     tools = [s.get("tool", "") for s in successful_steps]
     changed = initial_state != final_state
-    chk("state_changed", changed,
-        "world state changed" if changed else "NO state change — agent did nothing")
+    chk("state_changed", changed, "world state changed" if changed else "NO state change")
 
-    reads = [t for t in tools if t in READ_TOOLS]
-    writes = [t for t in tools if t in WRITE_TOOLS]
-    read_first = len(reads) > 0 and (
-        len(writes) == 0 or tools.index(reads[0]) < tools.index(writes[0]))
+    reads = [tool for tool in tools if tool in READ_TOOLS]
+    writes = [tool for tool in tools if tool in WRITE_TOOLS]
+    read_first = bool(reads) and (not writes or tools.index(reads[0]) < tools.index(writes[0]))
     chk("reads_before_writes", read_first,
         f"reads={len(reads)}, writes={len(writes)}, read_first={read_first}")
+    chk("no_shortcut_direct_update", not (writes and not reads),
+        "inspected data before writing" if reads else "SHORTCUT: wrote without reading")
 
-    shortcut = len(writes) > 0 and len(reads) == 0
-    chk("no_shortcut_direct_update", not shortcut,
-        "SHORTCUT: wrote without reading first" if shortcut else "inspected data before writing")
+    required_path = ['documents_search_fulltext', 'documents_download', 'notes_create', 'notes_create', 'notes_create', 'notes_create', 'notes_create', 'notes_create', 'notes_create', 'notes_create', 'notes_create', 'notes_create', 'notes_create']
+    cursor = 0
+    for tool in tools:
+        if cursor < len(required_path) and tool == required_path[cursor]:
+            cursor += 1
+    chk("required_workflow_path", cursor == len(required_path),
+        "completed: " + " -> ".join(required_path) if cursor == len(required_path)
+        else "INCOMPLETE: missing " + " -> ".join(required_path[cursor:]))
 
-    _required_workflow_path = ["query_matter_documents","read_matter_document","litigation_cases_evidence_create","litigation_cases_evidence_create","litigation_cases_evidence_create","litigation_cases_evidence_create","litigation_cases_evidence_create","litigation_cases_evidence_create","litigation_cases_evidence_create","litigation_cases_evidence_create","litigation_cases_evidence_create","litigation_cases_evidence_create","litigation_cases_evidence_create"]
-    _path_is_write = [False,False,True,True,True,True,True,True,True,True,True,True,True]
-    # Ordering is graded where it carries meaning: writes in declared order,
-    # and every read before the write it justifies. Reads are unordered among
-    # themselves — the reference walk's browsing order is not a requirement.
-    _pos = {}
-    for _i, _t in enumerate(tools):
-        _pos.setdefault(_t, []).append(_i)
-    _missing_workflow = [t for t in _required_workflow_path if t not in _pos]
-    _wpos = {}
-    if not _missing_workflow:
-        _cursor = -1
-        for _i, _t in enumerate(_required_workflow_path):
-            if not _path_is_write[_i]:
-                continue
-            _nxt = None
-            for _x in _pos[_t]:
-                if _x > _cursor:
-                    _nxt = _x
-                    break
-            if _nxt is None:
-                _missing_workflow.append(_t)
-                break
-            _wpos[_i] = _nxt
-            _cursor = _nxt
-    if not _missing_workflow:
-        _need, _due = {}, {}
-        for _i, _t in enumerate(_required_workflow_path):
-            if _path_is_write[_i]:
-                continue
-            _need[_t] = _need.get(_t, 0) + 1
-            _d = None
-            for _k in range(_i + 1, len(_required_workflow_path)):
-                if _path_is_write[_k] and _k in _wpos:
-                    _d = _wpos[_k]
-                    break
-            if _d is not None:
-                _due[_t] = _d if _t not in _due else min(_due[_t], _d)
-        for _t, _n in _need.items():
-            _d = _due.get(_t)
-            _seen = [_x for _x in _pos.get(_t, []) if _d is None or _x < _d]
-            if len(_seen) < _n:
-                _missing_workflow.append(_t)
-    _workflow_complete = not _missing_workflow
-    chk("required_workflow_path", _workflow_complete,
-        "completed ordered workflow: " + " -> ".join(_required_workflow_path) if _workflow_complete
-        else "INCOMPLETE WORKFLOW: missing ordered checkpoints " + " -> ".join(_missing_workflow))
+    _required_reads = [{'tool': 'documents_download', 'id': 100138}]
+    _missing_reads = []
+    for _need in _required_reads:
+        if not any(s.get("tool") == _need["tool"] and s.get("ok") and
+                   _norm((s.get("arguments") or {}).get("id")) == _norm(_need["id"])
+                   for s in successful_steps):
+            _missing_reads.append(_need)
+    chk("required_documents_read", not _missing_reads,
+        "all required documents downloaded in full" if not _missing_reads
+        else "EVIDENCE GAP: " + str(_missing_reads))
 
-    _read_ids = [str((s.get("arguments") or {}).get("id")) for s in successful_steps if s.get("tool") == "read_matter_document"]
-    _need_ids = ["133"]
-    _missing_reads = [i for i in _need_ids if i not in _read_ids]
-    chk("required_documents_read", len(_missing_reads) == 0,
-        "all required input documents were read in full" if not _missing_reads
-        else f"EVIDENCE GAP: matter_documents {_missing_reads} were never read with read_matter_document")
+    _new_0 = _new_rows(initial_state, final_state, 'pm_notes')
+    chk('rows_inserted_into_pm_notes', len(_new_0) >= 11,
+        f"pm_notes: {len(_new_0)} new row(s), need >= 11")
+    _effect_rows_0 = _new_rows(initial_state, final_state, 'pm_notes')
+    _effect_match_0 = [r for r in _effect_rows_0 if _norm(r.get('matter_id')) == _norm(100000) and _norm(r.get('subject')) == _norm('litigation_cases_evidence_records') and _norm(_payload(r, 'detail').get('litigation_cases_id')) == _norm('litigation_cases_001') and _norm(_payload(r, 'detail').get('evidence_type')) == _norm('minimum_commitment')]
+    chk('effect_0_direct_matter_id', len(_effect_match_0) > 0,
+        'expected one new pm_notes row matching all direct pins, including matter_id=100000' if _effect_match_0
+        else 'no new pm_notes row matched the declared direct pins')
+    chk('effect_0_direct_subject', len(_effect_match_0) > 0,
+        'expected one new pm_notes row matching all direct pins, including subject=litigation_cases_evidence_records' if _effect_match_0
+        else 'no new pm_notes row matched the declared direct pins')
+    chk('effect_0_payload_litigation_cases_id', len(_effect_match_0) > 0,
+        'expected one new pm_notes payload matching all pins, including litigation_cases_id=litigation_cases_001' if _effect_match_0
+        else 'no new pm_notes payload matched the declared pins')
+    chk('effect_0_payload_evidence_type', len(_effect_match_0) > 0,
+        'expected one new pm_notes payload matching all pins, including evidence_type=minimum_commitment' if _effect_match_0
+        else 'no new pm_notes payload matched the declared pins')
+    _effect_rows_1 = _new_rows(initial_state, final_state, 'pm_notes')
+    _effect_match_1 = [r for r in _effect_rows_1 if _norm(r.get('matter_id')) == _norm(100000) and _norm(r.get('subject')) == _norm('litigation_cases_evidence_records') and _norm(_payload(r, 'detail').get('litigation_cases_id')) == _norm('litigation_cases_001') and _norm(_payload(r, 'detail').get('evidence_type')) == _norm('volume_restriction')]
+    chk('effect_1_direct_matter_id', len(_effect_match_1) > 0,
+        'expected one new pm_notes row matching all direct pins, including matter_id=100000' if _effect_match_1
+        else 'no new pm_notes row matched the declared direct pins')
+    chk('effect_1_direct_subject', len(_effect_match_1) > 0,
+        'expected one new pm_notes row matching all direct pins, including subject=litigation_cases_evidence_records' if _effect_match_1
+        else 'no new pm_notes row matched the declared direct pins')
+    chk('effect_1_payload_litigation_cases_id', len(_effect_match_1) > 0,
+        'expected one new pm_notes payload matching all pins, including litigation_cases_id=litigation_cases_001' if _effect_match_1
+        else 'no new pm_notes payload matched the declared pins')
+    chk('effect_1_payload_evidence_type', len(_effect_match_1) > 0,
+        'expected one new pm_notes payload matching all pins, including evidence_type=volume_restriction' if _effect_match_1
+        else 'no new pm_notes payload matched the declared pins')
+    _effect_rows_2 = _new_rows(initial_state, final_state, 'pm_notes')
+    _effect_match_2 = [r for r in _effect_rows_2 if _norm(r.get('matter_id')) == _norm(100000) and _norm(r.get('subject')) == _norm('litigation_cases_evidence_records') and _norm(_payload(r, 'detail').get('litigation_cases_id')) == _norm('litigation_cases_001') and _norm(_payload(r, 'detail').get('evidence_type')) == _norm('price_restrictions')]
+    chk('effect_2_direct_matter_id', len(_effect_match_2) > 0,
+        'expected one new pm_notes row matching all direct pins, including matter_id=100000' if _effect_match_2
+        else 'no new pm_notes row matched the declared direct pins')
+    chk('effect_2_direct_subject', len(_effect_match_2) > 0,
+        'expected one new pm_notes row matching all direct pins, including subject=litigation_cases_evidence_records' if _effect_match_2
+        else 'no new pm_notes row matched the declared direct pins')
+    chk('effect_2_payload_litigation_cases_id', len(_effect_match_2) > 0,
+        'expected one new pm_notes payload matching all pins, including litigation_cases_id=litigation_cases_001' if _effect_match_2
+        else 'no new pm_notes payload matched the declared pins')
+    chk('effect_2_payload_evidence_type', len(_effect_match_2) > 0,
+        'expected one new pm_notes payload matching all pins, including evidence_type=price_restrictions' if _effect_match_2
+        else 'no new pm_notes payload matched the declared pins')
+    _effect_rows_3 = _new_rows(initial_state, final_state, 'pm_notes')
+    _effect_match_3 = [r for r in _effect_rows_3 if _norm(r.get('matter_id')) == _norm(100000) and _norm(r.get('subject')) == _norm('litigation_cases_evidence_records') and _norm(_payload(r, 'detail').get('litigation_cases_id')) == _norm('litigation_cases_001') and _norm(_payload(r, 'detail').get('evidence_type')) == _norm('non_compete')]
+    chk('effect_3_direct_matter_id', len(_effect_match_3) > 0,
+        'expected one new pm_notes row matching all direct pins, including matter_id=100000' if _effect_match_3
+        else 'no new pm_notes row matched the declared direct pins')
+    chk('effect_3_direct_subject', len(_effect_match_3) > 0,
+        'expected one new pm_notes row matching all direct pins, including subject=litigation_cases_evidence_records' if _effect_match_3
+        else 'no new pm_notes row matched the declared direct pins')
+    chk('effect_3_payload_litigation_cases_id', len(_effect_match_3) > 0,
+        'expected one new pm_notes payload matching all pins, including litigation_cases_id=litigation_cases_001' if _effect_match_3
+        else 'no new pm_notes payload matched the declared pins')
+    chk('effect_3_payload_evidence_type', len(_effect_match_3) > 0,
+        'expected one new pm_notes payload matching all pins, including evidence_type=non_compete' if _effect_match_3
+        else 'no new pm_notes payload matched the declared pins')
+    _effect_rows_4 = _new_rows(initial_state, final_state, 'pm_notes')
+    _effect_match_4 = [r for r in _effect_rows_4 if _norm(r.get('matter_id')) == _norm(100000) and _norm(r.get('subject')) == _norm('litigation_cases_evidence_records') and _norm(_payload(r, 'detail').get('litigation_cases_id')) == _norm('litigation_cases_001') and _norm(_payload(r, 'detail').get('evidence_type')) == _norm('no_solicit_of_customers')]
+    chk('effect_4_direct_matter_id', len(_effect_match_4) > 0,
+        'expected one new pm_notes row matching all direct pins, including matter_id=100000' if _effect_match_4
+        else 'no new pm_notes row matched the declared direct pins')
+    chk('effect_4_direct_subject', len(_effect_match_4) > 0,
+        'expected one new pm_notes row matching all direct pins, including subject=litigation_cases_evidence_records' if _effect_match_4
+        else 'no new pm_notes row matched the declared direct pins')
+    chk('effect_4_payload_litigation_cases_id', len(_effect_match_4) > 0,
+        'expected one new pm_notes payload matching all pins, including litigation_cases_id=litigation_cases_001' if _effect_match_4
+        else 'no new pm_notes payload matched the declared pins')
+    chk('effect_4_payload_evidence_type', len(_effect_match_4) > 0,
+        'expected one new pm_notes payload matching all pins, including evidence_type=no_solicit_of_customers' if _effect_match_4
+        else 'no new pm_notes payload matched the declared pins')
+    _effect_rows_5 = _new_rows(initial_state, final_state, 'pm_notes')
+    _effect_match_5 = [r for r in _effect_rows_5 if _norm(r.get('matter_id')) == _norm(100000) and _norm(r.get('subject')) == _norm('litigation_cases_evidence_records') and _norm(_payload(r, 'detail').get('litigation_cases_id')) == _norm('litigation_cases_001') and _norm(_payload(r, 'detail').get('evidence_type')) == _norm('rofr_rofo_rofn')]
+    chk('effect_5_direct_matter_id', len(_effect_match_5) > 0,
+        'expected one new pm_notes row matching all direct pins, including matter_id=100000' if _effect_match_5
+        else 'no new pm_notes row matched the declared direct pins')
+    chk('effect_5_direct_subject', len(_effect_match_5) > 0,
+        'expected one new pm_notes row matching all direct pins, including subject=litigation_cases_evidence_records' if _effect_match_5
+        else 'no new pm_notes row matched the declared direct pins')
+    chk('effect_5_payload_litigation_cases_id', len(_effect_match_5) > 0,
+        'expected one new pm_notes payload matching all pins, including litigation_cases_id=litigation_cases_001' if _effect_match_5
+        else 'no new pm_notes payload matched the declared pins')
+    chk('effect_5_payload_evidence_type', len(_effect_match_5) > 0,
+        'expected one new pm_notes payload matching all pins, including evidence_type=rofr_rofo_rofn' if _effect_match_5
+        else 'no new pm_notes payload matched the declared pins')
+    _effect_rows_6 = _new_rows(initial_state, final_state, 'pm_notes')
+    _effect_match_6 = [r for r in _effect_rows_6 if _norm(r.get('matter_id')) == _norm(100000) and _norm(r.get('subject')) == _norm('litigation_cases_evidence_records') and _norm(_payload(r, 'detail').get('litigation_cases_id')) == _norm('litigation_cases_001') and _norm(_payload(r, 'detail').get('evidence_type')) == _norm('change_of_control')]
+    chk('effect_6_direct_matter_id', len(_effect_match_6) > 0,
+        'expected one new pm_notes row matching all direct pins, including matter_id=100000' if _effect_match_6
+        else 'no new pm_notes row matched the declared direct pins')
+    chk('effect_6_direct_subject', len(_effect_match_6) > 0,
+        'expected one new pm_notes row matching all direct pins, including subject=litigation_cases_evidence_records' if _effect_match_6
+        else 'no new pm_notes row matched the declared direct pins')
+    chk('effect_6_payload_litigation_cases_id', len(_effect_match_6) > 0,
+        'expected one new pm_notes payload matching all pins, including litigation_cases_id=litigation_cases_001' if _effect_match_6
+        else 'no new pm_notes payload matched the declared pins')
+    chk('effect_6_payload_evidence_type', len(_effect_match_6) > 0,
+        'expected one new pm_notes payload matching all pins, including evidence_type=change_of_control' if _effect_match_6
+        else 'no new pm_notes payload matched the declared pins')
+    _effect_rows_7 = _new_rows(initial_state, final_state, 'pm_notes')
+    _effect_match_7 = [r for r in _effect_rows_7 if _norm(r.get('matter_id')) == _norm(100000) and _norm(r.get('subject')) == _norm('litigation_cases_evidence_records') and _norm(_payload(r, 'detail').get('litigation_cases_id')) == _norm('litigation_cases_001') and _norm(_payload(r, 'detail').get('evidence_type')) == _norm('liquidated_damages')]
+    chk('effect_7_direct_matter_id', len(_effect_match_7) > 0,
+        'expected one new pm_notes row matching all direct pins, including matter_id=100000' if _effect_match_7
+        else 'no new pm_notes row matched the declared direct pins')
+    chk('effect_7_direct_subject', len(_effect_match_7) > 0,
+        'expected one new pm_notes row matching all direct pins, including subject=litigation_cases_evidence_records' if _effect_match_7
+        else 'no new pm_notes row matched the declared direct pins')
+    chk('effect_7_payload_litigation_cases_id', len(_effect_match_7) > 0,
+        'expected one new pm_notes payload matching all pins, including litigation_cases_id=litigation_cases_001' if _effect_match_7
+        else 'no new pm_notes payload matched the declared pins')
+    chk('effect_7_payload_evidence_type', len(_effect_match_7) > 0,
+        'expected one new pm_notes payload matching all pins, including evidence_type=liquidated_damages' if _effect_match_7
+        else 'no new pm_notes payload matched the declared pins')
+    _effect_rows_8 = _new_rows(initial_state, final_state, 'pm_notes')
+    _effect_match_8 = [r for r in _effect_rows_8 if _norm(r.get('matter_id')) == _norm(100000) and _norm(r.get('subject')) == _norm('litigation_cases_evidence_records') and _norm(_payload(r, 'detail').get('litigation_cases_id')) == _norm('litigation_cases_001') and _norm(_payload(r, 'detail').get('evidence_type')) == _norm('insurance')]
+    chk('effect_8_direct_matter_id', len(_effect_match_8) > 0,
+        'expected one new pm_notes row matching all direct pins, including matter_id=100000' if _effect_match_8
+        else 'no new pm_notes row matched the declared direct pins')
+    chk('effect_8_direct_subject', len(_effect_match_8) > 0,
+        'expected one new pm_notes row matching all direct pins, including subject=litigation_cases_evidence_records' if _effect_match_8
+        else 'no new pm_notes row matched the declared direct pins')
+    chk('effect_8_payload_litigation_cases_id', len(_effect_match_8) > 0,
+        'expected one new pm_notes payload matching all pins, including litigation_cases_id=litigation_cases_001' if _effect_match_8
+        else 'no new pm_notes payload matched the declared pins')
+    chk('effect_8_payload_evidence_type', len(_effect_match_8) > 0,
+        'expected one new pm_notes payload matching all pins, including evidence_type=insurance' if _effect_match_8
+        else 'no new pm_notes payload matched the declared pins')
+    _effect_rows_9 = _new_rows(initial_state, final_state, 'pm_notes')
+    _effect_match_9 = [r for r in _effect_rows_9 if _norm(r.get('matter_id')) == _norm(100000) and _norm(r.get('subject')) == _norm('litigation_cases_evidence_records') and _norm(_payload(r, 'detail').get('litigation_cases_id')) == _norm('litigation_cases_001') and _norm(_payload(r, 'detail').get('evidence_type')) == _norm('third_party_beneficiary')]
+    chk('effect_9_direct_matter_id', len(_effect_match_9) > 0,
+        'expected one new pm_notes row matching all direct pins, including matter_id=100000' if _effect_match_9
+        else 'no new pm_notes row matched the declared direct pins')
+    chk('effect_9_direct_subject', len(_effect_match_9) > 0,
+        'expected one new pm_notes row matching all direct pins, including subject=litigation_cases_evidence_records' if _effect_match_9
+        else 'no new pm_notes row matched the declared direct pins')
+    chk('effect_9_payload_litigation_cases_id', len(_effect_match_9) > 0,
+        'expected one new pm_notes payload matching all pins, including litigation_cases_id=litigation_cases_001' if _effect_match_9
+        else 'no new pm_notes payload matched the declared pins')
+    chk('effect_9_payload_evidence_type', len(_effect_match_9) > 0,
+        'expected one new pm_notes payload matching all pins, including evidence_type=third_party_beneficiary' if _effect_match_9
+        else 'no new pm_notes payload matched the declared pins')
+    _effect_rows_10 = _new_rows(initial_state, final_state, 'pm_notes')
+    _effect_match_10 = [r for r in _effect_rows_10 if _norm(r.get('matter_id')) == _norm(100000) and _norm(r.get('subject')) == _norm('litigation_cases_evidence_records') and _norm(_payload(r, 'detail').get('litigation_cases_id')) == _norm('litigation_cases_001') and _norm(_payload(r, 'detail').get('evidence_type')) == _norm('governing_law')]
+    chk('effect_10_direct_matter_id', len(_effect_match_10) > 0,
+        'expected one new pm_notes row matching all direct pins, including matter_id=100000' if _effect_match_10
+        else 'no new pm_notes row matched the declared direct pins')
+    chk('effect_10_direct_subject', len(_effect_match_10) > 0,
+        'expected one new pm_notes row matching all direct pins, including subject=litigation_cases_evidence_records' if _effect_match_10
+        else 'no new pm_notes row matched the declared direct pins')
+    chk('effect_10_payload_litigation_cases_id', len(_effect_match_10) > 0,
+        'expected one new pm_notes payload matching all pins, including litigation_cases_id=litigation_cases_001' if _effect_match_10
+        else 'no new pm_notes payload matched the declared pins')
+    chk('effect_10_payload_evidence_type', len(_effect_match_10) > 0,
+        'expected one new pm_notes payload matching all pins, including evidence_type=governing_law' if _effect_match_10
+        else 'no new pm_notes payload matched the declared pins')
 
-    _bi_0 = _by_id(_rows(initial_state, "litigation_cases_evidence_records"))
-    _af_0 = _rows(final_state, "litigation_cases_evidence_records")
-    _new_rows_0 = [r for r in _af_0 if str(r.get("id")) not in _bi_0]
-    chk("rows_inserted_into_litigation_cases_evidence_records", len(_new_rows_0) >= 11,
-        f"litigation_cases_evidence_records: {len(_bi_0)} -> {len(_af_0)} rows ({len(_new_rows_0)} new, need >= 11)")
-    _new_0_pin_0 = [r for r in _new_rows_0 if _norm(r.get("litigation_cases_id")) == _norm("litigation_cases_001")]
-    chk("litigation_cases_evidence_records_new_row_0_litigation_cases_id_is_litigation_cases_001", len(_new_0_pin_0) > 0,
-        f"expected a new litigation_cases_evidence_records row with litigation_cases_id=litigation_cases_001; got " +
-        str([_norm(r.get("litigation_cases_id")) for r in _new_rows_0][:8]))
-    _new_0_pin_1 = [r for r in _new_rows_0 if _norm(r.get("evidence_type")) == _norm("minimum_commitment")]
-    chk("litigation_cases_evidence_records_new_row_1_evidence_type_is_minimum_commitment", len(_new_0_pin_1) > 0,
-        f"expected a new litigation_cases_evidence_records row with evidence_type=minimum_commitment; got " +
-        str([_norm(r.get("evidence_type")) for r in _new_rows_0][:8]))
-    _new_0_pin_2 = [r for r in _new_rows_0 if _norm(r.get("litigation_cases_id")) == _norm("litigation_cases_001")]
-    chk("litigation_cases_evidence_records_new_row_2_litigation_cases_id_is_litigation_cases_001", len(_new_0_pin_2) > 0,
-        f"expected a new litigation_cases_evidence_records row with litigation_cases_id=litigation_cases_001; got " +
-        str([_norm(r.get("litigation_cases_id")) for r in _new_rows_0][:8]))
-    _new_0_pin_3 = [r for r in _new_rows_0 if _norm(r.get("evidence_type")) == _norm("volume_restriction")]
-    chk("litigation_cases_evidence_records_new_row_3_evidence_type_is_volume_restriction", len(_new_0_pin_3) > 0,
-        f"expected a new litigation_cases_evidence_records row with evidence_type=volume_restriction; got " +
-        str([_norm(r.get("evidence_type")) for r in _new_rows_0][:8]))
-    _new_0_pin_4 = [r for r in _new_rows_0 if _norm(r.get("litigation_cases_id")) == _norm("litigation_cases_001")]
-    chk("litigation_cases_evidence_records_new_row_4_litigation_cases_id_is_litigation_cases_001", len(_new_0_pin_4) > 0,
-        f"expected a new litigation_cases_evidence_records row with litigation_cases_id=litigation_cases_001; got " +
-        str([_norm(r.get("litigation_cases_id")) for r in _new_rows_0][:8]))
-    _new_0_pin_5 = [r for r in _new_rows_0 if _norm(r.get("evidence_type")) == _norm("price_restrictions")]
-    chk("litigation_cases_evidence_records_new_row_5_evidence_type_is_price_restrictions", len(_new_0_pin_5) > 0,
-        f"expected a new litigation_cases_evidence_records row with evidence_type=price_restrictions; got " +
-        str([_norm(r.get("evidence_type")) for r in _new_rows_0][:8]))
-    _new_0_pin_6 = [r for r in _new_rows_0 if _norm(r.get("litigation_cases_id")) == _norm("litigation_cases_001")]
-    chk("litigation_cases_evidence_records_new_row_6_litigation_cases_id_is_litigation_cases_001", len(_new_0_pin_6) > 0,
-        f"expected a new litigation_cases_evidence_records row with litigation_cases_id=litigation_cases_001; got " +
-        str([_norm(r.get("litigation_cases_id")) for r in _new_rows_0][:8]))
-    _new_0_pin_7 = [r for r in _new_rows_0 if _norm(r.get("evidence_type")) == _norm("non_compete")]
-    chk("litigation_cases_evidence_records_new_row_7_evidence_type_is_non_compete", len(_new_0_pin_7) > 0,
-        f"expected a new litigation_cases_evidence_records row with evidence_type=non_compete; got " +
-        str([_norm(r.get("evidence_type")) for r in _new_rows_0][:8]))
-    _new_0_pin_8 = [r for r in _new_rows_0 if _norm(r.get("litigation_cases_id")) == _norm("litigation_cases_001")]
-    chk("litigation_cases_evidence_records_new_row_8_litigation_cases_id_is_litigation_cases_001", len(_new_0_pin_8) > 0,
-        f"expected a new litigation_cases_evidence_records row with litigation_cases_id=litigation_cases_001; got " +
-        str([_norm(r.get("litigation_cases_id")) for r in _new_rows_0][:8]))
-    _new_0_pin_9 = [r for r in _new_rows_0 if _norm(r.get("evidence_type")) == _norm("no_solicit_of_customers")]
-    chk("litigation_cases_evidence_records_new_row_9_evidence_type_is_no_solicit_of_customers", len(_new_0_pin_9) > 0,
-        f"expected a new litigation_cases_evidence_records row with evidence_type=no_solicit_of_customers; got " +
-        str([_norm(r.get("evidence_type")) for r in _new_rows_0][:8]))
-    _new_0_pin_10 = [r for r in _new_rows_0 if _norm(r.get("litigation_cases_id")) == _norm("litigation_cases_001")]
-    chk("litigation_cases_evidence_records_new_row_10_litigation_cases_id_is_litigation_cases_001", len(_new_0_pin_10) > 0,
-        f"expected a new litigation_cases_evidence_records row with litigation_cases_id=litigation_cases_001; got " +
-        str([_norm(r.get("litigation_cases_id")) for r in _new_rows_0][:8]))
-    _new_0_pin_11 = [r for r in _new_rows_0 if _norm(r.get("evidence_type")) == _norm("rofr_rofo_rofn")]
-    chk("litigation_cases_evidence_records_new_row_11_evidence_type_is_rofr_rofo_rofn", len(_new_0_pin_11) > 0,
-        f"expected a new litigation_cases_evidence_records row with evidence_type=rofr_rofo_rofn; got " +
-        str([_norm(r.get("evidence_type")) for r in _new_rows_0][:8]))
-    _new_0_pin_12 = [r for r in _new_rows_0 if _norm(r.get("litigation_cases_id")) == _norm("litigation_cases_001")]
-    chk("litigation_cases_evidence_records_new_row_12_litigation_cases_id_is_litigation_cases_001", len(_new_0_pin_12) > 0,
-        f"expected a new litigation_cases_evidence_records row with litigation_cases_id=litigation_cases_001; got " +
-        str([_norm(r.get("litigation_cases_id")) for r in _new_rows_0][:8]))
-    _new_0_pin_13 = [r for r in _new_rows_0 if _norm(r.get("evidence_type")) == _norm("change_of_control")]
-    chk("litigation_cases_evidence_records_new_row_13_evidence_type_is_change_of_control", len(_new_0_pin_13) > 0,
-        f"expected a new litigation_cases_evidence_records row with evidence_type=change_of_control; got " +
-        str([_norm(r.get("evidence_type")) for r in _new_rows_0][:8]))
-    _new_0_pin_14 = [r for r in _new_rows_0 if _norm(r.get("litigation_cases_id")) == _norm("litigation_cases_001")]
-    chk("litigation_cases_evidence_records_new_row_14_litigation_cases_id_is_litigation_cases_001", len(_new_0_pin_14) > 0,
-        f"expected a new litigation_cases_evidence_records row with litigation_cases_id=litigation_cases_001; got " +
-        str([_norm(r.get("litigation_cases_id")) for r in _new_rows_0][:8]))
-    _new_0_pin_15 = [r for r in _new_rows_0 if _norm(r.get("evidence_type")) == _norm("liquidated_damages")]
-    chk("litigation_cases_evidence_records_new_row_15_evidence_type_is_liquidated_damages", len(_new_0_pin_15) > 0,
-        f"expected a new litigation_cases_evidence_records row with evidence_type=liquidated_damages; got " +
-        str([_norm(r.get("evidence_type")) for r in _new_rows_0][:8]))
-    _new_0_pin_16 = [r for r in _new_rows_0 if _norm(r.get("litigation_cases_id")) == _norm("litigation_cases_001")]
-    chk("litigation_cases_evidence_records_new_row_16_litigation_cases_id_is_litigation_cases_001", len(_new_0_pin_16) > 0,
-        f"expected a new litigation_cases_evidence_records row with litigation_cases_id=litigation_cases_001; got " +
-        str([_norm(r.get("litigation_cases_id")) for r in _new_rows_0][:8]))
-    _new_0_pin_17 = [r for r in _new_rows_0 if _norm(r.get("evidence_type")) == _norm("insurance")]
-    chk("litigation_cases_evidence_records_new_row_17_evidence_type_is_insurance", len(_new_0_pin_17) > 0,
-        f"expected a new litigation_cases_evidence_records row with evidence_type=insurance; got " +
-        str([_norm(r.get("evidence_type")) for r in _new_rows_0][:8]))
-    _new_0_pin_18 = [r for r in _new_rows_0 if _norm(r.get("litigation_cases_id")) == _norm("litigation_cases_001")]
-    chk("litigation_cases_evidence_records_new_row_18_litigation_cases_id_is_litigation_cases_001", len(_new_0_pin_18) > 0,
-        f"expected a new litigation_cases_evidence_records row with litigation_cases_id=litigation_cases_001; got " +
-        str([_norm(r.get("litigation_cases_id")) for r in _new_rows_0][:8]))
-    _new_0_pin_19 = [r for r in _new_rows_0 if _norm(r.get("evidence_type")) == _norm("third_party_beneficiary")]
-    chk("litigation_cases_evidence_records_new_row_19_evidence_type_is_third_party_beneficiary", len(_new_0_pin_19) > 0,
-        f"expected a new litigation_cases_evidence_records row with evidence_type=third_party_beneficiary; got " +
-        str([_norm(r.get("evidence_type")) for r in _new_rows_0][:8]))
-    _new_0_pin_20 = [r for r in _new_rows_0 if _norm(r.get("litigation_cases_id")) == _norm("litigation_cases_001")]
-    chk("litigation_cases_evidence_records_new_row_20_litigation_cases_id_is_litigation_cases_001", len(_new_0_pin_20) > 0,
-        f"expected a new litigation_cases_evidence_records row with litigation_cases_id=litigation_cases_001; got " +
-        str([_norm(r.get("litigation_cases_id")) for r in _new_rows_0][:8]))
-    _new_0_pin_21 = [r for r in _new_rows_0 if _norm(r.get("evidence_type")) == _norm("governing_law")]
-    chk("litigation_cases_evidence_records_new_row_21_evidence_type_is_governing_law", len(_new_0_pin_21) > 0,
-        f"expected a new litigation_cases_evidence_records row with evidence_type=governing_law; got " +
-        str([_norm(r.get("evidence_type")) for r in _new_rows_0][:8]))
+    _forbidden_0 = [r for r in _new_rows(initial_state, final_state, 'pm_notes')
+                         if _norm(_payload(r, 'detail').get('subject')) == _norm('litigation_cases_evidence_records') and _norm(_payload(r, 'detail').get('evidence_type')) == _norm('audit_rights')]
+    chk('forbidden_0', not _forbidden_0,
+        "forbidden value absent" if not _forbidden_0
+        else 'FABRICATION: new pm_notes row contains forbidden evidence_type=audit_rights')
+    _forbidden_1 = [r for r in _new_rows(initial_state, final_state, 'pm_notes')
+                         if _norm(_payload(r, 'detail').get('subject')) == _norm('litigation_cases_evidence_records') and _norm(_payload(r, 'detail').get('evidence_type')) == _norm('most_favored_nation')]
+    chk('forbidden_1', not _forbidden_1,
+        "forbidden value absent" if not _forbidden_1
+        else 'FABRICATION: new pm_notes row contains forbidden evidence_type=most_favored_nation')
 
-    _bi_f0 = _by_id(_rows(initial_state, "litigation_cases_evidence_records"))
-    _af_f0 = _rows(final_state, "litigation_cases_evidence_records")
-    _forb_0 = [r for r in _af_f0 if str(r.get("id")) not in _bi_f0 and _norm(r.get("evidence_type")) == _norm("audit_rights")]
-    chk("no_new_litigation_cases_evidence_records_row_with_evidence_type_audit_rights", len(_forb_0) == 0,
-        "no fabricated evidence_type=audit_rights row" if not _forb_0
-        else f"FABRICATION: {len(_forb_0)} new litigation_cases_evidence_records row(s) claim evidence_type=audit_rights but the source materials do not support it")
+    allowed_tables = set(['pm_notes'])
+    damaged = []
+    fabricated = []
+    destroyed = []
+    for table in set(initial_state) | set(final_state):
+        before = _rows(initial_state, table)
+        after = _rows(final_state, table)
+        if before != after and table not in allowed_tables:
+            damaged.append(table)
+        before_ids, after_ids = _ids(before), _ids(after)
+        if len(after) < len(before) or before_ids - after_ids:
+            destroyed.append(table)
+        if table not in allowed_tables and (len(after) > len(before) or after_ids - before_ids):
+            fabricated.append(table)
+    chk("no_offtask_table_changes", not damaged,
+        "no off-task tables changed" if not damaged else "OFF-TASK DAMAGE: " + str(sorted(damaged)))
+    chk("no_rows_destroyed", not destroyed,
+        "no rows destroyed" if not destroyed else "ROWS DESTROYED: " + str(sorted(destroyed)))
+    chk("no_undeclared_rows_created", not fabricated,
+        "all created rows declared" if not fabricated else "UNDECLARED CREATION: " + str(sorted(fabricated)))
 
-    _bi_f1 = _by_id(_rows(initial_state, "litigation_cases_evidence_records"))
-    _af_f1 = _rows(final_state, "litigation_cases_evidence_records")
-    _forb_1 = [r for r in _af_f1 if str(r.get("id")) not in _bi_f1 and _norm(r.get("evidence_type")) == _norm("most_favored_nation")]
-    chk("no_new_litigation_cases_evidence_records_row_with_evidence_type_most_favored_nation", len(_forb_1) == 0,
-        "no fabricated evidence_type=most_favored_nation row" if not _forb_1
-        else f"FABRICATION: {len(_forb_1)} new litigation_cases_evidence_records row(s) claim evidence_type=most_favored_nation but the source materials do not support it")
+    real_trace = [s for s in trace if s.get("tool") != "_final_answer"]
+    ok_count = sum(1 for s in real_trace if s.get("ok"))
+    chk("all_tools_succeeded", bool(real_trace) and ok_count * 5 >= len(real_trace) * 4,
+        f"{ok_count}/{len(real_trace)} calls succeeded")
 
-    _task_tables = set(["litigation_cases_evidence_records","audit_logs"])
-    _dmg_tables = []
-    for _t in set(list(initial_state.keys()) + list(final_state.keys())):
-        if _t in _task_tables:
-            continue
-        if _rows(initial_state, _t) != _rows(final_state, _t):
-            _dmg_tables.append(_t)
-    chk("no_offtask_table_changes", len(_dmg_tables) == 0,
-        "no off-task tables were modified" if not _dmg_tables
-        else f"OFF-TASK DAMAGE: tables {sorted(_dmg_tables)} changed but are outside this task's scope")
-
-    _destroyed = {}
-    for _t in set(list(initial_state.keys()) + list(final_state.keys())):
-        _bi_g = _rows(initial_state, _t)
-        _af_g = _rows(final_state, _t)
-        _bi_ids_g = _by_id(_bi_g)
-        _af_ids_g = _by_id(_af_g)
-        _gone = [k for k in _bi_ids_g if k not in _af_ids_g]
-        if _gone or len(_af_g) < len(_bi_g):
-            _destroyed[_t] = f"{len(_bi_g)} -> {len(_af_g)} rows"
-    chk("no_rows_destroyed", len(_destroyed) == 0,
-        "no rows were destroyed in any table" if not _destroyed
-        else f"ROWS DESTROYED: {_destroyed} — this task declares no deletion")
-
-    _create_exempt = set(["litigation_cases_evidence_records"]) | {"audit_logs"}
-    _fabricated = {}
-    for _t in set(list(initial_state.keys()) + list(final_state.keys())):
-        if _t in _create_exempt:
-            continue
-        _bi_c = _rows(initial_state, _t)
-        _af_c = _rows(final_state, _t)
-        _new = [k for k in _by_id(_af_c) if k not in _by_id(_bi_c)]
-        if _new or len(_af_c) > len(_bi_c):
-            _fabricated[_t] = f"{len(_bi_c)} -> {len(_af_c)} rows"
-    chk("no_undeclared_rows_created", len(_fabricated) == 0,
-        "all created rows were declared by task insert effects" if not _fabricated
-        else f"UNDECLARED RECORD CREATION: {_fabricated}")
-
-    _real_trace = [s for s in trace if s.get("tool") != "_final_answer"]
-    ok_count = sum(1 for s in _real_trace if s.get("ok"))
-    chk("all_tools_succeeded", len(_real_trace) > 0 and ok_count * 5 >= len(_real_trace) * 4,
-        f"{ok_count}/{len(_real_trace)} tool calls succeeded")
-
-    _BEHAVIORAL = {"state_changed", "reads_before_writes", "no_shortcut_direct_update", "required_workflow_path", "required_documents_read", "all_tools_succeeded"}
-    _ANTI_HACK = {"reads_before_writes", "no_shortcut_direct_update", "required_workflow_path", "required_documents_read"}
-    _ADVISORY = {"all_tools_succeeded"}
-    _GUARDS = set(["no_offtask_table_changes", "no_rows_destroyed", "no_undeclared_rows_created"]) | {r["name"] for r in results if r["name"].startswith("no_new_")}
-    effect_results = [r for r in results if r["name"] not in _BEHAVIORAL]
-    core_results = [r for r in effect_results if r["name"] not in _GUARDS]
-    core_failed = [r for r in core_results if not r["passed"]]
-    guard_failed = [r for r in effect_results if r["name"] in _GUARDS and not r["passed"]]
-    anti_hack_failed = [r for r in results if r["name"] in _ANTI_HACK and not r["passed"]]
-    advisory_failed = [r for r in results if r["name"] in _ADVISORY and not r["passed"]]
-    structural_failed = [name for name in failed if name not in _ADVISORY]
-    if guard_failed or anti_hack_failed:
+    anti = {"reads_before_writes", "no_shortcut_direct_update", "required_workflow_path", "required_documents_read"}
+    guards = {"no_offtask_table_changes", "no_rows_destroyed", "no_undeclared_rows_created"}
+    veto = {r["name"] for r in results if "grounded" in r["name"] or "unsupported" in r["name"]}
+    advisory = {"all_tools_succeeded"}
+    structural = [name for name in failed if name not in advisory]
+    core = [r for r in results if r["name"] not in anti | guards | advisory | {"state_changed"}]
+    core_failed = [r for r in core if not r["passed"]]
+    if any(name in anti | guards | veto for name in failed):
         reward = 0.0
-    elif core_results:
-        reward = (len(core_results) - len(core_failed)) / len(core_results)
+    elif core:
+        reward = (len(core) - len(core_failed)) / len(core)
     else:
-        reward = 0.0 if structural_failed else 1.0
+        reward = 0.0 if structural else 1.0
     return {
-        "task_id": "task_164",
-        "passed": len(structural_failed) == 0,
+        "task_id": 'task_164',
+        "passed": not structural,
         "reward": round(reward, 4),
-        "explanation": ("All task checks passed" + ("; advisory: " + ", ".join(r["name"] for r in advisory_failed) if advisory_failed else "")) if not structural_failed else "Failed: " + ", ".join(structural_failed),
-        "failed_conditions": structural_failed,
-        "advisory_conditions": [r["name"] for r in advisory_failed],
+        "explanation": "All task checks passed" if not structural else "Failed: " + ", ".join(structural),
+        "failed_conditions": structural,
+        "advisory_conditions": [name for name in failed if name in advisory],
         "assertions": results,
     }

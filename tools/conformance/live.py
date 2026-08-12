@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import copy
+import gzip
 import hashlib
 import json
 from pathlib import Path
@@ -36,6 +37,7 @@ from oracle import OracleSession  # noqa: E402
 
 
 WIRE_REPORT_PATH = ROOT / "data" / "conformance-wire.json"
+INPUT_SCHEMA_BUNDLE = ROOT / "mcp" / "v3" / "contracts" / "_wire-input-schemas.json.gz"
 
 
 def value_for(name: str, kind: str) -> object:
@@ -64,6 +66,8 @@ def value_for(name: str, kind: str) -> object:
 
 
 def sample_arguments(tool: dict[str, Any]) -> dict[str, object]:
+    if isinstance(tool.get("conformance_args"), dict):
+        return copy.deepcopy(tool["conformance_args"])
     op = tool.get("op", {})
     kind = op.get("kind")
     params = tool.get("params", {})
@@ -97,6 +101,10 @@ def sample_arguments(tool: dict[str, Any]) -> dict[str, object]:
         allowed = op.get("allowed") or []
         if allowed:
             add(allowed[0])
+    for required in op.get("required", []):
+        name = external(required)
+        if name not in arguments:
+            arguments[name] = value_for(name, params.get(name, "string"))
     return arguments
 
 
@@ -171,6 +179,32 @@ def rewrite_google_refs(value: Any) -> Any:
     return value
 
 
+def normalize_schema(value: Any) -> Any:
+    """Normalize machine-readable vendor quirks that are invalid JSON Schema.
+
+    Clio currently serializes a few numeric bounds as strings.  Converting only
+    JSON Schema's numeric keywords preserves the represented constraint and
+    prevents validators (and MCP clients) from raising a Python type error.
+    """
+    if isinstance(value, dict):
+        result = {key: normalize_schema(child) for key, child in value.items()}
+        if result.get("type") == "file":
+            result["type"] = "string"
+            result.setdefault("format", "binary")
+        for key in ("minimum", "maximum", "exclusiveMinimum", "exclusiveMaximum", "multipleOf"):
+            raw = result.get(key)
+            if isinstance(raw, str):
+                try:
+                    number = float(raw)
+                    result[key] = int(number) if number.is_integer() else number
+                except ValueError:
+                    pass
+        return result
+    if isinstance(value, list):
+        return [normalize_schema(child) for child in value]
+    return value
+
+
 def google_schema(document: dict[str, Any], method_id: str) -> tuple[dict[str, Any] | None, Any]:
     operation = registry_run.google_methods(document).get(method_id)
     response = operation.get("response") if operation else None
@@ -184,6 +218,94 @@ def google_schema(document: dict[str, Any], method_id: str) -> tuple[dict[str, A
     return root, None
 
 
+def _parameter_schema(parameter: dict[str, Any]) -> dict[str, Any]:
+    schema = parameter.get("schema")
+    if isinstance(schema, dict):
+        return copy.deepcopy(schema)
+    return {
+        key: copy.deepcopy(value)
+        for key, value in parameter.items()
+        if key in {"type", "format", "enum", "items", "minimum", "maximum", "pattern"}
+    } or {"type": "string"}
+
+
+def _merged_request_schema(
+    parameters: list[dict[str, Any]], body: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    properties: dict[str, Any] = {}
+    required: list[str] = []
+    for raw in parameters:
+        parameter = resolve_ref({}, raw) if not raw.get("$ref") else raw
+        name = parameter.get("name")
+        if not isinstance(name, str) or parameter.get("in") == "header":
+            continue
+        if parameter.get("in") == "body":
+            properties["body"] = _parameter_schema(parameter)
+            if parameter.get("required"):
+                required.append("body")
+            continue
+        properties[name] = _parameter_schema(parameter)
+        if parameter.get("required"):
+            required.append(name)
+    if body is not None:
+        properties["body"] = copy.deepcopy(body)
+        required.append("body")
+    return {"type": "object", "properties": properties,
+            "additionalProperties": False,
+            **({"required": sorted(set(required))} if required else {})}
+
+
+def request_schema_for(
+    row: dict[str, Any], products: dict[str, Any], specs: dict[str, Any]
+) -> tuple[dict[str, Any] | None, Any]:
+    product = products[row["product"]]
+    document = specs.get(product.get("source"))
+    if not isinstance(document, dict):
+        return None, None
+    mode = row["mode"]
+    if mode == "openapi":
+        method, path = row["target"]
+        path_item = document.get("paths", {}).get(path, {})
+        operation = path_item.get(method)
+        if not isinstance(operation, dict):
+            return None, None
+        parameters = [
+            resolve_ref(document, item)
+            for item in [*(path_item.get("parameters") or []), *(operation.get("parameters") or [])]
+            if isinstance(item, dict)
+        ]
+        return _merged_request_schema(parameters, registry_run.body_schema(operation)), RefResolver.from_schema(document)
+    if mode in {"swagger", "imanage_connector"}:
+        operation_id = row["target"][0]
+        operation = registry_run.swagger_operations(document).get(operation_id)
+        if not operation:
+            return None, None
+        parameters = [resolve_ref(document, item) for item in operation[2].get("parameters", [])
+                      if isinstance(item, dict)]
+        return _merged_request_schema(parameters), RefResolver.from_schema(document)
+    if mode == "google_discovery":
+        operation = registry_run.google_methods(document).get(row["target"][0])
+        if not operation:
+            return None, None
+        properties = rewrite_google_refs(copy.deepcopy(operation.get("parameters", {})))
+        required = [name for name, value in properties.items()
+                    if isinstance(value, dict) and value.get("required")]
+        for value in properties.values():
+            if isinstance(value, dict):
+                value.pop("required", None)
+                value.pop("location", None)
+        request = operation.get("request")
+        if isinstance(request, dict):
+            properties["body"] = rewrite_google_refs(copy.deepcopy(request))
+            required.append("body")
+        schema = {"$schema": "http://json-schema.org/draft-07/schema#",
+                  "definitions": rewrite_google_refs(copy.deepcopy(document.get("schemas", {}))),
+                  "type": "object", "properties": properties, "additionalProperties": False,
+                  **({"required": sorted(set(required))} if required else {})}
+        return schema, None
+    return None, None
+
+
 def schema_for(
     row: dict[str, Any], products: dict[str, Any], specs: dict[str, Any]
 ) -> tuple[dict[str, Any] | None, Any]:
@@ -194,6 +316,8 @@ def schema_for(
     if row["mode"] == "openapi":
         method, path = row["target"]
         return openapi_schema(document, method, path)
+    if row["mode"] == "swagger":
+        return swagger_schema(document, row["target"][0])
     if row["mode"] == "google_discovery":
         return google_schema(document, row["target"][0])
     if row["mode"] == "imanage_connector":
@@ -204,7 +328,7 @@ def schema_for(
 def schema_verdict(schema: dict[str, Any] | None, resolver: Any, value: Any) -> dict[str, Any]:
     if schema is None:
         return {"applicable": False, "passed": False, "reason": "no public machine-readable response schema"}
-    validator = Draft7Validator(schema, resolver=resolver)
+    validator = Draft7Validator(normalize_schema(schema), resolver=resolver)
     errors = sorted(validator.iter_errors(value), key=lambda error: list(error.absolute_path))
     if not errors:
         return {"applicable": True, "passed": True}
@@ -248,43 +372,80 @@ def build_report(base: str) -> tuple[dict[str, Any], list[str]]:
     failures = [*registry_failures, *spec_failures]
     results: list[dict[str, Any]] = []
 
+    with gzip.open(INPUT_SCHEMA_BUNDLE, "rt", encoding="utf-8") as handle:
+        expected_input_schemas = (json.load(handle).get("tools") or {})
+    list_session = OracleSession(base, profile="contract")
+    try:
+        published_tools = {item["name"]: item for item in list_session.list_tools()}
+    finally:
+        list_session.close()
+
     for name in sorted(rows):
         tool = contracts.get(name)
         if tool is None:
             failures.append(f"{name}: registry row has no contract tool")
             continue
         arguments = sample_arguments(tool)
+        schema, resolver = schema_for(rows[name], registry.get("products", {}), specs)
+        request_schema, request_resolver = request_schema_for(
+            rows[name], registry.get("products", {}), specs
+        )
         ok, text = call_one(base, name, arguments)
-        item: dict[str, Any] = {"arguments": arguments, "name": name, "success_call": ok}
+        item: dict[str, Any] = {
+            "arguments": arguments,
+            "name": name,
+            "success_call": ok,
+            "request": schema_verdict(request_schema, request_resolver, arguments),
+        }
+        expected_input = expected_input_schemas.get(name)
+        published_input = (published_tools.get(name) or {}).get("inputSchema")
+        item["published_input_schema"] = {
+            "applicable": expected_input is not None,
+            "passed": expected_input is not None and published_input == expected_input,
+        }
+        if expected_input is not None and published_input != expected_input:
+            failures.append(f"{name}: published MCP input schema differs from pinned generated schema")
         if not ok:
             failures.append(f"{name}: deterministic success sample failed: {text[:240]}")
             item.update({"response_digest": None, "schema": {"applicable": False, "passed": False}})
             results.append(item)
             continue
-        try:
-            value = json.loads(text)
-        except json.JSONDecodeError as exc:
-            failures.append(f"{name}: success response is not JSON: {exc}")
-            item.update({"response_digest": None, "schema": {"applicable": False, "passed": False}})
-            results.append(item)
-            continue
+        if schema is None or (isinstance(schema, dict) and schema.get("type") == "string"):
+            value = text
+        else:
+            try:
+                value = json.loads(text)
+            except json.JSONDecodeError as exc:
+                failures.append(f"{name}: success response is not JSON: {exc}")
+                item.update({"response_digest": None, "schema": {"applicable": False, "passed": False}})
+                results.append(item)
+                continue
         canonical = json.dumps(value, sort_keys=True, separators=(",", ":")).encode()
-        schema, resolver = schema_for(rows[name], registry.get("products", {}), specs)
         item["response_digest"] = hashlib.sha256(canonical).hexdigest()
         item["schema"] = schema_verdict(schema, resolver, value)
         results.append(item)
 
     applicable = [item for item in results if item["schema"]["applicable"]]
     passed = [item for item in applicable if item["schema"]["passed"]]
+    request_applicable = [item for item in results if (item.get("request") or {}).get("applicable")]
+    request_passed = [item for item in request_applicable if item["request"]["passed"]]
+    published_applicable = [item for item in results if item["published_input_schema"]["applicable"]]
+    published_passed = [item for item in published_applicable if item["published_input_schema"]["passed"]]
     report = {
         "schema_version": 1,
         "session_profile": "contract (fault-injection overlay disabled)",
         "specs_as_of": manifest.get("as_of"),
         "summary": {
-            "contract_tools": len(contracts),
+            # Registry rows are the agent-visible contract. Hidden simulator
+            # helpers can remain in contract files without inflating coverage.
+            "contract_tools": len(rows),
             "harness_failures": len(failures),
             "schema_applicable": len(applicable),
             "schema_passed": len(passed),
+            "request_schema_applicable": len(request_applicable),
+            "request_schema_passed": len(request_passed),
+            "published_input_schema_applicable": len(published_applicable),
+            "published_input_schema_passed": len(published_passed),
             "success_calls": sum(bool(item["success_call"]) for item in results),
             "tools_checked": len(results),
         },
@@ -321,6 +482,8 @@ def main() -> None:
     print(
         f"success calls {summary['success_calls']}/{summary['tools_checked']}; "
         f"response schemas {summary['schema_passed']}/{summary['schema_applicable']}; "
+        f"request schemas {summary['request_schema_passed']}/{summary['request_schema_applicable']}; "
+        f"published input schemas {summary['published_input_schema_passed']}/{summary['published_input_schema_applicable']}; "
         f"harness failures {summary['harness_failures']}"
     )
     if failures:

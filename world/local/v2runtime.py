@@ -6,8 +6,10 @@ aggregate) so a dense real-API-mirrored surface needs zero per-tool code.
 from __future__ import annotations
 
 import json
+import gzip
 import os
 import sqlite3
+import copy
 
 try:
     from v3dialects import translate_args, wrap_output
@@ -15,7 +17,51 @@ except ImportError:  # v3 layer optional
     translate_args = None
     wrap_output = None
 
+try:
+    from product_workflows import execute_special
+except ImportError:  # package import in unit tests
+    from .product_workflows import execute_special
+
+try:
+    from query_dsl import QuerySyntaxError, gmail_where, relativity_where, vendor_error
+except ImportError:  # package import in unit tests
+    from .query_dsl import QuerySyntaxError, gmail_where, relativity_where, vendor_error
+
 EPOCH = "2026-08-10T12:00:00Z"
+
+
+def _wire_type_error(tool: dict, args: dict) -> str | None:
+    """Validate provided top-level wire parameters before any state change."""
+    expected_python = {
+        "string": (str,),
+        "integer": (int,),
+        "number": (int, float),
+        "boolean": (bool,),
+        "object": (dict,),
+        "array": (list,),
+    }
+    for name, definition in (tool.get("params") or {}).items():
+        if name not in args or args[name] is None:
+            continue
+        schema = definition if isinstance(definition, dict) else {"type": definition}
+        declared = schema.get("type", "string")
+        types = declared if isinstance(declared, list) else [declared]
+        value = args[name]
+        valid = False
+        for type_name in types:
+            if type_name == "null" and value is None:
+                valid = True
+            elif type_name in expected_python:
+                valid = isinstance(value, expected_python[type_name])
+                if type_name in {"integer", "number"} and isinstance(value, bool):
+                    valid = False
+            if valid:
+                break
+        if not valid:
+            return f"{name}: expected {' or '.join(types)}, got {type(value).__name__}"
+        if schema.get("enum") is not None and value not in schema["enum"]:
+            return f"{name}: unsupported value {value!r}"
+    return None
 
 
 # ------------------------------------------------------------------ PRNG
@@ -178,6 +224,11 @@ class V2Runtime:
         self.contracts = []
         self.tools = {}
         self.tables = {}
+        self.wire_input_schemas = {}
+        schema_bundle = os.path.join(contracts_dir, "_wire-input-schemas.json.gz")
+        if os.path.isfile(schema_bundle):
+            with gzip.open(schema_bundle, "rt", encoding="utf-8") as handle:
+                self.wire_input_schemas = (json.load(handle).get("tools") or {})
         for f in sorted(os.listdir(contracts_dir)):
             if not f.endswith(".json"):
                 continue
@@ -286,23 +337,98 @@ class V2Runtime:
                 conn.execute('UPDATE pm_trust_transactions SET amount = ? WHERE id = ?',
                              (amt, dep[0]))
 
+        # CourtListener fidelity: DocketAlert.alert_type is the documented
+        # integer subscription enum and one user cannot hold duplicate alerts
+        # for the same docket.  Keep the two workflow target dockets (1 and 7)
+        # free so create calls match the real unique(user, docket) constraint.
+        try:
+            alerts = conn.execute(
+                'SELECT id FROM cl_docket_alerts ORDER BY id'
+            ).fetchall()
+            for index, (alert_id,) in enumerate(alerts):
+                conn.execute(
+                    'UPDATE cl_docket_alerts SET docket_id = ?, alert_type = ? WHERE id = ?',
+                    (8 + index, 1 if index % 3 else 0, alert_id),
+                )
+        except sqlite3.Error:
+            pass
+
+        # Use a reporter citation Eyecite and CourtListener actually parse so
+        # the positive citation-lookup task exercises the real endpoint shape.
+        try:
+            conn.execute(
+                'UPDATE cl_opinions SET citation = ? WHERE id = 1',
+                ("410 U.S. 113",),
+            )
+        except sqlite3.Error:
+            pass
+
     # ------------------------------------------------------------ mcp glue
     def mcp_tools(self) -> list[dict]:
         out = []
         for tool in self.tools.values():
-            props = {p: {"type": {"integer": "integer", "number": "number"}.get(ty, "string")}
-                     for p, ty in (tool.get("params") or {}).items()}
-            required = tool["op"].get("required", []) if tool["op"]["kind"] == "create" else []
+            if tool.get("agent_visible") is False:
+                continue
+            params = dict(tool.get("params") or {})
+            if tool.get("_dialect") == "clio" and tool["op"].get("kind") in ("list", "search", "get"):
+                params.setdefault("fields", "string")
+            if tool["op"].get("kind") in ("list", "search"):
+                dialect = tool.get("_dialect")
+                if dialect == "clio":
+                    params.setdefault("page_token", "string")
+                elif dialect == "courtlistener":
+                    pagination = tool.get("courtlistener_pagination")
+                    if pagination == "page":
+                        params.setdefault("page", "integer")
+                    elif pagination == "cursor" or tool.get("wire_search_type"):
+                        params.setdefault("cursor", "string")
+                elif dialect == "google":
+                    params.setdefault("pageToken", "string")
+                    params.setdefault("pageSize", "integer")
+                elif dialect == "relativity":
+                    params.setdefault("start", "integer")
+                    params.setdefault("length", "integer")
+                    if tool["op"].get("query_dsl") == "relativity":
+                        params.setdefault("condition", "string")
+                elif dialect == "imanage":
+                    params.setdefault("offset", "integer")
+            props = {}
+            for param, definition in params.items():
+                if isinstance(definition, dict):
+                    props[param] = definition
+                else:
+                    props[param] = {
+                        "type": {"integer": "integer", "number": "number",
+                                 "boolean": "boolean", "array": "array",
+                                 "object": "object"}.get(definition, "string")
+                    }
+            required = tool["op"].get("required", [])
+            input_schema = copy.deepcopy(self.wire_input_schemas.get(tool["name"]))
+            if input_schema is None:
+                input_schema = {"type": "object", "properties": props,
+                                **({"required": required} if required else {})}
             out.append({
                 "name": tool["name"],
                 "description": f'[{tool["_product"].split("(")[0].strip()}] {tool["description"]} '
                                f'(mirrors {tool["mirrors"].split(" — ")[0].split(" (")[0]})',
-                "inputSchema": {"type": "object", "properties": props,
-                                **({"required": required} if required else {})},
+                "inputSchema": input_schema,
             })
         return out
 
     # ------------------------------------------------------------- execute
+    def is_write(self, name: str) -> bool:
+        """Return whether a successful call is an agent-authored mutation.
+
+        Contract state machines are not all generic CRUD operations, so the
+        HTTP layer must ask the runtime instead of guessing from two op kinds.
+        """
+        tool = self.tools.get(name) or {}
+        op = tool.get("op") or {}
+        return bool(op.get("writes") or op.get("kind") in {
+            "create", "update", "efiling_create", "docusign_create",
+            "docusign_update", "docusign_recipient_complete", "ledes_submit",
+        })
+
     def call(self, conn: sqlite3.Connection, name: str, args: dict) -> tuple[bool, str]:
         ok, text = self._call_raw(conn, name, args)
         tool = self.tools.get(name)
@@ -318,9 +444,15 @@ class V2Runtime:
         kind = op["kind"]
         table = op["table"]
         args = args if isinstance(args, dict) else {}
+        wire_error = _wire_type_error(tool, args)
+        if wire_error:
+            return False, vendor_error(tool.get("_dialect"), wire_error)
         if tool.get("_dialect") and translate_args is not None:
             args = translate_args(tool, args)
         try:
+            special = execute_special(conn, op, args, name)
+            if special is not None:
+                return special
             if kind == "list":
                 return self._list(conn, op, args)
             if kind == "get":
@@ -336,6 +468,8 @@ class V2Runtime:
             if kind == "job_poll":
                 return self._job_poll(conn, op, args, name)
             return False, f"ERROR: unsupported op kind '{kind}'"
+        except QuerySyntaxError as e:
+            return False, vendor_error(tool.get("_dialect"), str(e))
         except sqlite3.Error as e:
             return False, f"ERROR sqlite: {e}"
 
@@ -355,6 +489,10 @@ class V2Runtime:
 
     def _where(self, op, args):
         clauses, vals = [], []
+        if op.get("query_dsl") == "relativity" and args.get("condition"):
+            clause, query_values = relativity_where(str(args["condition"]))
+            clauses.append(clause)
+            vals.extend(query_values)
         for f in op.get("filters", []):
             if args.get(f) not in (None, ""):
                 clauses.append(f'"{f}" = ?')
@@ -369,13 +507,45 @@ class V2Runtime:
                 vals.append(args[rng["to_param"]])
         return (" WHERE " + " AND ".join(clauses)) if clauses else "", vals
 
+    def _sparse(self, op, args, rows):
+        requested = str(args.get("fields") or "").strip()
+        if not requested:
+            return rows
+        fields = [field.strip() for field in requested.split(",") if field.strip()]
+        allowed = {column["name"] for column in self.tables[op["table"]]["columns"]}
+        unknown = sorted(set(fields) - allowed)
+        if unknown:
+            raise QuerySyntaxError(f"Unknown sparse field(s): {', '.join(unknown)}")
+        keep = set(fields) | {"id"}
+        return [{key: value for key, value in row.items() if key in keep} for row in rows]
+
     def _list(self, conn, op, args):
         where, vals = self._where(op, args)
-        limit = int(args.get("limit") or 25)
-        cur = conn.execute(f'SELECT * FROM "{op["table"]}"{where} ORDER BY rowid LIMIT ?',
-                           (*vals, limit))
-        rows = self._clip(self._rows(cur), op.get("preview"))
-        return True, json.dumps({"count": len(rows), "results": rows}, default=str)
+        limit = max(1, min(100, int(args.get("limit") or 25)))
+        offset = int(args.get("offset") or 0)
+        if offset < 0:
+            return False, "ERROR 400: invalid page cursor"
+        requested_order = str(args.get("order_by") or op.get("default_order") or "").strip()
+        descending = requested_order.startswith("-")
+        requested_field = requested_order[1:] if descending else requested_order
+        order_map = op.get("order_map") or {}
+        order_field = order_map.get(requested_field, requested_field)
+        columns = {column["name"] for column in self.tables[op["table"]]["columns"]}
+        if requested_field and order_field not in columns:
+            raise QuerySyntaxError(f"Unsupported ordering field: {requested_field}")
+        order_clause = (
+            f'"{order_field}" {"DESC" if descending else "ASC"}, rowid ASC'
+            if requested_field else "rowid ASC"
+        )
+        total = int(conn.execute(f'SELECT COUNT(*) FROM "{op["table"]}"{where}', vals).fetchone()[0])
+        cur = conn.execute(f'SELECT * FROM "{op["table"]}"{where} ORDER BY {order_clause} LIMIT ? OFFSET ?',
+                           (*vals, limit, offset))
+        rows = self._sparse(op, args, self._clip(self._rows(cur), op.get("preview")))
+        next_offset = offset + len(rows) if offset + len(rows) < total else None
+        previous_offset = max(0, offset - limit) if offset else None
+        return True, json.dumps({"count": len(rows), "total": total, "results": rows,
+                                 "limit": limit, "offset": offset, "has_more": next_offset is not None,
+                                 "next_offset": next_offset, "previous_offset": previous_offset}, default=str)
 
     def _get(self, conn, op, args, name):
         rid = args.get("id")
@@ -390,24 +560,43 @@ class V2Runtime:
         if red and all(row.get(k) == v for k, v in red["when"].items()):
             for f in red["fields"]:
                 row[f] = red["message"]
+        row = self._sparse(op, args, [row])[0]
         return True, json.dumps(row, default=str)
 
     def _search(self, conn, op, args):
         q = str(args.get("query") or args.get("citation") or "").strip()
-        limit = int(args.get("limit") or 20)
+        limit = max(1, min(100, int(args.get("limit") or 20)))
+        offset = int(args.get("offset") or 0)
+        if offset < 0:
+            return False, "ERROR 400: invalid page cursor"
         if not q:
             return False, "ERROR 400: query required"
-        if op.get("exactish"):
-            f = op["fields"][0]
+        if op.get("query_dsl") == "gmail":
+            where, terms = gmail_where(q)
+            total = int(conn.execute(f'SELECT COUNT(*) FROM "{op["table"]}" WHERE {where}', terms).fetchone()[0])
             cur = conn.execute(
-                f'SELECT * FROM "{op["table"]}" WHERE LOWER("{f}") = LOWER(?) LIMIT ?', (q, limit))
+                f'SELECT * FROM "{op["table"]}" WHERE {where} ORDER BY rowid LIMIT ? OFFSET ?',
+                (*terms, limit, offset))
+        elif op.get("exactish"):
+            f = op["fields"][0]
+            total = int(conn.execute(
+                f'SELECT COUNT(*) FROM "{op["table"]}" WHERE LOWER("{f}") = LOWER(?)', (q,)).fetchone()[0])
+            cur = conn.execute(
+                f'SELECT * FROM "{op["table"]}" WHERE LOWER("{f}") = LOWER(?) LIMIT ? OFFSET ?', (q, limit, offset))
         else:
             where = " OR ".join(f'"{f}" LIKE ?' for f in op["fields"])
+            terms = [f"%{q}%"] * len(op["fields"])
+            total = int(conn.execute(
+                f'SELECT COUNT(*) FROM "{op["table"]}" WHERE {where}', terms).fetchone()[0])
             cur = conn.execute(
-                f'SELECT * FROM "{op["table"]}" WHERE {where} ORDER BY rowid LIMIT ?',
-                (*[f"%{q}%"] * len(op["fields"]), limit))
-        rows = self._clip(self._rows(cur), op.get("preview"))
-        return True, json.dumps({"query": q, "count": len(rows), "results": rows}, default=str)
+                f'SELECT * FROM "{op["table"]}" WHERE {where} ORDER BY rowid LIMIT ? OFFSET ?',
+                (*terms, limit, offset))
+        rows = self._sparse(op, args, self._clip(self._rows(cur), op.get("preview")))
+        next_offset = offset + len(rows) if offset + len(rows) < total else None
+        previous_offset = max(0, offset - limit) if offset else None
+        return True, json.dumps({"query": q, "count": len(rows), "total": total, "results": rows,
+                                 "limit": limit, "offset": offset, "has_more": next_offset is not None,
+                                 "next_offset": next_offset, "previous_offset": previous_offset}, default=str)
 
     def _job_poll(self, conn, op, args, name):
         """Async job semantics without a wall clock: state advances one step
@@ -494,8 +683,10 @@ class V2Runtime:
             return False, f"ERROR 400: no updatable fields supplied to {name}"
         conn.execute(f'UPDATE "{op["table"]}" SET {", ".join(sets)} WHERE id = ?', (*vals, rid))
         conn.commit()
-        return True, json.dumps({"id": rid, "updated": op["table"],
-                                 "fields": [s.split(" ")[0].strip('"') for s in sets]})
+        updated = conn.execute(
+            f'SELECT * FROM "{op["table"]}" WHERE id = ?', (rid,)
+        )
+        return True, json.dumps(self._rows(updated)[0], default=str)
 
     def _aggregate(self, conn, op, args):
         where, vals = self._where(op, args)

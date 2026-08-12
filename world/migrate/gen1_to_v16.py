@@ -22,6 +22,7 @@ import json
 import os
 import re
 import sqlite3
+import subprocess
 import sys
 import tempfile
 from collections import Counter, defaultdict
@@ -99,6 +100,44 @@ def canonical(value: Any) -> str:
 
 def pretty(value: Any) -> str:
     return json.dumps(value, ensure_ascii=False, sort_keys=True, indent=2) + "\n"
+
+
+def refresh_native_product_tasks(target: dict[str, Any]) -> dict[str, Any]:
+    """Regenerate the 15 native product tasks from their declarative source.
+
+    The migration compiler owns Gen-1 rewrites, while
+    ``build-v3-tasks.mjs`` owns the product-native task manifest.  Running the
+    latter over the in-memory migration result keeps v16 reproducible without
+    copying old VCode strings or mutating the historical v15 input.
+    """
+    generator = ROOT / "world" / "expansion" / "build-v3-tasks.mjs"
+    with tempfile.TemporaryDirectory(prefix="legal-sim-v16-native-") as tmp:
+        source = Path(tmp) / "world.json"
+        output = Path(tmp) / "world-refreshed.json"
+        source.write_text(pretty(target), encoding="utf-8")
+        completed = subprocess.run(
+            [
+                "node",
+                str(generator),
+                "--in",
+                str(source),
+                "--out",
+                str(output),
+                "--refresh-only",
+            ],
+            cwd=ROOT,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        if not output.exists():
+            raise RuntimeError(
+                "native product task generator produced no output: "
+                + completed.stdout[-500:]
+            )
+        refreshed = json.loads(output.read_text(encoding="utf-8"))
+    refreshed["version"] = 16
+    return refreshed
 
 
 def sha256_bytes(data: bytes) -> str:
@@ -1075,13 +1114,15 @@ def build() -> dict[Path, str]:
             "dm_documents IDs; core_data contains the exact product rows to upsert."
         ),
     }
+    visible_tool_count = len(runtime.mcp_tools())
     target["surface_migration"] = {
         "schema": "lawfirm.surface-migration.v1",
         "source_world": "world-v15.json",
         "source_sha256": source_sha256,
         "compiler": "world/migrate/gen1_to_v16.py",
         "legacy_tools_removed": len(world_tool_by_name),
-        "product_tools_runtime": len(runtime.tools),
+        "product_tools_runtime": visible_tool_count,
+        "product_operations_internal": len(runtime.tools) - visible_tool_count,
         "legacy_rows_migrated": len(converted),
         "virtual_parent_rows": sum(entry["status"] != "migrated" for entry in entries),
         "tasks_migrated": len(grammars),
@@ -1095,7 +1136,7 @@ def build() -> dict[Path, str]:
     }
     target["thesis"]["thesis"] = (
         "Legal Agent Simulation — product-only v16: 291 deterministic legal-agent tasks "
-        f"over {len(product_tables)} product-contract tables and {len(runtime.tools)} "
+        f"over {len(product_tables)} product-contract tables and {visible_tool_count} "
         "runtime tools; zero synthesized Gen-1 tools."
     )
     target["thesis"]["systems"] = [
@@ -1105,12 +1146,16 @@ def build() -> dict[Path, str]:
         "MatterVault DMS (iManage Work)",
         "Fieldstone Workspace (Google Workspace)",
         "LedgerBill (LEDES 1998B)",
+        "CourtFile ECF (CM/ECF workflow semantics)",
+        "DeadlineRules (published FRCP fixtures)",
+        "SealPoint eSign (Docusign eSignature REST v2.1)",
     ]
     target["_note"] = (
         "world-v16 is generated from world-v15 by world/migrate/gen1_to_v16.py. "
         "Product tools are loaded from mcp/v3/contracts at runtime; the world embeds no "
         "synthesized tool specifications."
     )
+    target = refresh_native_product_tasks(target)
 
     by_table: dict[str, dict[str, Any]] = {}
     for table in legacy_tables:

@@ -1,100 +1,109 @@
 {
- "task_id": "task_184",
- "outcome_class": "eligible_action",
- "prompt": "You represent Trellis BioWorks (sell-side) on Project Lattice. Halberd's markup of the indemnification article adds a special indemnity for disclosed matters, and the Trellis deal team has approved responding with a counter-rider on strictly limited terms. First query the matter file to locate, and then read in full, each of: (1) the share purchase agreement Article VIII indemnification provisions, execution draft v4; (2) the second-turn markup of Article VIII from Halberd's outside counsel (which contains the special-indemnity ask and the counterparty's transmittal logistics); (3) the Trellis deal team's privileged approved indemnity positions memo (which states the only terms on which a special indemnity may be offered); and (4) the Trellis disclosure schedule covering litigation and intellectual property matters (which identifies each disclosed item by number and status). Then draft the Trellis counter-rider as new contract text for Section 8.2(d): it must scope the special indemnity to exactly the disclosed items the approved positions permit (identifying them by schedule item number and matter name), carry the approved aggregate dollar cap and survival period, expressly exclude the resolved disclosed matter, and state how the rider interacts with the basket, cap, and escrow provisions of the v4 draft. Create the deliverable with draft_matter_document using title exactly trellis-spa-special-indemnity-rider.docx and doc_type exactly deliverable. File work product under Trellis naming conventions only — counterparty transmittal logistics do not govern the Trellis workspace.",
- "goal": "Draft the scope-limited, capped special indemnity counter-rider exactly on the approved-positions terms, filed under the Trellis filename.",
- "required_tools": [
-  "query_matter_documents",
-  "read_matter_document",
-  "draft_matter_document"
- ],
+ "acceptance_label": "pending_calibration",
  "complexity": "high",
+ "difficulty_tier": "high",
+ "effects": [
+  {
+   "op": "insert",
+   "table": "dm_documents"
+  }
+ ],
+ "expansion": {
+  "pack": "deep-drafting.json",
+  "slug": "spa-special-indemnity-rider"
+ },
+ "expected_state_changes": [
+  {
+   "field": "(new row)",
+   "id": "(new product row)",
+   "note": ">=1 rows with pinned fields",
+   "table": "dm_documents"
+  }
+ ],
+ "goal": "Draft the scope-limited, capped special indemnity counter-rider exactly on the approved-positions terms, filed under the Trellis filename.",
  "method": "eval_anchored_expansion",
+ "outcome_class": "eligible_action",
+ "prompt": "You represent Trellis BioWorks (sell-side) on Project Lattice. Halberd's markup of the indemnification article adds a special indemnity for disclosed matters, and the Trellis deal team has approved responding with a counter-rider on strictly limited terms. First query the matter file to locate, and then read in full, each of: (1) the share purchase agreement Article VIII indemnification provisions, execution draft v4; (2) the second-turn markup of Article VIII from Halberd's outside counsel (which contains the special-indemnity ask and the counterparty's transmittal logistics); (3) the Trellis deal team's privileged approved indemnity positions memo (which states the only terms on which a special indemnity may be offered); and (4) the Trellis disclosure schedule covering litigation and intellectual property matters (which identifies each disclosed item by number and status). Then draft the Trellis counter-rider as new contract text for Section 8.2(d): it must scope the special indemnity to exactly the disclosed items the approved positions permit (identifying them by schedule item number and matter name), carry the approved aggregate dollar cap and survival period, expressly exclude the resolved disclosed matter, and state how the rider interacts with the basket, cap, and escrow provisions of the v4 draft. Create the deliverable with documents_create using title exactly trellis-spa-special-indemnity-rider.docx and doc_type exactly deliverable. File work product under Trellis naming conventions only — counterparty transmittal logistics do not govern the Trellis workspace.\n\nSYSTEM MIGRATION — WORLD V16\n- Matter documents now live in MatterVault DMS: search with documents_search_fulltext(query), read full text with documents_download(id), and file deliverables with documents_create using workspace_id=1, folder_id=1, name for the requested filename, doc_class for the requested document type, author=\"agent@simulated-firm.example\", and the complete deliverable in body.",
+ "provenance": {
+  "source_workflow": "harvey_lab: deep-drafting/spa-special-indemnity-rider",
+  "surface_migration": {
+   "compiler": "world/migrate/gen1_to_v16.py",
+   "from": "Gen-1 synthesized tools",
+   "to": "v3 product contracts"
+  }
+ },
+ "reference_args": [
+  {
+   "query": "deep-drafting pack — SPA (Halberd Holdings / Trellis BioWork"
+  },
+  {
+   "id": 100163
+  },
+  {
+   "id": 100164
+  },
+  {
+   "id": 100165
+  },
+  {
+   "id": 100166
+  },
+  {
+   "author": "agent@simulated-firm.example",
+   "body": "TRELLIS COUNTER-RIDER — PROPOSED SECTION 8.2(d) (SPECIAL INDEMNITY FOR SPECIFIED SCHEDULE 3.14 MATTERS)\n\n8.2(d) Special Indemnity. Subject to this Section 8.2(d), the Sellers shall indemnify Buyer against Losses actually incurred arising out of the following matters, and no others: (i) Schedule 3.14, Item 1 — TTAB Opposition No. 91-284772, Lumenor Devices B.V. v. Trellis BioWorks, Inc., opposing registration of the TRELLIGEN mark (U.S. App. Serial No. 98/415,882); and (ii) Schedule 3.14, Item 2 — the written demand of Bexley Clinical Partners LLC dated 3 April 2026 claiming $1,850,000 under the 2024 Supply Agreement (together, the \"Specified Matters\").\n\n(1) Exclusion of resolved matters. For the avoidance of doubt, Schedule 3.14, Item 3 (OSHA Citation No. 1829445, resolved by informal settlement with the $46,500 penalty paid on 17 March 2026) is a resolved matter and is expressly excluded from this Section 8.2(d), and no claim may be made in respect of it.\n(2) Cap. The aggregate liability of the Sellers under this Section 8.2(d) shall not exceed $2,500,000. Amounts recovered under this Section 8.2(d) shall not count toward the Deductible or reduce the cap in Section 8.3(b), and are not subject to either.\n(3) Survival. Claims under this Section 8.2(d) must be noticed within twenty-four (24) months after the Closing, after which this Section 8.2(d) expires.\n(4) Order of recovery. Claims under this Section 8.2(d) are recoverable first from the Escrow Amount in accordance with Section 8.5, and thereafter severally from the Sellers in proportion to their Pro Rata Shares.\n(5) No duplication. No Loss may be recovered more than once under Sections 8.2(a) and 8.2(d).\n\nDrafting note for the negotiation file: this rider implements the approved positions — scope limited to the pending Specified Matters, $2,500,000 aggregate cap, 24-month survival, resolved matters excluded — in place of Halberd's proposed uncapped, statute-of-limitations special indemnity.",
+   "doc_class": "deliverable",
+   "folder_id": 1,
+   "name": "trellis-spa-special-indemnity-rider.docx",
+   "workspace_id": 1
+  }
+ ],
+ "relevant_data": [
+  {
+   "field": "name",
+   "id": 100163,
+   "table": "dm_documents",
+   "value": "deep-drafting pack — SPA (Halberd Holdings / Trellis BioWorks) Article VIII indemnification, execution draft v4"
+  },
+  {
+   "field": "name",
+   "id": 100164,
+   "table": "dm_documents",
+   "value": "deep-drafting pack — Wexler Bright second-turn markup of Trellis SPA Article VIII"
+  },
+  {
+   "field": "name",
+   "id": 100165,
+   "table": "dm_documents",
+   "value": "deep-drafting pack — Trellis deal team approved indemnity positions memo (privileged)"
+  },
+  {
+   "field": "name",
+   "id": 100166,
+   "table": "dm_documents",
+   "value": "deep-drafting pack — Trellis BioWorks Disclosure Schedule 3.14 (litigation and intellectual property)"
+  }
+ ],
+ "required_tools": [
+  "documents_search_fulltext",
+  "documents_download",
+  "documents_create"
+ ],
  "steps": [
   "Locate the input documents for this engagement in the matter folder",
   "Read every required input document in full",
   "Derive the graded determinations strictly from the documents",
   "Record the determinations with the required write tools"
  ],
- "relevant_data": [
-  {
-   "table": "matter_documents",
-   "id": 158,
-   "field": "title",
-   "value": "deep-drafting pack — SPA (Halberd Holdings / Trellis BioWorks) Article VIII indemnification, execution draft v4"
-  },
-  {
-   "table": "matter_documents",
-   "id": 159,
-   "field": "title",
-   "value": "deep-drafting pack — Wexler Bright second-turn markup of Trellis SPA Article VIII"
-  },
-  {
-   "table": "matter_documents",
-   "id": 160,
-   "field": "title",
-   "value": "deep-drafting pack — Trellis deal team approved indemnity positions memo (privileged)"
-  },
-  {
-   "table": "matter_documents",
-   "id": 161,
-   "field": "title",
-   "value": "deep-drafting pack — Trellis BioWorks Disclosure Schedule 3.14 (litigation and intellectual property)"
-  }
- ],
- "expected_state_changes": [
-  {
-   "table": "matter_documents",
-   "field": "(new row)",
-   "note": ">=1 rows with pinned fields"
-  }
- ],
  "tables_affected": [
-  "matter_documents"
+  "dm_documents"
  ],
+ "task_id": "task_184",
  "walk": [
-  "query_matter_documents",
-  "read_matter_document",
-  "read_matter_document",
-  "read_matter_document",
-  "read_matter_document",
-  "draft_matter_document"
- ],
- "reference_args": [
-  {
-   "title": "deep-drafting pack — SPA (Halberd Holdings / Trellis BioWork"
-  },
-  {
-   "id": 158
-  },
-  {
-   "id": 159
-  },
-  {
-   "id": 160
-  },
-  {
-   "id": 161
-  },
-  {
-   "title": "trellis-spa-special-indemnity-rider.docx",
-   "doc_type": "deliverable",
-   "body": "TRELLIS COUNTER-RIDER — PROPOSED SECTION 8.2(d) (SPECIAL INDEMNITY FOR SPECIFIED SCHEDULE 3.14 MATTERS)\n\n8.2(d) Special Indemnity. Subject to this Section 8.2(d), the Sellers shall indemnify Buyer against Losses actually incurred arising out of the following matters, and no others: (i) Schedule 3.14, Item 1 — TTAB Opposition No. 91-284772, Lumenor Devices B.V. v. Trellis BioWorks, Inc., opposing registration of the TRELLIGEN mark (U.S. App. Serial No. 98/415,882); and (ii) Schedule 3.14, Item 2 — the written demand of Bexley Clinical Partners LLC dated 3 April 2026 claiming $1,850,000 under the 2024 Supply Agreement (together, the \"Specified Matters\").\n\n(1) Exclusion of resolved matters. For the avoidance of doubt, Schedule 3.14, Item 3 (OSHA Citation No. 1829445, resolved by informal settlement with the $46,500 penalty paid on 17 March 2026) is a resolved matter and is expressly excluded from this Section 8.2(d), and no claim may be made in respect of it.\n(2) Cap. The aggregate liability of the Sellers under this Section 8.2(d) shall not exceed $2,500,000. Amounts recovered under this Section 8.2(d) shall not count toward the Deductible or reduce the cap in Section 8.3(b), and are not subject to either.\n(3) Survival. Claims under this Section 8.2(d) must be noticed within twenty-four (24) months after the Closing, after which this Section 8.2(d) expires.\n(4) Order of recovery. Claims under this Section 8.2(d) are recoverable first from the Escrow Amount in accordance with Section 8.5, and thereafter severally from the Sellers in proportion to their Pro Rata Shares.\n(5) No duplication. No Loss may be recovered more than once under Sections 8.2(a) and 8.2(d).\n\nDrafting note for the negotiation file: this rider implements the approved positions — scope limited to the pending Specified Matters, $2,500,000 aggregate cap, 24-month survival, resolved matters excluded — in place of Halberd's proposed uncapped, statute-of-limitations special indemnity."
-  }
- ],
- "effects": [
-  {
-   "table": "matter_documents",
-   "op": "insert"
-  }
- ],
- "provenance": {
-  "source_workflow": "harvey_lab: deep-drafting/spa-special-indemnity-rider"
- },
- "difficulty_tier": "high",
- "acceptance_label": "pending_calibration",
- "expansion": {
-  "pack": "deep-drafting.json",
-  "slug": "spa-special-indemnity-rider"
- }
+  "documents_search_fulltext",
+  "documents_download",
+  "documents_download",
+  "documents_download",
+  "documents_download",
+  "documents_create"
+ ]
 }

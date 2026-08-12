@@ -1,55 +1,61 @@
 {
- "task_id": "task_v3_006",
- "outcome_class": "eligible_action",
- "prompt": "E-billing validation gate for invoice 2: (1) get the invoice header; (2) list its line items; (3) run the line-total reconciliation. The invoice may be submitted ONLY if the line-item sum equals the header total. If they do not match, do NOT submit: instead record the failure by updating the invoice with status exactly \"rejected\" and validation_errors exactly \"TOTAL_MISMATCH\". ",
- "goal": "E-billing validation gate for invoice 2: (1) get the invoice header; (2) list its line items; (3) run the line",
- "required_tools": [
-  "invoices_get",
-  "invoice_lines_list",
-  "invoice_total_check",
-  "invoices_submit"
- ],
+ "acceptance_label": "pending_calibration",
  "complexity": "medium",
- "method": "v3_workflow",
- "walk": [
-  "invoices_get",
-  "invoice_lines_list",
-  "invoice_total_check",
-  "invoices_submit"
+ "difficulty_tier": "medium",
+ "effects": [
+  {
+   "op": "insert",
+   "table": "pm_notes"
+  }
  ],
+ "goal": "Pre-submission billing validation for Clio bill 2: get the bill header, list every line item, and independentl",
+ "method": "v3_workflow",
+ "outcome_class": "eligible_action",
+ "prompt": "Pre-submission billing validation for Clio bill 2: get the bill header, list every line item, and independently sum the line amounts. The bill total is $56,903.18. If the line sum differs, do not generate a LEDES file. Record a matter note on matter 5 authored by user 1, subject exactly \"LEDES TOTAL MISMATCH\", with detail stating both the computed line sum and header total.",
+ "provenance": {
+  "source_workflow": "workflow_research: ledes-reconciliation-gate"
+ },
  "reference_args": [
   {
    "id": 2
   },
   {
-   "invoice_id": 2
+   "bill_id": 2,
+   "limit": 100
   },
   {
-   "invoice_id": 2
-  },
-  {
-   "id": 2,
-   "status": "rejected",
-   "validation_errors": "TOTAL_MISMATCH"
+   "body": {
+    "data": {
+     "contact": {
+      "id": 1
+     },
+     "date": "2026-08-10",
+     "detail": "Bill 2 line items total $26,060.90, which does not match the $56,903.18 header total; LEDES generation blocked.",
+     "matter": {
+      "id": 5
+     },
+     "subject": "LEDES TOTAL MISMATCH",
+     "type": "Matter"
+    }
+   }
   }
+ ],
+ "required_tools": [
+  "bills_get",
+  "bill_line_items_list",
+  "notes_create"
  ],
  "tables_affected": [
-  "eb_invoices"
+  "pm_notes"
  ],
- "effects": [
-  {
-   "table": "eb_invoices",
-   "op": "update",
-   "id": 2
-  }
- ],
- "provenance": {
-  "source_workflow": "workflow_research: ledes-reconciliation-gate"
- },
- "difficulty_tier": "medium",
- "acceptance_label": "pending_calibration",
+ "task_id": "task_v3_006",
  "v3": {
-  "family": "ledes-reconciliation-gate",
-  "dialect_surface": true
- }
+  "dialect_surface": true,
+  "family": "ledes-reconciliation-gate"
+ },
+ "walk": [
+  "bills_get",
+  "bill_line_items_list",
+  "notes_create"
+ ]
 }

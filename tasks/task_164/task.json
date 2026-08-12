@@ -1,174 +1,147 @@
 {
- "task_id": "task_164",
- "outcome_class": "eligible_action",
- "prompt": "Run a full CUAD-style clause review of the EXECUTED supply agreement between the components supplier and the vehicle manufacturer, for litigation case litigation_cases_001. Warning: a non-binding term sheet for the same program proposes clauses that were later rejected — base every filing on the execution copy only. Candidate clause categories (CUAD slugs): minimum_commitment, volume_restriction, price_restrictions, non_compete, no_solicit_of_customers, rofr_rofo_rofn, change_of_control, liquidated_damages, insurance, third_party_beneficiary, governing_law, audit_rights, most_favored_nation, uncapped_liability. For each category present in the execution copy, file one record with litigation_cases_evidence_create for litigation_cases_001. Rules: query the document store first to identify the correct document(s), read each listed document in full before filing anything, and file exactly one evidence record per clause category that is actually present in the executed text — set evidence_type to the exact category slug, verbatim from the candidate list. Do NOT file a record for any category that is absent from the executed agreement, even if a draft, term sheet, or email mentions it. Use a short quote or section reference of the supporting clause as content_summary, and any reasonable source_uri.",
- "goal": "Eleven categories present; audit_rights and most_favored_nation were proposed in the term sheet but expressly rejected in the executed agreement.",
- "required_tools": [
-  "query_matter_documents",
-  "read_matter_document",
-  "litigation_cases_evidence_create"
- ],
+ "acceptance_label": "pending_calibration",
  "complexity": "high",
+ "difficulty_tier": "high",
+ "effects": [
+  {
+   "op": "insert",
+   "table": "pm_notes"
+  }
+ ],
+ "expansion": {
+  "pack": "cuad-clause-extraction.json",
+  "slug": "cuad-supply-full-clause-review"
+ },
+ "expected_state_changes": [
+  {
+   "field": "(new row)",
+   "id": "(new product row)",
+   "note": ">=11 rows with pinned fields",
+   "table": "pm_notes"
+  }
+ ],
+ "goal": "Eleven categories present; audit_rights and most_favored_nation were proposed in the term sheet but expressly rejected in the executed agreement.",
  "method": "eval_anchored_expansion",
+ "outcome_class": "eligible_action",
+ "prompt": "Run a full CUAD-style clause review of the EXECUTED supply agreement between the components supplier and the vehicle manufacturer, for litigation case litigation_cases_001. Warning: a non-binding term sheet for the same program proposes clauses that were later rejected — base every filing on the execution copy only. Candidate clause categories (CUAD slugs): minimum_commitment, volume_restriction, price_restrictions, non_compete, no_solicit_of_customers, rofr_rofo_rofn, change_of_control, liquidated_damages, insurance, third_party_beneficiary, governing_law, audit_rights, most_favored_nation, uncapped_liability. For each category present in the execution copy, file one record with notes_create for litigation_cases_001. Rules: query the document store first to identify the correct document(s), read each listed document in full before filing anything, and file exactly one evidence record per clause category that is actually present in the executed text — set evidence_type to the exact category slug, verbatim from the candidate list. Do NOT file a record for any category that is absent from the executed agreement, even if a draft, term sheet, or email mentions it. Use a short quote or section reference of the supporting clause as content_summary, and any reasonable source_uri.\n\nSYSTEM MIGRATION — WORLD V16\n- Matter documents now live in MatterVault DMS: search with documents_search_fulltext(query), read full text with documents_download(id), and file deliverables with documents_create using workspace_id=1, folder_id=1, name for the requested filename, doc_class for the requested document type, author=\"agent@simulated-firm.example\", and the complete deliverable in body.\n- A legacy litigation_cases_evidence_records record is now filed through notes_create: use matter_id=100000, author_user_id=1, subject exactly 'litigation_cases_evidence_records', and detail as a JSON object containing every legacy field named in the instruction.",
+ "provenance": {
+  "source_workflow": "cuad: cuad-clause-extraction/cuad-supply-full-clause-review",
+  "surface_migration": {
+   "compiler": "world/migrate/gen1_to_v16.py",
+   "from": "Gen-1 synthesized tools",
+   "to": "v3 product contracts"
+  }
+ },
+ "reference_args": [
+  {
+   "query": "CUAD pack — Supply Agreement (Bluewater Components / Argent "
+  },
+  {
+   "id": 100138
+  },
+  {
+   "author_user_id": 1,
+   "detail": "{\"content_digest\":\"sha256:reference-digest\",\"content_summary\":\"Section 2: 40,000-unit annual minimum with shortfall true-up.\",\"evidence_type\":\"minimum_commitment\",\"litigation_cases_id\":\"litigation_cases_001\",\"owner_role\":\"associate\",\"source_uri\":\"matter://litigation_cases_001/supply-bluewater-argent-execution\",\"status\":\"open\"}",
+   "matter_id": 100000,
+   "subject": "litigation_cases_evidence_records"
+  },
+  {
+   "author_user_id": 1,
+   "detail": "{\"content_digest\":\"sha256:reference-digest\",\"content_summary\":\"Section 3: consent plus 6% surcharge for orders above 120% of binding forecast.\",\"evidence_type\":\"volume_restriction\",\"litigation_cases_id\":\"litigation_cases_001\",\"owner_role\":\"associate\",\"source_uri\":\"matter://litigation_cases_001/supply-bluewater-argent-execution\",\"status\":\"open\"}",
+   "matter_id": 100000,
+   "subject": "litigation_cases_evidence_records"
+  },
+  {
+   "author_user_id": 1,
+   "detail": "{\"content_digest\":\"sha256:reference-digest\",\"content_summary\":\"Section 4: firm pricing 24 months, then index-capped annual adjustments only.\",\"evidence_type\":\"price_restrictions\",\"litigation_cases_id\":\"litigation_cases_001\",\"owner_role\":\"associate\",\"source_uri\":\"matter://litigation_cases_001/supply-bluewater-argent-execution\",\"status\":\"open\"}",
+   "matter_id": 100000,
+   "subject": "litigation_cases_evidence_records"
+  },
+  {
+   "author_user_id": 1,
+   "detail": "{\"content_digest\":\"sha256:reference-digest\",\"content_summary\":\"Section 5: Supplier barred for term plus 2 years from supplying equivalent actuators to other North American passenger-vehicle OEMs.\",\"evidence_type\":\"non_compete\",\"litigation_cases_id\":\"litigation_cases_001\",\"owner_role\":\"associate\",\"source_uri\":\"matter://litigation_cases_001/supply-bluewater-argent-execution\",\"status\":\"open\"}",
+   "matter_id": 100000,
+   "subject": "litigation_cases_evidence_records"
+  },
+  {
+   "author_user_id": 1,
+   "detail": "{\"content_digest\":\"sha256:reference-digest\",\"content_summary\":\"Section 6: Supplier may not solicit Buyer's franchised dealer network during term plus 1 year.\",\"evidence_type\":\"no_solicit_of_customers\",\"litigation_cases_id\":\"litigation_cases_001\",\"owner_role\":\"associate\",\"source_uri\":\"matter://litigation_cases_001/supply-bluewater-argent-execution\",\"status\":\"open\"}",
+   "matter_id": 100000,
+   "subject": "litigation_cases_evidence_records"
+  },
+  {
+   "author_user_id": 1,
+   "detail": "{\"content_digest\":\"sha256:reference-digest\",\"content_summary\":\"Section 7: Buyer ROFR over transfer of the BA-7 line and tooling, 45-day acceptance window.\",\"evidence_type\":\"rofr_rofo_rofn\",\"litigation_cases_id\":\"litigation_cases_001\",\"owner_role\":\"associate\",\"source_uri\":\"matter://litigation_cases_001/supply-bluewater-argent-execution\",\"status\":\"open\"}",
+   "matter_id": 100000,
+   "subject": "litigation_cases_evidence_records"
+  },
+  {
+   "author_user_id": 1,
+   "detail": "{\"content_digest\":\"sha256:reference-digest\",\"content_summary\":\"Section 8: Buyer may terminate on Supplier change of control, on notice within 90 days.\",\"evidence_type\":\"change_of_control\",\"litigation_cases_id\":\"litigation_cases_001\",\"owner_role\":\"associate\",\"source_uri\":\"matter://litigation_cases_001/supply-bluewater-argent-execution\",\"status\":\"open\"}",
+   "matter_id": 100000,
+   "subject": "litigation_cases_evidence_records"
+  },
+  {
+   "author_user_id": 1,
+   "detail": "{\"content_digest\":\"sha256:reference-digest\",\"content_summary\":\"Section 9: $75 per unit per week late-delivery liquidated damages, capped at 10% of order value.\",\"evidence_type\":\"liquidated_damages\",\"litigation_cases_id\":\"litigation_cases_001\",\"owner_role\":\"associate\",\"source_uri\":\"matter://litigation_cases_001/supply-bluewater-argent-execution\",\"status\":\"open\"}",
+   "matter_id": 100000,
+   "subject": "litigation_cases_evidence_records"
+  },
+  {
+   "author_user_id": 1,
+   "detail": "{\"content_digest\":\"sha256:reference-digest\",\"content_summary\":\"Section 10: $5M per-occurrence product liability insurance naming Buyer as additional insured.\",\"evidence_type\":\"insurance\",\"litigation_cases_id\":\"litigation_cases_001\",\"owner_role\":\"associate\",\"source_uri\":\"matter://litigation_cases_001/supply-bluewater-argent-execution\",\"status\":\"open\"}",
+   "matter_id": 100000,
+   "subject": "litigation_cases_evidence_records"
+  },
+  {
+   "author_user_id": 1,
+   "detail": "{\"content_digest\":\"sha256:reference-digest\",\"content_summary\":\"Section 11: Buyer affiliates purchasing Products are express third-party beneficiaries of Sections 9-10.\",\"evidence_type\":\"third_party_beneficiary\",\"litigation_cases_id\":\"litigation_cases_001\",\"owner_role\":\"associate\",\"source_uri\":\"matter://litigation_cases_001/supply-bluewater-argent-execution\",\"status\":\"open\"}",
+   "matter_id": 100000,
+   "subject": "litigation_cases_evidence_records"
+  },
+  {
+   "author_user_id": 1,
+   "detail": "{\"content_digest\":\"sha256:reference-digest\",\"content_summary\":\"Section 13: Texas law governs.\",\"evidence_type\":\"governing_law\",\"litigation_cases_id\":\"litigation_cases_001\",\"owner_role\":\"associate\",\"source_uri\":\"matter://litigation_cases_001/supply-bluewater-argent-execution\",\"status\":\"open\"}",
+   "matter_id": 100000,
+   "subject": "litigation_cases_evidence_records"
+  }
+ ],
+ "relevant_data": [
+  {
+   "field": "name",
+   "id": 100138,
+   "table": "dm_documents",
+   "value": "CUAD pack — Supply Agreement (Bluewater Components / Argent Motors) execution copy"
+  }
+ ],
+ "required_tools": [
+  "documents_search_fulltext",
+  "documents_download",
+  "notes_create"
+ ],
  "steps": [
   "Locate the input documents for this engagement in the matter folder",
   "Read every required input document in full",
   "Derive the graded determinations strictly from the documents",
   "Record the determinations with the required write tools"
  ],
- "relevant_data": [
-  {
-   "table": "matter_documents",
-   "id": 133,
-   "field": "title",
-   "value": "CUAD pack — Supply Agreement (Bluewater Components / Argent Motors) execution copy"
-  }
- ],
- "expected_state_changes": [
-  {
-   "table": "litigation_cases_evidence_records",
-   "field": "(new row)",
-   "note": ">=11 rows with pinned fields"
-  }
- ],
  "tables_affected": [
-  "litigation_cases_evidence_records"
+  "pm_notes"
  ],
+ "task_id": "task_164",
  "walk": [
-  "query_matter_documents",
-  "read_matter_document",
-  "litigation_cases_evidence_create",
-  "litigation_cases_evidence_create",
-  "litigation_cases_evidence_create",
-  "litigation_cases_evidence_create",
-  "litigation_cases_evidence_create",
-  "litigation_cases_evidence_create",
-  "litigation_cases_evidence_create",
-  "litigation_cases_evidence_create",
-  "litigation_cases_evidence_create",
-  "litigation_cases_evidence_create",
-  "litigation_cases_evidence_create"
- ],
- "reference_args": [
-  {
-   "title": "CUAD pack — Supply Agreement (Bluewater Components / Argent "
-  },
-  {
-   "id": 133
-  },
-  {
-   "litigation_cases_id": "litigation_cases_001",
-   "evidence_type": "minimum_commitment",
-   "source_uri": "matter://litigation_cases_001/supply-bluewater-argent-execution",
-   "content_summary": "Section 2: 40,000-unit annual minimum with shortfall true-up.",
-   "content_digest": "sha256:reference-digest",
-   "owner_role": "associate",
-   "status": "open"
-  },
-  {
-   "litigation_cases_id": "litigation_cases_001",
-   "evidence_type": "volume_restriction",
-   "source_uri": "matter://litigation_cases_001/supply-bluewater-argent-execution",
-   "content_summary": "Section 3: consent plus 6% surcharge for orders above 120% of binding forecast.",
-   "content_digest": "sha256:reference-digest",
-   "owner_role": "associate",
-   "status": "open"
-  },
-  {
-   "litigation_cases_id": "litigation_cases_001",
-   "evidence_type": "price_restrictions",
-   "source_uri": "matter://litigation_cases_001/supply-bluewater-argent-execution",
-   "content_summary": "Section 4: firm pricing 24 months, then index-capped annual adjustments only.",
-   "content_digest": "sha256:reference-digest",
-   "owner_role": "associate",
-   "status": "open"
-  },
-  {
-   "litigation_cases_id": "litigation_cases_001",
-   "evidence_type": "non_compete",
-   "source_uri": "matter://litigation_cases_001/supply-bluewater-argent-execution",
-   "content_summary": "Section 5: Supplier barred for term plus 2 years from supplying equivalent actuators to other North American passenger-vehicle OEMs.",
-   "content_digest": "sha256:reference-digest",
-   "owner_role": "associate",
-   "status": "open"
-  },
-  {
-   "litigation_cases_id": "litigation_cases_001",
-   "evidence_type": "no_solicit_of_customers",
-   "source_uri": "matter://litigation_cases_001/supply-bluewater-argent-execution",
-   "content_summary": "Section 6: Supplier may not solicit Buyer's franchised dealer network during term plus 1 year.",
-   "content_digest": "sha256:reference-digest",
-   "owner_role": "associate",
-   "status": "open"
-  },
-  {
-   "litigation_cases_id": "litigation_cases_001",
-   "evidence_type": "rofr_rofo_rofn",
-   "source_uri": "matter://litigation_cases_001/supply-bluewater-argent-execution",
-   "content_summary": "Section 7: Buyer ROFR over transfer of the BA-7 line and tooling, 45-day acceptance window.",
-   "content_digest": "sha256:reference-digest",
-   "owner_role": "associate",
-   "status": "open"
-  },
-  {
-   "litigation_cases_id": "litigation_cases_001",
-   "evidence_type": "change_of_control",
-   "source_uri": "matter://litigation_cases_001/supply-bluewater-argent-execution",
-   "content_summary": "Section 8: Buyer may terminate on Supplier change of control, on notice within 90 days.",
-   "content_digest": "sha256:reference-digest",
-   "owner_role": "associate",
-   "status": "open"
-  },
-  {
-   "litigation_cases_id": "litigation_cases_001",
-   "evidence_type": "liquidated_damages",
-   "source_uri": "matter://litigation_cases_001/supply-bluewater-argent-execution",
-   "content_summary": "Section 9: $75 per unit per week late-delivery liquidated damages, capped at 10% of order value.",
-   "content_digest": "sha256:reference-digest",
-   "owner_role": "associate",
-   "status": "open"
-  },
-  {
-   "litigation_cases_id": "litigation_cases_001",
-   "evidence_type": "insurance",
-   "source_uri": "matter://litigation_cases_001/supply-bluewater-argent-execution",
-   "content_summary": "Section 10: $5M per-occurrence product liability insurance naming Buyer as additional insured.",
-   "content_digest": "sha256:reference-digest",
-   "owner_role": "associate",
-   "status": "open"
-  },
-  {
-   "litigation_cases_id": "litigation_cases_001",
-   "evidence_type": "third_party_beneficiary",
-   "source_uri": "matter://litigation_cases_001/supply-bluewater-argent-execution",
-   "content_summary": "Section 11: Buyer affiliates purchasing Products are express third-party beneficiaries of Sections 9-10.",
-   "content_digest": "sha256:reference-digest",
-   "owner_role": "associate",
-   "status": "open"
-  },
-  {
-   "litigation_cases_id": "litigation_cases_001",
-   "evidence_type": "governing_law",
-   "source_uri": "matter://litigation_cases_001/supply-bluewater-argent-execution",
-   "content_summary": "Section 13: Texas law governs.",
-   "content_digest": "sha256:reference-digest",
-   "owner_role": "associate",
-   "status": "open"
-  }
- ],
- "effects": [
-  {
-   "table": "litigation_cases_evidence_records",
-   "op": "insert"
-  }
- ],
- "provenance": {
-  "source_workflow": "cuad: cuad-clause-extraction/cuad-supply-full-clause-review"
- },
- "difficulty_tier": "high",
- "acceptance_label": "pending_calibration",
- "expansion": {
-  "pack": "cuad-clause-extraction.json",
-  "slug": "cuad-supply-full-clause-review"
- }
+  "documents_search_fulltext",
+  "documents_download",
+  "notes_create",
+  "notes_create",
+  "notes_create",
+  "notes_create",
+  "notes_create",
+  "notes_create",
+  "notes_create",
+  "notes_create",
+  "notes_create",
+  "notes_create",
+  "notes_create"
+ ]
 }

@@ -17,8 +17,8 @@ now **fully self-hosting** — the entire world runs offline from this repo.
 Three things live here:
 
 1. **The product-only world** — canonical `world-v16.json`: **291 tasks**,
-   **39 product-system tables / 2,754 seeded rows**, **92 contract-defined
-   tools**, zero synthesized name-family tools, and one deterministic verifier
+   **47 product-system tables / 2,767 seeded rows**, **91 agent-visible
+   product tools**, zero synthesized name-family tools, and one deterministic verifier
    per task. The migration reconciles every legacy row and rewrites every walk
    through committed ID and check-grammar manifests.
 
@@ -30,8 +30,8 @@ Three things live here:
    five verdicts per task; a six-defect badbank continuously tests the gates.
 
    “Mirrors a vendor” is deliberately not treated as “exact.” The conformance
-   registry covers all 92 tools and publishes unresolved schema, pagination,
-   error, and partner-gated gaps; the current measured status is in
+   registry covers all 91 exposed tools and publishes unresolved schema,
+   pagination, error, and partner-gated gaps; the current measured status is in
    [`docs/CONFORMANCE.md`](docs/CONFORMANCE.md) and
    [`docs/MCP-JUSTIFICATION.md`](docs/MCP-JUSTIFICATION.md).
 
@@ -58,26 +58,27 @@ Three things live here:
                                              ▼
                              ┌───────────────────────────────────────────────┐
                              │ mcp/ — the firm stack as MCP servers          │
-                             │  6 per-system servers: Clio, CourtListener,   │
-                             │  iManage, Relativity, Google Workspace, and   │
-                             │  LEDES via serve-system.mjs + systems.json,   │
-                             │  or one bridge exposing the same 92 tools     │
+                             │  9 per-system servers: Clio, CourtListener,   │
+                             │  iManage, Relativity, Google, LEDES, ECF,     │
+                             │  deadline rules, and Docusign-shaped eSign,   │
+                             │  or one bridge exposing the same 91 tools     │
                              └───────────────┬───────────────────────────────┘
-                                             │ sessions · /mcp · /verify
+                                             │ bearer sessions · /mcp · /verify
                                              ▼
                              ┌───────────────────────────────────────────────┐
                              │ world/local/server.py — local world runtime   │
                              │ hydrates world-v16.json → session SQLite      │
-                             │ 92 contract tools · zero synthesized tools ·  │
+                             │ 91 product tools · zero synthesized tools ·   │
                              │ VCode verifiers ·                             │
-                             │ seeded friction (rate_limited/stale_reference,│
+                             │ real HTTP 429/409/412 + Retry-After, auth,    │
+                             │ stale references, pagination cursors,        │
                              │ ambiguous acks, write cap) — all deterministic│
                              └───────────────────────────────────────────────┘
 ```
 
 The original hosted world (`sbx_206712ec47f741d3`) no longer resolves on
 blobfish.ai. `world/local/server.py` runs the migrated local world from the
-complete v16 document and six product contracts. Solvability is proved by
+complete product-only world document and nine product contracts. Solvability is proved by
 `data/oracle-v16.json`; API fidelity is a separate, fail-closed conformance
 measurement rather than an inference from oracle success.
 
@@ -86,8 +87,8 @@ measurement rather than an inference from oracle success.
 | | |
 |---|---|
 | World doc | **`world/blobfish/world-v16.json`**; lineage and deterministic compiler artifacts live under `world/migrate/` |
-| Tables | 39 product-system tables, 2,754 rows; DMS, practice management, court records, e-discovery, workspace, and e-billing share one private per-session state |
-| Tools | 92, all loaded from `mcp/v3/contracts/*.json`; the runtime rejects any world that still embeds Gen-1 tools |
+| Tables | 47 product-system tables, 2,767 rows; all nine systems share one private per-session state |
+| Tools | 91 agent-visible tools loaded from `mcp/v3/contracts/*.json`; 11 non-discoverable simulator/migration operations; the runtime rejects any world that still embeds Gen-1 tools |
 | Tasks | 291 — 117 graph walks, 159 eval-anchored expansions, 15 native product workflows |
 | Verifiers | 291 VCode programs regenerated from explicit check grammar where migrated; per-assertion reward plus anti-hack vetoes |
 | Friction | seeded + deterministic: 3% injected `rate_limited`/`stale_reference`, 15% ambiguous write-acks, per-session write cap |
@@ -166,7 +167,7 @@ itself is [`data/research/legal-eval-inventory.md`](data/research/legal-eval-inv
 
 | | Harvey LAB | legal-agent-simulation world |
 |---|---|---|
-| Environment | file sandbox, no system-of-record state | 39-table live SQLite, 92 product-contract tools (canonical v16) |
+| Environment | file sandbox, no system-of-record state | 47-table live SQLite, 91 product-contract tools |
 | Grading | LLM judge, all-pass rubric | deterministic VCode, per-assertion, anti-hack vetoes |
 | Repeatability | judge-dependent (same family scores 26.7% / ~7–12% / ~13.3% top all-pass under three harnesses) | bit-identical re-runs, seeded friction |
 | Difficulty evidence | none | 21 boundary-proven flaky tasks with full traces |

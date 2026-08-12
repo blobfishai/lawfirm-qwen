@@ -1,169 +1,23 @@
 {
- "task_id": "task_095",
- "prompt": "Run the antitrust competition matter workflow for the Fairview Group Legal Matters record. Review the matter details, then record the new amount history entry for it.",
- "prompt_generation": {
-  "source": "llm",
-  "template_family": "graph.researched_workflow@1",
-  "template_key": "antitrust competition <entity> workflow|list legal <entity>|get legal <entity>|create <entity>",
-  "template_signature": "template:d9ec938f3539d0df"
- },
- "goal": "Complete the uploaded antitrust competition matter workflow using the anchored workflow sequence and verified state changes.",
- "required_tools": [],
- "complexity": "high",
- "method": "graph_walk",
- "steps": [
-  "list legal matters",
-  "get legal matters",
-  "create legal matters amount history"
- ],
- "relevant_data": [
-  {
-   "table": "matters",
-   "id": "legal_matters_002",
-   "field": "title",
-   "value": "Fairview Group Legal Matters"
-  }
- ],
- "expected_state_changes": [
-  {
-   "table": "legal_matters_amount_history",
-   "id": "legal_matters_amount_history_116",
-   "field": "(new row)",
-   "from": "15 rows",
-   "to": "16 rows"
-  }
- ],
- "tables_affected": [
-  "legal_matters_amount_history"
- ],
- "walk": [
+ "_reference_tools": [
   "legal_matters_list",
   "legal_matters_get",
   "operations_records_agent",
   "legal_matters_amount_history_create"
  ],
- "effects": [
-  {
-   "table": "legal_matters_amount_history",
-   "op": "insert"
-  }
- ],
- "difficulty_tier": "hard",
- "sequence_integrity": {
-  "schemaVersion": 1,
-  "passed": true,
-  "pathLength": 4,
-  "uniqueTools": 4,
-  "rules": [
-   "every transition has an evidence-backed edge",
-   "no tool immediately repeats itself, and no tool is used more than 4 times",
-   "terminal actions cannot restart the same entity lifecycle",
-   "the same mutating action cannot repeat on the same entity"
-  ],
-  "transitions": [
-   {
-    "source": "legal_matters_list",
-    "target": "legal_matters_get",
-    "allowed": true,
-    "rule": "lifecycle_compatible",
-    "sourceAction": "list",
-    "targetAction": "get",
-    "sharedEntities": [
-     "matter"
-    ],
-    "stepIndex": 1,
-    "edgeSupported": true
-   },
-   {
-    "source": "legal_matters_get",
-    "target": "operations_records_agent",
-    "allowed": true,
-    "rule": "lifecycle_compatible",
-    "sourceAction": "get",
-    "targetAction": "",
-    "sharedEntities": [],
-    "stepIndex": 2,
-    "edgeSupported": true
-   },
-   {
-    "source": "operations_records_agent",
-    "target": "legal_matters_amount_history_create",
-    "allowed": true,
-    "rule": "lifecycle_compatible",
-    "sourceAction": "",
-    "targetAction": "create",
-    "sharedEntities": [],
-    "stepIndex": 3,
-    "edgeSupported": true
-   }
-  ],
-  "issues": []
+ "acceptance_evidence": {
+  "accepted_by": "discrimination_gate",
+  "attempts": 1,
+  "contract_digest": "acceptance_v2_b916ed0d2e677c38c97f0e62695078632de3be87e499238c5ea64d7dc7fb9cea",
+  "negative_probes_passed": true,
+  "pass_rate": 1,
+  "passes": 1,
+  "protocol": "vcode_discrimination",
+  "reason": "accepted: deterministic reference execution passed; null, shortcut, wrong-row, wrong-value, blind-fallback + incomplete baselines fail",
+  "reference_passed": true,
+  "timed_out": false
  },
- "provenance": {
-  "source_workflow": "harvey_lab: antitrust-competition matter workflow: list legal matters -> get legal matters -> create legal matters amount history",
-  "evidence_ids": [
-   "anc_f05fb377aefb"
-  ],
-  "tool_graph_path": [
-   "legal_matters_list",
-   "legal_matters_get",
-   "legal_matters_amount_history_create"
-  ],
-  "tool_graph_edges": [
-   "legal_matters_list\u0000legal_matters_get",
-   "legal_matters_get\u0000legal_matters_amount_history_create"
-  ],
-  "verifier_id": "task_001",
-  "difficulty_reason": "4-step walk, 1 effects",
-  "workflow_binding": {
-   "workflow_name": "harvey_lab: antitrust-competition matter workflow",
-   "steps": [
-    "list legal matters",
-    "get legal matters",
-    "create legal matters amount history"
-   ],
-   "step_bindings": [
-    {
-     "step": "list legal matters",
-     "tool": "legal_matters_list",
-     "matched_tokens": [
-      "list",
-      "legal",
-      "matter"
-     ]
-    },
-    {
-     "step": "get legal matters",
-     "tool": "legal_matters_get",
-     "matched_tokens": [
-      "get",
-      "legal",
-      "matter"
-     ]
-    },
-    {
-     "step": "create legal matters amount history",
-     "tool": "legal_matters_amount_history_create",
-     "matched_tokens": [
-      "create",
-      "legal",
-      "matter",
-      "amount",
-      "history"
-     ]
-    }
-   ],
-   "passed": true,
-   "reasons": [],
-   "source_steps": [
-    "list legal matters",
-    "get legal matters",
-    "create legal matters amount history"
-   ],
-   "omitted_steps": [],
-   "scope": "full"
-  }
- },
+ "acceptance_label": "in_band",
  "anchor_refs": [
   "anc_667869153f64",
   "anc_596f2fa3b049",
@@ -192,23 +46,195 @@
   "anc_91d1215a6503",
   "anc_e779dbdae6a6"
  ],
- "_reference_tools": [
-  "legal_matters_list",
-  "legal_matters_get",
-  "operations_records_agent",
-  "legal_matters_amount_history_create"
+ "complexity": "high",
+ "difficulty_tier": "hard",
+ "effects": [
+  {
+   "op": "insert",
+   "table": "pm_notes"
+  }
  ],
- "acceptance_evidence": {
-  "protocol": "vcode_discrimination",
-  "attempts": 1,
-  "passes": 1,
-  "pass_rate": 1,
-  "reference_passed": true,
-  "negative_probes_passed": true,
-  "timed_out": false,
-  "accepted_by": "discrimination_gate",
-  "contract_digest": "acceptance_v2_b916ed0d2e677c38c97f0e62695078632de3be87e499238c5ea64d7dc7fb9cea",
-  "reason": "accepted: deterministic reference execution passed; null, shortcut, wrong-row, wrong-value, blind-fallback + incomplete baselines fail"
+ "expected_state_changes": [
+  {
+   "field": "(new row)",
+   "from": "15 rows",
+   "id": "(new product row)",
+   "table": "pm_notes",
+   "to": "16 rows"
+  }
+ ],
+ "goal": "Complete the uploaded antitrust competition matter workflow using the anchored workflow sequence and verified state changes.",
+ "method": "graph_walk",
+ "prompt": "Run the antitrust competition matter workflow for the Fairview Group Legal Matters record. Review the matter details, then record the new amount history entry for it.\n\nSYSTEM MIGRATION — WORLD V16\n- A legacy legal_matters_amount_history record is now filed through notes_create: use matter_id=29, author_user_id=1, subject exactly 'legal_matters_amount_history', and detail as a JSON object containing every legacy field named in the instruction.",
+ "prompt_generation": {
+  "source": "llm",
+  "template_family": "graph.researched_workflow@1",
+  "template_key": "antitrust competition <entity> workflow|list legal <entity>|get legal <entity>|create <entity>",
+  "template_signature": "template:d9ec938f3539d0df"
  },
- "acceptance_label": "in_band"
+ "provenance": {
+  "difficulty_reason": "4-step walk, 1 effects",
+  "evidence_ids": [
+   "anc_f05fb377aefb"
+  ],
+  "source_workflow": "harvey_lab: antitrust-competition matter workflow: list legal matters -> get legal matters -> create legal matters amount history",
+  "surface_migration": {
+   "compiler": "world/migrate/gen1_to_v16.py",
+   "from": "Gen-1 synthesized tools",
+   "to": "v3 product contracts"
+  },
+  "tool_graph_edges": [
+   "matters_list\u0000matters_get",
+   "matters_get\u0000notes_create"
+  ],
+  "tool_graph_path": [
+   "matters_list",
+   "matters_get",
+   "notes_create"
+  ],
+  "verifier_id": "task_001",
+  "workflow_binding": {
+   "omitted_steps": [],
+   "passed": true,
+   "reasons": [],
+   "scope": "full",
+   "source_steps": [
+    "list legal matters",
+    "get legal matters",
+    "create legal matters amount history"
+   ],
+   "step_bindings": [
+    {
+     "matched_tokens": [
+      "list",
+      "legal",
+      "matter"
+     ],
+     "step": "list legal matters",
+     "tool": "legal_matters_list"
+    },
+    {
+     "matched_tokens": [
+      "get",
+      "legal",
+      "matter"
+     ],
+     "step": "get legal matters",
+     "tool": "legal_matters_get"
+    },
+    {
+     "matched_tokens": [
+      "create",
+      "legal",
+      "matter",
+      "amount",
+      "history"
+     ],
+     "step": "create legal matters amount history",
+     "tool": "legal_matters_amount_history_create"
+    }
+   ],
+   "steps": [
+    "list legal matters",
+    "get legal matters",
+    "create legal matters amount history"
+   ],
+   "workflow_name": "harvey_lab: antitrust-competition matter workflow"
+  }
+ },
+ "reference_args": [
+  {},
+  {
+   "id": 100148
+  },
+  {
+   "limit": 20,
+   "query": "Fairview Group Legal Matters"
+  },
+  {
+   "author_user_id": 1,
+   "detail": "{\"change_reason\":\"Oracle reference run: value confirmed against matter records.\",\"changed_by_role\":\"partner\",\"fee_budget\":125000.0,\"legal_matters_id\":\"1\"}",
+   "matter_id": 29,
+   "subject": "legal_matters_amount_history"
+  }
+ ],
+ "relevant_data": [
+  {
+   "field": "title",
+   "id": 100148,
+   "table": "pm_matters",
+   "value": "Fairview Group Legal Matters"
+  }
+ ],
+ "required_tools": [
+  "matters_list",
+  "matters_get",
+  "matters_search",
+  "notes_create"
+ ],
+ "sequence_integrity": {
+  "issues": [],
+  "passed": true,
+  "pathLength": 4,
+  "rules": [
+   "every transition has an evidence-backed edge",
+   "no tool immediately repeats itself, and no tool is used more than 4 times",
+   "terminal actions cannot restart the same entity lifecycle",
+   "the same mutating action cannot repeat on the same entity"
+  ],
+  "schemaVersion": 1,
+  "transitions": [
+   {
+    "allowed": true,
+    "edgeSupported": true,
+    "rule": "lifecycle_compatible",
+    "sharedEntities": [
+     "matter"
+    ],
+    "source": "legal_matters_list",
+    "sourceAction": "list",
+    "stepIndex": 1,
+    "target": "legal_matters_get",
+    "targetAction": "get"
+   },
+   {
+    "allowed": true,
+    "edgeSupported": true,
+    "rule": "lifecycle_compatible",
+    "sharedEntities": [],
+    "source": "legal_matters_get",
+    "sourceAction": "get",
+    "stepIndex": 2,
+    "target": "operations_records_agent",
+    "targetAction": ""
+   },
+   {
+    "allowed": true,
+    "edgeSupported": true,
+    "rule": "lifecycle_compatible",
+    "sharedEntities": [],
+    "source": "operations_records_agent",
+    "sourceAction": "",
+    "stepIndex": 3,
+    "target": "legal_matters_amount_history_create",
+    "targetAction": "create"
+   }
+  ],
+  "uniqueTools": 4
+ },
+ "steps": [
+  "list legal matters",
+  "get legal matters",
+  "create legal matters amount history"
+ ],
+ "tables_affected": [
+  "pm_notes"
+ ],
+ "task_id": "task_095",
+ "walk": [
+  "matters_list",
+  "matters_get",
+  "matters_search",
+  "notes_create"
+ ]
 }

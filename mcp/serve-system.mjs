@@ -39,6 +39,7 @@ const TOOL_SET = new Set(SPEC.tools);
 const BASE = (process.env.BLOBFISH_LOCAL_BASE ?? config.blobfish.localBase ?? "http://127.0.0.1:8971").replace(/\/$/, "");
 
 let SESSION = process.env.BLOBFISH_SESSION_ID || null;
+let ACCESS_TOKEN = process.env.BLOBFISH_SESSION_TOKEN || null;
 let TOOLS = [];
 let rpcId = 5000;
 
@@ -48,21 +49,33 @@ async function http(method, path, body) {
     headers: {
       "Content-Type": "application/json",
       ...(SESSION ? { "Mcp-Session-Id": SESSION } : {}),
+      ...(ACCESS_TOKEN ? { Authorization: `Bearer ${ACCESS_TOKEN}` } : {}),
     },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
   const text = await res.text();
-  try { return { ok: res.ok, json: JSON.parse(text) }; } catch { return { ok: res.ok, json: null, text }; }
+  try {
+    return { ok: res.ok, status: res.status,
+      retryAfter: res.headers.get("retry-after"), json: JSON.parse(text), text };
+  } catch {
+    return { ok: res.ok, status: res.status,
+      retryAfter: res.headers.get("retry-after"), json: null, text };
+  }
 }
 
 async function ensureSession() {
   if (SESSION) return;
   const r = await http("POST", "/sessions", {});
   SESSION = r.json?.session_id;
+  ACCESS_TOKEN = r.json?.access_token;
 }
 
 async function upstream(method, params) {
   const r = await http("POST", "/mcp", { jsonrpc: "2.0", id: ++rpcId, method, params });
+  if (!r.ok) {
+    const retry = r.retryAfter ? ` Retry-After=${r.retryAfter}.` : "";
+    throw new Error(`upstream HTTP ${r.status}.${retry} ${r.text ?? JSON.stringify(r.json)}`);
+  }
   if (r.json?.error) throw new Error(`${r.json.error.code}: ${r.json.error.message}`);
   return r.json?.result;
 }

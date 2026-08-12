@@ -1,92 +1,98 @@
 {
- "task_id": "task_324",
- "outcome_class": "eligible_action",
- "prompt": "Confirm the coverage of the privilege screen over the Cedarline production set. Read the review protocol in the matter folder in full, submit the screen, poll until the job reports complete, and record how many documents the job actually scanned by calling legal_matters_amount_history_create against legal_matters_016 with fee_budget set to the scanned count and changed_by_role exactly \"discovery-counsel\". Coverage is what the job scanned, not what it flagged.",
- "goal": "Confirm the coverage of the privilege screen over the Cedarline production set. Read the review protocol in the matter f",
- "required_tools": [
-  "query_matter_documents",
-  "read_matter_document",
-  "analysis_job_submit",
-  "analysis_job_status",
-  "analysis_job_result",
-  "legal_matters_amount_history_create"
- ],
+ "acceptance_label": "pending_calibration",
  "complexity": "high",
+ "difficulty_tier": "high",
+ "effects": [
+  {
+   "op": "insert",
+   "table": "pm_notes"
+  }
+ ],
+ "expansion": {
+  "pack": "async-privilege-screen.json",
+  "slug": "async-screen-coverage"
+ },
+ "expected_state_changes": [
+  {
+   "field": "(new row)",
+   "id": "(new product row)",
+   "note": ">=1 rows with pinned fields",
+   "table": "pm_notes"
+  }
+ ],
+ "goal": "Confirm the coverage of the privilege screen over the Cedarline production set. Read the review protocol in the matter f",
  "method": "eval_anchored_expansion",
+ "outcome_class": "eligible_action",
+ "prompt": "Confirm the coverage of the privilege screen over the Cedarline production set. Read the review protocol in the matter folder in full, submit the screen, poll until the job reports complete, and record how many documents the job actually scanned by calling notes_create against legal_matters_016 with fee_budget set to the scanned count and changed_by_role exactly \"discovery-counsel\". Coverage is what the job scanned, not what it flagged.\n\nSYSTEM MIGRATION — WORLD V16\n- Matter documents now live in MatterVault DMS: search with documents_search_fulltext(query), read full text with documents_download(id), and file deliverables with documents_create using workspace_id=1, folder_id=1, name for the requested filename, doc_class for the requested document type, author=\"agent@simulated-firm.example\", and the complete deliverable in body.\n- A legacy legal_matters_amount_history record is now filed through notes_create: use matter_id=100162, author_user_id=1, subject exactly 'legal_matters_amount_history', and detail as a JSON object containing every legacy field named in the instruction.\n- The analysis queue is represented by a Relativity production job: submit with productions_create, then call jobs_get until status is completed before using its result.",
+ "provenance": {
+  "source_workflow": "workflow_research: async-privilege-screen/async-screen-coverage",
+  "surface_migration": {
+   "compiler": "world/migrate/gen1_to_v16.py",
+   "from": "Gen-1 synthesized tools",
+   "to": "v3 product contracts"
+  }
+ },
+ "reference_args": [
+  {
+   "query": "Review protocol — privilege screen over the Cedarline production set"
+  },
+  {
+   "id": 100347
+  },
+  {
+   "bates_prefix": "SIM",
+   "doc_count": 10,
+   "name": "privilege_screen:async-privilege-screen",
+   "workspace_id": 1
+  },
+  {
+   "id": 7
+  },
+  {
+   "id": 7
+  },
+  {
+   "id": 7
+  },
+  {
+   "author_user_id": 1,
+   "detail": "{\"change_reason\":\"Privilege screen over scope async-privilege-screen scanned 10 documents in the matter folder (the 9-document review set plus the protocol) and flagged 3.\",\"changed_by_role\":\"discovery-counsel\",\"fee_budget\":10,\"legal_matters_id\":\"legal_matters_016\"}",
+   "matter_id": 100162,
+   "subject": "legal_matters_amount_history"
+  }
+ ],
+ "relevant_data": [
+  {
+   "field": "name",
+   "id": 100347,
+   "table": "dm_documents",
+   "value": "Review protocol — privilege screen over the Cedarline production set"
+  }
+ ],
+ "required_tools": [
+  "documents_search_fulltext",
+  "documents_download",
+  "productions_create",
+  "jobs_get",
+  "notes_create"
+ ],
  "steps": [
   "Locate the input documents for this engagement in the matter folder",
   "Read every required input document in full",
   "Derive the graded determinations strictly from the documents",
   "Record the determinations with the required write tools"
  ],
- "relevant_data": [
-  {
-   "table": "matter_documents",
-   "id": 342,
-   "field": "title",
-   "value": "Review protocol — privilege screen over the Cedarline production set"
-  }
- ],
- "expected_state_changes": [
-  {
-   "table": "legal_matters_amount_history",
-   "field": "(new row)",
-   "note": ">=1 rows with pinned fields"
-  }
- ],
  "tables_affected": [
-  "legal_matters_amount_history"
+  "pm_notes"
  ],
+ "task_id": "task_324",
  "walk": [
-  "query_matter_documents",
-  "read_matter_document",
-  "analysis_job_submit",
-  "analysis_job_status",
-  "analysis_job_status",
-  "analysis_job_result",
-  "legal_matters_amount_history_create"
- ],
- "reference_args": [
-  {
-   "title": "Review protocol — privilege screen over the Cedarline production set"
-  },
-  {
-   "id": 342
-  },
-  {
-   "analysis_type": "privilege_screen",
-   "scope": "async-privilege-screen",
-   "submitted_by_role": "discovery-counsel"
-  },
-  {
-   "id": 1
-  },
-  {
-   "id": 1
-  },
-  {
-   "id": 1
-  },
-  {
-   "legal_matters_id": "legal_matters_016",
-   "fee_budget": 10,
-   "changed_by_role": "discovery-counsel",
-   "change_reason": "Privilege screen over scope async-privilege-screen scanned 10 documents in the matter folder (the 9-document review set plus the protocol) and flagged 3."
-  }
- ],
- "effects": [
-  {
-   "table": "legal_matters_amount_history",
-   "op": "insert"
-  }
- ],
- "provenance": {
-  "source_workflow": "workflow_research: async-privilege-screen/async-screen-coverage"
- },
- "difficulty_tier": "high",
- "acceptance_label": "pending_calibration",
- "expansion": {
-  "pack": "async-privilege-screen.json",
-  "slug": "async-screen-coverage"
- }
+  "documents_search_fulltext",
+  "documents_download",
+  "productions_create",
+  "jobs_get",
+  "jobs_get",
+  "jobs_get",
+  "notes_create"
+ ]
 }

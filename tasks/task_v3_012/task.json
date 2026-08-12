@@ -1,48 +1,47 @@
 {
- "task_id": "task_v3_012",
- "outcome_class": "eligible_action",
- "prompt": "Cut the prebill for matter 5: list its time entries, sum the totals of entries that are billable and not yet billed, and create a draft bill for matter 5 (client_id 16) whose subtotal is exactly that sum, issue date \"2026-08-11\", due date \"2026-09-10\". The subtotal must equal the computed sum to the cent.",
- "goal": "Cut the prebill for matter 5: list its time entries, sum the totals of entries that are billable and not yet b",
- "required_tools": [
-  "time_entries_list",
-  "bills_create"
- ],
+ "acceptance_label": "pending_calibration",
  "complexity": "medium",
- "method": "v3_workflow",
- "walk": [
-  "time_entries_list",
-  "bills_create"
- ],
- "reference_args": [
-  {
-   "matter_id": 5,
-   "billable": 1,
-   "billed": 0
-  },
-  {
-   "matter_id": 5,
-   "client_id": 16,
-   "subtotal": 4730.5,
-   "issue_date": "2026-08-11",
-   "due_date": "2026-09-10"
-  }
- ],
- "tables_affected": [
-  "pm_bills"
- ],
+ "difficulty_tier": "medium",
  "effects": [
   {
-   "table": "pm_bills",
-   "op": "insert"
+   "op": "insert",
+   "table": "ws_messages"
   }
  ],
+ "goal": "Prepare the prebill handoff for matter 5: list its time entries, sum the totals of entries that are billable a",
+ "method": "v3_workflow",
+ "outcome_class": "eligible_action",
+ "prompt": "Prepare the prebill handoff for matter 5: list its time entries, sum the totals of entries that are billable and not yet billed, then email billing.ops@simulated-firm.example from associate@simulated-firm.example. Use subject exactly \"PREBILL REQUEST — MATTER 5 — $4,730.50\" and state the computed subtotal, issue date 2026-08-11, due date 2026-09-10, and client_id 16 in the body. Clio exposes no public bill-creation API, so do not invent one.",
  "provenance": {
   "source_workflow": "workflow_research: r2-derived-prebill"
  },
- "difficulty_tier": "medium",
- "acceptance_label": "pending_calibration",
+ "reference_args": [
+  {
+   "billable": 1,
+   "billed": 0,
+   "matter_id": 5
+  },
+  {
+   "body": {
+    "raw": "RnJvbTogYXNzb2NpYXRlQHNpbXVsYXRlZC1maXJtLmV4YW1wbGUNClRvOiBiaWxsaW5nLm9wc0BzaW11bGF0ZWQtZmlybS5leGFtcGxlDQpTdWJqZWN0OiBQUkVCSUxMIFJFUVVFU1Qg4oCUIE1BVFRFUiA1IOKAlCAkNCw3MzAuNTANCkNvbnRlbnQtVHlwZTogdGV4dC9wbGFpbjsgY2hhcnNldD11dGYtOA0KDQpNYXR0ZXIgNSBwcmViaWxsIHN1YnRvdGFsOiAkNCw3MzAuNTA7IGNsaWVudF9pZDogMTY7IGlzc3VlIGRhdGU6IDIwMjYtMDgtMTE7IGR1ZSBkYXRlOiAyMDI2LTA5LTEwLg"
+   },
+   "userId": "me"
+  }
+ ],
+ "required_tools": [
+  "time_entries_list",
+  "gmail_messages_send"
+ ],
+ "tables_affected": [
+  "ws_messages"
+ ],
+ "task_id": "task_v3_012",
  "v3": {
-  "family": "r2-derived-prebill",
-  "dialect_surface": true
- }
+  "dialect_surface": true,
+  "family": "r2-derived-prebill"
+ },
+ "walk": [
+  "time_entries_list",
+  "gmail_messages_send"
+ ]
 }

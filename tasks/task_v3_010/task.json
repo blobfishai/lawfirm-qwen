@@ -1,50 +1,59 @@
 {
- "task_id": "task_v3_010",
+ "acceptance_label": "pending_calibration",
+ "complexity": "medium",
+ "difficulty_tier": "medium",
+ "effects": [
+  {
+   "op": "insert",
+   "table": "pm_communications"
+  }
+ ],
+ "goal": "Evidence hygiene: the client's settlement-authority email must be logged to the matter record, not live only i",
+ "method": "v3_workflow",
  "outcome_class": "eligible_action",
  "prompt": "Evidence hygiene: the client's settlement-authority email must be logged to the matter record, not live only in the inbox. (1) Search mail for \"Settlement posture\"; (2) get message 9 in full; (3) log it on matter 1 as a communication of type exactly \"EmailCommunication\" with subject exactly \"Settlement posture — client authority email logged\" and the message body captured in the body field.",
- "goal": "Evidence hygiene: the client's settlement-authority email must be logged to the matter record, not live only i",
+ "provenance": {
+  "source_workflow": "workflow_research: gmail-evidence-to-matter"
+ },
+ "reference_args": [
+  {
+   "q": "Settlement posture",
+   "userId": "me"
+  },
+  {
+   "id": "9",
+   "userId": "me"
+  },
+  {
+   "body": {
+    "data": {
+     "body": "Logged from mailbox message 9: client settlement authority thread.",
+     "matter": {
+      "id": 1
+     },
+     "received_at": "2026-08-10T12:00:00Z",
+     "subject": "Settlement posture — client authority email logged",
+     "type": "EmailCommunication"
+    }
+   }
+  }
+ ],
  "required_tools": [
   "gmail_messages_list",
   "gmail_messages_get",
   "communications_create"
  ],
- "complexity": "medium",
- "method": "v3_workflow",
+ "tables_affected": [
+  "pm_communications"
+ ],
+ "task_id": "task_v3_010",
+ "v3": {
+  "dialect_surface": true,
+  "family": "gmail-evidence-to-matter"
+ },
  "walk": [
   "gmail_messages_list",
   "gmail_messages_get",
   "communications_create"
- ],
- "reference_args": [
-  {
-   "q": "Settlement posture"
-  },
-  {
-   "id": 9
-  },
-  {
-   "matter_id": 1,
-   "type": "EmailCommunication",
-   "subject": "Settlement posture — client authority email logged",
-   "body": "Logged from mailbox message 9: client settlement authority thread."
-  }
- ],
- "tables_affected": [
-  "pm_communications"
- ],
- "effects": [
-  {
-   "table": "pm_communications",
-   "op": "insert"
-  }
- ],
- "provenance": {
-  "source_workflow": "workflow_research: gmail-evidence-to-matter"
- },
- "difficulty_tier": "medium",
- "acceptance_label": "pending_calibration",
- "v3": {
-  "family": "gmail-evidence-to-matter",
-  "dialect_surface": true
- }
+ ]
 }

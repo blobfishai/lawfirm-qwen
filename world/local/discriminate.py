@@ -37,6 +37,7 @@ the classifier is the CI policy gate for broken keys and guards.
 from __future__ import annotations
 
 import argparse
+import base64
 import copy
 import json
 import os
@@ -59,19 +60,74 @@ def is_write(world, tool_name):
         "_upload", "_post", "_send", "_file"))
 
 
+def _root_selector(key: str | None) -> bool:
+    """Whether a top-level argument identifies the record being mutated."""
+    if key is None:
+        return False
+    return (key in PRESERVE or key.endswith("_id") or key.endswith("Id")
+            or key.endswith("ID"))
+
+
+def _corrupt_gmail_raw(value: str) -> str | None:
+    """Return a valid base64url RFC 2822 message with a wrong subject.
+
+    A syntactically invalid encoded payload only tests request validation and
+    is classified as inconclusive.  Keeping the wire encoding valid lets the
+    wrong-value episode reach the task's state assertions.
+    """
+    try:
+        padded = value + "=" * (-len(value) % 4)
+        message = base64.urlsafe_b64decode(padded.encode()).decode("utf-8")
+    except (ValueError, UnicodeDecodeError):
+        return None
+    lines = message.splitlines(keepends=True)
+    changed = False
+    for index, line in enumerate(lines):
+        ending = "\r\n" if line.endswith("\r\n") else ("\n" if line.endswith("\n") else "")
+        content = line[:-len(ending)] if ending else line
+        if content.lower().startswith("subject:"):
+            lines[index] = content + " XX-WRONG" + ending
+            changed = True
+            break
+    if not changed:
+        return None
+    return base64.urlsafe_b64encode("".join(lines).encode()).decode().rstrip("=")
+
+
+def _corrupt_value(value, key: str | None = None, *, depth: int = 0):
+    """Recursively corrupt payload leaves while preserving record identity.
+
+    Vendor-shaped calls put answer-bearing values below wrappers such as
+    ``body.data`` and ``requests[].updateCells``.  Treating only top-level
+    arguments as mutable made the wrong-value admission gate silently become
+    a no-op for those calls.  Identifier fields remain untouched at every
+    nesting depth so the episode still targets the same records.
+    """
+    if depth == 1 and _root_selector(key):
+        return copy.deepcopy(value)
+    if isinstance(value, dict):
+        return {k: _corrupt_value(v, k, depth=depth + 1)
+                for k, v in value.items()}
+    if isinstance(value, list):
+        return [_corrupt_value(v, depth=depth + 1) for v in value]
+    if isinstance(value, bool):
+        return not value
+    if isinstance(value, int):
+        return value + 4242
+    if isinstance(value, float):
+        return round(value + 4242.42, 2)
+    if isinstance(value, str) and value:
+        if key == "raw":
+            encoded = _corrupt_gmail_raw(value)
+            if encoded is not None:
+                return encoded
+        return value + " XX-WRONG"
+    return copy.deepcopy(value)
+
+
 def corrupt(args: dict) -> dict:
     """Change every answer-bearing value while keeping the call well-formed."""
-    out = copy.deepcopy(args)
-    for k, v in list(out.items()):
-        if k in PRESERVE or k.endswith("_id"):
-            continue
-        if isinstance(v, bool):
-            out[k] = not v
-        elif isinstance(v, (int, float)):
-            out[k] = round(float(v) + 4242.42, 2)
-        elif isinstance(v, str) and v:
-            out[k] = v + " XX-WRONG"
-    return out
+    return _corrupt_value(args)
 
 
 def build_walk(world, task, verifier):

@@ -1,32 +1,44 @@
-"""VCode verifier for task_136
+"""Generated v16 verifier for task_136.
 
-Task: Review the attached Prairie Aerostructures Holdings data room and produce a red-flags report at red-
-Tools (walk): query_matter_documents -> read_matter_document -> draft_matter_document
-Checks: any-row state diff of 1 expected effect(s) +
-        behavioral (state changed, read-before-write, no shortcut) + tool-success advisory.
-
-initial_state / final_state are {table: [row, ...]} snapshots taken before and
-after the rollout; trace is the list of executed steps.
+Source: explicit check_grammar embedded beside this VCode. Regenerate with
+world/migrate/gen1_to_v16.py; never patch this string directly.
 """
+import json
 
-READ_TOOLS = ["read_matter_document","operations_records_agent","query_matter_documents"]
-WRITE_TOOLS = ["draft_matter_document"]
+READ_TOOLS = ['documents_download']
+WRITE_TOOLS = ['documents_create']
 
 def _rows(state, table):
     return state.get(table, []) if isinstance(state, dict) else []
 
-def _by_id(rows):
-    out = {}
-    for r in rows:
-        if isinstance(r, dict) and r.get("id") is not None:
-            out[str(r["id"])] = r
-    return out
+def _ids(rows):
+    return {str(r.get("id")) for r in rows if isinstance(r, dict) and r.get("id") is not None}
+
+def _new_rows(initial_state, final_state, table):
+    before = _ids(_rows(initial_state, table))
+    return [r for r in _rows(final_state, table) if str(r.get("id")) not in before]
 
 def _norm(value):
     if value is None: return "null"
     if value is True: return "true"
     if value is False: return "false"
-    return str(value)
+    text = str(value).strip().lower()
+    try:
+        return repr(float(text))
+    except (TypeError, ValueError):
+        return text
+
+def _payload(row, field):
+    value = row.get(field)
+    if isinstance(value, dict): return value
+    try:
+        parsed = json.loads(value or "{}")
+        return parsed if isinstance(parsed, dict) else {}
+    except (TypeError, ValueError):
+        return {}
+
+def _payload_text(row, payload_field, field):
+    return str(_payload(row, payload_field).get(field) or "")
 
 def verify(initial_state, final_state, trace):
     results, failed = [], []
@@ -34,183 +46,91 @@ def verify(initial_state, final_state, trace):
         results.append({"name": name, "passed": bool(passed), "details": detail})
         if not passed: failed.append(name)
 
-    # --- Behavioral checks (from the trace) ---
-    # Failed calls are recovery evidence, not completed checkpoints.
     successful_steps = [s for s in trace if s.get("tool") != "_final_answer" and s.get("ok")]
     tools = [s.get("tool", "") for s in successful_steps]
     changed = initial_state != final_state
-    chk("state_changed", changed,
-        "world state changed" if changed else "NO state change — agent did nothing")
+    chk("state_changed", changed, "world state changed" if changed else "NO state change")
 
-    # Failed reads prove nothing about inspection. Count only successful
-    # advertised calls for read-before-write and shortcut discipline; the
-    # full trace still feeds the tool-health advisory below.
-    reads = [t for t in tools if t in READ_TOOLS]
-    writes = [t for t in tools if t in WRITE_TOOLS]
-    read_first = len(reads) > 0 and (
-        len(writes) == 0 or tools.index(reads[0]) < tools.index(writes[0]))
+    reads = [tool for tool in tools if tool in READ_TOOLS]
+    writes = [tool for tool in tools if tool in WRITE_TOOLS]
+    read_first = bool(reads) and (not writes or tools.index(reads[0]) < tools.index(writes[0]))
     chk("reads_before_writes", read_first,
         f"reads={len(reads)}, writes={len(writes)}, read_first={read_first}")
+    chk("no_shortcut_direct_update", not (writes and not reads),
+        "inspected data before writing" if reads else "SHORTCUT: wrote without reading")
 
-    shortcut = len(writes) > 0 and len(reads) == 0
-    chk("no_shortcut_direct_update", not shortcut,
-        "SHORTCUT: wrote without reading first" if shortcut else "inspected data before writing")
+    required_path = ['documents_download', 'documents_download', 'documents_create']
+    cursor = 0
+    for tool in tools:
+        if cursor < len(required_path) and tool == required_path[cursor]:
+            cursor += 1
+    chk("required_workflow_path", cursor == len(required_path),
+        "completed: " + " -> ".join(required_path) if cursor == len(required_path)
+        else "INCOMPLETE: missing " + " -> ".join(required_path[cursor:]))
 
-    # The packaged task DAG is a required playbook. Alternative noise or
-    # recovery calls may appear between checkpoints, but every declared
-    # function must succeed in source order (including intentional repeats).
-    _required_workflow_path = ["read_matter_document","read_matter_document","draft_matter_document"]
-    _path_is_write = [False,False,True]
-    # Ordering is graded where it carries meaning: writes in declared order,
-    # and every read before the write it justifies. Reads are unordered among
-    # themselves — the reference walk's browsing order is not a requirement.
-    _pos = {}
-    for _i, _t in enumerate(tools):
-        _pos.setdefault(_t, []).append(_i)
-    _missing_workflow = [t for t in _required_workflow_path if t not in _pos]
-    _wpos = {}
-    if not _missing_workflow:
-        _cursor = -1
-        for _i, _t in enumerate(_required_workflow_path):
-            if not _path_is_write[_i]:
-                continue
-            _nxt = None
-            for _x in _pos[_t]:
-                if _x > _cursor:
-                    _nxt = _x
-                    break
-            if _nxt is None:
-                _missing_workflow.append(_t)
-                break
-            _wpos[_i] = _nxt
-            _cursor = _nxt
-    if not _missing_workflow:
-        _need, _due = {}, {}
-        for _i, _t in enumerate(_required_workflow_path):
-            if _path_is_write[_i]:
-                continue
-            _need[_t] = _need.get(_t, 0) + 1
-            _d = None
-            for _k in range(_i + 1, len(_required_workflow_path)):
-                if _path_is_write[_k] and _k in _wpos:
-                    _d = _wpos[_k]
-                    break
-            if _d is not None:
-                _due[_t] = _d if _t not in _due else min(_due[_t], _d)
-        for _t, _n in _need.items():
-            _d = _due.get(_t)
-            _seen = [_x for _x in _pos.get(_t, []) if _d is None or _x < _d]
-            if len(_seen) < _n:
-                _missing_workflow.append(_t)
-    _workflow_complete = not _missing_workflow
-    chk("required_workflow_path", _workflow_complete,
-        "completed ordered workflow: " + " -> ".join(_required_workflow_path) if _workflow_complete
-        else "INCOMPLETE WORKFLOW: missing ordered checkpoints " + " -> ".join(_missing_workflow))
+    _required_reads = [{'tool': 'documents_download', 'id': 100015}, {'tool': 'documents_download', 'id': 100041}]
+    _missing_reads = []
+    for _need in _required_reads:
+        if not any(s.get("tool") == _need["tool"] and s.get("ok") and
+                   _norm((s.get("arguments") or {}).get("id")) == _norm(_need["id"])
+                   for s in successful_steps):
+            _missing_reads.append(_need)
+    chk("required_documents_read", not _missing_reads,
+        "all required documents downloaded in full" if not _missing_reads
+        else "EVIDENCE GAP: " + str(_missing_reads))
 
-    # --- Any-row state-diff checks (from expected effects) ---
+    _new_0 = _new_rows(initial_state, final_state, 'dm_documents')
+    chk('rows_inserted_into_dm_documents', len(_new_0) >= 1,
+        f"dm_documents: {len(_new_0)} new row(s), need >= 1")
+    _effect_rows_0 = _new_rows(initial_state, final_state, 'dm_documents')
+    _effect_match_0 = [r for r in _effect_rows_0 if True]
 
-    before_n = len(_rows(initial_state, "matter_documents"))
-    after_n = len(_rows(final_state, "matter_documents"))
-    chk("rows_inserted_into_matter_documents", after_n > before_n,
-        f"matter_documents: {before_n} -> {after_n} rows")
 
-    _task_tables = set(["matter_documents","audit_logs"])
-    _dmg_tables = []
-    for _t in set(list(initial_state.keys()) + list(final_state.keys())):
-        if _t in _task_tables:
-            continue
-        if _rows(initial_state, _t) != _rows(final_state, _t):
-            _dmg_tables.append(_t)
-    chk("no_offtask_table_changes", len(_dmg_tables) == 0,
-        "no off-task tables were modified" if not _dmg_tables
-        else f"OFF-TASK DAMAGE: tables {sorted(_dmg_tables)} changed but are outside this task's scope")
+    allowed_tables = set(['dm_documents'])
+    damaged = []
+    fabricated = []
+    destroyed = []
+    for table in set(initial_state) | set(final_state):
+        before = _rows(initial_state, table)
+        after = _rows(final_state, table)
+        if before != after and table not in allowed_tables:
+            damaged.append(table)
+        before_ids, after_ids = _ids(before), _ids(after)
+        if len(after) < len(before) or before_ids - after_ids:
+            destroyed.append(table)
+        if table not in allowed_tables and (len(after) > len(before) or after_ids - before_ids):
+            fabricated.append(table)
+    chk("no_offtask_table_changes", not damaged,
+        "no off-task tables changed" if not damaged else "OFF-TASK DAMAGE: " + str(sorted(damaged)))
+    chk("no_rows_destroyed", not destroyed,
+        "no rows destroyed" if not destroyed else "ROWS DESTROYED: " + str(sorted(destroyed)))
+    chk("no_undeclared_rows_created", not fabricated,
+        "all created rows declared" if not fabricated else "UNDECLARED CREATION: " + str(sorted(fabricated)))
 
-    _del_exempt = set([])
-    _destroyed = {}
-    for _t in set(list(initial_state.keys()) + list(final_state.keys())):
-        if _t in _del_exempt:
-            continue
-        _bi_g = _rows(initial_state, _t)
-        _af_g = _rows(final_state, _t)
-        _bi_ids_g = _by_id(_bi_g)
-        _af_ids_g = _by_id(_af_g)
-        _gone = [k for k in _bi_ids_g if k not in _af_ids_g]
-        if _gone or len(_af_g) < len(_bi_g):
-            _destroyed[_t] = f"{len(_bi_g)} -> {len(_af_g)} rows" + (f", deleted ids {sorted(_gone)[:8]}" if _gone else "")
-    chk("no_rows_destroyed", len(_destroyed) == 0,
-        "no rows were destroyed in any table" if not _destroyed
-        else f"ROWS DESTROYED: {_destroyed} — this task declares no deletion")
+    real_trace = [s for s in trace if s.get("tool") != "_final_answer"]
+    ok_count = sum(1 for s in real_trace if s.get("ok"))
+    chk("all_tools_succeeded", bool(real_trace) and ok_count * 5 >= len(real_trace) * 4,
+        f"{ok_count}/{len(real_trace)} calls succeeded")
 
-    _create_exempt = set(["matter_documents"]) | {"audit_logs"}
-    _fabricated = {}
-    for _t in set(list(initial_state.keys()) + list(final_state.keys())):
-        if _t in _create_exempt:
-            continue
-        _bi_c = _rows(initial_state, _t)
-        _af_c = _rows(final_state, _t)
-        _bi_ids_c = _by_id(_bi_c)
-        _af_ids_c = _by_id(_af_c)
-        _new = [k for k in _af_ids_c if k not in _bi_ids_c]
-        if _new or len(_af_c) > len(_bi_c):
-            _fabricated[_t] = f"{len(_bi_c)} -> {len(_af_c)} rows" + (f", new ids {sorted(_new)[:8]}" if _new else "")
-    chk("no_undeclared_rows_created", len(_fabricated) == 0,
-        "all created rows were declared by task insert effects" if not _fabricated
-        else f"UNDECLARED RECORD CREATION: {_fabricated}")
-
-    _bi_al = _rows(initial_state, "audit_logs")
-    _af_al = _rows(final_state, "audit_logs")
-    _bi_al_ids = _by_id(_bi_al)
-    _af_al_ids = _by_id(_af_al)
-    _al_tampered = [k for k in _bi_al_ids if k not in _af_al_ids or _af_al_ids[k] != _bi_al_ids[k]]
-    chk("audit_logs_append_only",
-        len(_af_al) >= len(_bi_al) and len(_al_tampered) == 0,
-        "audit_logs append-only invariant holds" if len(_af_al) >= len(_bi_al) and not _al_tampered
-        else f"AUDIT TAMPERING: audit_logs {len(_bi_al)} -> {len(_af_al)} rows, rewritten/deleted ids {sorted(_al_tampered)[:8]}")
-
-    # --- Most tool calls must have succeeded (>= 80%) ---
-    _real_trace = [s for s in trace if s.get("tool") != "_final_answer"]
-    ok_count = sum(1 for s in _real_trace if s.get("ok"))
-    chk("all_tools_succeeded", len(_real_trace) > 0 and ok_count * 5 >= len(_real_trace) * 4,
-        f"{ok_count}/{len(_real_trace)} tool calls succeeded")
-
-    _BEHAVIORAL = {"state_changed", "reads_before_writes", "no_shortcut_direct_update", "required_workflow_path", "all_tools_succeeded"}
-    # Anti-hack behaviors VETO reward like guards: a direct-write shortcut
-    # that landed the right rows still earned reward 1.0 while passed was
-    # false (live 2026-07-12, run-task on sbx_a56e583b038847b0) — a trainer
-    # consuming reward would reinforce exactly what the check forbids.
-    # Global tool success is different: optional/exploratory calls can fail
-    # even when the requested state and every anti-hack invariant are right.
-    # Keep that signal as an advisory instead of structurally vetoing an
-    # otherwise-correct trajectory.
-    _ANTI_HACK = {"reads_before_writes", "no_shortcut_direct_update", "required_workflow_path"}
-    _ADVISORY = {"all_tools_succeeded"}
-    _GUARDS = set(["no_offtask_table_changes","no_rows_destroyed","no_undeclared_rows_created","audit_logs_append_only"])
-    effect_results = [r for r in results if r["name"] not in _BEHAVIORAL]
-    core_results = [r for r in effect_results if r["name"] not in _GUARDS]
-    core_failed = [r for r in core_results if not r["passed"]]
-    guard_failed = [r for r in effect_results if r["name"] in _GUARDS and not r["passed"]]
-    anti_hack_failed = [r for r in results if r["name"] in _ANTI_HACK and not r["passed"]]
-    advisory_failed = [r for r in results if r["name"] in _ADVISORY and not r["passed"]]
-    structural_failed = [name for name in failed if name not in _ADVISORY]
-    # Granular reward from CORE task completion only. reward = fraction of
-    # core assertions satisfied, so a task with N row-pinned changes grades in
-    # 1/N steps (e.g. 3/6 correct → 0.5). Behavioral checks (did-anything,
-    # read-before-write) grant NO credit — a no-op or wrong-row that trips only
-    # behavioral checks earns exactly 0, never partial "effort" credit (that
-    # would be reward-hackable). Guards and anti-hack behaviors veto to 0;
-    # tool-call success remains diagnostic and does not change correctness.
-    if guard_failed or anti_hack_failed:
+    anti = {"reads_before_writes", "no_shortcut_direct_update", "required_workflow_path", "required_documents_read"}
+    guards = {"no_offtask_table_changes", "no_rows_destroyed", "no_undeclared_rows_created"}
+    veto = {r["name"] for r in results if "grounded" in r["name"] or "unsupported" in r["name"]}
+    advisory = {"all_tools_succeeded"}
+    structural = [name for name in failed if name not in advisory]
+    core = [r for r in results if r["name"] not in anti | guards | advisory | {"state_changed"}]
+    core_failed = [r for r in core if not r["passed"]]
+    if any(name in anti | guards | veto for name in failed):
         reward = 0.0
-    elif core_results:
-        reward = (len(core_results) - len(core_failed)) / len(core_results)
+    elif core:
+        reward = (len(core) - len(core_failed)) / len(core)
     else:
-        reward = 0.0 if structural_failed else 1.0
+        reward = 0.0 if structural else 1.0
     return {
-        "task_id": "task_136",
-        "passed": len(structural_failed) == 0,
+        "task_id": 'task_136',
+        "passed": not structural,
         "reward": round(reward, 4),
-        "explanation": ("All task checks passed" + ("; advisory: " + ", ".join(r["name"] for r in advisory_failed) if advisory_failed else "")) if not structural_failed else "Failed: " + ", ".join(structural_failed),
-        "failed_conditions": structural_failed,
-        "advisory_conditions": [r["name"] for r in advisory_failed],
+        "explanation": "All task checks passed" if not structural else "Failed: " + ", ".join(structural),
+        "failed_conditions": structural,
+        "advisory_conditions": [name for name in failed if name in advisory],
         "assertions": results,
     }

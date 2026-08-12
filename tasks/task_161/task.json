@@ -1,84 +1,84 @@
 {
- "task_id": "task_161",
- "outcome_class": "eligible_action",
- "prompt": "For conflict record legal_conflicts_001, review the EXECUTED software license agreement between the grid-software licensor and the UK licensee for commercial and payment clauses. Candidate clause categories (CUAD slugs): most_favored_nation, revenue_profit_sharing, minimum_commitment, volume_restriction, liquidated_damages. For each category present, file one record with legal_conflicts_evidence_create for legal_conflicts_001. Rules: query the document store first to identify the correct document(s), read each listed document in full before filing anything, and file exactly one evidence record per clause category that is actually present in the executed text — set evidence_type to the exact category slug, verbatim from the candidate list. Do NOT file a record for any category that is absent from the executed agreement, even if a draft, term sheet, or email mentions it. Use a short quote or section reference of the supporting clause as content_summary, and any reasonable source_uri.",
- "goal": "most_favored_nation and revenue_profit_sharing present; the agreement expressly disclaims any minimum commitment.",
- "required_tools": [
-  "query_matter_documents",
-  "read_matter_document",
-  "legal_conflicts_evidence_create"
- ],
+ "acceptance_label": "pending_calibration",
  "complexity": "medium",
+ "difficulty_tier": "medium",
+ "effects": [
+  {
+   "op": "insert",
+   "table": "pm_notes"
+  }
+ ],
+ "expansion": {
+  "pack": "cuad-clause-extraction.json",
+  "slug": "cuad-license-commercial-terms-review"
+ },
+ "expected_state_changes": [
+  {
+   "field": "(new row)",
+   "id": "(new product row)",
+   "note": ">=2 rows with pinned fields",
+   "table": "pm_notes"
+  }
+ ],
+ "goal": "most_favored_nation and revenue_profit_sharing present; the agreement expressly disclaims any minimum commitment.",
  "method": "eval_anchored_expansion",
+ "outcome_class": "eligible_action",
+ "prompt": "For conflict record legal_conflicts_001, review the EXECUTED software license agreement between the grid-software licensor and the UK licensee for commercial and payment clauses. Candidate clause categories (CUAD slugs): most_favored_nation, revenue_profit_sharing, minimum_commitment, volume_restriction, liquidated_damages. For each category present, file one record with notes_create for legal_conflicts_001. Rules: query the document store first to identify the correct document(s), read each listed document in full before filing anything, and file exactly one evidence record per clause category that is actually present in the executed text — set evidence_type to the exact category slug, verbatim from the candidate list. Do NOT file a record for any category that is absent from the executed agreement, even if a draft, term sheet, or email mentions it. Use a short quote or section reference of the supporting clause as content_summary, and any reasonable source_uri.\n\nSYSTEM MIGRATION — WORLD V16\n- Matter documents now live in MatterVault DMS: search with documents_search_fulltext(query), read full text with documents_download(id), and file deliverables with documents_create using workspace_id=1, folder_id=1, name for the requested filename, doc_class for the requested document type, author=\"agent@simulated-firm.example\", and the complete deliverable in body.\n- A legacy legal_conflicts_evidence_records record is now filed through notes_create: use matter_id=100026, author_user_id=1, subject exactly 'legal_conflicts_evidence_records', and detail as a JSON object containing every legacy field named in the instruction.",
+ "provenance": {
+  "source_workflow": "cuad: cuad-clause-extraction/cuad-license-commercial-terms-review",
+  "surface_migration": {
+   "compiler": "world/migrate/gen1_to_v16.py",
+   "from": "Gen-1 synthesized tools",
+   "to": "v3 product contracts"
+  }
+ },
+ "reference_args": [
+  {
+   "query": "CUAD pack — GridCore Software License Agreement (Helix Grid "
+  },
+  {
+   "id": 100137
+  },
+  {
+   "author_user_id": 1,
+   "detail": "{\"content_digest\":\"sha256:reference-digest\",\"content_summary\":\"Section 4: more favorable royalty terms granted to any third party automatically extend to Licensee retroactively.\",\"evidence_type\":\"most_favored_nation\",\"legal_conflicts_id\":\"legal_conflicts_001\",\"owner_role\":\"associate\",\"source_uri\":\"matter://legal_conflicts_001/gridcore-license-helix-tessellate-execution\",\"status\":\"open\"}",
+   "matter_id": 100026,
+   "subject": "legal_conflicts_evidence_records"
+  },
+  {
+   "author_user_id": 1,
+   "detail": "{\"content_digest\":\"sha256:reference-digest\",\"content_summary\":\"Section 3: running royalty of 4% of Net Revenue from products embedding the Software, paid quarterly.\",\"evidence_type\":\"revenue_profit_sharing\",\"legal_conflicts_id\":\"legal_conflicts_001\",\"owner_role\":\"associate\",\"source_uri\":\"matter://legal_conflicts_001/gridcore-license-helix-tessellate-execution\",\"status\":\"open\"}",
+   "matter_id": 100026,
+   "subject": "legal_conflicts_evidence_records"
+  }
+ ],
+ "relevant_data": [
+  {
+   "field": "name",
+   "id": 100137,
+   "table": "dm_documents",
+   "value": "CUAD pack — GridCore Software License Agreement (Helix Grid / Tessellate Systems) execution copy"
+  }
+ ],
+ "required_tools": [
+  "documents_search_fulltext",
+  "documents_download",
+  "notes_create"
+ ],
  "steps": [
   "Locate the input documents for this engagement in the matter folder",
   "Read every required input document in full",
   "Derive the graded determinations strictly from the documents",
   "Record the determinations with the required write tools"
  ],
- "relevant_data": [
-  {
-   "table": "matter_documents",
-   "id": 132,
-   "field": "title",
-   "value": "CUAD pack — GridCore Software License Agreement (Helix Grid / Tessellate Systems) execution copy"
-  }
- ],
- "expected_state_changes": [
-  {
-   "table": "legal_conflicts_evidence_records",
-   "field": "(new row)",
-   "note": ">=2 rows with pinned fields"
-  }
- ],
  "tables_affected": [
-  "legal_conflicts_evidence_records"
+  "pm_notes"
  ],
+ "task_id": "task_161",
  "walk": [
-  "query_matter_documents",
-  "read_matter_document",
-  "legal_conflicts_evidence_create",
-  "legal_conflicts_evidence_create"
- ],
- "reference_args": [
-  {
-   "title": "CUAD pack — GridCore Software License Agreement (Helix Grid "
-  },
-  {
-   "id": 132
-  },
-  {
-   "legal_conflicts_id": "legal_conflicts_001",
-   "evidence_type": "most_favored_nation",
-   "source_uri": "matter://legal_conflicts_001/gridcore-license-helix-tessellate-execution",
-   "content_summary": "Section 4: more favorable royalty terms granted to any third party automatically extend to Licensee retroactively.",
-   "content_digest": "sha256:reference-digest",
-   "owner_role": "associate",
-   "status": "open"
-  },
-  {
-   "legal_conflicts_id": "legal_conflicts_001",
-   "evidence_type": "revenue_profit_sharing",
-   "source_uri": "matter://legal_conflicts_001/gridcore-license-helix-tessellate-execution",
-   "content_summary": "Section 3: running royalty of 4% of Net Revenue from products embedding the Software, paid quarterly.",
-   "content_digest": "sha256:reference-digest",
-   "owner_role": "associate",
-   "status": "open"
-  }
- ],
- "effects": [
-  {
-   "table": "legal_conflicts_evidence_records",
-   "op": "insert"
-  }
- ],
- "provenance": {
-  "source_workflow": "cuad: cuad-clause-extraction/cuad-license-commercial-terms-review"
- },
- "difficulty_tier": "medium",
- "acceptance_label": "pending_calibration",
- "expansion": {
-  "pack": "cuad-clause-extraction.json",
-  "slug": "cuad-license-commercial-terms-review"
- }
+  "documents_search_fulltext",
+  "documents_download",
+  "notes_create",
+  "notes_create"
+ ]
 }

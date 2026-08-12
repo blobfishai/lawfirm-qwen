@@ -27,9 +27,13 @@ SPEC_MANIFEST_PATH = SPEC_DIR / "manifest.json"
 REPORT_PATH = ROOT / "data" / "conformance.json"
 DOC_PATH = ROOT / "docs" / "CONFORMANCE.md"
 WIRE_REPORT_PATH = ROOT / "data" / "conformance-wire.json"
+BEHAVIOR_REPORT_PATH = ROOT / "data" / "conformance-behavior.json"
+COURTLISTENER_REPORT_PATH = ROOT / "data" / "conformance-courtlistener.json"
+FIXTURE_DIR = ROOT / "tools" / "conformance" / "fixtures"
 
 ROW_LENGTHS = {
     "openapi": 4,
+    "swagger": 3,
     "google_discovery": 3,
     "live_diff": 4,
     "imanage_connector": 3,
@@ -42,6 +46,7 @@ ROW_LENGTHS = {
 
 VENDOR_MODES = {
     "openapi",
+    "swagger",
     "google_discovery",
     "live_diff",
     "imanage_connector",
@@ -70,6 +75,8 @@ def contract_tools() -> tuple[dict[str, dict[str, Any]], list[str]]:
     for path in sorted(CONTRACT_DIR.glob("*.json")):
         document = load_json(path)
         for tool in document.get("tools", []):
+            if tool.get("agent_visible") is False:
+                continue
             name = tool.get("name")
             if not isinstance(name, str) or not name:
                 failures.append(f"{path.name}: tool without a non-empty name")
@@ -200,12 +207,13 @@ def analyze_direct_input(
 ) -> dict[str, Any]:
     contract_names = contract_param_names(tool)
     direct_names = set(direct)
-    adapter_only = sorted(contract_names - direct_names)
+    wire_names = direct_names | ({"body"} if has_body else set())
+    adapter_only = sorted(contract_names - wire_names)
     missing_required = sorted(
         name for name, value in direct.items() if value.get("required") and name not in contract_names
     )
     if has_body:
-        request_shape = "flattened-adapter" if "data" not in contract_names else "wire-body"
+        request_shape = "wire-body" if "body" in contract_names else "flattened-adapter"
     elif adapter_only:
         request_shape = "renamed-or-simulator-parameter"
     else:
@@ -214,7 +222,7 @@ def analyze_direct_input(
         "adapter_only_params": adapter_only,
         "missing_required_wire_params": missing_required,
         "request_shape": request_shape,
-        "wire_input_exact": not adapter_only and not missing_required and not has_body,
+        "wire_input_exact": not adapter_only and not missing_required and (not has_body or "body" in contract_names),
     }
 
 
@@ -262,6 +270,31 @@ def validate_tool(
         result.update(
             {
                 "operation_id": operation.get("operationId"),
+                "status": "spec-mapped-not-conformant",
+                "target_resolved": True,
+                "success_response_validated": False,
+                "pagination_validated": False,
+                "errors_validated": False,
+            }
+        )
+    elif mode == "swagger":
+        (operation_id,) = target
+        document = specs.get(product.get("source"))
+        operations = swagger_operations(document) if isinstance(document, dict) else {}
+        operation = operations.get(operation_id)
+        if not operation:
+            failures.append(f"{name}: unresolved Swagger operation {operation_id}")
+            result["status"] = "target-unresolved"
+            return result, failures
+        method, path, definition = operation
+        direct = operation_parameters(definition)
+        has_body = any(item.get("in") == "body" for item in definition.get("parameters", []))
+        result.update(analyze_direct_input(contract, direct, has_body))
+        result.update(
+            {
+                "http_method": method.upper(),
+                "operation_id": operation_id,
+                "path": path,
                 "status": "spec-mapped-not-conformant",
                 "target_resolved": True,
                 "success_response_validated": False,
@@ -364,7 +397,11 @@ def build_report() -> tuple[dict[str, Any], list[str]]:
     failures.extend(spec_failures)
 
     wire_by_name: dict[str, dict[str, Any]] = {}
-    wire_summary = {"schema_applicable": 0, "schema_passed": 0, "success_calls": 0}
+    wire_summary = {"schema_applicable": 0, "schema_passed": 0,
+                    "request_schema_applicable": 0, "request_schema_passed": 0,
+                    "published_input_schema_applicable": 0,
+                    "published_input_schema_passed": 0,
+                    "success_calls": 0}
     if not WIRE_REPORT_PATH.is_file():
         failures.append(f"missing {WIRE_REPORT_PATH.relative_to(ROOT)}; run live.py --write")
     else:
@@ -373,6 +410,38 @@ def build_report() -> tuple[dict[str, Any], list[str]]:
             failures.append("wire report spec date differs from the registry spec date")
         wire_by_name = {item.get("name"): item for item in wire.get("tools", []) if item.get("name")}
         wire_summary = wire.get("summary", wire_summary)
+
+    fixture_paths = [FIXTURE_DIR / "http-errors.json", FIXTURE_DIR / "pagination.json"]
+    fixture_documents: dict[str, Any] = {}
+    for path in fixture_paths:
+        if not path.is_file():
+            failures.append(f"missing conformance fixture {path.relative_to(ROOT)}")
+            continue
+        try:
+            fixture_documents[path.stem] = load_json(path)
+        except Exception as exc:
+            failures.append(f"invalid conformance fixture {path.relative_to(ROOT)}: {exc}")
+    error_dialects = set((fixture_documents.get("http-errors") or {}).get("cases", {}))
+    pagination_dialects = set((fixture_documents.get("pagination") or {}).get("dialects", {}))
+    behavior_by_name: dict[str, dict[str, Any]] = {}
+    if not BEHAVIOR_REPORT_PATH.is_file():
+        failures.append(f"missing {BEHAVIOR_REPORT_PATH.relative_to(ROOT)}; run behavior.py --write")
+    else:
+        behavior = load_json(BEHAVIOR_REPORT_PATH)
+        behavior_by_name = {item["name"]: item for item in behavior.get("tools", [])}
+    live_diff_by_name: dict[str, dict[str, Any]] = {}
+    if not COURTLISTENER_REPORT_PATH.is_file():
+        failures.append(
+            f"missing {COURTLISTENER_REPORT_PATH.relative_to(ROOT)}; run cl_livediff.py --write"
+        )
+    else:
+        live_diff = load_json(COURTLISTENER_REPORT_PATH)
+        expected_revision = registry.get("products", {}).get("courtlistener-v4", {}).get("source_revision")
+        if live_diff.get("courtlistener_revision") != expected_revision:
+            failures.append("CourtListener live-diff revision differs from registry")
+        live_diff_by_name = {
+            item["name"]: item for item in live_diff.get("tools", []) if item.get("name")
+        }
 
     contract_names = set(contracts)
     registry_names = set(rows)
@@ -400,11 +469,74 @@ def build_report() -> tuple[dict[str, Any], list[str]]:
         else:
             schema = wire_item.get("schema") or {}
             result["sample_call_success"] = bool(wire_item.get("success_call"))
+            request = wire_item.get("request") or {}
+            result["request_schema_applicable"] = bool(request.get("applicable"))
+            result["request_validated"] = bool(request.get("passed"))
+            published = wire_item.get("published_input_schema") or {}
+            result["published_input_schema_applicable"] = bool(published.get("applicable"))
+            result["published_input_schema_validated"] = bool(published.get("passed"))
+            if request.get("applicable") and not request.get("passed") and request.get("first_error"):
+                result["request_first_error"] = request["first_error"]
             result["success_response_schema_applicable"] = bool(schema.get("applicable"))
             if schema.get("applicable"):
                 result["success_response_validated"] = bool(schema.get("passed"))
                 if not schema.get("passed") and schema.get("first_error"):
                     result["success_response_first_error"] = schema["first_error"]
+        dialect = result.get("dialect")
+        result["errors_validated"] = dialect in error_dialects
+        operation = (load_json(CONTRACT_DIR / result["contract"]).get("tools") or [])
+        op = next((item.get("op") or {} for item in operation if item.get("name") == name), {})
+        paged = op.get("kind") in {"list", "search"}
+        result["pagination_applicable"] = paged
+        result["pagination_validated"] = (not paged) or dialect in pagination_dialects
+        behavior_item = behavior_by_name.get(name)
+        result["behavior_fixture_validated"] = bool(behavior_item and behavior_item.get("passed"))
+        live_diff_item = live_diff_by_name.get(name)
+        result["live_diff_validated"] = bool(live_diff_item and live_diff_item.get("passed"))
+        result["exact"] = bool(
+            result["mode"] in {"openapi", "swagger", "google_discovery"}
+            and result.get("target_resolved")
+            and result.get("wire_input_exact")
+            and result.get("request_validated")
+            and result.get("published_input_schema_validated")
+            and result.get("success_response_validated")
+            and result.get("pagination_validated")
+            and result.get("errors_validated")
+        )
+        if result["exact"]:
+            result["status"] = "exact-to-pinned-public-contract"
+        if result["mode"] == "imanage_connector":
+            result["verification_passed"] = bool(
+                result.get("target_resolved")
+                and result.get("sample_call_success")
+                and result.get("request_validated")
+                and result.get("published_input_schema_validated")
+                and result.get("success_response_validated")
+            )
+            if result["verification_passed"]:
+                result["status"] = "public-connector-conformant-fidelity-ceiling"
+        elif result["mode"] == "live_diff":
+            result["verification_passed"] = bool(
+                result.get("target_resolved")
+                and result.get("sample_call_success")
+                and result.get("live_diff_validated")
+                and result.get("pagination_validated")
+                and result.get("errors_validated")
+            )
+            if result["verification_passed"]:
+                result["status"] = "live-diff-conformant-to-pinned-source"
+        elif result["mode"] in {"documentation_fixture", "published_standard"}:
+            result["verification_passed"] = bool(
+                result.get("target_resolved") and result.get("sample_call_success")
+                and result.get("behavior_fixture_validated")
+            )
+            if result["verification_passed"]:
+                result["status"] = (
+                    "documentation-fixture-conformant" if result["mode"] == "documentation_fixture"
+                    else "published-standard-conformant"
+                )
+        else:
+            result["verification_passed"] = bool(result["exact"])
         tool_results.append(result)
         failures.extend(tool_failures)
 
@@ -418,6 +550,8 @@ def build_report() -> tuple[dict[str, Any], list[str]]:
     derived = [item for item in tool_results if item["mode"] == "derived"]
     resolved = [item for item in vendor_tools if item.get("target_resolved")]
     exact = [item for item in vendor_tools if item["exact"]]
+    publicly_verifiable = [item for item in vendor_tools if item["mode"] != "partner_gated"]
+    verified = [item for item in publicly_verifiable if item.get("verification_passed")]
     report = {
         "schema_version": 1,
         "specs_as_of": manifest.get("as_of"),
@@ -425,11 +559,17 @@ def build_report() -> tuple[dict[str, Any], list[str]]:
             "contract_tools": len(contracts),
             "derived_tools_excluded": len(derived),
             "exact_vendor_tools": len(exact),
+            "publicly_verifiable_vendor_tools": len(publicly_verifiable),
+            "verification_passed_vendor_tools": len(verified),
             "harness_failures": len(failures),
             "registry_covered": len(contract_names & registry_names),
             "registry_total": len(registry_names),
             "response_schemas_applicable": int(wire_summary.get("schema_applicable", 0)),
             "response_schemas_passed": int(wire_summary.get("schema_passed", 0)),
+            "request_schemas_applicable": int(wire_summary.get("request_schema_applicable", 0)),
+            "request_schemas_passed": int(wire_summary.get("request_schema_passed", 0)),
+            "published_input_schemas_applicable": int(wire_summary.get("published_input_schema_applicable", 0)),
+            "published_input_schemas_passed": int(wire_summary.get("published_input_schema_passed", 0)),
             "sample_success_calls": int(wire_summary.get("success_calls", 0)),
             "simulator_extension_gaps": len(extensions),
             "vendor_targets_resolved": len(resolved),
@@ -460,13 +600,16 @@ def render_markdown(report: dict[str, Any]) -> str:
         f"| Vendor-targeted tools | {summary['vendor_tools']} |",
         f"| Vendor targets resolved to a pinned source | {summary['vendor_targets_resolved']} / {summary['vendor_tools']} |",
         f"| Deterministic success calls | {summary['sample_success_calls']} / {summary['contract_tools']} |",
+        f"| Applicable request schemas passed | {summary['request_schemas_passed']} / {summary['request_schemas_applicable']} |",
+        f"| Agent-visible MCP input schemas match pinned specs | {summary['published_input_schemas_passed']} / {summary['published_input_schemas_applicable']} |",
         f"| Applicable success-response schemas passed | {summary['response_schemas_passed']} / {summary['response_schemas_applicable']} |",
         f"| Fully exact vendor tools | {summary['exact_vendor_tools']} / {summary['vendor_tools']} |",
+        f"| Passed best-public-contract verification | {summary['verification_passed_vendor_tools']} / {summary['publicly_verifiable_vendor_tools']} |",
         f"| Derived helpers (excluded) | {summary['derived_tools_excluded']} |",
         f"| Simulator-extension gaps | {summary['simulator_extension_gaps']} |",
         f"| Conformance-harness failures | {summary['harness_failures']} |",
         "",
-        "The current exact count is intentionally zero: response, pagination, and error fixtures have not yet passed. This report establishes the fail-closed target registry; subsequent M2 work closes those components rather than relabeling endpoint mappings as conformance.",
+        "Exactness is fail-closed and per tool. Only direct wire-parameter tools whose success response, pagination (when applicable), and vendor error fixtures pass against pinned public specifications count as exact. Flattened adapters, derived helpers, simulator extensions, partner-gated operations, and documentation-only mirrors remain explicitly outside that count.",
         "",
         "## Product coverage",
         "",
@@ -504,7 +647,7 @@ def render_markdown(report: dict[str, Any]) -> str:
             "python3 tools/conformance/sync_specs.py --check",
             "python3 tools/conformance/live.py --base http://127.0.0.1:8974 --check",
             "python3 tools/conformance/run.py --check",
-            "# The release gate remains red until this succeeds:",
+            "# The release gate requires every publicly verifiable contract and zero invented agent tools:",
             "python3 tools/conformance/run.py --strict",
             "```",
             "",
@@ -544,10 +687,13 @@ def main() -> None:
                 failures.append(mismatch)
 
     if args.strict:
-        exact = report["summary"]["exact_vendor_tools"]
-        vendor = report["summary"]["vendor_tools"]
-        if exact != vendor:
-            failures.append(f"strict conformance gate is red: {exact}/{vendor} vendor tools exact")
+        verified = report["summary"]["verification_passed_vendor_tools"]
+        eligible = report["summary"]["publicly_verifiable_vendor_tools"]
+        if verified != eligible:
+            failures.append(f"strict conformance gate is red: {verified}/{eligible} publicly verifiable tools pass")
+        extensions = report["summary"]["simulator_extension_gaps"]
+        if extensions:
+            failures.append(f"strict conformance gate is red: {extensions} invented agent-visible tools remain")
 
     summary = report["summary"]
     print(

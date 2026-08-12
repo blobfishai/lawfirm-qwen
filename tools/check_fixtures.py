@@ -21,6 +21,7 @@ import glob
 import json
 import os
 import sys
+import urllib.error
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
@@ -30,28 +31,38 @@ from oracle import http  # noqa: E402
 
 
 def replay_episode(base: str, task_id: str, recorded: dict) -> dict:
-    sid = http(base, "POST", "/sessions", {"task_id": task_id})["session_id"]
+    opened = http(base, "POST", "/sessions", {"task_id": task_id})
+    sid = opened["session_id"]
+    token = opened["access_token"]
     trace = []
     try:
         for i, entry in enumerate(recorded["trace"]):
-            res = http(base, "POST", "/mcp", {
-                "jsonrpc": "2.0", "id": i + 1, "method": "tools/call",
-                "params": {"name": entry["tool"],
-                           "arguments": entry["arguments"]},
-            }, session=sid)
-            r = res.get("result") or {}
-            text = "".join(c.get("text", "") for c in r.get("content", []))
+            try:
+                res = http(base, "POST", "/mcp", {
+                    "jsonrpc": "2.0", "id": i + 1, "method": "tools/call",
+                    "params": {"name": entry["tool"],
+                               "arguments": entry["arguments"]},
+                }, session=sid, token=token)
+                r = res.get("result") or {}
+                text = "".join(c.get("text", "") for c in r.get("content", []))
+                ok = not r.get("isError")
+            except urllib.error.HTTPError as exc:
+                if exc.headers.get("X-Simulator-Failure") not in {
+                        "rate_limited", "stale_reference"}:
+                    raise
+                text = exc.read().decode(errors="replace")
+                ok = False
             trace.append({
                 "tool": entry["tool"], "requested_tool": entry["tool"],
                 "arguments": entry["arguments"],
-                "observation": text[:4000], "ok": not r.get("isError"),
+                "observation": text[:4000], "ok": ok,
             })
         verdict = http(base, "POST", f"/verify/{task_id}",
-                       {"trace": trace}, session=sid)
+                       {"trace": trace}, session=sid, token=token)
         return {"trace": trace, "verdict": verdict}
     finally:
         try:
-            http(base, "DELETE", f"/sessions/{sid}")
+            http(base, "DELETE", f"/sessions/{sid}", session=sid, token=token)
         except Exception:
             pass
 

@@ -89,13 +89,24 @@ def main() -> int:
     json.dump({"world": world}, tmp, default=str)
     tmp.close()
 
+    server_log = tempfile.NamedTemporaryFile(
+        mode="w+", suffix="-badbank-server.log", prefix="legal-sim-", delete=False
+    )
     srv = subprocess.Popen(
         [sys.executable, os.path.join(ROOT, "world", "local", "server.py"),
          "--port", str(args.port), "--world", tmp.name],
-        stderr=subprocess.DEVNULL)
+        stderr=server_log)
     results = []
     try:
-        wait_health(base)
+        try:
+            wait_health(base)
+        except Exception:
+            server_log.flush()
+            server_log.seek(0)
+            detail = server_log.read()[-4000:]
+            raise RuntimeError(
+                "badbank server failed its health gate:\n" + detail
+            ) from None
         for task in bad_tasks:
             tid = task["task_id"]
             exp = expect[tid]
@@ -123,6 +134,8 @@ def main() -> int:
     finally:
         srv.terminate()
         srv.wait(timeout=10)
+        server_log.close()
+        os.unlink(server_log.name)
         os.unlink(tmp.name)
 
     n_ok = sum(1 for r in results if r[2])

@@ -6,8 +6,8 @@
 
 | Op | Envelope |
 |---|---|
-| list/search | `{"count": N, "next": null, "previous": null, "results": [...]}` |
-| get | `{..., "resource_uri": "/api/rest/v4/<res>/<id>/"}` |
+| list/search | `{"count": N\|count-URL, "next": null, "previous": null, "results": [...]}` |
+| get | `{...resource fields...}` |
 | create/update | `{...}` |
 
 **Tables (SQLite):** `cl_courts`, `cl_dockets`, `cl_docket_entries`, `cl_recap_documents`, `cl_opinions`, `cl_parties`, `cl_docket_alerts`
@@ -24,7 +24,7 @@ List courts with jurisdiction filters.
 |---|---|---|---|
 | `jurisdiction` | string | no | same |
 | `in_use` | integer | no | same |
-| `limit` | integer | no | same |
+| `page` | integer | no | same |
 
 **Op:** `list` on `cl_courts`
 
@@ -40,10 +40,10 @@ List dockets filtered by court, nature of suit, and filing-date range.
 |---|---|---|---|
 | `court` | string | no | `court_id` |
 | `nature_of_suit` | string | no | same |
-| `assigned_to` | string | no | same |
 | `date_filed__gte` | string | no | `date_filed_after` |
 | `date_filed__lte` | string | no | `date_filed_before` |
-| `limit` | integer | no | same |
+| `page` | integer | no | same |
+| `order_by` | string | no | same |
 
 **Op:** `list` on `cl_dockets`
 
@@ -72,7 +72,7 @@ Free-text docket search (case name, docket number, cause).
 | Param (real API name) | Type | Required | Internal field |
 |---|---|---|---|
 | `q` | string | no | `query` |
-| `limit` | integer | no | same |
+| `cursor` | string | no | same |
 
 **Op:** `search` on `cl_dockets`
 
@@ -90,7 +90,8 @@ List a docket's entries in filing order.
 | `entry_number` | integer | no | same |
 | `date_filed__gte` | string | no | `filed_after` |
 | `date_filed__lte` | string | no | `filed_before` |
-| `limit` | integer | no | same |
+| `page` | integer | no | same |
+| `order_by` | string | no | same |
 
 **Op:** `list` on `cl_docket_entries`
 
@@ -120,7 +121,8 @@ List documents attached to a docket entry.
 |---|---|---|---|
 | `docket_entry` | integer | no | `docket_entry_id` |
 | `is_sealed` | integer | no | same |
-| `limit` | integer | no | same |
+| `page` | integer | no | same |
+| `order_by` | string | no | same |
 
 **Op:** `list` on `cl_recap_documents`
 
@@ -135,7 +137,7 @@ Full-text opinion search returning snippets and citations.
 | Param (real API name) | Type | Required | Internal field |
 |---|---|---|---|
 | `q` | string | no | `query` |
-| `limit` | integer | no | same |
+| `cursor` | string | no | same |
 
 **Op:** `search` on `cl_opinions`
 
@@ -178,8 +180,9 @@ List parties on a docket with representation.
 | Param (real API name) | Type | Required | Internal field |
 |---|---|---|---|
 | `docket` | integer | no | `docket_id` |
-| `party_type` | string | no | same |
-| `limit` | integer | no | same |
+| `name` | string | no | same |
+| `cursor` | string | no | same |
+| `order_by` | string | no | same |
 
 **Op:** `list` on `cl_parties`
 
@@ -194,8 +197,7 @@ Subscribe an alert on a docket (new-entry or termination).
 | Param (real API name) | Type | Required | Internal field |
 |---|---|---|---|
 | `docket` | integer | yes | `docket_id` |
-| `alert_type` | string | yes | same |
-| `recipient` | string | yes | same |
+| `alert_type` | integer | no | same |
 
 **Op:** `create` on `cl_docket_alerts`
 
@@ -210,8 +212,10 @@ List active docket alerts.
 | Param (real API name) | Type | Required | Internal field |
 |---|---|---|---|
 | `docket` | integer | no | `docket_id` |
-| `alert_type` | string | no | same |
-| `limit` | integer | no | same |
+| `alert_type` | integer | no | same |
+| `cursor` | string | no | same |
+| `page_size` | integer | no | same |
+| `order_by` | string | no | same |
 
 **Op:** `list` on `cl_docket_alerts`
 

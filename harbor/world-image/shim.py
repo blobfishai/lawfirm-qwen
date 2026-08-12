@@ -41,11 +41,14 @@ WORLD_DOC_PATH = os.environ.get("WORLD_DOC", os.path.join(HERE, "world.json"))
 TRACE_LOG = os.environ.get("TRACE_LOG", os.path.join(HERE, "state", "trace.jsonl"))
 
 
-def http(method: str, path: str, body=None, session: str | None = None, timeout=120):
+def http(method: str, path: str, body=None, session: str | None = None,
+         token: str | None = None, timeout=120):
     req = urllib.request.Request(WORLD_BASE + path, method=method)
     req.add_header("Content-Type", "application/json")
     if session:
         req.add_header("Mcp-Session-Id", session)
+    if token:
+        req.add_header("Authorization", f"Bearer {token}")
     data = json.dumps(body).encode() if body is not None else None
     with urllib.request.urlopen(req, data=data, timeout=timeout) as res:
         return json.loads(res.read().decode() or "{}")
@@ -70,7 +73,9 @@ def main() -> None:
             time.sleep(0.5)
     else:
         sys.exit("[shim] world server never became healthy")
-    session_id = http("POST", "/sessions", {"task_id": TASK_ID})["session_id"]
+    opened = http("POST", "/sessions", {"task_id": TASK_ID})
+    session_id = opened["session_id"]
+    access_token = opened["access_token"]
     print(f"[shim] task={TASK_ID} session={session_id}", file=sys.stderr)
 
     trace: list[dict] = []
@@ -84,7 +89,16 @@ def main() -> None:
                 f.write(json.dumps(entry, default=str) + "\n")
 
     def forward(msg: dict) -> dict:
-        res = http("POST", "/mcp", msg, session=session_id)
+        try:
+            res = http("POST", "/mcp", msg, session=session_id, token=access_token)
+        except urllib.error.HTTPError as exc:
+            signature = exc.headers.get("X-Simulator-Failure")
+            if signature not in {"rate_limited", "stale_reference"}:
+                raise
+            text = exc.read().decode(errors="replace")
+            res = {"jsonrpc": "2.0", "id": msg.get("id"), "result": {
+                "content": [{"type": "text", "text": text}], "isError": True,
+            }}
         if msg.get("method") == "tools/call":
             params = msg.get("params") or {}
             r = res.get("result") or {}
@@ -106,7 +120,12 @@ def main() -> None:
             r = res.get("result") or {}
             text = "".join(c.get("text", "") for c in r.get("content", []))
             ok = not r.get("isError")
-            transient = ("rate_limited" in text) or ("stale_reference" in text)
+            transient = any(marker in text for marker in (
+                "rate_limited", "stale_reference", "rate_limit",
+                "RESOURCE_EXHAUSTED", "HOURLY_APIINVOCATION_LIMIT_EXCEEDED",
+                "retry after", "stale_object", "FAILED_PRECONDITION",
+                "ENVELOPE_LOCKED", "referenced resource changed",
+            ))
             if ok or not transient or attempt == retries:
                 return ok, text
         return False, text
@@ -146,7 +165,8 @@ def main() -> None:
     def verify() -> dict:
         with lock:
             body = {"trace": list(trace)}
-        return http("POST", f"/verify/{TASK_ID}", body, session=session_id)
+        return http("POST", f"/verify/{TASK_ID}", body,
+                    session=session_id, token=access_token)
 
     class Handler(BaseHTTPRequestHandler):
         protocol_version = "HTTP/1.1"

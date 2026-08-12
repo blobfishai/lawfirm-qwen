@@ -1,6 +1,6 @@
 {
   "$schema": "lawfirm-qwen.mcp-systems.v2",
-  "note": "The v16 product-only tool stack partitioned into one MCP server per mirrored system. Every name is defined by a cited contract under mcp/v3/contracts; no synthesized Gen-1 tools are routed here.",
+  "note": "The product-only tool stack partitioned into one MCP server per mirrored system. Every name is defined by a cited contract under mcp/v3/contracts; no synthesized Gen-1 tools are routed here.",
   "systems": {
     "practice-management": {
       "product": "LexOperis PM (SIMULATED) — mirrors Clio Manage API v4",
@@ -10,12 +10,11 @@
         "contacts_list", "contacts_get", "contacts_create", "contacts_update", "contacts_search",
         "time_entries_list", "time_entries_get", "time_entries_create", "time_entries_update",
         "expense_entries_list", "expense_entries_create",
-        "bills_list", "bills_get", "bills_create", "bills_update", "bill_line_items_list",
-        "trust_transactions_list", "trust_transactions_create", "trust_balance_get",
+        "bills_list", "bills_get", "bills_update", "bill_line_items_list",
+        "trust_transactions_list",
         "calendar_entries_list", "calendar_entries_create", "calendar_entries_update",
         "tasks_list", "tasks_create", "tasks_update", "notes_list", "notes_create",
-        "communications_list", "communications_create", "users_list", "practice_areas_list",
-        "audit_events_list"
+        "communications_list", "communications_create", "users_list", "practice_areas_list"
       ]
     },
     "docket-records": {
@@ -27,6 +26,19 @@
         "opinions_search", "opinions_get", "citation_lookup", "parties_list",
         "docket_alerts_create", "docket_alerts_list"
       ]
+    },
+    "courtfile-efiling": {
+      "product": "CourtFile ECF (SIMULATED) — mirrors documented CM/ECF NextGen workflow semantics",
+      "description": "Case selection, PDF filing, docket entries, and Notices of Electronic Filing. Documentation-fixture fidelity; no public common write API is claimed.",
+      "tools": [
+        "efiling_cases_get", "efiling_filings_create", "efiling_docket_entries_list",
+        "efiling_nef_notices_list"
+      ]
+    },
+    "deadline-rules": {
+      "product": "DeadlineRules (SIMULATED) — verified FRCP fixtures",
+      "description": "Trigger- and service-aware federal civil deadline calculation with rule citations.",
+      "tools": ["deadlines_compute"]
     },
     "dms": {
       "product": "MatterVault DMS (SIMULATED) — mirrors iManage Work API",
@@ -60,10 +72,17 @@
     },
     "ebilling": {
       "product": "LedgerBill (SIMULATED) — mirrors LEDES 1998B exchange semantics",
-      "description": "UTBMS codes, invoices and lines, submission, total validation, and appeals.",
+      "description": "UTBMS code lookup and standards-conformant LEDES 1998B serialization and submission.",
       "tools": [
-        "utbms_codes_list", "invoices_list", "invoices_get", "invoice_lines_list",
-        "invoices_submit", "invoice_total_check", "appeals_list", "appeals_create"
+        "utbms_codes_list", "invoices_submit"
+      ]
+    },
+    "esign": {
+      "product": "SealPoint eSign (SIMULATED) — mirrors Docusign eSignature REST API v2.1",
+      "description": "Envelope creation, sending, status polling, and ordered recipients.",
+      "tools": [
+        "esign_envelopes_create", "esign_envelopes_get", "esign_envelopes_send",
+        "esign_recipients_list"
       ]
     }
   }

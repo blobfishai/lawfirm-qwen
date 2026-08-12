@@ -37,6 +37,7 @@ Query documents by custodian, responsiveness, privilege, or date range.
 
 | Param (real API name) | Type | Required | Internal field |
 |---|---|---|---|
+| `condition` | string | no | same |
 | `workspace_id` | integer | no | same |
 | `custodian` | string | no | same |
 | `responsive` | string | no | same |

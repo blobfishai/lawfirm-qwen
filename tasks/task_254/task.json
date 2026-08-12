@@ -1,71 +1,77 @@
 {
- "task_id": "task_254",
- "outcome_class": "eligible_action",
- "prompt": "Regulatory advice, question 2: the client reconciles client money every 30 business days. Find and read the governing client-money chapter in the matter folder and record the rulebook's MAXIMUM permitted interval by calling legal_conflicts_amount_history_create with exposure_amount set to exactly the number of business days the rule permits and changed_by_role exactly \"regulatory-counsel\".",
- "goal": "Regulatory advice, question 2: the client reconciles client money every 30 business days. Find and read the governing cl",
- "required_tools": [
-  "query_matter_documents",
-  "read_matter_document",
-  "legal_conflicts_amount_history_create"
- ],
+ "acceptance_label": "pending_calibration",
  "complexity": "medium",
+ "difficulty_tier": "medium",
+ "effects": [
+  {
+   "op": "insert",
+   "table": "pm_notes"
+  }
+ ],
+ "expansion": {
+  "pack": "obliqa-regulatory-obligations.json",
+  "slug": "obliqa-client-money-frequency"
+ },
+ "expected_state_changes": [
+  {
+   "field": "(new row)",
+   "id": "(new product row)",
+   "note": ">=1 rows with pinned fields",
+   "table": "pm_notes"
+  }
+ ],
+ "goal": "Regulatory advice, question 2: the client reconciles client money every 30 business days. Find and read the governing cl",
  "method": "eval_anchored_expansion",
+ "outcome_class": "eligible_action",
+ "prompt": "Regulatory advice, question 2: the client reconciles client money every 30 business days. Find and read the governing client-money chapter in the matter folder and record the rulebook's MAXIMUM permitted interval by calling notes_create with exposure_amount set to exactly the number of business days the rule permits and changed_by_role exactly \"regulatory-counsel\".\n\nSYSTEM MIGRATION — WORLD V16\n- Matter documents now live in MatterVault DMS: search with documents_search_fulltext(query), read full text with documents_download(id), and file deliverables with documents_create using workspace_id=1, folder_id=1, name for the requested filename, doc_class for the requested document type, author=\"agent@simulated-firm.example\", and the complete deliverable in body.\n- A legacy legal_conflicts_amount_history record is now filed through notes_create: use matter_id=100026, author_user_id=1, subject exactly 'legal_conflicts_amount_history', and detail as a JSON object containing every legacy field named in the instruction.",
+ "provenance": {
+  "source_workflow": "obliqa_regnlp: obliqa-regulatory-obligations/obliqa-client-money-frequency",
+  "surface_migration": {
+   "compiler": "world/migrate/gen1_to_v16.py",
+   "from": "Gen-1 synthesized tools",
+   "to": "v3 product contracts"
+  }
+ },
+ "reference_args": [
+  {
+   "query": "Regulatory pack — Client Money Rules Chapter 9: Segregation "
+  },
+  {
+   "id": 100244
+  },
+  {
+   "author_user_id": 1,
+   "detail": "{\"change_reason\":\"Rule 9.4.2 requires reconciliation not less frequently than every 25 business days; the client's 30-day cycle is non-compliant.\",\"changed_by_role\":\"regulatory-counsel\",\"exposure_amount\":25,\"legal_conflicts_id\":\"legal_conflicts_001\"}",
+   "matter_id": 100026,
+   "subject": "legal_conflicts_amount_history"
+  }
+ ],
+ "relevant_data": [
+  {
+   "field": "name",
+   "id": 100244,
+   "table": "dm_documents",
+   "value": "Regulatory pack — Client Money Rules Chapter 9: Segregation and Reconciliation (excerpt)"
+  }
+ ],
+ "required_tools": [
+  "documents_search_fulltext",
+  "documents_download",
+  "notes_create"
+ ],
  "steps": [
   "Locate the input documents for this engagement in the matter folder",
   "Read every required input document in full",
   "Derive the graded determinations strictly from the documents",
   "Record the determinations with the required write tools"
  ],
- "relevant_data": [
-  {
-   "table": "matter_documents",
-   "id": 239,
-   "field": "title",
-   "value": "Regulatory pack — Client Money Rules Chapter 9: Segregation and Reconciliation (excerpt)"
-  }
- ],
- "expected_state_changes": [
-  {
-   "table": "legal_conflicts_amount_history",
-   "field": "(new row)",
-   "note": ">=1 rows with pinned fields"
-  }
- ],
  "tables_affected": [
-  "legal_conflicts_amount_history"
+  "pm_notes"
  ],
+ "task_id": "task_254",
  "walk": [
-  "query_matter_documents",
-  "read_matter_document",
-  "legal_conflicts_amount_history_create"
- ],
- "reference_args": [
-  {
-   "title": "Regulatory pack — Client Money Rules Chapter 9: Segregation "
-  },
-  {
-   "id": 239
-  },
-  {
-   "legal_conflicts_id": "legal_conflicts_001",
-   "exposure_amount": 25,
-   "changed_by_role": "regulatory-counsel",
-   "change_reason": "Rule 9.4.2 requires reconciliation not less frequently than every 25 business days; the client's 30-day cycle is non-compliant."
-  }
- ],
- "effects": [
-  {
-   "table": "legal_conflicts_amount_history",
-   "op": "insert"
-  }
- ],
- "provenance": {
-  "source_workflow": "obliqa_regnlp: obliqa-regulatory-obligations/obliqa-client-money-frequency"
- },
- "difficulty_tier": "medium",
- "acceptance_label": "pending_calibration",
- "expansion": {
-  "pack": "obliqa-regulatory-obligations.json",
-  "slug": "obliqa-client-money-frequency"
- }
+  "documents_search_fulltext",
+  "documents_download",
+  "notes_create"
+ ]
 }

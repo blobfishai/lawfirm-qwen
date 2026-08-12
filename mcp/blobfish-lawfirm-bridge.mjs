@@ -43,6 +43,8 @@ const WORLD_BASE = LOCAL
 const MCP_URL = `${WORLD_BASE}/mcp`;
 
 let SESSION = null;
+let ACCESS_TOKEN = null;
+let REFRESH_TOKEN = null;
 let TOOLS = [];
 let UPSTREAM_INFO = {};
 let upstreamId = 1000;
@@ -75,6 +77,7 @@ function authHeaders() {
     "Content-Type": "application/json",
     Accept: "application/json, text/event-stream",
     ...(SESSION ? { "Mcp-Session-Id": SESSION, "X-Blobfish-Session": SESSION } : {}),
+    ...(ACCESS_TOKEN ? { Authorization: `Bearer ${ACCESS_TOKEN}` } : {}),
   };
 }
 
@@ -125,6 +128,8 @@ async function createSession() {
   const body = JSON.stringify(env.BLOBFISH_TASK_ID ? { task_id: env.BLOBFISH_TASK_ID } : {});
   const s = await rest("/sessions", { method: "POST", body });
   if (!s.ok) throw new Error(`session create ${s.status}: ${s.text.slice(0, 300)}`);
+  ACCESS_TOKEN = s.json.access_token ?? null;
+  REFRESH_TOKEN = s.json.refresh_token ?? null;
   return s.json.session_id ?? s.json.sessionId ?? null;
 }
 

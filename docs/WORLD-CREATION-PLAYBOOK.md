@@ -59,11 +59,11 @@ Enumerate the real tool landscape of the domain, then mock **all of it**:
   leads, stale sync, currency mismatches, superseded quotes) traces to an
   eval, article, or reading collected in Stage 0.
 
-*Lawfirm status:* partial — 102 executable tools over one unified SQLite
+*Lawfirm status:* implemented — 91 agent-visible product tools over one session-private SQLite
 world with chaos-lite (distractor documents, superseded drafts, ambiguous
-acks, injected API friction; `world/local/server.py`), now fronted by **8
-per-system MCP servers** (practice management, docketing, DMS, billing,
-discovery, office suite, HR, knowledge — `mcp/systems.json`,
+acks, injected API friction; `world/local/server.py`), now fronted by **9
+per-system MCP servers** (practice management, court records, e-filing,
+deadline rules, DMS, discovery, Workspace, e-billing, and e-signature — `mcp/systems.json`,
 `mcp/serve-system.mjs`, topology-proven by `npm run mcp:test`). **NEW for sales (the
 headline gap):** multi-system fragmentation — several mock services with
 separate namespaces/storage and cross-system reconciliation tasks. The local
@@ -79,8 +79,8 @@ audit trail looks like, which fields are load-bearing for verification).
 Depth target: every workflow from the thesis has the tables it mutates, and
 every graded outcome is a row a verifier can pin.
 
-*Lawfirm status:* implemented — 74 tables, tool contracts synthesized from
-specs, verifier-pinnable outcomes (`world/expansion/assemble.mjs` generates
+*Lawfirm status:* implemented — 47 product-state tables,
+vendor-shaped tool contracts, and verifier-pinnable outcomes (`world/expansion/assemble.mjs` generates
 verifiers with pinned answer keys; `world/local/oracle.py` is the admission
 gate: a task ships only if its reference walk executes and passes).
 
@@ -92,7 +92,8 @@ each with the answer-key discipline: prompt states the output vocabulary,
 the answer comes only from the seeded data, the verifier pins it
 (exact values, required reads, forbidden fabrications).
 
-*Lawfirm status:* implemented — 9 eval-anchored packs, 231 tasks, 231/231
+*Lawfirm status:* implemented — eval-anchored packs plus native product workflows,
+291 tasks, 291/291
 oracle-verified; coverage proof with per-item verdicts
 (`docs/COVERAGE.md`).
 

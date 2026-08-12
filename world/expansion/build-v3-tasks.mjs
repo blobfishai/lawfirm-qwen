@@ -32,6 +32,64 @@ const previousVerifierRevision = world.v3_task_pack?.verifier_revision ?? 1;
 
 const py = (s) => JSON.stringify(String(s));
 const pyNorm = (v) => (typeof v === "number" ? (Number.isInteger(v) ? v.toFixed(1) : String(v)) : String(v));
+const gmailRaw = ({ from, to, subject, body }) => Buffer.from([
+  `From: ${from}`, `To: ${to}`, `Subject: ${subject}`,
+  "Content-Type: text/plain; charset=utf-8", "", body,
+].join("\r\n")).toString("base64url");
+
+function wireArgs(tool, a) {
+  const args = { ...a };
+  if (tool === "contacts_create") return { body: { data: {
+    type: args.type, name: args.name, title: args.title,
+    email_addresses: args.primary_email ? [{ name: "Work", address: args.primary_email, default_email: true }] : undefined,
+    phone_numbers: args.primary_phone ? [{ name: "Work", number: args.primary_phone, default_number: true }] : undefined,
+  } } };
+  if (tool === "matters_create") return { body: { data: {
+    client: { id: args.client_id }, description: args.display_name || args.description,
+    display_number: args.number, practice_area: args.practice_area_id ? { id: args.practice_area_id } : undefined,
+    responsible_attorney: args.responsible_attorney_id ? { id: args.responsible_attorney_id } : undefined,
+    open_date: args.open_date,
+  } } };
+  if (tool === "tasks_create") return { body: { data: {
+    name: args.name, description: args.description || args.name,
+    assignee: { id: args.assignee_user_id, type: "User" },
+    matter: { id: args.matter_id }, due_at: args.due_at, priority: args.priority,
+  } } };
+  if (tool === "notes_create") return { body: { data: {
+    contact: { id: args.author_user_id }, matter: { id: args.matter_id }, type: "Matter",
+    subject: args.subject, detail: args.detail, date: "2026-08-10",
+  } } };
+  if (tool === "time_entries_create") return { body: { data: {
+    type: "TimeEntry", date: args.date, matter: { id: args.matter_id }, user: { id: args.user_id },
+    quantity: args.quantity_hours, price: args.rate, note: args.description,
+    activity_description: args.utbms_task_code ? { utbms_task_id: args.utbms_task_code } : undefined,
+    non_billable: args.billable === 0,
+  } } };
+  if (tool === "time_entries_update") return { id: args.id, body: { data: {
+    date: args.date, quantity: args.quantity_hours, price: args.rate, note: args.description,
+    activity_description: args.utbms_task_code ? { utbms_task_id: args.utbms_task_code } : undefined,
+    non_billable: args.billable == null ? undefined : args.billable === 0,
+  } } };
+  if (tool === "bills_update") return { id: args.id, body: { data: {
+    state: args.state, issued_at: args.issue_date, due_at: args.due_date,
+  } } };
+  if (tool === "communications_create") return { body: { data: {
+    matter: { id: args.matter_id }, type: args.type || "EmailCommunication",
+    subject: args.subject, body: args.body || "", received_at: args.received_at || "2026-08-10T12:00:00Z",
+  } } };
+  if (tool === "documents_get" || tool === "documents_download") {
+    return { body: { documentId: `LEGAL!${args.id}.1`, latest: true } };
+  }
+  if (tool === "documents_checkin") return {
+    updateOrCreate: "Create New Version", documentId: `LEGAL!${args.id}.1`, file: args.body,
+  };
+  if (tool === "gmail_messages_list") return { userId: "me", ...args };
+  if (tool === "gmail_messages_get") return { userId: "me", ...args, id: String(args.id) };
+  if (tool === "gmail_messages_send") return { userId: "me", body: { raw: gmailRaw({
+    from: args.from_addr, to: args.to_addr, subject: args.subject, body: args.body,
+  }) } };
+  return args;
+}
 
 function vcode(taskId, family, walk, inserts, updates) {
   const insertBlocks = inserts.map((c, i) => {
@@ -163,10 +221,9 @@ const TASKS = [
   },
   {
     id: "task_v3_004", family: "clio-trust-overdraft",
-    prompt: 'Trust compliance check: (1) list the trust transactions for matter 10 and (2) get the trust balance for matter 10. A client ledger must never be negative. If (and only if) the balance is negative, record a note on matter 10 authored by user 1 with subject exactly "TRUST OVERDRAFT ALERT" and a detail stating the computed balance. Do not post any trust transaction.',
-    walk: ["trust_transactions_list", "trust_balance_get", "notes_create"],
+    prompt: 'Trust compliance check: list every trust transaction for matter 10 and compute the balance yourself. A client ledger must never be negative. If (and only if) the balance is negative, record a note on matter 10 authored by user 1 with subject exactly "TRUST OVERDRAFT ALERT" and a detail stating the computed balance. Do not post any trust transaction.',
+    walk: ["trust_transactions_list", "notes_create"],
     args: [
-      { matter_id: 10 },
       { matter_id: 10 },
       { matter_id: 10, author_user_id: 1, subject: "TRUST OVERDRAFT ALERT", detail: "Client trust ledger for matter 10 computes to -25750.44; freeze disbursements and escalate to the trust accountant." },
     ],
@@ -187,25 +244,24 @@ const TASKS = [
   },
   {
     id: "task_v3_006", family: "ledes-reconciliation-gate",
-    prompt: 'E-billing validation gate for invoice 2: (1) get the invoice header; (2) list its line items; (3) run the line-total reconciliation. The invoice may be submitted ONLY if the line-item sum equals the header total. If they do not match, do NOT submit: instead record the failure by updating the invoice with status exactly "rejected" and validation_errors exactly "TOTAL_MISMATCH". ',
-    walk: ["invoices_get", "invoice_lines_list", "invoice_total_check", "invoices_submit"],
+    prompt: 'Pre-submission billing validation for Clio bill 2: get the bill header, list every line item, and independently sum the line amounts. The bill total is $56,903.18. If the line sum differs, do not generate a LEDES file. Record a matter note on matter 5 authored by user 1, subject exactly "LEDES TOTAL MISMATCH", with detail stating both the computed line sum and header total.',
+    walk: ["bills_get", "bill_line_items_list", "notes_create"],
     args: [
       { id: 2 },
-      { invoice_id: 2 },
-      { invoice_id: 2 },
-      { id: 2, status: "rejected", validation_errors: "TOTAL_MISMATCH" },
+      { bill_id: 2, limit: 100 },
+      { matter_id: 5, author_user_id: 1, subject: "LEDES TOTAL MISMATCH", detail: "Bill 2 line items total $26,060.90, which does not match the $56,903.18 header total; LEDES generation blocked." },
     ],
-    inserts: [],
-    updates: [{ table: "eb_invoices", id: 2, pinned: [["status", "rejected"], ["validation_errors", "TOTAL_MISMATCH"]] }],
+    inserts: [{ table: "pm_notes", pinned: [["subject", "LEDES TOTAL MISMATCH"], ["matter_id", 5]] }],
+    updates: [],
   },
   {
     id: "task_v3_007", family: "courtlistener-cite-check",
-    prompt: 'Cite-check two citations from a draft brief using the citation lookup: "821 Sim. 3d 926" and "999 Sim. 9d 999". A citation that does not resolve must be flagged, never guessed. Record the result as a note on matter 1 authored by user 1 with subject exactly "CITE CHECK: 1 verified, 1 unresolved" and a detail naming which citation failed.',
+    prompt: 'Cite-check two citations from a draft brief using the citation lookup: "410 U.S. 113" and "999 Sim. 9d 999". A citation that does not resolve must be flagged, never guessed. Record the result as a note on matter 1 authored by user 1 with subject exactly "CITE CHECK: 1 verified, 1 unresolved" and a detail naming which citation failed.',
     walk: ["citation_lookup", "citation_lookup", "notes_create"],
     args: [
-      { text: "821 Sim. 3d 926" },
+      { text: "410 U.S. 113" },
       { text: "999 Sim. 9d 999" },
-      { matter_id: 1, author_user_id: 1, subject: "CITE CHECK: 1 verified, 1 unresolved", detail: "821 Sim. 3d 926 resolves; 999 Sim. 9d 999 does not resolve in the citation database and must not be cited." },
+      { matter_id: 1, author_user_id: 1, subject: "CITE CHECK: 1 verified, 1 unresolved", detail: "410 U.S. 113 resolves; 999 Sim. 9d 999 does not resolve in the citation database and must not be cited." },
     ],
     inserts: [{ table: "pm_notes", pinned: [["subject", "CITE CHECK: 1 verified, 1 unresolved"]] }],
     updates: [],
@@ -221,18 +277,21 @@ const TASKS = [
       { document_id: 5 },
     ],
     inserts: [],
-    updates: [{ table: "dm_documents", id: 5, pinned: [["latest_version", 2]] }],
+    updates: [{ table: "dm_documents", id: 5, pinned: [
+      ["latest_version", 2],
+      ["body", "Settlement Model — revised assumptions per partner comments (v2)."],
+    ] }],
   },
   {
     id: "task_v3_009", family: "courtlistener-docket-watch",
-    prompt: 'Docket monitoring: find the docket for "Talvern Logistics v. Halcyon Therapeutics" (search by case name). Before subscribing, inspect the firm\'s existing docket alerts to learn the exact alert_type vocabulary this system uses — do not invent a value. Then subscribe a new-filing alert on that docket for exactly "docketing@simulated-firm.example", using the alert_type value that means a new docket entry.',
+    prompt: 'Docket monitoring: find the docket for "Talvern Logistics v. Halcyon Therapeutics" (search by case name). Before subscribing, inspect the current CourtListener user\'s existing docket alerts to learn the exact alert_type vocabulary this system uses — do not invent a value. Then subscribe that authenticated user to docket 7 using alert_type 1 (subscription).',
     walk: ["dockets_search", "docket_alerts_list", "docket_alerts_create"],
     args: [
       { q: "Talvern Logistics v. Halcyon" },
-      { limit: 20 },
-      { docket: 7, alert_type: "entry", recipient: "docketing@simulated-firm.example" },
+      {},
+      { docket: 7, alert_type: 1 },
     ],
-    inserts: [{ table: "cl_docket_alerts", pinned: [["docket_id", 7], ["alert_type", "entry"], ["recipient", "docketing@simulated-firm.example"]] }],
+    inserts: [{ table: "cl_docket_alerts", pinned: [["docket_id", 7], ["alert_type", 1]] }],
     updates: [],
   },
   {
@@ -259,13 +318,13 @@ const TASKS = [
   },
   {
     id: "task_v3_012", family: "r2-derived-prebill",
-    prompt: 'Cut the prebill for matter 5: list its time entries, sum the totals of entries that are billable and not yet billed, and create a draft bill for matter 5 (client_id 16) whose subtotal is exactly that sum, issue date "2026-08-11", due date "2026-09-10". The subtotal must equal the computed sum to the cent.',
-    walk: ["time_entries_list", "bills_create"],
+    prompt: 'Prepare the prebill handoff for matter 5: list its time entries, sum the totals of entries that are billable and not yet billed, then email billing.ops@simulated-firm.example from associate@simulated-firm.example. Use subject exactly "PREBILL REQUEST — MATTER 5 — $4,730.50" and state the computed subtotal, issue date 2026-08-11, due date 2026-09-10, and client_id 16 in the body. Clio exposes no public bill-creation API, so do not invent one.',
+    walk: ["time_entries_list", "gmail_messages_send"],
     args: [
       { matter_id: 5, billable: 1, billed: 0 },
-      { matter_id: 5, client_id: 16, subtotal: 4730.5, issue_date: "2026-08-11", due_date: "2026-09-10" },
+      { from_addr: "associate@simulated-firm.example", to_addr: "billing.ops@simulated-firm.example", subject: "PREBILL REQUEST — MATTER 5 — $4,730.50", body: "Matter 5 prebill subtotal: $4,730.50; client_id: 16; issue date: 2026-08-11; due date: 2026-09-10." },
     ],
-    inserts: [{ table: "pm_bills", pinned: [["subtotal", 4730.5], ["matter_id", 5], ["state", "draft"]] }],
+    inserts: [{ table: "ws_messages", pinned: [["subject", "PREBILL REQUEST — MATTER 5 — $4,730.50"], ["to_addr", "billing.ops@simulated-firm.example"]] }],
     updates: [],
   },
   {
@@ -287,14 +346,14 @@ const TASKS = [
   },
   {
     id: "task_v3_014", family: "r2-withheld-id-docket",
-    prompt: 'Docket intake: our client Meridian Cloud has been sued — find the docket where Meridian Cloud is the DEFENDANT (case name ends "v. Meridian Cloud"), confirm its filing date by getting the docket, and subscribe a new-entry alert on it for exactly "litigation-team@simulated-firm.example". Do not subscribe on any docket where Meridian Cloud is the plaintiff.',
+    prompt: 'Docket intake: our client Meridian Cloud has been sued — find the docket where Meridian Cloud is the DEFENDANT (case name ends "v. Meridian Cloud"), confirm its filing date by getting the docket, and subscribe the current authenticated CourtListener user to it with alert_type 1. Do not subscribe on any docket where Meridian Cloud is the plaintiff.',
     walk: ["dockets_search", "dockets_get", "docket_alerts_create"],
     args: [
       { q: "v. Meridian Cloud" },
       { id: 1 },
-      { docket: 1, alert_type: "entry", recipient: "litigation-team@simulated-firm.example" },
+      { docket: 1, alert_type: 1 },
     ],
-    inserts: [{ table: "cl_docket_alerts", pinned: [["docket_id", 1], ["recipient", "litigation-team@simulated-firm.example"]] }],
+    inserts: [{ table: "cl_docket_alerts", pinned: [["docket_id", 1], ["alert_type", 1]] }],
     updates: [],
   },
   {
@@ -328,7 +387,7 @@ for (const t of TASKS) {
     complexity: "medium",
     method: "v3_workflow",
     walk: t.walk,
-    reference_args: t.args,
+    reference_args: t.args.map((args, index) => wireArgs(t.walk[index], args)),
     tables_affected: [...new Set([...t.inserts.map((x) => x.table), ...t.updates.map((x) => x.table)])],
     effects: [
       ...t.inserts.map((x) => ({ table: x.table, op: "insert" })),
@@ -347,6 +406,8 @@ for (const t of TASKS) {
   } else {
     // Preserve later lineage additions (especially per-task seed bundles).
     // The structured TASKS manifest remains the verifier source of truth.
+    const existing = world.tasks[taskIndex];
+    world.tasks[taskIndex] = { ...existing, ...generatedTask, seed: existing.seed };
     refreshed++;
   }
 
@@ -381,9 +442,9 @@ for (const t of TASKS) {
 world.v3_task_pack = {
   generated_at: "2026-08-10",
   tasks: TASKS.map((t) => t.id),
-  verifier_revision: 2,
-  note: "Workflow tasks graded on the v3 real-API-mirrored surfaces; answer keys are same-row bound against the deterministic v3 seed.",
+  verifier_revision: 3,
+  note: "Workflow tasks graded on the v3 real-API-mirrored surfaces; answer keys are same-row bound and document writes pin their required content against the deterministic v3 seed.",
 };
-world.version = (world.version ?? 21) + ((added > 0 || previousVerifierRevision < 2) ? 1 : 0);
+world.version = (world.version ?? 21) + ((added > 0 || previousVerifierRevision < 3) ? 1 : 0);
 writeFileSync(WORLD_OUT, JSON.stringify(raw, null, 1));
 console.log(`${WORLD_OUT}: ${world.tasks.length} tasks (${added} added, ${refreshed} refreshed), ${world.verifiers.length} verifiers`);

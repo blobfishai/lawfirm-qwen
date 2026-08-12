@@ -26,7 +26,6 @@ List matters with filters (status, client, responsible attorney, practice area).
 | `client_id` | integer | no | same |
 | `responsible_attorney_id` | integer | no | same |
 | `practice_area_id` | integer | no | same |
-| `billing_method` | string | no | same |
 | `limit` | integer | no | same |
 
 **Op:** `list` on `pm_matters`
@@ -55,14 +54,7 @@ Open a new matter.
 
 | Param (real API name) | Type | Required | Internal field |
 |---|---|---|---|
-| `display_name` | string | yes | same |
-| `client_id` | integer | yes | same |
-| `practice_area_id` | integer | yes | same |
-| `responsible_attorney_id` | integer | yes | same |
-| `billing_method` | string | no | same |
-| `description` | string | no | same |
-| `number` | string | no | same |
-| `open_date` | string | no | same |
+| `body` | object | no | same |
 
 **Op:** `create` on `pm_matters`
 
@@ -77,11 +69,7 @@ Update matter fields (status transitions, staffing, description).
 | Param (real API name) | Type | Required | Internal field |
 |---|---|---|---|
 | `id` | integer | no | same |
-| `status` | string | no | same |
-| `responsible_attorney_id` | integer | no | same |
-| `description` | string | no | same |
-| `close_date` | string | no | same |
-| `billing_method` | string | no | same |
+| `body` | object | no | same |
 
 **Op:** `update` on `pm_matters`
 
@@ -111,7 +99,6 @@ List contacts (people and companies) with filters.
 | Param (real API name) | Type | Required | Internal field |
 |---|---|---|---|
 | `type` | string | no | same |
-| `is_client` | integer | no | same |
 | `limit` | integer | no | same |
 
 **Op:** `list` on `pm_contacts`
@@ -140,13 +127,7 @@ Create a person or company contact.
 
 | Param (real API name) | Type | Required | Internal field |
 |---|---|---|---|
-| `type` | string | yes | same |
-| `name` | string | yes | same |
-| `primary_email` | string | no | same |
-| `primary_phone` | string | no | same |
-| `title` | string | no | same |
-| `company_name` | string | no | same |
-| `is_client` | integer | no | same |
+| `body` | object | no | same |
 
 **Op:** `create` on `pm_contacts`
 
@@ -161,12 +142,7 @@ Update contact fields.
 | Param (real API name) | Type | Required | Internal field |
 |---|---|---|---|
 | `id` | integer | no | same |
-| `primary_email` | string | no | same |
-| `primary_phone` | string | no | same |
-| `title` | string | no | same |
-| `company_name` | string | no | same |
-| `is_client` | integer | no | same |
-| `name` | string | no | same |
+| `body` | object | no | same |
 
 **Op:** `update` on `pm_contacts`
 
@@ -197,11 +173,11 @@ List time entries with filters (matter, user, date range, billed state).
 |---|---|---|---|
 | `matter_id` | integer | no | same |
 | `user_id` | integer | no | same |
-| `billable` | integer | no | same |
-| `billed` | integer | no | same |
-| `utbms_task_code` | string | no | same |
-| `date_from` | string | no | same |
-| `date_to` | string | no | same |
+| `start_date` | string | no | `date_from` |
+| `end_date` | string | no | `date_to` |
+| `status` | string | no | same |
+| `type` | string | no | same |
+| `query` | string | no | same |
 | `limit` | integer | no | same |
 
 **Op:** `list` on `pm_time_entries`
@@ -230,14 +206,7 @@ Record billable/non-billable time against a matter with a UTBMS task code.
 
 | Param (real API name) | Type | Required | Internal field |
 |---|---|---|---|
-| `matter_id` | integer | yes | same |
-| `user_id` | integer | yes | same |
-| `date` | string | yes | same |
-| `quantity_hours` | number | yes | same |
-| `rate` | number | no | same |
-| `description` | string | yes | same |
-| `utbms_task_code` | string | no | same |
-| `billable` | integer | no | same |
+| `body` | object | no | same |
 
 **Op:** `create` on `pm_time_entries` · computed: total
 
@@ -252,12 +221,7 @@ Correct a time entry (narrative, hours, code) before billing.
 | Param (real API name) | Type | Required | Internal field |
 |---|---|---|---|
 | `id` | integer | no | same |
-| `quantity_hours` | number | no | same |
-| `rate` | number | no | same |
-| `description` | string | no | same |
-| `utbms_task_code` | string | no | same |
-| `billable` | integer | no | same |
-| `date` | string | no | same |
+| `body` | object | no | same |
 
 **Op:** `update` on `pm_time_entries` · computed: total
 
@@ -273,8 +237,11 @@ List expense entries with filters.
 |---|---|---|---|
 | `matter_id` | integer | no | same |
 | `user_id` | integer | no | same |
-| `billable` | integer | no | same |
-| `utbms_expense_code` | string | no | same |
+| `start_date` | string | no | `date_from` |
+| `end_date` | string | no | `date_to` |
+| `status` | string | no | same |
+| `type` | string | no | same |
+| `query` | string | no | same |
 | `limit` | integer | no | same |
 
 **Op:** `list` on `pm_expense_entries`
@@ -289,13 +256,7 @@ Record a matter expense with a UTBMS expense code.
 
 | Param (real API name) | Type | Required | Internal field |
 |---|---|---|---|
-| `matter_id` | integer | yes | same |
-| `user_id` | integer | yes | same |
-| `date` | string | yes | same |
-| `amount` | number | yes | same |
-| `description` | string | yes | same |
-| `utbms_expense_code` | string | no | same |
-| `billable` | integer | no | same |
+| `body` | object | no | same |
 
 **Op:** `create` on `pm_expense_entries`
 
@@ -330,25 +291,6 @@ Fetch one bill with totals and state.
 
 **Op:** `get` on `pm_bills`
 
-## `bills_create`
-
-*Mirrors:* POST /api/v4/bills.json
-
-Generate a draft bill (prebill) for a matter.
-
-**Who uses it & why:** The billing clerk cuts a draft bill from June's unbilled time on the matter.
-
-| Param (real API name) | Type | Required | Internal field |
-|---|---|---|---|
-| `matter_id` | integer | yes | same |
-| `client_id` | integer | yes | same |
-| `subtotal` | number | yes | same |
-| `issue_date` | string | no | same |
-| `due_date` | string | no | same |
-| `number` | string | no | same |
-
-**Op:** `create` on `pm_bills` · computed: total, balance
-
 ## `bills_update`
 
 *Mirrors:* PATCH /api/v4/bills/{id}.json
@@ -360,10 +302,7 @@ Move a bill through its lifecycle (draft → awaiting_approval → approved → 
 | Param (real API name) | Type | Required | Internal field |
 |---|---|---|---|
 | `id` | integer | no | same |
-| `state` | string | no | same |
-| `issue_date` | string | no | same |
-| `due_date` | string | no | same |
-| `balance` | number | no | same |
+| `body` | object | no | same |
 
 **Op:** `update` on `pm_bills`
 
@@ -394,48 +333,12 @@ List client trust ledger transactions (deposits, disbursements, earned-fee trans
 | Param (real API name) | Type | Required | Internal field |
 |---|---|---|---|
 | `matter_id` | integer | no | same |
-| `client_id` | integer | no | same |
+| `contact_id` | integer | no | `client_id` |
 | `kind` | string | no | same |
-| `cleared` | integer | no | same |
-| `date_from` | string | no | same |
-| `date_to` | string | no | same |
+| `status` | string | no | same |
 | `limit` | integer | no | same |
 
 **Op:** `list` on `pm_trust_transactions`
-
-## `trust_transactions_create`
-
-*Mirrors:* Clio trust accounting (trust deposit/disbursement)
-
-Post a trust transaction. Deposits positive; disbursements and earned-fee transfers negative.
-
-**Who uses it & why:** Reception posts the client's retainer check into the trust ledger.
-
-| Param (real API name) | Type | Required | Internal field |
-|---|---|---|---|
-| `matter_id` | integer | yes | same |
-| `client_id` | integer | yes | same |
-| `kind` | string | yes | same |
-| `amount` | number | yes | same |
-| `date` | string | yes | same |
-| `memo` | string | yes | same |
-
-**Op:** `create` on `pm_trust_transactions`
-
-## `trust_balance_get`
-
-*Mirrors:* derived: Clio trust balance report
-
-Current trust balance for a matter or client (sum of ledger).
-
-**Who uses it & why:** Before filing, the paralegal confirms the trust balance covers the court fees.
-
-| Param (real API name) | Type | Required | Internal field |
-|---|---|---|---|
-| `matter_id` | integer | no | same |
-| `client_id` | integer | no | same |
-
-**Op:** `aggregate` on `pm_trust_transactions`
 
 ## `calendar_entries_list`
 
@@ -448,9 +351,9 @@ List calendar entries (hearings, depositions, deadlines) with filters and date r
 | Param (real API name) | Type | Required | Internal field |
 |---|---|---|---|
 | `matter_id` | integer | no | same |
-| `kind` | string | no | same |
-| `start_from` | string | no | same |
-| `start_to` | string | no | same |
+| `from` | string | no | `start_from` |
+| `to` | string | no | `start_to` |
+| `query` | string | no | same |
 | `limit` | integer | no | same |
 
 **Op:** `list` on `pm_calendar_entries`
@@ -465,13 +368,7 @@ Create a calendar entry for a matter.
 
 | Param (real API name) | Type | Required | Internal field |
 |---|---|---|---|
-| `matter_id` | integer | yes | same |
-| `summary` | string | yes | same |
-| `start_at` | string | yes | same |
-| `end_at` | string | no | same |
-| `location` | string | no | same |
-| `kind` | string | yes | same |
-| `attendee_user_ids` | string | no | same |
+| `body` | object | no | same |
 
 **Op:** `create` on `pm_calendar_entries`
 
@@ -486,11 +383,7 @@ Reschedule or edit a calendar entry.
 | Param (real API name) | Type | Required | Internal field |
 |---|---|---|---|
 | `id` | integer | no | same |
-| `summary` | string | no | same |
-| `start_at` | string | no | same |
-| `end_at` | string | no | same |
-| `location` | string | no | same |
-| `kind` | string | no | same |
+| `body` | object | no | same |
 
 **Op:** `update` on `pm_calendar_entries`
 
@@ -505,9 +398,10 @@ List matter tasks with filters.
 | Param (real API name) | Type | Required | Internal field |
 |---|---|---|---|
 | `matter_id` | integer | no | same |
-| `assignee_user_id` | integer | no | same |
+| `assignee_id` | integer | no | `assignee_user_id` |
 | `status` | string | no | same |
 | `priority` | string | no | same |
+| `query` | string | no | same |
 | `limit` | integer | no | same |
 
 **Op:** `list` on `pm_tasks`
@@ -522,11 +416,7 @@ Assign a task on a matter.
 
 | Param (real API name) | Type | Required | Internal field |
 |---|---|---|---|
-| `matter_id` | integer | yes | same |
-| `assignee_user_id` | integer | yes | same |
-| `name` | string | yes | same |
-| `due_at` | string | yes | same |
-| `priority` | string | no | same |
+| `body` | object | no | same |
 
 **Op:** `create` on `pm_tasks`
 
@@ -541,10 +431,7 @@ Progress or complete a task.
 | Param (real API name) | Type | Required | Internal field |
 |---|---|---|---|
 | `id` | integer | no | same |
-| `status` | string | no | same |
-| `due_at` | string | no | same |
-| `priority` | string | no | same |
-| `assignee_user_id` | integer | no | same |
+| `body` | object | no | same |
 
 **Op:** `update` on `pm_tasks`
 
@@ -558,8 +445,9 @@ List matter notes.
 
 | Param (real API name) | Type | Required | Internal field |
 |---|---|---|---|
+| `type` | string | no | same |
 | `matter_id` | integer | no | same |
-| `author_user_id` | integer | no | same |
+| `query` | string | no | same |
 | `limit` | integer | no | same |
 
 **Op:** `list` on `pm_notes`
@@ -574,10 +462,7 @@ Attach a note to a matter.
 
 | Param (real API name) | Type | Required | Internal field |
 |---|---|---|---|
-| `matter_id` | integer | yes | same |
-| `author_user_id` | integer | yes | same |
-| `subject` | string | yes | same |
-| `detail` | string | yes | same |
+| `body` | object | no | same |
 
 **Op:** `create` on `pm_notes`
 
@@ -607,13 +492,7 @@ Log an email or call against a matter.
 
 | Param (real API name) | Type | Required | Internal field |
 |---|---|---|---|
-| `matter_id` | integer | yes | same |
-| `type` | string | yes | same |
-| `subject` | string | yes | same |
-| `body` | string | no | same |
-| `senders` | string | no | same |
-| `receivers` | string | no | same |
-| `received_at` | string | no | same |
+| `body` | object | no | same |
 
 **Op:** `create` on `pm_communications`
 
@@ -643,25 +522,16 @@ List the firm's practice areas.
 
 | Param (real API name) | Type | Required | Internal field |
 |---|---|---|---|
-| `category` | string | no | same |
 | `limit` | integer | no | same |
 
 **Op:** `list` on `pm_practice_areas`
 
-## `audit_events_list`
+## Internal simulator boundary
 
-*Mirrors:* internal audit feed — NO public Clio equivalent (Clio exposes no audit-log API); fidelity ceiling documented, kept because controlled-change verifiers pin these rows
+These operations are not published by MCP `tools/list` and cannot be called by an evaluated agent. They actuate deterministic external state or preserve migration-only storage behavior:
 
-List controlled-change audit events for a record.
-
-**Who uses it & why:** A partner reviews who changed the invoice amount and why.
-
-| Param (real API name) | Type | Required | Internal field |
-|---|---|---|---|
-| `record_table` | string | no | same |
-| `record_id` | integer | no | same |
-| `actor_role` | string | no | same |
-| `limit` | integer | no | same |
-
-**Op:** `list` on `pm_audit_events`
+- `bills_create`
+- `trust_transactions_create`
+- `trust_balance_get`
+- `audit_events_list`
 

@@ -26,68 +26,29 @@ def verify(initial_state, final_state, trace):
     chk("state_changed", initial_state != final_state,
         "world state changed" if initial_state != final_state else "NO state change")
 
-    _required_workflow_path = ["matters_get","time_entries_create","bills_update"]
-    _path_is_write = [False,True,True]
-    # Ordering is graded where it carries meaning: writes in declared order,
-    # and every read before the write it justifies. Reads are unordered among
-    # themselves — the reference walk's browsing order is not a requirement.
-    _pos = {}
-    for _i, _t in enumerate(tools):
-        _pos.setdefault(_t, []).append(_i)
-    _missing_workflow = [t for t in _required_workflow_path if t not in _pos]
-    _wpos = {}
-    if not _missing_workflow:
-        _cursor = -1
-        for _i, _t in enumerate(_required_workflow_path):
-            if not _path_is_write[_i]:
-                continue
-            _nxt = None
-            for _x in _pos[_t]:
-                if _x > _cursor:
-                    _nxt = _x
-                    break
-            if _nxt is None:
-                _missing_workflow.append(_t)
-                break
-            _wpos[_i] = _nxt
-            _cursor = _nxt
-    if not _missing_workflow:
-        _need, _due = {}, {}
-        for _i, _t in enumerate(_required_workflow_path):
-            if _path_is_write[_i]:
-                continue
-            _need[_t] = _need.get(_t, 0) + 1
-            _d = None
-            for _k in range(_i + 1, len(_required_workflow_path)):
-                if _path_is_write[_k] and _k in _wpos:
-                    _d = _wpos[_k]
-                    break
-            if _d is not None:
-                _due[_t] = _d if _t not in _due else min(_due[_t], _d)
-        for _t, _n in _need.items():
-            _d = _due.get(_t)
-            _seen = [_x for _x in _pos.get(_t, []) if _d is None or _x < _d]
-            if len(_seen) < _n:
-                _missing_workflow.append(_t)
-    _workflow_complete = not _missing_workflow
-    chk("required_workflow_path", _workflow_complete,
-        "completed ordered workflow: " + " -> ".join(_required_workflow_path) if _workflow_complete
-        else "INCOMPLETE WORKFLOW: missing ordered checkpoints " + " -> ".join(_missing_workflow))
+    _path = ["matters_get","time_entries_create","bills_update"]
+    _cur = 0
+    for _t in tools:
+        if _cur < len(_path) and _t == _path[_cur]:
+            _cur += 1
+    chk("required_workflow_path", _cur == len(_path),
+        "completed: " + " -> ".join(_path) if _cur == len(_path)
+        else "INCOMPLETE: missing " + " -> ".join(_path[_cur:]))
 
     _bi_0 = _ids(initial_state.get("pm_time_entries", []))
     _af_0 = final_state.get("pm_time_entries", [])
     _new_0 = [r for r in _af_0 if str(r.get("id")) not in _bi_0]
     chk("rows_inserted_into_pm_time_entries", len(_new_0) >= 1,
         f"pm_time_entries: {len(_bi_0)} -> {len(_af_0)} rows")
-    _p0_0 = [r for r in _new_0 if _norm(r.get("utbms_task_code")) == _norm("L240")]
+    _p0_0 = [r for r in _new_0 if _norm(r.get("utbms_task_code")) == _norm("L240") and _norm(r.get("quantity_hours")) == _norm("2.5") and _norm(r.get("total")) == _norm("1000.0")]
     chk("pm_time_entries_new_row_utbms_task_code_is_L240", len(_p0_0) > 0,
-        f"expected new pm_time_entries row with utbms_task_code=L240; saw " + str([_norm(r.get("utbms_task_code")) for r in _new_0][:6]))
-    _p0_1 = [r for r in _new_0 if _norm(r.get("quantity_hours")) == _norm("2.5")]
+        f"expected one new pm_time_entries row matching every declared pin (including utbms_task_code=L240); saw " + str([_norm(r.get("utbms_task_code")) for r in _new_0][:6]))
+    _p0_1 = [r for r in _new_0 if _norm(r.get("utbms_task_code")) == _norm("L240") and _norm(r.get("quantity_hours")) == _norm("2.5") and _norm(r.get("total")) == _norm("1000.0")]
     chk("pm_time_entries_new_row_quantity_hours_is_2.5", len(_p0_1) > 0,
-        f"expected new pm_time_entries row with quantity_hours=2.5; saw " + str([_norm(r.get("quantity_hours")) for r in _new_0][:6]))
-    _p0_2 = [r for r in _new_0 if _norm(r.get("total")) == _norm("1000.0")]
+        f"expected one new pm_time_entries row matching every declared pin (including quantity_hours=2.5); saw " + str([_norm(r.get("quantity_hours")) for r in _new_0][:6]))
+    _p0_2 = [r for r in _new_0 if _norm(r.get("utbms_task_code")) == _norm("L240") and _norm(r.get("quantity_hours")) == _norm("2.5") and _norm(r.get("total")) == _norm("1000.0")]
     chk("pm_time_entries_new_row_total_is_1000.0", len(_p0_2) > 0,
-        f"expected new pm_time_entries row with total=1000.0; saw " + str([_norm(r.get("total")) for r in _new_0][:6]))
+        f"expected one new pm_time_entries row matching every declared pin (including total=1000.0); saw " + str([_norm(r.get("total")) for r in _new_0][:6]))
 
     _row_u0 = next((r for r in final_state.get("pm_bills", []) if str(r.get("id")) == "3"), None)
     chk("pm_bills_3_state_is_awaiting_approval",

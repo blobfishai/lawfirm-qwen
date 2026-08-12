@@ -1,122 +1,69 @@
 {
- "task_id": "task_015",
- "prompt": "At Law Firm Company, the operations queue flags Summit Holdings Litigation Discovery as currently in \"Requested\" status within discovery requests, awaiting attention. To move forward, record a controlled production cost adjustment for this discovery request, capturing the change in the litigation discovery amount history. Separately, log an independent review of the discovery request decision, adding it to the litigation discovery reviews. Apply only these two specific updates, using the operational terminology \"Litigation Support\" where applicable, and create the new amount history record and the new review record accordingly.",
+ "acceptance_evidence": {
+  "accepted_by": "discrimination_gate",
+  "attempts": 1,
+  "contract_digest": "acceptance_v2_1872a37dea09ee51e5b56042b4690ce95a661db3a1a17419d55ef988b769b29b",
+  "negative_probes_passed": true,
+  "pass_rate": 1,
+  "passes": 1,
+  "protocol": "vcode_discrimination",
+  "reason": "accepted: deterministic reference execution passed; null, shortcut, wrong-row, wrong-value, blind-fallback + incomplete baselines fail",
+  "reference_passed": true,
+  "timed_out": false
+ },
+ "acceptance_label": "in_band",
+ "anchor_refs": [
+  "anc_5590a9fbe72c",
+  "anc_d309e3ebc023",
+  "anc_60f8b994fb8a",
+  "anc_e238669e3d88",
+  "anc_dd3f15c795cd",
+  "anc_9e88ea92b5c0",
+  "anc_f3608223908f",
+  "anc_eb2ac60e3898",
+  "anc_dc588f9468a1",
+  "anc_30f0f9b63f30",
+  "anc_566d7c4fde9c",
+  "anc_e1a8aa579e95"
+ ],
+ "complexity": "medium",
+ "difficulty_tier": "medium",
+ "effects": [
+  {
+   "op": "insert",
+   "table": "pm_notes"
+  },
+  {
+   "op": "insert",
+   "table": "pm_notes"
+  }
+ ],
+ "expected_state_changes": [
+  {
+   "field": "(new row)",
+   "from": "14 rows",
+   "id": "(new product row)",
+   "table": "pm_notes",
+   "to": "15 rows"
+  },
+  {
+   "field": "(new row)",
+   "from": "18 rows",
+   "id": "(new product row)",
+   "table": "pm_notes",
+   "to": "19 rows"
+  }
+ ],
+ "goal": "Drive litigation discovery amount history through the workflow, applying 2 verified state changes.",
+ "method": "graph_walk",
+ "prompt": "At Law Firm Company, the operations queue flags Summit Holdings Litigation Discovery as currently in \"Requested\" status within discovery requests, awaiting attention. To move forward, record a controlled production cost adjustment for this discovery request, capturing the change in the litigation discovery amount history. Separately, log an independent review of the discovery request decision, adding it to the litigation discovery reviews. Apply only these two specific updates, using the operational terminology \"Litigation Support\" where applicable, and create the new amount history record and the new review record accordingly.\n\nSYSTEM MIGRATION — WORLD V16\n- A legacy litigation_discovery_amount_history record is now filed through notes_create: use matter_id=100078, author_user_id=1, subject exactly 'litigation_discovery_amount_history', and detail as a JSON object containing every legacy field named in the instruction.\n- A legacy litigation_discovery_reviews record is now filed through notes_create: use matter_id=100078, author_user_id=1, subject exactly 'litigation_discovery_reviews', and detail as a JSON object containing every legacy field named in the instruction.",
  "prompt_generation": {
   "source": "llm",
   "template_family": "graph.mutation.medium.anchored@1",
   "template_signature": "template:e8c2ddd7981fb23c"
  },
- "goal": "Drive litigation discovery amount history through the workflow, applying 2 verified state changes.",
- "required_tools": [
-  "litigation_discovery_list",
-  "litigation_discovery_amount_history_create",
-  "litigation_discovery_get",
-  "litigation_discovery_review_create"
- ],
- "complexity": "medium",
- "method": "graph_walk",
- "steps": [
-  "Read litigation_discovery state (list) without mutating the world. (discovery_requests)",
-  "Apply a create write to litigation_discovery_amount_history. (litigation_discovery_amount_history)",
-  "Read litigation_discovery state (item) without mutating the world. (discovery_requests)",
-  "Apply a create write to litigation_discovery_review. (litigation_discovery_reviews)"
- ],
- "relevant_data": [
-  {
-   "table": "discovery_requests",
-   "id": "litigation_discovery_006",
-   "field": "title",
-   "value": "Summit Holdings Litigation Discovery"
-  }
- ],
- "expected_state_changes": [
-  {
-   "table": "litigation_discovery_amount_history",
-   "id": "litigation_discovery_amount_history_115",
-   "field": "(new row)",
-   "from": "14 rows",
-   "to": "15 rows"
-  },
-  {
-   "table": "litigation_discovery_reviews",
-   "id": "litigation_discovery_review_119",
-   "field": "(new row)",
-   "from": "18 rows",
-   "to": "19 rows"
-  }
- ],
- "tables_affected": [
-  "litigation_discovery_amount_history",
-  "litigation_discovery_reviews"
- ],
- "walk": [
-  "litigation_discovery_list",
-  "litigation_discovery_amount_history_create",
-  "litigation_discovery_get",
-  "litigation_discovery_review_create"
- ],
- "effects": [
-  {
-   "table": "litigation_discovery_amount_history",
-   "op": "insert"
-  },
-  {
-   "table": "litigation_discovery_reviews",
-   "op": "insert"
-  }
- ],
- "difficulty_tier": "medium",
- "sequence_integrity": {
-  "schemaVersion": 1,
-  "passed": true,
-  "pathLength": 4,
-  "uniqueTools": 4,
-  "rules": [
-   "every transition has an evidence-backed edge",
-   "no tool immediately repeats itself, and no tool is used more than 4 times",
-   "terminal actions cannot restart the same entity lifecycle",
-   "the same mutating action cannot repeat on the same entity"
-  ],
-  "transitions": [
-   {
-    "source": "litigation_discovery_list",
-    "target": "litigation_discovery_amount_history_create",
-    "allowed": true,
-    "rule": "lifecycle_compatible",
-    "sourceAction": "list",
-    "targetAction": "create",
-    "sharedEntities": [],
-    "stepIndex": 1,
-    "edgeSupported": true
-   },
-   {
-    "source": "litigation_discovery_amount_history_create",
-    "target": "litigation_discovery_get",
-    "allowed": true,
-    "rule": "lifecycle_compatible",
-    "sourceAction": "create",
-    "targetAction": "get",
-    "sharedEntities": [],
-    "stepIndex": 2,
-    "edgeSupported": true
-   },
-   {
-    "source": "litigation_discovery_get",
-    "target": "litigation_discovery_review_create",
-    "allowed": true,
-    "rule": "lifecycle_compatible",
-    "sourceAction": "get",
-    "targetAction": "review",
-    "sharedEntities": [
-     "discovery"
-    ],
-    "stepIndex": 3,
-    "edgeSupported": true
-   }
-  ],
-  "issues": []
- },
  "provenance": {
+  "difficulty_reason": "medium: walk length 4",
   "evidence_ids": [
    "anc_5590a9fbe72c",
    "anc_d309e3ebc023",
@@ -132,60 +79,134 @@
    "anc_e1a8aa579e95",
    "anc_543dc2d4d3e9"
   ],
-  "tool_graph_path": [
-   "litigation_discovery_list",
-   "litigation_discovery_amount_history_create",
-   "litigation_discovery_get",
-   "litigation_discovery_review_create"
-  ],
+  "surface_migration": {
+   "compiler": "world/migrate/gen1_to_v16.py",
+   "from": "Gen-1 synthesized tools",
+   "to": "v3 product contracts"
+  },
   "tool_graph_edges": [
-   "litigation_discovery_list\u0000litigation_discovery_amount_history_create",
-   "litigation_discovery_amount_history_create\u0000litigation_discovery_get",
-   "litigation_discovery_get\u0000litigation_discovery_review_create"
+   "matters_list\u0000notes_create",
+   "notes_create\u0000matters_get",
+   "matters_get\u0000notes_create"
   ],
-  "verifier_id": "task_015",
-  "difficulty_reason": "medium: walk length 4"
+  "tool_graph_path": [
+   "matters_list",
+   "notes_create",
+   "matters_get",
+   "notes_create"
+  ],
+  "verifier_id": "task_015"
  },
- "anchor_refs": [
-  "anc_5590a9fbe72c",
-  "anc_d309e3ebc023",
-  "anc_60f8b994fb8a",
-  "anc_e238669e3d88",
-  "anc_dd3f15c795cd",
-  "anc_9e88ea92b5c0",
-  "anc_f3608223908f",
-  "anc_eb2ac60e3898",
-  "anc_dc588f9468a1",
-  "anc_30f0f9b63f30",
-  "anc_566d7c4fde9c",
-  "anc_e1a8aa579e95"
+ "reference_args": [
+  {},
+  {
+   "id": 100083
+  },
+  {
+   "author_user_id": 1,
+   "detail": "{\"change_reason\":\"Oracle reference run: value confirmed against matter records.\",\"changed_by_role\":\"partner\",\"litigation_discovery_id\":\"1\",\"production_cost\":125000.0}",
+   "matter_id": 100078,
+   "subject": "litigation_discovery_amount_history"
+  },
+  {
+   "author_user_id": 1,
+   "detail": "{\"litigation_discovery_id\":\"1\",\"outcome\":\"approved\",\"rationale\":\"Reference review confirms the record is consistent.\",\"reviewer_role\":\"partner\"}",
+   "matter_id": 100078,
+   "subject": "litigation_discovery_reviews"
+  }
  ],
- "acceptance_evidence": {
-  "protocol": "vcode_discrimination",
-  "attempts": 1,
-  "passes": 1,
-  "pass_rate": 1,
-  "reference_passed": true,
-  "negative_probes_passed": true,
-  "timed_out": false,
-  "accepted_by": "discrimination_gate",
-  "contract_digest": "acceptance_v2_1872a37dea09ee51e5b56042b4690ce95a661db3a1a17419d55ef988b769b29b",
-  "reason": "accepted: deterministic reference execution passed; null, shortcut, wrong-row, wrong-value, blind-fallback + incomplete baselines fail"
- },
- "acceptance_label": "in_band",
+ "relevant_data": [
+  {
+   "field": "title",
+   "id": 100083,
+   "table": "pm_matters",
+   "value": "Summit Holdings Litigation Discovery"
+  }
+ ],
+ "required_tools": [
+  "matters_list",
+  "notes_create",
+  "matters_get"
+ ],
  "semantic_alignment": {
+  "checked_at": "2026-08-09T10:00:32.031Z",
   "passed": true,
   "reasons": [],
   "warnings": [
    "prompt mentions schema vocabulary \"cases.decision_reason\" that the verifier never observes"
+  ]
+ },
+ "sequence_integrity": {
+  "issues": [],
+  "passed": true,
+  "pathLength": 4,
+  "rules": [
+   "every transition has an evidence-backed edge",
+   "no tool immediately repeats itself, and no tool is used more than 4 times",
+   "terminal actions cannot restart the same entity lifecycle",
+   "the same mutating action cannot repeat on the same entity"
   ],
-  "checked_at": "2026-08-09T10:00:32.031Z"
+  "schemaVersion": 1,
+  "transitions": [
+   {
+    "allowed": true,
+    "edgeSupported": true,
+    "rule": "lifecycle_compatible",
+    "sharedEntities": [],
+    "source": "litigation_discovery_list",
+    "sourceAction": "list",
+    "stepIndex": 1,
+    "target": "litigation_discovery_amount_history_create",
+    "targetAction": "create"
+   },
+   {
+    "allowed": true,
+    "edgeSupported": true,
+    "rule": "lifecycle_compatible",
+    "sharedEntities": [],
+    "source": "litigation_discovery_amount_history_create",
+    "sourceAction": "create",
+    "stepIndex": 2,
+    "target": "litigation_discovery_get",
+    "targetAction": "get"
+   },
+   {
+    "allowed": true,
+    "edgeSupported": true,
+    "rule": "lifecycle_compatible",
+    "sharedEntities": [
+     "discovery"
+    ],
+    "source": "litigation_discovery_get",
+    "sourceAction": "get",
+    "stepIndex": 3,
+    "target": "litigation_discovery_review_create",
+    "targetAction": "review"
+   }
+  ],
+  "uniqueTools": 4
  },
  "solvability": {
-  "schema": "blobfish.task-solvability.v1",
-  "task_id": "task_015",
+  "detail": "outside the stratified solvability sample; deterministic acceptance evidence stands",
   "measured": false,
   "reason": "not_sampled",
-  "detail": "outside the stratified solvability sample; deterministic acceptance evidence stands"
- }
+  "schema": "blobfish.task-solvability.v1",
+  "task_id": "task_015"
+ },
+ "steps": [
+  "Read litigation_discovery state (list) without mutating the world. (discovery_requests)",
+  "Apply a create write to litigation_discovery_amount_history. (litigation_discovery_amount_history)",
+  "Read litigation_discovery state (item) without mutating the world. (discovery_requests)",
+  "Apply a create write to litigation_discovery_review. (litigation_discovery_reviews)"
+ ],
+ "tables_affected": [
+  "pm_notes"
+ ],
+ "task_id": "task_015",
+ "walk": [
+  "matters_list",
+  "matters_get",
+  "notes_create",
+  "notes_create"
+ ]
 }

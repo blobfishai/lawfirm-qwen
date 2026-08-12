@@ -22,10 +22,8 @@ Read values from a sheet range.
 
 | Param (real API name) | Type | Required | Internal field |
 |---|---|---|---|
-| `spreadsheetId` | integer | no | `spreadsheet_id` |
-| `sheet_name` | string | no | same |
-| `cell_range` | string | no | same |
-| `limit` | integer | no | same |
+| `spreadsheetId` | string | no | `spreadsheet_id` |
+| `range` | string | no | same |
 
 **Op:** `list` on `ws_sheet_values`
 
@@ -39,10 +37,10 @@ Write a value to a cell/range.
 
 | Param (real API name) | Type | Required | Internal field |
 |---|---|---|---|
-| `spreadsheetId` | integer | yes | `spreadsheet_id` |
-| `sheet_name` | string | yes | same |
-| `cell_range` | string | yes | same |
-| `value` | string | yes | same |
+| `spreadsheetId` | string | yes | `spreadsheet_id` |
+| `range` | string | no | same |
+| `valueInputOption` | string | no | same |
+| `body` | object | no | same |
 
 **Op:** `create` on `ws_sheet_values`
 
@@ -56,8 +54,8 @@ List spreadsheets.
 
 | Param (real API name) | Type | Required | Internal field |
 |---|---|---|---|
-| `owner` | string | no | same |
-| `limit` | integer | no | same |
+| `q` | string | no | `query` |
+| `pageSize` | integer | no | `limit` |
 
 **Op:** `list` on `ws_spreadsheets`
 
@@ -72,7 +70,7 @@ List/search Drive files.
 | Param (real API name) | Type | Required | Internal field |
 |---|---|---|---|
 | `q` | string | no | `query` |
-| `limit` | integer | no | same |
+| `pageSize` | integer | no | `limit` |
 
 **Op:** `search` on `ws_files`
 
@@ -86,7 +84,7 @@ Fetch a file with content.
 
 | Param (real API name) | Type | Required | Internal field |
 |---|---|---|---|
-| `fileId` | integer | no | `id` |
+| `fileId` | string | no | `id` |
 
 **Op:** `get` on `ws_files`
 
@@ -100,6 +98,7 @@ Search mail (subject/body/participants).
 
 | Param (real API name) | Type | Required | Internal field |
 |---|---|---|---|
+| `userId` | string | no | same |
 | `q` | string | no | `query` |
 | `maxResults` | integer | no | `limit` |
 
@@ -115,7 +114,8 @@ Fetch one message in full.
 
 | Param (real API name) | Type | Required | Internal field |
 |---|---|---|---|
-| `id` | integer | no | same |
+| `userId` | string | no | same |
+| `id` | string | no | same |
 
 **Op:** `get` on `ws_messages`
 
@@ -129,12 +129,8 @@ Send a message (records to SENT).
 
 | Param (real API name) | Type | Required | Internal field |
 |---|---|---|---|
-| `from_addr` | string | yes | same |
-| `to_addr` | string | yes | same |
-| `subject` | string | yes | same |
-| `body` | string | yes | same |
-| `thread_id` | integer | no | same |
-| `sent_at` | string | no | same |
+| `userId` | string | no | same |
+| `body` | object | yes | same |
 
 **Op:** `create` on `ws_messages`
 
@@ -149,7 +145,6 @@ List events with date range.
 | Param (real API name) | Type | Required | Internal field |
 |---|---|---|---|
 | `calendarId` | string | no | `calendar` |
-| `status` | string | no | same |
 | `timeMin` | string | no | `time_min` |
 | `timeMax` | string | no | `time_max` |
 | `maxResults` | integer | no | `limit` |
@@ -167,10 +162,8 @@ Create an event.
 | Param (real API name) | Type | Required | Internal field |
 |---|---|---|---|
 | `calendarId` | string | yes | `calendar` |
-| `summary` | string | yes | same |
-| `start_at` | string | yes | same |
-| `end_at` | string | no | same |
-| `attendees` | string | no | same |
+| `sendUpdates` | string | no | same |
+| `body` | object | no | same |
 
 **Op:** `create` on `ws_events`
 

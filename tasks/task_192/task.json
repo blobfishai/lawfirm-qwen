@@ -1,83 +1,87 @@
 {
- "task_id": "task_192",
- "outcome_class": "eligible_action",
- "prompt": "Spoliation workup in Meridian v. Talvern (litigation case litigation_cases_001): we need to establish the relationship between the date Talvern issued its litigation hold to its ESI custodians and the date of the management directive that took the Complex 4 climate control offline. Find and read in full both Talvern's litigation hold notice and the custodian communication containing the management shutdown directive. Compare the two dates. Then open exactly one remediation item with litigation_cases_remediation_create on litigation_cases_001 with owner_role litigation_associate, a short due_note in your own words tying the item to the pretrial motion schedule, and action_required set to exactly one of these two literals depending on your determination: confirm-hold-adequacy if the hold was issued BEFORE the shutdown directive, or move-for-spoliation-sanctions if the hold was issued AFTER the shutdown directive. Do not create any other records. In your final answer state both dates and the gap between them.",
- "goal": "Date comparison across two documents: hold issued 2025-05-06 postdates the 2025-03-14 directive, so record move-for-spoliation-sanctions.",
- "required_tools": [
-  "query_matter_documents",
-  "read_matter_document",
-  "litigation_cases_remediation_create"
- ],
+ "acceptance_label": "pending_calibration",
  "complexity": "high",
+ "difficulty_tier": "high",
+ "effects": [
+  {
+   "op": "insert",
+   "table": "pm_notes"
+  }
+ ],
+ "expansion": {
+  "pack": "discovery-retrieval.json",
+  "slug": "hold-timing-remediation"
+ },
+ "expected_state_changes": [
+  {
+   "field": "(new row)",
+   "id": "(new product row)",
+   "note": ">=1 rows with pinned fields",
+   "table": "pm_notes"
+  }
+ ],
+ "goal": "Date comparison across two documents: hold issued 2025-05-06 postdates the 2025-03-14 directive, so record move-for-spoliation-sanctions.",
  "method": "eval_anchored_expansion",
+ "outcome_class": "eligible_action",
+ "prompt": "Spoliation workup in Meridian v. Talvern (litigation case litigation_cases_001): we need to establish the relationship between the date Talvern issued its litigation hold to its ESI custodians and the date of the management directive that took the Complex 4 climate control offline. Find and read in full both Talvern's litigation hold notice and the custodian communication containing the management shutdown directive. Compare the two dates. Then open exactly one remediation item with notes_create on litigation_cases_001 with owner_role litigation_associate, a short due_note in your own words tying the item to the pretrial motion schedule, and action_required set to exactly one of these two literals depending on your determination: confirm-hold-adequacy if the hold was issued BEFORE the shutdown directive, or move-for-spoliation-sanctions if the hold was issued AFTER the shutdown directive. Do not create any other records. In your final answer state both dates and the gap between them.\n\nSYSTEM MIGRATION — WORLD V16\n- Matter documents now live in MatterVault DMS: search with documents_search_fulltext(query), read full text with documents_download(id), and file deliverables with documents_create using workspace_id=1, folder_id=1, name for the requested filename, doc_class for the requested document type, author=\"agent@simulated-firm.example\", and the complete deliverable in body.\n- A legacy litigation_cases_remediations record is now filed through notes_create: use matter_id=100000, author_user_id=1, subject exactly 'litigation_cases_remediations', and detail as a JSON object containing every legacy field named in the instruction.",
+ "provenance": {
+  "source_workflow": "biglaw_bench: discovery-retrieval/hold-timing-remediation",
+  "surface_migration": {
+   "compiler": "world/migrate/gen1_to_v16.py",
+   "from": "Gen-1 synthesized tools",
+   "to": "v3 product contracts"
+  }
+ },
+ "reference_args": [
+  {
+   "query": "Discovery-retrieval pack — Talvern Logistics litigation hold"
+  },
+  {
+   "id": 100181
+  },
+  {
+   "id": 100169
+  },
+  {
+   "author_user_id": 1,
+   "detail": "{\"action_required\":\"move-for-spoliation-sanctions\",\"due_at\":\"2026-09-01T12:00:00Z\",\"due_note\":\"Brief ahead of the pretrial motion deadline; hold issued 2025-05-06, shutdown directive dated 2025-03-14.\",\"litigation_cases_id\":\"litigation_cases_001\",\"owner_role\":\"litigation_associate\",\"status\":\"open\"}",
+   "matter_id": 100000,
+   "subject": "litigation_cases_remediations"
+  }
+ ],
+ "relevant_data": [
+  {
+   "field": "name",
+   "id": 100181,
+   "table": "dm_documents",
+   "value": "Discovery-retrieval pack — Talvern Logistics litigation hold notice to ESI custodians (2025-05-06)"
+  },
+  {
+   "field": "name",
+   "id": 100169,
+   "table": "dm_documents",
+   "value": "Discovery-retrieval pack — TLG-EM-0414 email thread: Kessler to Okafor, Complex 4 load-shed directive (2025-03-14)"
+  }
+ ],
+ "required_tools": [
+  "documents_search_fulltext",
+  "documents_download",
+  "notes_create"
+ ],
  "steps": [
   "Locate the input documents for this engagement in the matter folder",
   "Read every required input document in full",
   "Derive the graded determinations strictly from the documents",
   "Record the determinations with the required write tools"
  ],
- "relevant_data": [
-  {
-   "table": "matter_documents",
-   "id": 176,
-   "field": "title",
-   "value": "Discovery-retrieval pack — Talvern Logistics litigation hold notice to ESI custodians (2025-05-06)"
-  },
-  {
-   "table": "matter_documents",
-   "id": 164,
-   "field": "title",
-   "value": "Discovery-retrieval pack — TLG-EM-0414 email thread: Kessler to Okafor, Complex 4 load-shed directive (2025-03-14)"
-  }
- ],
- "expected_state_changes": [
-  {
-   "table": "litigation_cases_remediations",
-   "field": "(new row)",
-   "note": ">=1 rows with pinned fields"
-  }
- ],
  "tables_affected": [
-  "litigation_cases_remediations"
+  "pm_notes"
  ],
+ "task_id": "task_192",
  "walk": [
-  "query_matter_documents",
-  "read_matter_document",
-  "read_matter_document",
-  "litigation_cases_remediation_create"
- ],
- "reference_args": [
-  {
-   "title": "Discovery-retrieval pack — Talvern Logistics litigation hold"
-  },
-  {
-   "id": 176
-  },
-  {
-   "id": 164
-  },
-  {
-   "litigation_cases_id": "litigation_cases_001",
-   "owner_role": "litigation_associate",
-   "action_required": "move-for-spoliation-sanctions",
-   "due_note": "Brief ahead of the pretrial motion deadline; hold issued 2025-05-06, shutdown directive dated 2025-03-14.",
-   "due_at": "2026-09-01T12:00:00Z",
-   "status": "open"
-  }
- ],
- "effects": [
-  {
-   "table": "litigation_cases_remediations",
-   "op": "insert"
-  }
- ],
- "provenance": {
-  "source_workflow": "biglaw_bench: discovery-retrieval/hold-timing-remediation"
- },
- "difficulty_tier": "high",
- "acceptance_label": "pending_calibration",
- "expansion": {
-  "pack": "discovery-retrieval.json",
-  "slug": "hold-timing-remediation"
- }
+  "documents_search_fulltext",
+  "documents_download",
+  "documents_download",
+  "notes_create"
+ ]
 }

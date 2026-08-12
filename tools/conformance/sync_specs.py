@@ -28,6 +28,14 @@ SOURCES = {
         "kind": "openapi",
         "url": "https://docs.developers.clio.com/openapi.json",
     },
+    "docusign-esign-v2.1": {
+        "filename": "docusign-esign-v2.1.swagger.json.gz",
+        "kind": "swagger",
+        "url": (
+            "https://raw.githubusercontent.com/docusign/OpenAPI-Specifications/"
+            "master/esignature.rest.swagger-v2.1.json"
+        ),
+    },
     "google-calendar-v3": {
         "filename": "google-calendar-v3.discovery.json.gz",
         "kind": "google-discovery",

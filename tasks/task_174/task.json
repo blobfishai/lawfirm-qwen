@@ -1,81 +1,87 @@
 {
- "task_id": "task_174",
- "outcome_class": "eligible_action",
- "prompt": "Docket the answer deadline in Meridian Grain v. Talvern. Locate the controlling rules memo for computing time and the operative affidavit of service for the summons and complaint in the matter folder, read both in full, and compute the defendant's answer deadline under the firm's controlling method. Record the computation in the deadlines register by calling litigation_deadlines_review_create with reviewer_role set exactly to \"docketing-clerk\" and outcome set to ONLY the final computed date in YYYY-MM-DD form. Base the computation strictly on the operative documents — the withdrawn 2024 chart must not be used.",
- "goal": "Compute the SRCP 6 answer deadline (21 days from June 3, 2026 personal service, rollover applied)",
- "required_tools": [
-  "query_matter_documents",
-  "read_matter_document",
-  "litigation_deadlines_review_create"
- ],
+ "acceptance_label": "pending_calibration",
  "complexity": "medium",
+ "difficulty_tier": "medium",
+ "effects": [
+  {
+   "op": "insert",
+   "table": "pm_notes"
+  }
+ ],
+ "expansion": {
+  "pack": "deadline-computation.json",
+  "slug": "answer-deadline-personal-service"
+ },
+ "expected_state_changes": [
+  {
+   "field": "(new row)",
+   "id": "(new product row)",
+   "note": ">=1 rows with pinned fields",
+   "table": "pm_notes"
+  }
+ ],
+ "goal": "Compute the SRCP 6 answer deadline (21 days from June 3, 2026 personal service, rollover applied)",
  "method": "eval_anchored_expansion",
+ "outcome_class": "eligible_action",
+ "prompt": "Docket the answer deadline in Meridian Grain v. Talvern. Locate the controlling rules memo for computing time and the operative affidavit of service for the summons and complaint in the matter folder, read both in full, and compute the defendant's answer deadline under the firm's controlling method. Record the computation in the deadlines register by calling notes_create with reviewer_role set exactly to \"docketing-clerk\" and outcome set to ONLY the final computed date in YYYY-MM-DD form. Base the computation strictly on the operative documents — the withdrawn 2024 chart must not be used.\n\nSYSTEM MIGRATION — WORLD V16\n- Matter documents now live in MatterVault DMS: search with documents_search_fulltext(query), read full text with documents_download(id), and file deliverables with documents_create using workspace_id=1, folder_id=1, name for the requested filename, doc_class for the requested document type, author=\"agent@simulated-firm.example\", and the complete deliverable in body.\n- A legacy litigation_deadlines_reviews record is now filed through notes_create: use matter_id=100128, author_user_id=1, subject exactly 'litigation_deadlines_reviews', and detail as a JSON object containing every legacy field named in the instruction.",
+ "provenance": {
+  "source_workflow": "court_rules_calendaring: deadline-computation/answer-deadline-personal-service",
+  "surface_migration": {
+   "compiler": "world/migrate/gen1_to_v16.py",
+   "from": "Gen-1 synthesized tools",
+   "to": "v3 product contracts"
+  }
+ },
+ "reference_args": [
+  {
+   "query": "Deadline pack — Consolidated Rules Memo: Computing Time Unde"
+  },
+  {
+   "id": 100151
+  },
+  {
+   "id": 100152
+  },
+  {
+   "author_user_id": 1,
+   "detail": "{\"litigation_deadlines_id\":\"litigation_deadlines_001\",\"outcome\":\"2026-06-24\",\"rationale\":\"21 days after June 3, 2026 service (exclude trigger day) ends Wednesday June 24, 2026; no weekend/holiday rollover needed; personal delivery, so no mail adjustment.\",\"reviewer_role\":\"docketing-clerk\"}",
+   "matter_id": 100128,
+   "subject": "litigation_deadlines_reviews"
+  }
+ ],
+ "relevant_data": [
+  {
+   "field": "name",
+   "id": 100151,
+   "table": "dm_documents",
+   "value": "Deadline pack — Consolidated Rules Memo: Computing Time Under the Simulated Rules of Civil Procedure (SRCP 6)"
+  },
+  {
+   "field": "name",
+   "id": 100152,
+   "table": "dm_documents",
+   "value": "Deadline pack — Affidavit of Service: Meridian Grain complaint served by personal delivery June 3, 2026"
+  }
+ ],
+ "required_tools": [
+  "documents_search_fulltext",
+  "documents_download",
+  "notes_create"
+ ],
  "steps": [
   "Locate the input documents for this engagement in the matter folder",
   "Read every required input document in full",
   "Derive the graded determinations strictly from the documents",
   "Record the determinations with the required write tools"
  ],
- "relevant_data": [
-  {
-   "table": "matter_documents",
-   "id": 146,
-   "field": "title",
-   "value": "Deadline pack — Consolidated Rules Memo: Computing Time Under the Simulated Rules of Civil Procedure (SRCP 6)"
-  },
-  {
-   "table": "matter_documents",
-   "id": 147,
-   "field": "title",
-   "value": "Deadline pack — Affidavit of Service: Meridian Grain complaint served by personal delivery June 3, 2026"
-  }
- ],
- "expected_state_changes": [
-  {
-   "table": "litigation_deadlines_reviews",
-   "field": "(new row)",
-   "note": ">=1 rows with pinned fields"
-  }
- ],
  "tables_affected": [
-  "litigation_deadlines_reviews"
+  "pm_notes"
  ],
+ "task_id": "task_174",
  "walk": [
-  "query_matter_documents",
-  "read_matter_document",
-  "read_matter_document",
-  "litigation_deadlines_review_create"
- ],
- "reference_args": [
-  {
-   "title": "Deadline pack — Consolidated Rules Memo: Computing Time Unde"
-  },
-  {
-   "id": 146
-  },
-  {
-   "id": 147
-  },
-  {
-   "litigation_deadlines_id": "litigation_deadlines_001",
-   "reviewer_role": "docketing-clerk",
-   "outcome": "2026-06-24",
-   "rationale": "21 days after June 3, 2026 service (exclude trigger day) ends Wednesday June 24, 2026; no weekend/holiday rollover needed; personal delivery, so no mail adjustment."
-  }
- ],
- "effects": [
-  {
-   "table": "litigation_deadlines_reviews",
-   "op": "insert"
-  }
- ],
- "provenance": {
-  "source_workflow": "court_rules_calendaring: deadline-computation/answer-deadline-personal-service"
- },
- "difficulty_tier": "medium",
- "acceptance_label": "pending_calibration",
- "expansion": {
-  "pack": "deadline-computation.json",
-  "slug": "answer-deadline-personal-service"
- }
+  "documents_search_fulltext",
+  "documents_download",
+  "documents_download",
+  "notes_create"
+ ]
 }

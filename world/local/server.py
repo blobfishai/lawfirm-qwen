@@ -9,8 +9,9 @@ proved independently by the conformance suite and oracle.
 Surface (matches mcp/blobfish-lawfirm-bridge.mjs BLOBFISH_LOCAL=1 mode):
   GET  /health                 — {ok, world_id, tables, tools, tasks}
   GET  /world                  — world summary
-  POST /sessions               — {} -> {"session_id": ...}   (fresh copy of seed DB)
-  DELETE /sessions/{id}        — drop a session
+  POST /sessions               — {} -> session id + bearer/refresh tokens
+  POST /sessions/{id}/refresh  — one-use refresh-token exchange
+  DELETE /sessions/{id}        — authenticated session teardown
   POST /mcp                    — JSON-RPC: initialize | notifications/initialized |
                                  tools/list | tools/call   (session via Mcp-Session-Id)
   POST /verify/{task_id}       — {"trace":[...]} -> VCode verdict for the session
@@ -38,6 +39,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 from evidence import ExternalEvidence
+from paging import paging_diagnostic
+from wire_errors import friction_http
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(BASE))
@@ -177,18 +180,6 @@ class Friction:
         return self._h("ack", tool, idx) < self.ack_rate
 
 
-FRICTION_MESSAGES = {
-    "rate_limited": (
-        "ERROR rate_limited: upstream service throttled this call. "
-        "Retry the operation."
-    ),
-    "stale_reference": (
-        "ERROR stale_reference: the referenced record snapshot is stale. "
-        "Re-read the record and retry with current data."
-    ),
-}
-
-
 # ---------------------------------------------------------------------------
 # Sessions
 # ---------------------------------------------------------------------------
@@ -202,10 +193,16 @@ class Session:
     def __init__(self, sid: str, task: dict | None = None,
                  document_rows_by_id: dict | None = None,
                  table_defs: dict | None = None,
-                 contract_probe: bool = False):
+                 contract_probe: bool = False, auth_ttl: int | None = None):
         self.id = sid
         self.task_id = (task or {}).get("task_id")
         self.contract_probe = bool(contract_probe)
+        self.access_token = hashlib.sha256(f"access:0:{sid}".encode()).hexdigest()
+        self.refresh_token = hashlib.sha256(f"refresh:{sid}".encode()).hexdigest()
+        self.auth_generation = 0
+        self.refresh_used = False
+        self.auth_ttl = int(auth_ttl) if auth_ttl is not None else None
+        self.auth_calls = 0
         self.db_path = os.path.join(SESS_DIR, f"{sid}.db")
         try:
             shutil.copyfile(SEED_DB, self.db_path)
@@ -255,6 +252,28 @@ class Session:
         except OSError:
             pass
 
+    def authorize(self, authorization: str | None) -> tuple[bool, str]:
+        if authorization != f"Bearer {self.access_token}":
+            return False, "invalid_token"
+        if self.auth_ttl is not None and self.auth_calls >= self.auth_ttl:
+            return False, "token_expired"
+        self.auth_calls += 1
+        return True, "ok"
+
+    def refresh(self, supplied: str | None) -> tuple[bool, str]:
+        if supplied != self.refresh_token:
+            return False, "invalid_refresh_token"
+        if self.refresh_used:
+            return False, "refresh_token_already_used"
+        self.refresh_used = True
+        self.auth_generation += 1
+        self.access_token = hashlib.sha256(
+            f"access:{self.auth_generation}:{self.id}".encode()
+        ).hexdigest()
+        self.auth_calls = 0
+        self.auth_ttl = None
+        return True, self.access_token
+
 
 # ---------------------------------------------------------------------------
 # HTTP server
@@ -263,6 +282,7 @@ class Session:
 def make_handler(world: dict, friction: Friction, initial_state: dict,
                  verifiers: dict, v2):
     sessions: dict[str, Session] = {}
+    visible_tool_count = len(v2.mcp_tools())
     tasks_by_id = {t["task_id"]: t for t in world.get("tasks") or []}
     table_defs = {t["name"]: t for t in world["tables"]}
     document_rows_by_id = {
@@ -284,11 +304,13 @@ def make_handler(world: dict, friction: Friction, initial_state: dict,
         def log_message(self, fmt, *a):  # quiet
             pass
 
-        def _json(self, code: int, obj) -> None:
+        def _json(self, code: int, obj, headers: dict[str, str] | None = None) -> None:
             data = json.dumps(obj, default=str).encode()
             self.send_response(code)
             self.send_header("Content-Type", "application/json")
             self.send_header("Content-Length", str(len(data)))
+            for key, value in (headers or {}).items():
+                self.send_header(key, value)
             self.end_headers()
             self.wfile.write(data)
 
@@ -306,19 +328,33 @@ def make_handler(world: dict, friction: Friction, initial_state: dict,
                    or self.headers.get("X-Blobfish-Session"))
             return sessions.get(sid) if sid else None
 
+        def _authorized_session(self) -> Session | None:
+            sess = self._session()
+            if not sess:
+                self._json(401, {"auth_error": "missing_or_unknown_session"},
+                           {"WWW-Authenticate": "Bearer"})
+                return None
+            ok, reason = sess.authorize(self.headers.get("Authorization"))
+            if not ok:
+                self._json(401, {"auth_error": reason}, {"WWW-Authenticate": "Bearer"})
+                return None
+            return sess
+
         # ------------------------------------------------------------- GET
         def do_GET(self):
             if self.path == "/health":
                 return self._json(200, {
                     "ok": True, "world_id": world.get("world_id"),
-                    "tables": len(world["tables"]), "tools": len(v2.tools),
+                    "tables": len(world["tables"]), "tools": visible_tool_count,
+                    "internal_operations": len(v2.tools) - visible_tool_count,
                     "tasks": len(world["tasks"]), "sessions": len(sessions),
                 })
             if self.path == "/world":
                 return self._json(200, {
                     "world_id": world.get("world_id"),
                     "company": (world.get("thesis") or {}).get("company"),
-                    "tables": len(world["tables"]), "tools": len(v2.tools),
+                    "tables": len(world["tables"]), "tools": visible_tool_count,
+                    "internal_operations": len(v2.tools) - visible_tool_count,
                     "tasks": len(world["tasks"]),
                 })
             return self._json(404, {"error": "not_found"})
@@ -328,7 +364,12 @@ def make_handler(world: dict, friction: Friction, initial_state: dict,
             self._body()  # drain any body — see do_POST
             m = re.match(r"^/sessions/([\w\-]+)$", self.path)
             if m:
-                s = sessions.pop(m.group(1), None)
+                s = sessions.get(m.group(1))
+                if s:
+                    ok, reason = s.authorize(self.headers.get("Authorization"))
+                    if not ok:
+                        return self._json(401, {"auth_error": reason}, {"WWW-Authenticate": "Bearer"})
+                    sessions.pop(m.group(1), None)
                 if s:
                     s.close()
                 return self._json(200, {"deleted": bool(s)})
@@ -349,11 +390,25 @@ def make_handler(world: dict, friction: Friction, initial_state: dict,
                 )
                 sess = Session(sid, task=task, document_rows_by_id=document_rows_by_id,
                                table_defs=table_defs,
-                               contract_probe=contract_probe)
+                               contract_probe=contract_probe,
+                               auth_ttl=(body or {}).get("auth_ttl"))
                 sessions[sid] = sess
                 baseline_for(sess)  # warm the per-task baseline cache
-                return self._json(200, {"session_id": sid,
-                                        "task_id": sess.task_id})
+                return self._json(200, {"session_id": sid, "task_id": sess.task_id,
+                                        "access_token": sess.access_token,
+                                        "refresh_token": sess.refresh_token,
+                                        "token_type": "Bearer"})
+
+            refresh = re.match(r"^/sessions/([\w\-]+)/refresh$", self.path)
+            if refresh:
+                sess = sessions.get(refresh.group(1))
+                if not sess:
+                    return self._json(401, {"auth_error": "missing_or_unknown_session"},
+                                      {"WWW-Authenticate": "Bearer"})
+                ok, value = sess.refresh((body or {}).get("refresh_token"))
+                if not ok:
+                    return self._json(401, {"auth_error": value}, {"WWW-Authenticate": "Bearer"})
+                return self._json(200, {"access_token": value, "token_type": "Bearer"})
 
             m = re.match(r"^/verify/([\w\-]+)$", self.path)
             if m:
@@ -369,15 +424,18 @@ def make_handler(world: dict, friction: Friction, initial_state: dict,
             v = verifiers.get(task_id)
             if not v:
                 return self._json(404, {"error": f"no verifier for {task_id}"})
-            sess = self._session()
+            sess = self._authorized_session()
             if not sess:
-                return self._json(400, {"error": "missing or unknown session header"})
+                return
             trace = body.get("trace") or []
             final_state = snapshot(sess.db_path)
             ns: dict = {}
             try:
                 exec(v["vcode"], ns)  # shipped verifier code, executed verbatim
                 verdict = ns["verify"](copy.deepcopy(baseline_for(sess)), final_state, trace)
+                diagnostic = paging_diagnostic(trace)
+                verdict["paging_discipline"] = diagnostic
+                verdict.setdefault("paging_complete", diagnostic["paging_complete"])
             except Exception as e:  # noqa: BLE001 — surface verifier bugs
                 return self._json(500, {"error": f"verifier crashed: {e!r}"})
             return self._json(200, verdict)
@@ -388,6 +446,11 @@ def make_handler(world: dict, friction: Friction, initial_state: dict,
             mid = msg.get("id")
             method = msg.get("method", "")
             params = msg.get("params") or {}
+            protected_session = None
+            if method in {"tools/list", "tools/call"}:
+                protected_session = self._authorized_session()
+                if not protected_session:
+                    return
 
             def rpc(result):
                 return self._json(200, {"jsonrpc": "2.0", "id": mid, "result": result})
@@ -415,21 +478,18 @@ def make_handler(world: dict, friction: Friction, initial_state: dict,
             if method == "tools/list":
                 return rpc({"tools": v2.mcp_tools()})
             if method == "tools/call":
-                sess = self._session()
-                if not sess:
-                    return rpc_err(-32000, "missing or unknown session header")
+                sess = protected_session
                 name = params.get("name")
                 args = params.get("arguments") or {}
                 tool = v2.tools.get(name)
-                if tool is None:
+                if tool is None or (tool.get("agent_visible") is False and not sess.contract_probe):
                     return rpc_err(-32602, f"Unknown tool '{name}'")
                 sess.call_index += 1
                 sig = None if sess.contract_probe else friction.fails(name, sess.call_index)
                 if sig:
-                    return rpc({"content": [{"type": "text",
-                                             "text": FRICTION_MESSAGES[sig]}],
-                                "isError": True})
-                is_write = tool["op"]["kind"] in {"create", "update"}
+                    status, error_body, headers = friction_http(sig, tool.get("_dialect"))
+                    return self._json(status, error_body, headers)
+                is_write = v2.is_write(name)
                 if is_write:
                     if (not sess.contract_probe and friction.write_cap
                             and sess.write_count >= friction.write_cap):
@@ -478,8 +538,11 @@ def main():
     from v2runtime import V2Runtime
     v2 = V2Runtime(args.v2_contracts)
     build_seed_db(world, v2=v2)
+    visible_tool_count = len(v2.mcp_tools())
     print(f"[local-world] product contracts: {len(v2.contracts)} products, "
-          f"{len(v2.tools)} tools, {len(v2.tables)} tables seeded", file=sys.stderr)
+          f"{visible_tool_count} agent tools, "
+          f"{len(v2.tools) - visible_tool_count} internal operations, "
+          f"{len(v2.tables)} tables seeded", file=sys.stderr)
     initial_state = snapshot(SEED_DB)
     friction = Friction(world.get("friction") or {})
     verifiers = {v["task_id"]: v for v in world.get("verifiers") or []}
@@ -487,7 +550,7 @@ def main():
     rows = sum(len(t) for t in initial_state.values())
     print(f"[local-world] world {world.get('world_id')} — "
           f"{len(world['tables'])} tables / {rows} rows / "
-          f"{len(v2.tools)} tools / {len(world['tasks'])} tasks / "
+          f"{visible_tool_count} tools / {len(world['tasks'])} tasks / "
           f"{len(verifiers)} verifiers", file=sys.stderr)
 
     handler = make_handler(world, friction, initial_state, verifiers, v2)

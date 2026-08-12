@@ -1,81 +1,87 @@
 {
- "task_id": "task_309",
- "outcome_class": "eligible_action",
- "prompt": "Compensation approval review for the Chen-Velasco SVP offer. Read the Verdana Compensation Authority Policy and the candidate's counterproposal in the matter folder in full. Apply the Policy's tiered approval framework to the proposed terms and record which approval authority must authorize this arrangement by calling legal_matters_review_create against legal_matters_001 with reviewer_role exactly \"compensation-counsel\" and outcome set to exactly one of \"cpo\", \"gc_co_approval\" or \"board_compensation_committee\". Where more than one tier is triggered, the Policy states which one governs.",
- "goal": "Compensation approval review for the Chen-Velasco SVP offer. Read the Verdana Compensation Authority Policy and the cand",
- "required_tools": [
-  "query_matter_documents",
-  "read_matter_document",
-  "legal_matters_review_create"
- ],
+ "acceptance_label": "pending_calibration",
  "complexity": "high",
+ "difficulty_tier": "high",
+ "effects": [
+  {
+   "op": "insert",
+   "table": "pm_notes"
+  }
+ ],
+ "expansion": {
+  "pack": "lab-employment-compensation-escalation.json",
+  "slug": "cap-approval-authority"
+ },
+ "expected_state_changes": [
+  {
+   "field": "(new row)",
+   "id": "(new product row)",
+   "note": ">=1 rows with pinned fields",
+   "table": "pm_notes"
+  }
+ ],
+ "goal": "Compensation approval review for the Chen-Velasco SVP offer. Read the Verdana Compensation Authority Policy and the cand",
  "method": "eval_anchored_expansion",
+ "outcome_class": "eligible_action",
+ "prompt": "Compensation approval review for the Chen-Velasco SVP offer. Read the Verdana Compensation Authority Policy and the candidate's counterproposal in the matter folder in full. Apply the Policy's tiered approval framework to the proposed terms and record which approval authority must authorize this arrangement by calling notes_create against legal_matters_001 with reviewer_role exactly \"compensation-counsel\" and outcome set to exactly one of \"cpo\", \"gc_co_approval\" or \"board_compensation_committee\". Where more than one tier is triggered, the Policy states which one governs.\n\nSYSTEM MIGRATION — WORLD V16\n- Matter documents now live in MatterVault DMS: search with documents_search_fulltext(query), read full text with documents_download(id), and file deliverables with documents_create using workspace_id=1, folder_id=1, name for the requested filename, doc_class for the requested document type, author=\"agent@simulated-firm.example\", and the complete deliverable in body.\n- A legacy legal_matters_reviews record is now filed through notes_create: use matter_id=100147, author_user_id=1, subject exactly 'legal_matters_reviews', and detail as a JSON object containing every legacy field named in the instruction.",
+ "provenance": {
+  "source_workflow": "harvey_lab: lab-employment-compensation-escalation/cap-approval-authority",
+  "surface_migration": {
+   "compiler": "world/migrate/gen1_to_v16.py",
+   "from": "Gen-1 synthesized tools",
+   "to": "v3 product contracts"
+  }
+ },
+ "reference_args": [
+  {
+   "query": "Verdana — Compensation Authority Policy v3.2"
+  },
+  {
+   "id": 100324
+  },
+  {
+   "id": 100319
+  },
+  {
+   "author_user_id": 1,
+   "detail": "{\"legal_matters_id\":\"legal_matters_001\",\"outcome\":\"board_compensation_committee\",\"rationale\":\"The counterproposal includes a Guaranteed Bonus Floor, which the Policy prohibits categorically and reserves to the Committee regardless of amount, and a CIC Severance Multiplier of 2.0x against an SVP CAP Limit of 1.0x — 100% above the limit, far beyond the CPO's 25% Tier 1 authority. Where multiple tiers are triggered the highest governs.\",\"reviewer_role\":\"compensation-counsel\"}",
+   "matter_id": 100147,
+   "subject": "legal_matters_reviews"
+  }
+ ],
+ "relevant_data": [
+  {
+   "field": "name",
+   "id": 100324,
+   "table": "dm_documents",
+   "value": "Verdana — Compensation Authority Policy v3.2"
+  },
+  {
+   "field": "name",
+   "id": 100319,
+   "table": "dm_documents",
+   "value": "Chen-Velasco — Employment agreement counterproposal"
+  }
+ ],
+ "required_tools": [
+  "documents_search_fulltext",
+  "documents_download",
+  "notes_create"
+ ],
  "steps": [
   "Locate the input documents for this engagement in the matter folder",
   "Read every required input document in full",
   "Derive the graded determinations strictly from the documents",
   "Record the determinations with the required write tools"
  ],
- "relevant_data": [
-  {
-   "table": "matter_documents",
-   "id": 319,
-   "field": "title",
-   "value": "Verdana — Compensation Authority Policy v3.2"
-  },
-  {
-   "table": "matter_documents",
-   "id": 314,
-   "field": "title",
-   "value": "Chen-Velasco — Employment agreement counterproposal"
-  }
- ],
- "expected_state_changes": [
-  {
-   "table": "legal_matters_reviews",
-   "field": "(new row)",
-   "note": ">=1 rows with pinned fields"
-  }
- ],
  "tables_affected": [
-  "legal_matters_reviews"
+  "pm_notes"
  ],
+ "task_id": "task_309",
  "walk": [
-  "query_matter_documents",
-  "read_matter_document",
-  "read_matter_document",
-  "legal_matters_review_create"
- ],
- "reference_args": [
-  {
-   "title": "Verdana — Compensation Authority Policy v3.2"
-  },
-  {
-   "id": 319
-  },
-  {
-   "id": 314
-  },
-  {
-   "legal_matters_id": "legal_matters_001",
-   "reviewer_role": "compensation-counsel",
-   "outcome": "board_compensation_committee",
-   "rationale": "The counterproposal includes a Guaranteed Bonus Floor, which the Policy prohibits categorically and reserves to the Committee regardless of amount, and a CIC Severance Multiplier of 2.0x against an SVP CAP Limit of 1.0x — 100% above the limit, far beyond the CPO's 25% Tier 1 authority. Where multiple tiers are triggered the highest governs."
-  }
- ],
- "effects": [
-  {
-   "table": "legal_matters_reviews",
-   "op": "insert"
-  }
- ],
- "provenance": {
-  "source_workflow": "harvey_lab: lab-employment-compensation-escalation/cap-approval-authority"
- },
- "difficulty_tier": "high",
- "acceptance_label": "pending_calibration",
- "expansion": {
-  "pack": "lab-employment-compensation-escalation.json",
-  "slug": "cap-approval-authority"
- }
+  "documents_search_fulltext",
+  "documents_download",
+  "documents_download",
+  "notes_create"
+ ]
 }

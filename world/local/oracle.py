@@ -23,15 +23,20 @@ import os
 import re
 import sys
 import urllib.request
+import urllib.error
+
+from wire_errors import infrastructure_error
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
-def http(base: str, method: str, path: str, body=None, session=None):
+def http(base: str, method: str, path: str, body=None, session=None, token=None):
     req = urllib.request.Request(base + path, method=method)
     req.add_header("Content-Type", "application/json")
     if session:
         req.add_header("Mcp-Session-Id", session)
+    if token:
+        req.add_header("Authorization", f"Bearer {token}")
     data = json.dumps(body).encode() if body is not None else None
     with urllib.request.urlopen(req, data=data, timeout=60) as res:
         return json.loads(res.read().decode() or "{}")
@@ -46,7 +51,10 @@ class OracleSession:
             session_request["task_id"] = task_id
         if profile:
             session_request["profile"] = profile
-        self.sid = http(base, "POST", "/sessions", session_request)["session_id"]
+        opened = http(base, "POST", "/sessions", session_request)
+        self.sid = opened["session_id"]
+        self.access_token = opened["access_token"]
+        self.refresh_token = opened["refresh_token"]
         self.trace: list[dict] = []
         self._rpc_id = 0
 
@@ -54,10 +62,34 @@ class OracleSession:
         """Call a tool; retry transient friction errors like a competent agent."""
         for attempt in range(retries + 1):
             self._rpc_id += 1
-            res = http(self.base, "POST", "/mcp", {
-                "jsonrpc": "2.0", "id": self._rpc_id, "method": "tools/call",
-                "params": {"name": tool, "arguments": args},
-            }, session=self.sid)
+            try:
+                res = http(self.base, "POST", "/mcp", {
+                    "jsonrpc": "2.0", "id": self._rpc_id, "method": "tools/call",
+                    "params": {"name": tool, "arguments": args},
+                }, session=self.sid, token=self.access_token)
+            except urllib.error.HTTPError as exc:
+                if exc.code == 401 and self._refresh():
+                    continue
+                signature = exc.headers.get("X-Simulator-Failure")
+                if signature in {"rate_limited", "stale_reference"}:
+                    raw = exc.read().decode(errors="replace")
+                    text = raw or json.dumps({"error": signature})
+                    self.trace.append({
+                        "tool": tool, "requested_tool": tool, "arguments": args,
+                        "observation": text[:4000], "ok": False,
+                    })
+                    if attempt < retries:
+                        continue
+                    return False, text
+                text = infrastructure_error(exc)
+                self.trace.append({"tool": tool, "requested_tool": tool, "arguments": args,
+                                   "observation": text, "ok": False})
+                return False, text
+            except (urllib.error.URLError, TimeoutError, ConnectionError, OSError) as exc:
+                text = infrastructure_error(exc)
+                self.trace.append({"tool": tool, "requested_tool": tool, "arguments": args,
+                                   "observation": text, "ok": False})
+                return False, text
             r = res.get("result") or {}
             text = "".join(c.get("text", "") for c in r.get("content", []))
             ok = not r.get("isError")
@@ -70,13 +102,31 @@ class OracleSession:
                 return ok, text
         return False, text
 
+    def list_tools(self) -> list[dict]:
+        """Return the agent-visible MCP tools for this authenticated session."""
+        self._rpc_id += 1
+        response = http(self.base, "POST", "/mcp", {
+            "jsonrpc": "2.0", "id": self._rpc_id, "method": "tools/list", "params": {},
+        }, session=self.sid, token=self.access_token)
+        return ((response.get("result") or {}).get("tools") or [])
+
+    def _refresh(self) -> bool:
+        try:
+            result = http(self.base, "POST", f"/sessions/{self.sid}/refresh",
+                          {"refresh_token": self.refresh_token})
+            self.access_token = result["access_token"]
+            return True
+        except Exception:
+            return False
+
     def verify(self, task_id: str) -> dict:
         return http(self.base, "POST", f"/verify/{task_id}",
-                    {"trace": self.trace}, session=self.sid)
+                    {"trace": self.trace}, session=self.sid, token=self.access_token)
 
     def close(self):
         try:
-            http(self.base, "DELETE", f"/sessions/{self.sid}")
+            http(self.base, "DELETE", f"/sessions/{self.sid}",
+                 session=self.sid, token=self.access_token)
         except Exception:
             pass
 

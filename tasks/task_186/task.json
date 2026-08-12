@@ -1,84 +1,87 @@
 {
- "task_id": "task_186",
- "outcome_class": "eligible_action",
- "prompt": "Meridian Grain Cooperative v. Talvern Logistics (our litigation case litigation_cases_001): opposing counsel disputes that Talvern management ever directed the shutdown of the Silo Complex 4 climate-control equipment. Search the matter workspace for the produced custodian communications in which the power-down of the Complex 4 dehumidification units was ordered and then confirmed as executed — beware of look-alike maintenance correspondence about other sites — and read each of those communications in full. Then record exactly one evidence record on the litigation case with litigation_cases_evidence_create, classifying where the fact is established using exactly one of these evidence_type slugs: source_document (fact established in a primary custodian communication or contemporaneous business record), independent_review (fact established by an outside expert, auditor or engineering analysis), decision_record (fact established by formal corporate action such as a board resolution). Set source_uri to a matter:// reference to the communication that establishes the directive, and content_summary to a one-to-two sentence summary of what the communication establishes. Do not create any other records. In your final answer, identify who gave the directive, to whom, and on what date.",
- "goal": "Locate the custodian communications ordering and confirming the Complex 4 shutdown and classify the evidence correctly.",
- "required_tools": [
-  "query_matter_documents",
-  "read_matter_document",
-  "litigation_cases_evidence_create"
- ],
+ "acceptance_label": "pending_calibration",
  "complexity": "medium",
+ "difficulty_tier": "medium",
+ "effects": [
+  {
+   "op": "insert",
+   "table": "pm_notes"
+  }
+ ],
+ "expansion": {
+  "pack": "discovery-retrieval.json",
+  "slug": "shutdown-directive-source"
+ },
+ "expected_state_changes": [
+  {
+   "field": "(new row)",
+   "id": "(new product row)",
+   "note": ">=1 rows with pinned fields",
+   "table": "pm_notes"
+  }
+ ],
+ "goal": "Locate the custodian communications ordering and confirming the Complex 4 shutdown and classify the evidence correctly.",
  "method": "eval_anchored_expansion",
+ "outcome_class": "eligible_action",
+ "prompt": "Meridian Grain Cooperative v. Talvern Logistics (our litigation case litigation_cases_001): opposing counsel disputes that Talvern management ever directed the shutdown of the Silo Complex 4 climate-control equipment. Search the matter workspace for the produced custodian communications in which the power-down of the Complex 4 dehumidification units was ordered and then confirmed as executed — beware of look-alike maintenance correspondence about other sites — and read each of those communications in full. Then record exactly one evidence record on the litigation case with notes_create, classifying where the fact is established using exactly one of these evidence_type slugs: source_document (fact established in a primary custodian communication or contemporaneous business record), independent_review (fact established by an outside expert, auditor or engineering analysis), decision_record (fact established by formal corporate action such as a board resolution). Set source_uri to a matter:// reference to the communication that establishes the directive, and content_summary to a one-to-two sentence summary of what the communication establishes. Do not create any other records. In your final answer, identify who gave the directive, to whom, and on what date.\n\nSYSTEM MIGRATION — WORLD V16\n- Matter documents now live in MatterVault DMS: search with documents_search_fulltext(query), read full text with documents_download(id), and file deliverables with documents_create using workspace_id=1, folder_id=1, name for the requested filename, doc_class for the requested document type, author=\"agent@simulated-firm.example\", and the complete deliverable in body.\n- A legacy litigation_cases_evidence_records record is now filed through notes_create: use matter_id=100000, author_user_id=1, subject exactly 'litigation_cases_evidence_records', and detail as a JSON object containing every legacy field named in the instruction.",
+ "provenance": {
+  "source_workflow": "biglaw_bench: discovery-retrieval/shutdown-directive-source",
+  "surface_migration": {
+   "compiler": "world/migrate/gen1_to_v16.py",
+   "from": "Gen-1 synthesized tools",
+   "to": "v3 product contracts"
+  }
+ },
+ "reference_args": [
+  {
+   "query": "Discovery-retrieval pack — TLG-EM-0414 email thread: Kessler"
+  },
+  {
+   "id": 100169
+  },
+  {
+   "id": 100170
+  },
+  {
+   "author_user_id": 1,
+   "detail": "{\"content_digest\":\"sha256:reference-digest\",\"content_summary\":\"Kessler's written 2025-03-14 directive ordering the Complex 4 dehumidification bank offline, confirmed executed by Okafor on 2025-03-15.\",\"evidence_type\":\"source_document\",\"litigation_cases_id\":\"litigation_cases_001\",\"owner_role\":\"associate\",\"source_uri\":\"matter://discovery/TLG-EM-0414\",\"status\":\"open\"}",
+   "matter_id": 100000,
+   "subject": "litigation_cases_evidence_records"
+  }
+ ],
+ "relevant_data": [
+  {
+   "field": "name",
+   "id": 100169,
+   "table": "dm_documents",
+   "value": "Discovery-retrieval pack — TLG-EM-0414 email thread: Kessler to Okafor, Complex 4 load-shed directive (2025-03-14)"
+  },
+  {
+   "field": "name",
+   "id": 100170,
+   "table": "dm_documents",
+   "value": "Discovery-retrieval pack — TLG-EM-0419 email: Okafor implementation confirmation, Complex 4 power-down (2025-03-15)"
+  }
+ ],
+ "required_tools": [
+  "documents_search_fulltext",
+  "documents_download",
+  "notes_create"
+ ],
  "steps": [
   "Locate the input documents for this engagement in the matter folder",
   "Read every required input document in full",
   "Derive the graded determinations strictly from the documents",
   "Record the determinations with the required write tools"
  ],
- "relevant_data": [
-  {
-   "table": "matter_documents",
-   "id": 164,
-   "field": "title",
-   "value": "Discovery-retrieval pack — TLG-EM-0414 email thread: Kessler to Okafor, Complex 4 load-shed directive (2025-03-14)"
-  },
-  {
-   "table": "matter_documents",
-   "id": 165,
-   "field": "title",
-   "value": "Discovery-retrieval pack — TLG-EM-0419 email: Okafor implementation confirmation, Complex 4 power-down (2025-03-15)"
-  }
- ],
- "expected_state_changes": [
-  {
-   "table": "litigation_cases_evidence_records",
-   "field": "(new row)",
-   "note": ">=1 rows with pinned fields"
-  }
- ],
  "tables_affected": [
-  "litigation_cases_evidence_records"
+  "pm_notes"
  ],
+ "task_id": "task_186",
  "walk": [
-  "query_matter_documents",
-  "read_matter_document",
-  "read_matter_document",
-  "litigation_cases_evidence_create"
- ],
- "reference_args": [
-  {
-   "title": "Discovery-retrieval pack — TLG-EM-0414 email thread: Kessler"
-  },
-  {
-   "id": 164
-  },
-  {
-   "id": 165
-  },
-  {
-   "litigation_cases_id": "litigation_cases_001",
-   "evidence_type": "source_document",
-   "source_uri": "matter://discovery/TLG-EM-0414",
-   "content_summary": "Kessler's written 2025-03-14 directive ordering the Complex 4 dehumidification bank offline, confirmed executed by Okafor on 2025-03-15.",
-   "content_digest": "sha256:reference-digest",
-   "owner_role": "associate",
-   "status": "open"
-  }
- ],
- "effects": [
-  {
-   "table": "litigation_cases_evidence_records",
-   "op": "insert"
-  }
- ],
- "provenance": {
-  "source_workflow": "biglaw_bench: discovery-retrieval/shutdown-directive-source"
- },
- "difficulty_tier": "medium",
- "acceptance_label": "pending_calibration",
- "expansion": {
-  "pack": "discovery-retrieval.json",
-  "slug": "shutdown-directive-source"
- }
+  "documents_search_fulltext",
+  "documents_download",
+  "documents_download",
+  "notes_create"
+ ]
 }

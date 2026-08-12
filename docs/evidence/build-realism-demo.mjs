@@ -22,11 +22,13 @@ const world = (() => { const r = JSON.parse(readFileSync(join(ROOT, "world", "bl
 const mdRows = world.tables.find((t) => t.name === "matter_documents").sample_rows;
 const docById = new Map(mdRows.map((r) => [r.id, r]));
 
-let sessionId = null, rpc = 0;
+let sessionId = null, accessToken = null, rpc = 0;
 async function post(path, body) {
   const res = await fetch(BASE + path, {
     method: "POST",
-    headers: { "Content-Type": "application/json", ...(sessionId ? { "Mcp-Session-Id": sessionId } : {}) },
+    headers: { "Content-Type": "application/json",
+      ...(sessionId ? { "Mcp-Session-Id": sessionId } : {}),
+      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}) },
     body: JSON.stringify(body),
   });
   return res.json();
@@ -114,7 +116,9 @@ const SCENES = [
 
 // ---- run it live ---------------------------------------------------------
 const health = await (await fetch(BASE + "/health")).json();
-sessionId = (await post("/sessions", {})).session_id;
+const opened = await post("/sessions", {});
+sessionId = opened.session_id;
+accessToken = opened.access_token;
 const toolList = (await post("/mcp", { jsonrpc: "2.0", id: ++rpc, method: "tools/list", params: {} })).result.tools;
 
 const transcript = [];

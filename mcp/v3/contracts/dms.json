@@ -1,7 +1,7 @@
 {
  "$schema": "lawfirm-qwen.mcp-contract.v3",
  "system": "dms-v3",
- "product": "MatterVault DMS (SIMULATED) \u2014 API surface mirrors iManage Work API",
+ "product": "MatterVault DMS (SIMULATED) — API surface mirrors iManage Work API",
  "provenance": "https://docs.imanage.com/work-api/ (documents, versions, workspaces, folders, search, checkout/checkin)",
  "tables": [
   {
@@ -197,9 +197,24 @@
     "table": "dm_documents"
    },
    "params": {
-    "id": "integer"
+    "body": {
+     "type": "object",
+     "description": "Vendor request body; full schema is generated from the pinned public specification."
+    }
    },
-   "scenario": "The partner opens the engagement letter to check the fee clause verbatim."
+   "scenario": "The partner opens the engagement letter to check the fee clause verbatim.",
+   "conformance_args": {
+    "body": {
+     "documentId": "LEGAL!1.1",
+     "latest": true
+    }
+   },
+   "request_map": {
+    "body.documentId": "id"
+   },
+   "request_transforms": {
+    "body.documentId": "imanage_document_id"
+   }
   },
   {
    "name": "documents_list",
@@ -259,13 +274,31 @@
     ]
    },
    "params": {
-    "id": "integer",
-    "checked_out_by": "string",
-    "latest_version": "integer",
-    "body": "string",
-    "edit_date": "string"
+    "updateOrCreate": "string",
+    "documentId": "string",
+    "file": "string"
    },
-   "scenario": "She checks the MSA back in as version 4 with partner revisions."
+   "scenario": "She checks the MSA back in as version 4 with partner revisions.",
+   "conformance_args": {
+    "updateOrCreate": "Create New Version",
+    "documentId": "LEGAL!1.1",
+    "file": "Conformance document version"
+   },
+   "param_map": {
+    "documentId": "id",
+    "file": "body"
+   },
+   "request_defaults": {
+    "checked_out_by": "",
+    "latest_version": 2,
+    "edit_date": "2026-08-12T12:00:00Z"
+   },
+   "request_map": {
+    "documentId": "id"
+   },
+   "request_transforms": {
+    "documentId": "imanage_document_id"
+   }
   },
   {
    "name": "document_versions_list",
@@ -303,14 +336,33 @@
     }
    },
    "params": {
-    "folder_id": "integer",
-    "workspace_id": "integer",
-    "name": "string",
-    "doc_class": "string",
+    "libraryId": "string",
+    "folderId": "string",
+    "inherit_profile_from_folder": "boolean",
+    "file": "string",
     "author": "string",
-    "body": "string"
+    "class": "string"
    },
-   "scenario": "The associate files the signed amendment into the matter's Deal Documents folder."
+   "scenario": "The associate files the signed amendment into the matter's Deal Documents folder.",
+   "conformance_args": {
+    "libraryId": "LEGAL",
+    "folderId": "1",
+    "inherit_profile_from_folder": true,
+    "file": "Conformance document body",
+    "author": "Conformance Author",
+    "class": "DOCUMENT"
+   },
+   "param_map": {
+    "folderId": "folder_id",
+    "file": "body",
+    "author": "author",
+    "class": "doc_class"
+   },
+   "request_defaults": {
+    "workspace_id": 1,
+    "name": "Conformance document",
+    "doc_class": "DOCUMENT"
+   }
   },
   {
    "name": "workspaces_list",
@@ -342,12 +394,23 @@
     ]
    },
    "params": {
-    "name": "string",
-    "limit": "integer"
+    "body": {
+     "type": "object",
+     "description": "Vendor request body; full schema is generated from the pinned public specification."
+    }
    },
    "scenario": "A new paralegal finds the matter workspace from the client's matter number.",
    "param_map": {
     "name": "query"
+   },
+   "conformance_args": {
+    "body": {
+     "libraryId": "LEGAL",
+     "anywhere": "a"
+    }
+   },
+   "request_map": {
+    "body.anywhere": "query"
    }
   },
   {
@@ -362,27 +425,56 @@
     ]
    },
    "params": {
-    "workspace_id": "integer",
-    "limit": "integer"
+    "body": {
+     "type": "object",
+     "description": "Vendor request body; full schema is generated from the pinned public specification."
+    }
    },
-   "scenario": "Before filing, the secretary checks which folders the workspace already has."
+   "scenario": "Before filing, the secretary checks which folders the workspace already has.",
+   "conformance_args": {
+    "body": {
+     "libraryId": "LEGAL",
+     "container_id": "LEGAL!1"
+    }
+   },
+   "request_map": {
+    "body.container_id": "workspace_id"
+   },
+   "request_transforms": {
+    "body.container_id": "imanage_container_id"
+   }
   },
   {
    "name": "documents_download",
-   "mirrors": "GET /api/v2/customers/{c}/libraries/{l}/documents/{id}/download \u2014 iManage Work document download",
+   "mirrors": "GET /api/v2/customers/{c}/libraries/{l}/documents/{id}/download — iManage Work document download",
    "description": "Download a document: the FULL body text, not the profile preview.",
    "op": {
     "kind": "get",
     "table": "dm_documents"
    },
    "params": {
-    "id": "integer"
+    "body": {
+     "type": "object",
+     "description": "Vendor request body; full schema is generated from the pinned public specification."
+    }
    },
-   "scenario": "An associate pulls the full executed agreement text before drafting."
+   "scenario": "An associate pulls the full executed agreement text before drafting.",
+   "conformance_args": {
+    "body": {
+     "documentId": "LEGAL!1.1",
+     "latest": true
+    }
+   },
+   "request_map": {
+    "body.documentId": "id"
+   },
+   "request_transforms": {
+    "body.documentId": "imanage_document_id"
+   }
   },
   {
    "name": "documents_search_fulltext",
-   "mirrors": "POST /api/v2/customers/{c}/libraries/{l}/documents/search (anyword/fulltext) \u2014 iManage Work search",
+   "mirrors": "POST /api/v2/customers/{c}/libraries/{l}/documents/search (anyword/fulltext) — iManage Work search",
    "description": "Full-text search over document bodies and names. Paged; page until has_more is false.",
    "op": {
     "kind": "search",

@@ -11,10 +11,25 @@
       "source": "clio-manage-v4",
       "verification": "offline OpenAPI operation and schema validation"
     },
+    "cmecf-nextgen": {
+      "source_kind": "documentation-fixture",
+      "source": "https://pacer.uscourts.gov/file-case/how-file-case",
+      "verification": "official workflow documentation and deterministic filing/NEF golden fixtures; no public common write API"
+    },
+    "deadline-rules-frcp": {
+      "source_kind": "published-standard",
+      "source": "https://www.uscourts.gov/forms-rules/current-rules-practice-procedure/federal-rules-civil-procedure",
+      "verification": "published FRCP answer and discovery deadlines re-derived in code"
+    },
+    "docusign-esign-v2.1": {
+      "source_kind": "swagger",
+      "source": "docusign-esign-v2.1",
+      "verification": "offline official Swagger operation and response-schema validation"
+    },
     "courtlistener-v4": {
       "source_kind": "live-diff",
       "source": "https://github.com/freelawproject/courtlistener",
-      "source_revision": "973136f3520245bdae2165292e148ef46bf622fa",
+      "source_revision": "f7f45696fca033a83fabace3ebd880916aa36ec2",
       "verification": "replay against a pinned local CourtListener server"
     },
     "google-calendar-v3": {
@@ -44,7 +59,7 @@
     },
     "ledes-1998b": {
       "source_kind": "published-standard",
-      "source": "https://ledes.org/ledes-1998b-format/",
+      "source": "https://ledes.org/ledes-98b-format/",
       "verification": "24-field pipe-delimited ASCII golden files and deterministic totals"
     },
     "relativity-rest": {
@@ -94,6 +109,12 @@
       ["users_list", "clio-manage-v4", "get", "/users.json"],
       ["practice_areas_list", "clio-manage-v4", "get", "/practice_areas.json"]
     ],
+    "swagger": [
+      ["esign_envelopes_create", "docusign-esign-v2.1", "Envelopes_PostEnvelopes"],
+      ["esign_envelopes_get", "docusign-esign-v2.1", "Envelopes_GetEnvelope"],
+      ["esign_envelopes_send", "docusign-esign-v2.1", "Envelopes_PutEnvelope"],
+      ["esign_recipients_list", "docusign-esign-v2.1", "Recipients_GetRecipients"]
+    ],
     "google_discovery": [
       ["sheets_values_get", "google-sheets-v4", "sheets.spreadsheets.values.get"],
       ["sheets_values_update", "google-sheets-v4", "sheets.spreadsheets.values.update"],
@@ -138,6 +159,10 @@
       ["documents_search_fulltext", "imanage-work", "private Work API full-text search"]
     ],
     "documentation_fixture": [
+      ["efiling_cases_get", "cmecf-nextgen", "case-selection"],
+      ["efiling_filings_create", "cmecf-nextgen", "event-pdf-submit-nef"],
+      ["efiling_docket_entries_list", "cmecf-nextgen", "docket-report"],
+      ["efiling_nef_notices_list", "cmecf-nextgen", "notice-of-electronic-filing"],
       ["review_workspaces_list", "relativity-rest", "review_workspaces_list"],
       ["documents_query", "relativity-rest", "documents_query"],
       ["review_documents_get", "relativity-rest", "review_documents_get"],
@@ -152,22 +177,11 @@
       ["jobs_get", "relativity-rest", "jobs_get"]
     ],
     "published_standard": [
+      ["deadlines_compute", "deadline-rules-frcp", "frcp-6-12-33-34"],
       ["utbms_codes_list", "utbms", "utbms-code-set"],
       ["invoices_submit", "ledes-1998b", "ledes-1998b-file"]
     ],
-    "derived": [
-      ["trust_balance_get", "clio-manage-v4", "sum trust allocations for a scoped balance"],
-      ["invoice_total_check", "ledes-1998b", "sum line items and compare with declared total"]
-    ],
-    "simulator_extension": [
-      ["audit_events_list", "clio-manage-v4", "No public Clio audit-log endpoint; retained temporarily for controlled-change verifiers."],
-      ["bills_create", "clio-manage-v4", "The pinned Clio v4 OpenAPI exposes GET /bills.json but no POST; direct bill creation is not a documented operation."],
-      ["trust_transactions_create", "clio-manage-v4", "The pinned Clio v4 OpenAPI exposes allocations as read-only; trust writes must migrate to a documented bank-transaction or trust-request workflow."],
-      ["invoices_list", "ledes-1998b", "Invoice inventory is an e-billing platform surface, not part of the LEDES file standard."],
-      ["invoices_get", "ledes-1998b", "Invoice detail retrieval is an e-billing platform surface, not part of the LEDES file standard."],
-      ["invoice_lines_list", "ledes-1998b", "Line retrieval is an e-billing platform surface, not part of the LEDES file standard."],
-      ["appeals_list", "ledes-1998b", "Appeal workflow is an e-billing platform surface, not part of the LEDES file standard."],
-      ["appeals_create", "ledes-1998b", "Appeal workflow is an e-billing platform surface, not part of the LEDES file standard."]
-    ]
+    "derived": [],
+    "simulator_extension": []
   }
 }

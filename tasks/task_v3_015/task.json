@@ -1,56 +1,76 @@
 {
- "task_id": "task_v3_015",
+ "acceptance_label": "pending_calibration",
+ "complexity": "medium",
+ "difficulty_tier": "medium",
+ "effects": [
+  {
+   "op": "insert",
+   "table": "pm_notes"
+  },
+  {
+   "op": "insert",
+   "table": "pm_notes"
+  }
+ ],
+ "goal": "Quarterly trust sweep: a client trust ledger must never be negative. Review the trust transactions across ALL ",
+ "method": "v3_workflow",
  "outcome_class": "eligible_action",
  "prompt": "Quarterly trust sweep: a client trust ledger must never be negative. Review the trust transactions across ALL matters (list them — mind the default page size — and compute per-matter balances yourself) and file one alert note per overdrawn matter: authored by user 1, subject exactly \"TRUST OVERDRAFT ALERT\", filed on that overdrawn matter, detail stating that matter's computed balance. Post no trust transactions. Find every overdrawn matter; miss none, and do not flag a matter whose ledger is positive.",
- "goal": "Quarterly trust sweep: a client trust ledger must never be negative. Review the trust transactions across ALL ",
- "required_tools": [
-  "trust_transactions_list",
-  "notes_create"
- ],
- "complexity": "medium",
- "method": "v3_workflow",
- "walk": [
-  "trust_transactions_list",
-  "notes_create",
-  "notes_create"
- ],
+ "provenance": {
+  "source_workflow": "workflow_research: r2-trust-sweep-all-matters"
+ },
  "reference_args": [
   {
    "limit": 100
   },
   {
-   "matter_id": 10,
-   "author_user_id": 1,
-   "subject": "TRUST OVERDRAFT ALERT",
-   "detail": "Matter 10 client ledger computes to -25750.44; freeze disbursements."
+   "body": {
+    "data": {
+     "contact": {
+      "id": 1
+     },
+     "date": "2026-08-10",
+     "detail": "Matter 10 client ledger computes to -25750.44; freeze disbursements.",
+     "matter": {
+      "id": 10
+     },
+     "subject": "TRUST OVERDRAFT ALERT",
+     "type": "Matter"
+    }
+   }
   },
   {
-   "matter_id": 17,
-   "author_user_id": 1,
-   "subject": "TRUST OVERDRAFT ALERT",
-   "detail": "Matter 17 client ledger computes to -42300.06; freeze disbursements."
+   "body": {
+    "data": {
+     "contact": {
+      "id": 1
+     },
+     "date": "2026-08-10",
+     "detail": "Matter 17 client ledger computes to -42300.06; freeze disbursements.",
+     "matter": {
+      "id": 17
+     },
+     "subject": "TRUST OVERDRAFT ALERT",
+     "type": "Matter"
+    }
+   }
   }
+ ],
+ "required_tools": [
+  "trust_transactions_list",
+  "notes_create"
  ],
  "tables_affected": [
   "pm_notes"
  ],
- "effects": [
-  {
-   "table": "pm_notes",
-   "op": "insert"
-  },
-  {
-   "table": "pm_notes",
-   "op": "insert"
-  }
- ],
- "provenance": {
-  "source_workflow": "workflow_research: r2-trust-sweep-all-matters"
- },
- "difficulty_tier": "medium",
- "acceptance_label": "pending_calibration",
+ "task_id": "task_v3_015",
  "v3": {
-  "family": "r2-trust-sweep-all-matters",
-  "dialect_surface": true
- }
+  "dialect_surface": true,
+  "family": "r2-trust-sweep-all-matters"
+ },
+ "walk": [
+  "trust_transactions_list",
+  "notes_create",
+  "notes_create"
+ ]
 }

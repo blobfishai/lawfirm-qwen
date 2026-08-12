@@ -63,20 +63,32 @@ if (!API_KEY || !BASE_URL) { console.error(`engine ${ENGINE_ID} needs ${spec.api
 
 const CORPUS_TOOLS = ["corpus_matters_list", "corpus_files_list", "corpus_search", "corpus_read"];
 
+const SESSION_TOKENS = new Map();
 async function rpc(path, body, sid) {
   const r = await fetch(BASE + path, {
     method: "POST",
-    headers: { "content-type": "application/json", ...(sid ? { "X-Blobfish-Session": sid } : {}) },
+    headers: { "content-type": "application/json",
+      ...(sid ? { "X-Blobfish-Session": sid,
+        Authorization: `Bearer ${SESSION_TOKENS.get(sid)}` } : {}) },
     body: JSON.stringify(body),
   });
   return r.json();
 }
 
 async function toolSchemas() {
-  const r = await rpc("/mcp", { jsonrpc: "2.0", id: 1, method: "tools/list", params: {} });
-  return (r.result?.tools ?? [])
-    .filter((t) => CORPUS_TOOLS.includes(t.name))
-    .map((t) => ({ type: "function", function: { name: t.name, description: t.description, parameters: t.inputSchema } }));
+  const opened = await rpc("/sessions", {});
+  SESSION_TOKENS.set(opened.session_id, opened.access_token);
+  try {
+    const r = await rpc("/mcp", { jsonrpc: "2.0", id: 1, method: "tools/list", params: {} }, opened.session_id);
+    return (r.result?.tools ?? [])
+      .filter((t) => CORPUS_TOOLS.includes(t.name))
+      .map((t) => ({ type: "function", function: { name: t.name, description: t.description, parameters: t.inputSchema } }));
+  } finally {
+    await fetch(`${BASE}/sessions/${opened.session_id}`, {
+      method: "DELETE", headers: { Authorization: `Bearer ${opened.access_token}` },
+    }).catch(() => {});
+    SESSION_TOKENS.delete(opened.session_id);
+  }
 }
 
 const SYSTEM = `You are a knowledge-management associate at Calderwood & Harkness.
@@ -93,7 +105,9 @@ Cite matters by their id, in the form 1234-56789. Your final message must list
 every qualifying matter id. Do not list matters that do not qualify.`;
 
 async function runEpisode(task, tools) {
-  const sid = (await rpc("/sessions", {})).session_id;
+  const opened = await rpc("/sessions", { task_id: task.task_id });
+  const sid = opened.session_id;
+  SESSION_TOKENS.set(sid, opened.access_token);
   const messages = [{ role: "system", content: SYSTEM },
                     { role: "user", content: task.prompt }];
   const steps = [];
@@ -239,6 +253,13 @@ async function worker(queue) {
     spentTokens += (ep.usage?.prompt_tokens ?? 0) + (ep.usage?.completion_tokens ?? 0);
     writeFileSync(join(OUT_DIR, `${task.task_id}.json`),
       JSON.stringify({ ...rec, answer: ep.answer, steps: ep.steps }, null, 1));
+    if (ep.sid) {
+      const token = SESSION_TOKENS.get(ep.sid);
+      await fetch(`${BASE}/sessions/${ep.sid}`, {
+        method: "DELETE", headers: token ? { Authorization: `Bearer ${token}` } : {},
+      }).catch(() => {});
+      SESSION_TOKENS.delete(ep.sid);
+    }
     done++;
     console.log(`[${String(done).padStart(3)}/${list.length}] ${task.task_id} ` +
       `${String(task.title ?? task.kind ?? task.task_id).slice(0, 42).padEnd(42)} ` +

@@ -1,7 +1,7 @@
 {
  "$schema": "lawfirm-qwen.mcp-contract.v3",
  "system": "practice-management-v3",
- "product": "LexOperis PM (SIMULATED) \u2014 API surface mirrors Clio Manage API v4",
+ "product": "LexOperis PM (SIMULATED) — API surface mirrors Clio Manage API v4",
  "provenance": "https://docs.developers.clio.com/api-reference/ (resource groups: Matters, Contacts, Activities, Bills, Calendar entries, Tasks, Notes, Communications, Trust, Users, Practice areas)",
  "tables": [
   {
@@ -821,7 +821,7 @@
  "tools": [
   {
    "name": "matters_list",
-   "mirrors": "GET /api/v4/matters.json \u2014 https://docs.developers.clio.com/api-reference/#tag/Matters",
+   "mirrors": "GET /api/v4/matters.json — https://docs.developers.clio.com/api-reference/#tag/Matters",
    "description": "List matters with filters (status, client, responsible attorney, practice area).",
    "op": {
     "kind": "list",
@@ -839,7 +839,6 @@
     "client_id": "integer",
     "responsible_attorney_id": "integer",
     "practice_area_id": "integer",
-    "billing_method": "string",
     "limit": "integer"
    },
    "scenario": "A supervising partner reviews all open matters in her practice area before Monday staffing."
@@ -875,16 +874,44 @@
     }
    },
    "params": {
-    "display_name": "string",
-    "client_id": "integer",
-    "practice_area_id": "integer",
-    "responsible_attorney_id": "integer",
-    "billing_method": "string",
-    "description": "string",
-    "number": "string",
-    "open_date": "string"
+    "body": {
+     "type": "object",
+     "description": "Vendor request body; full schema is generated from the pinned public specification."
+    }
    },
-   "scenario": "Intake coordinator opens a new matter after the engagement letter is signed and conflicts cleared."
+   "scenario": "Intake coordinator opens a new matter after the engagement letter is signed and conflicts cleared.",
+   "conformance_args": {
+    "body": {
+     "data": {
+      "client": {
+       "id": 1
+      },
+      "description": "Conformance matter",
+      "display_number": "CONF-001",
+      "practice_area": {
+       "id": 1
+      },
+      "responsible_attorney": {
+       "id": 1
+      },
+      "status": "open",
+      "open_date": "2026-08-12"
+     }
+    }
+   },
+   "request_map": {
+    "body.data.client.id": "client_id",
+    "body.data.description": [
+     "display_name",
+     "description"
+    ],
+    "body.data.display_number": "number",
+    "body.data.practice_area.id": "practice_area_id",
+    "body.data.responsible_attorney.id": "responsible_attorney_id",
+    "body.data.status": "status",
+    "body.data.open_date": "open_date",
+    "body.data.close_date": "close_date"
+   }
   },
   {
    "name": "matters_update",
@@ -903,13 +930,30 @@
    },
    "params": {
     "id": "integer",
-    "status": "string",
-    "responsible_attorney_id": "integer",
-    "description": "string",
-    "close_date": "string",
-    "billing_method": "string"
+    "body": {
+     "type": "object",
+     "description": "Vendor request body; full schema is generated from the pinned public specification."
+    }
    },
-   "scenario": "The responsible partner closes a settled matter and hands staffing to a new associate."
+   "scenario": "The responsible partner closes a settled matter and hands staffing to a new associate.",
+   "conformance_args": {
+    "id": 1,
+    "body": {
+     "data": {
+      "description": "Conformance update"
+     }
+    }
+   },
+   "request_map": {
+    "body.data.description": [
+     "display_name",
+     "description"
+    ],
+    "body.data.responsible_attorney.id": "responsible_attorney_id",
+    "body.data.status": "status",
+    "body.data.open_date": "open_date",
+    "body.data.close_date": "close_date"
+   }
   },
   {
    "name": "matters_search",
@@ -932,7 +976,7 @@
   },
   {
    "name": "contacts_list",
-   "mirrors": "GET /api/v4/contacts.json \u2014 #tag/Contacts",
+   "mirrors": "GET /api/v4/contacts.json — #tag/Contacts",
    "description": "List contacts (people and companies) with filters.",
    "op": {
     "kind": "list",
@@ -944,7 +988,6 @@
    },
    "params": {
     "type": "string",
-    "is_client": "integer",
     "limit": "integer"
    },
    "scenario": "The billing clerk lists client companies to reconcile month-end statements."
@@ -978,15 +1021,50 @@
     }
    },
    "params": {
-    "type": "string",
-    "name": "string",
-    "primary_email": "string",
-    "primary_phone": "string",
-    "title": "string",
-    "company_name": "string",
-    "is_client": "integer"
+    "body": {
+     "type": "object",
+     "description": "Vendor request body; full schema is generated from the pinned public specification."
+    }
    },
-   "scenario": "Intake adds the new client company and its GC after the pitch converts."
+   "scenario": "Intake adds the new client company and its GC after the pitch converts.",
+   "conformance_args": {
+    "body": {
+     "data": {
+      "type": "Company",
+      "name": "Conformance Client",
+      "email_addresses": [
+       {
+        "name": "Work",
+        "address": "conformance@example.com",
+        "default_email": true
+       }
+      ],
+      "phone_numbers": [
+       {
+        "name": "Work",
+        "number": "555-0100",
+        "default_number": true
+       }
+      ],
+      "title": "General Counsel"
+     }
+    }
+   },
+   "request_map": {
+    "body.data.type": "type",
+    "body.data.name": "name",
+    "body.data.email_addresses": "primary_email",
+    "body.data.phone_numbers": "primary_phone",
+    "body.data.title": "title",
+    "body.data.company.id": "company_name"
+   },
+   "request_transforms": {
+    "body.data.email_addresses": "first_email",
+    "body.data.phone_numbers": "first_phone"
+   },
+   "request_defaults": {
+    "is_client": 0
+   }
   },
   {
    "name": "contacts_update",
@@ -1006,14 +1084,32 @@
    },
    "params": {
     "id": "integer",
-    "primary_email": "string",
-    "primary_phone": "string",
-    "title": "string",
-    "company_name": "string",
-    "is_client": "integer",
-    "name": "string"
+    "body": {
+     "type": "object",
+     "description": "Vendor request body; full schema is generated from the pinned public specification."
+    }
    },
-   "scenario": "A secretary updates a contact's phone and title after a client-side promotion."
+   "scenario": "A secretary updates a contact's phone and title after a client-side promotion.",
+   "conformance_args": {
+    "id": 1,
+    "body": {
+     "data": {
+      "title": "Updated title"
+     }
+    }
+   },
+   "request_map": {
+    "body.data.type": "type",
+    "body.data.name": "name",
+    "body.data.email_addresses": "primary_email",
+    "body.data.phone_numbers": "primary_phone",
+    "body.data.title": "title",
+    "body.data.company.id": "company_name"
+   },
+   "request_transforms": {
+    "body.data.email_addresses": "first_email",
+    "body.data.phone_numbers": "first_phone"
+   }
   },
   {
    "name": "contacts_search",
@@ -1036,7 +1132,7 @@
   },
   {
    "name": "time_entries_list",
-   "mirrors": "GET /api/v4/activities.json?type=TimeEntry \u2014 #tag/Activities",
+   "mirrors": "GET /api/v4/activities.json?type=TimeEntry — #tag/Activities",
    "description": "List time entries with filters (matter, user, date range, billed state).",
    "op": {
     "kind": "list",
@@ -1057,14 +1153,18 @@
    "params": {
     "matter_id": "integer",
     "user_id": "integer",
-    "billable": "integer",
-    "billed": "integer",
-    "utbms_task_code": "string",
-    "date_from": "string",
-    "date_to": "string",
+    "start_date": "string",
+    "end_date": "string",
+    "status": "string",
+    "type": "string",
+    "query": "string",
     "limit": "integer"
    },
-   "scenario": "The billing partner pulls a matter's unbilled time before generating the prebill."
+   "scenario": "The billing partner pulls a matter's unbilled time before generating the prebill.",
+   "param_map": {
+    "start_date": "date_from",
+    "end_date": "date_to"
+   }
   },
   {
    "name": "time_entries_get",
@@ -1102,16 +1202,46 @@
     }
    },
    "params": {
-    "matter_id": "integer",
-    "user_id": "integer",
-    "date": "string",
-    "quantity_hours": "number",
-    "rate": "number",
-    "description": "string",
-    "utbms_task_code": "string",
-    "billable": "integer"
+    "body": {
+     "type": "object",
+     "description": "Vendor request body; full schema is generated from the pinned public specification."
+    }
    },
-   "scenario": "An associate records 2.5 hours drafting the dispositive motion with task code L240."
+   "scenario": "An associate records 2.5 hours drafting the dispositive motion with task code L240.",
+   "conformance_args": {
+    "body": {
+     "data": {
+      "type": "TimeEntry",
+      "date": "2026-08-12",
+      "matter": {
+       "id": 1
+      },
+      "user": {
+       "id": 1
+      },
+      "quantity": 1.5,
+      "price": 450,
+      "note": "Conformance time",
+      "activity_description": {
+       "utbms_task_id": 1
+      },
+      "non_billable": false
+     }
+    }
+   },
+   "request_map": {
+    "body.data.matter.id": "matter_id",
+    "body.data.user.id": "user_id",
+    "body.data.date": "date",
+    "body.data.quantity": "quantity_hours",
+    "body.data.price": "rate",
+    "body.data.note": "description",
+    "body.data.activity_description.utbms_task_id": "utbms_task_code",
+    "body.data.non_billable": "billable"
+   },
+   "request_transforms": {
+    "body.data.non_billable": "invert_bool"
+   }
   },
   {
    "name": "time_entries_update",
@@ -1134,14 +1264,31 @@
    },
    "params": {
     "id": "integer",
-    "quantity_hours": "number",
-    "rate": "number",
-    "description": "string",
-    "utbms_task_code": "string",
-    "billable": "integer",
-    "date": "string"
+    "body": {
+     "type": "object",
+     "description": "Vendor request body; full schema is generated from the pinned public specification."
+    }
    },
-   "scenario": "The billing partner rewrites a vague narrative and fixes the task code before the bill goes out."
+   "scenario": "The billing partner rewrites a vague narrative and fixes the task code before the bill goes out.",
+   "conformance_args": {
+    "id": 1,
+    "body": {
+     "data": {
+      "quantity": 1.25
+     }
+    }
+   },
+   "request_map": {
+    "body.data.date": "date",
+    "body.data.quantity": "quantity_hours",
+    "body.data.price": "rate",
+    "body.data.note": "description",
+    "body.data.activity_description.utbms_task_id": "utbms_task_code",
+    "body.data.non_billable": "billable"
+   },
+   "request_transforms": {
+    "body.data.non_billable": "invert_bool"
+   }
   },
   {
    "name": "expense_entries_list",
@@ -1160,11 +1307,18 @@
    "params": {
     "matter_id": "integer",
     "user_id": "integer",
-    "billable": "integer",
-    "utbms_expense_code": "string",
+    "start_date": "string",
+    "end_date": "string",
+    "status": "string",
+    "type": "string",
+    "query": "string",
     "limit": "integer"
    },
-   "scenario": "Accounting reviews court-fee expenses across matters for the quarterly true-up."
+   "scenario": "Accounting reviews court-fee expenses across matters for the quarterly true-up.",
+   "param_map": {
+    "start_date": "date_from",
+    "end_date": "date_to"
+   }
   },
   {
    "name": "expense_entries_create",
@@ -1185,19 +1339,46 @@
     }
    },
    "params": {
-    "matter_id": "integer",
-    "user_id": "integer",
-    "date": "string",
-    "amount": "number",
-    "description": "string",
-    "utbms_expense_code": "string",
-    "billable": "integer"
+    "body": {
+     "type": "object",
+     "description": "Vendor request body; full schema is generated from the pinned public specification."
+    }
    },
-   "scenario": "A paralegal records the filing fee paid to the clerk this morning."
+   "scenario": "A paralegal records the filing fee paid to the clerk this morning.",
+   "conformance_args": {
+    "body": {
+     "data": {
+      "type": "ExpenseEntry",
+      "date": "2026-08-12",
+      "matter": {
+       "id": 1
+      },
+      "user": {
+       "id": 1
+      },
+      "quantity": 1,
+      "price": 125,
+      "note": "Conformance expense",
+      "non_billable": false
+     }
+    }
+   },
+   "request_map": {
+    "body.data.matter.id": "matter_id",
+    "body.data.user.id": "user_id",
+    "body.data.date": "date",
+    "body.data.price": "amount",
+    "body.data.note": "description",
+    "body.data.utbms_expense.id": "utbms_expense_code",
+    "body.data.non_billable": "billable"
+   },
+   "request_transforms": {
+    "body.data.non_billable": "invert_bool"
+   }
   },
   {
    "name": "bills_list",
-   "mirrors": "GET /api/v4/bills.json \u2014 #tag/Bills",
+   "mirrors": "GET /api/v4/bills.json — #tag/Bills",
    "description": "List bills with filters (state, matter, client).",
    "op": {
     "kind": "list",
@@ -1258,12 +1439,13 @@
     "due_date": "string",
     "number": "string"
    },
-   "scenario": "The billing clerk cuts a draft bill from June's unbilled time on the matter."
+   "scenario": "The billing clerk cuts a draft bill from June's unbilled time on the matter.",
+   "agent_visible": false
   },
   {
    "name": "bills_update",
    "mirrors": "PATCH /api/v4/bills/{id}.json",
-   "description": "Move a bill through its lifecycle (draft \u2192 awaiting_approval \u2192 approved \u2192 issued \u2192 paid | void) or adjust dates/balance.",
+   "description": "Move a bill through its lifecycle (draft → awaiting_approval → approved → issued → paid | void) or adjust dates/balance.",
    "op": {
     "kind": "update",
     "table": "pm_bills",
@@ -1276,12 +1458,25 @@
    },
    "params": {
     "id": "integer",
-    "state": "string",
-    "issue_date": "string",
-    "due_date": "string",
-    "balance": "number"
+    "body": {
+     "type": "object",
+     "description": "Vendor request body; full schema is generated from the pinned public specification."
+    }
    },
-   "scenario": "After partner sign-off, the clerk moves the bill from awaiting_approval to issued."
+   "scenario": "After partner sign-off, the clerk moves the bill from awaiting_approval to issued.",
+   "conformance_args": {
+    "id": 1,
+    "body": {
+     "data": {
+      "state": "awaiting_payment"
+     }
+    }
+   },
+   "request_map": {
+    "body.data.state": "state",
+    "body.data.issued_at": "issue_date",
+    "body.data.due_at": "due_date"
+   }
   },
   {
    "name": "bill_line_items_list",
@@ -1304,7 +1499,7 @@
   },
   {
    "name": "trust_transactions_list",
-   "mirrors": "Clio trust accounting (allocations/trust line items) \u2014 #tag/Allocations",
+   "mirrors": "Clio trust accounting (allocations/trust line items) — #tag/Allocations",
    "description": "List client trust ledger transactions (deposits, disbursements, earned-fee transfers).",
    "op": {
     "kind": "list",
@@ -1323,14 +1518,15 @@
    },
    "params": {
     "matter_id": "integer",
-    "client_id": "integer",
+    "contact_id": "integer",
     "kind": "string",
-    "cleared": "integer",
-    "date_from": "string",
-    "date_to": "string",
+    "status": "string",
     "limit": "integer"
    },
-   "scenario": "The trust accountant pulls the matter's ledger for the monthly three-way reconciliation."
+   "scenario": "The trust accountant pulls the matter's ledger for the monthly three-way reconciliation.",
+   "param_map": {
+    "contact_id": "client_id"
+   }
   },
   {
    "name": "trust_transactions_create",
@@ -1359,7 +1555,8 @@
     "date": "string",
     "memo": "string"
    },
-   "scenario": "Reception posts the client's retainer check into the trust ledger."
+   "scenario": "Reception posts the client's retainer check into the trust ledger.",
+   "agent_visible": false
   },
   {
    "name": "trust_balance_get",
@@ -1379,11 +1576,12 @@
     "matter_id": "integer",
     "client_id": "integer"
    },
-   "scenario": "Before filing, the paralegal confirms the trust balance covers the court fees."
+   "scenario": "Before filing, the paralegal confirms the trust balance covers the court fees.",
+   "agent_visible": false
   },
   {
    "name": "calendar_entries_list",
-   "mirrors": "GET /api/v4/calendar_entries.json \u2014 #tag/Calendar-entries",
+   "mirrors": "GET /api/v4/calendar_entries.json — #tag/Calendar-entries",
    "description": "List calendar entries (hearings, depositions, deadlines) with filters and date range.",
    "op": {
     "kind": "list",
@@ -1400,12 +1598,16 @@
    },
    "params": {
     "matter_id": "integer",
-    "kind": "string",
-    "start_from": "string",
-    "start_to": "string",
+    "from": "string",
+    "to": "string",
+    "query": "string",
     "limit": "integer"
    },
-   "scenario": "The docketing clerk reviews next week's hearings across all matters every Friday."
+   "scenario": "The docketing clerk reviews next week's hearings across all matters every Friday.",
+   "param_map": {
+    "from": "start_from",
+    "to": "start_to"
+   }
   },
   {
    "name": "calendar_entries_create",
@@ -1422,15 +1624,42 @@
     ]
    },
    "params": {
-    "matter_id": "integer",
-    "summary": "string",
-    "start_at": "string",
-    "end_at": "string",
-    "location": "string",
-    "kind": "string",
-    "attendee_user_ids": "string"
+    "body": {
+     "type": "object",
+     "description": "Vendor request body; full schema is generated from the pinned public specification."
+    }
    },
-   "scenario": "An associate calendars the deposition the parties just agreed to."
+   "scenario": "An associate calendars the deposition the parties just agreed to.",
+   "conformance_args": {
+    "body": {
+     "data": {
+      "summary": "Conformance event",
+      "start_at": "2026-08-12T12:00:00Z",
+      "end_at": "2026-08-12T13:00:00Z",
+      "calendar_owner": {
+       "id": 1
+      },
+      "matter": {
+       "id": 1
+      },
+      "location": "Conference Room"
+     }
+    }
+   },
+   "request_map": {
+    "body.data.matter.id": "matter_id",
+    "body.data.summary": "summary",
+    "body.data.start_at": "start_at",
+    "body.data.end_at": "end_at",
+    "body.data.location": "location",
+    "body.data.attendees": "attendee_user_ids"
+   },
+   "request_transforms": {
+    "body.data.attendees": "ids_csv"
+   },
+   "request_defaults": {
+    "kind": "event"
+   }
   },
   {
    "name": "calendar_entries_update",
@@ -1449,17 +1678,34 @@
    },
    "params": {
     "id": "integer",
-    "summary": "string",
-    "start_at": "string",
-    "end_at": "string",
-    "location": "string",
-    "kind": "string"
+    "body": {
+     "type": "object",
+     "description": "Vendor request body; full schema is generated from the pinned public specification."
+    }
    },
-   "scenario": "Court moved the status conference; the clerk reschedules the entry."
+   "scenario": "Court moved the status conference; the clerk reschedules the entry.",
+   "conformance_args": {
+    "id": 1,
+    "body": {
+     "data": {
+      "summary": "Updated event"
+     }
+    }
+   },
+   "request_map": {
+    "body.data.summary": "summary",
+    "body.data.start_at": "start_at",
+    "body.data.end_at": "end_at",
+    "body.data.location": "location",
+    "body.data.attendees": "attendee_user_ids"
+   },
+   "request_transforms": {
+    "body.data.attendees": "ids_csv"
+   }
   },
   {
    "name": "tasks_list",
-   "mirrors": "GET /api/v4/tasks.json \u2014 #tag/Tasks",
+   "mirrors": "GET /api/v4/tasks.json — #tag/Tasks",
    "description": "List matter tasks with filters.",
    "op": {
     "kind": "list",
@@ -1473,12 +1719,16 @@
    },
    "params": {
     "matter_id": "integer",
-    "assignee_user_id": "integer",
+    "assignee_id": "integer",
     "status": "string",
     "priority": "string",
+    "query": "string",
     "limit": "integer"
    },
-   "scenario": "A supervising attorney checks which of her associates' tasks are overdue."
+   "scenario": "A supervising attorney checks which of her associates' tasks are overdue.",
+   "param_map": {
+    "assignee_id": "assignee_user_id"
+   }
   },
   {
    "name": "tasks_create",
@@ -1499,13 +1749,38 @@
     }
    },
    "params": {
-    "matter_id": "integer",
-    "assignee_user_id": "integer",
-    "name": "string",
-    "due_at": "string",
-    "priority": "string"
+    "body": {
+     "type": "object",
+     "description": "Vendor request body; full schema is generated from the pinned public specification."
+    }
    },
-   "scenario": "The partner assigns 'draft privilege log' to the second-year with a Friday due date."
+   "scenario": "The partner assigns 'draft privilege log' to the second-year with a Friday due date.",
+   "conformance_args": {
+    "body": {
+     "data": {
+      "name": "Conformance task",
+      "description": "Conformance task description",
+      "assignee": {
+       "id": 1,
+       "type": "User"
+      },
+      "matter": {
+       "id": 1
+      },
+      "due_at": "2026-08-20T12:00:00Z",
+      "priority": "Normal",
+      "status": "pending"
+     }
+    }
+   },
+   "request_map": {
+    "body.data.matter.id": "matter_id",
+    "body.data.assignee.id": "assignee_user_id",
+    "body.data.name": "name",
+    "body.data.due_at": "due_at",
+    "body.data.priority": "priority",
+    "body.data.status": "status"
+   }
   },
   {
    "name": "tasks_update",
@@ -1523,16 +1798,30 @@
    },
    "params": {
     "id": "integer",
-    "status": "string",
-    "due_at": "string",
-    "priority": "string",
-    "assignee_user_id": "integer"
+    "body": {
+     "type": "object",
+     "description": "Vendor request body; full schema is generated from the pinned public specification."
+    }
    },
-   "scenario": "The associate marks the cite-check complete before leaving."
+   "scenario": "The associate marks the cite-check complete before leaving.",
+   "conformance_args": {
+    "id": 1,
+    "body": {
+     "data": {
+      "status": "complete"
+     }
+    }
+   },
+   "request_map": {
+    "body.data.assignee.id": "assignee_user_id",
+    "body.data.due_at": "due_at",
+    "body.data.priority": "priority",
+    "body.data.status": "status"
+   }
   },
   {
    "name": "notes_list",
-   "mirrors": "GET /api/v4/notes.json \u2014 #tag/Notes",
+   "mirrors": "GET /api/v4/notes.json — #tag/Notes",
    "description": "List matter notes.",
    "op": {
     "kind": "list",
@@ -1543,11 +1832,17 @@
     ]
    },
    "params": {
+    "type": "string",
     "matter_id": "integer",
-    "author_user_id": "integer",
+    "query": "string",
     "limit": "integer"
    },
-   "scenario": "New counsel reads the matter's notes to get up to speed after the handoff."
+   "scenario": "New counsel reads the matter's notes to get up to speed after the handoff.",
+   "conformance_args": {
+    "type": "Matter",
+    "limit": 10
+   },
+   "param_map": {}
   },
   {
    "name": "notes_create",
@@ -1564,16 +1859,38 @@
     ]
    },
    "params": {
-    "matter_id": "integer",
-    "author_user_id": "integer",
-    "subject": "string",
-    "detail": "string"
+    "body": {
+     "type": "object",
+     "description": "Vendor request body; full schema is generated from the pinned public specification."
+    }
    },
-   "scenario": "After the client call, the partner writes the strategy note into the matter."
+   "scenario": "After the client call, the partner writes the strategy note into the matter.",
+   "conformance_args": {
+    "body": {
+     "data": {
+      "contact": {
+       "id": 1
+      },
+      "matter": {
+       "id": 1
+      },
+      "type": "Matter",
+      "subject": "Conformance note",
+      "detail": "Conformance detail",
+      "date": "2026-08-12"
+     }
+    }
+   },
+   "request_map": {
+    "body.data.matter.id": "matter_id",
+    "body.data.contact.id": "author_user_id",
+    "body.data.subject": "subject",
+    "body.data.detail": "detail"
+   }
   },
   {
    "name": "communications_list",
-   "mirrors": "GET /api/v4/communications.json \u2014 #tag/Communications",
+   "mirrors": "GET /api/v4/communications.json — #tag/Communications",
    "description": "List logged emails/calls on a matter.",
    "op": {
     "kind": "list",
@@ -1604,19 +1921,54 @@
     ]
    },
    "params": {
-    "matter_id": "integer",
-    "type": "string",
-    "subject": "string",
-    "body": "string",
-    "senders": "string",
-    "receivers": "string",
-    "received_at": "string"
+    "body": {
+     "type": "object",
+     "description": "Vendor request body; full schema is generated from the pinned public specification."
+    }
    },
-   "scenario": "The secretary logs today's client call with a summary against the matter."
+   "scenario": "The secretary logs today's client call with a summary against the matter.",
+   "conformance_args": {
+    "body": {
+     "data": {
+      "type": "EmailCommunication",
+      "subject": "Conformance communication",
+      "body": "Conformance body",
+      "received_at": "2026-08-12T12:00:00Z",
+      "matter": {
+       "id": 1
+      },
+      "senders": [
+       {
+        "id": 1,
+        "type": "Contact"
+       }
+      ],
+      "receivers": [
+       {
+        "id": 2,
+        "type": "Contact"
+       }
+      ]
+     }
+    }
+   },
+   "request_map": {
+    "body.data.matter.id": "matter_id",
+    "body.data.type": "type",
+    "body.data.subject": "subject",
+    "body.data.body": "body",
+    "body.data.senders": "senders",
+    "body.data.receivers": "receivers",
+    "body.data.received_at": "received_at"
+   },
+   "request_transforms": {
+    "body.data.senders": "ids_csv",
+    "body.data.receivers": "ids_csv"
+   }
   },
   {
    "name": "users_list",
-   "mirrors": "GET /api/v4/users.json \u2014 #tag/Users",
+   "mirrors": "GET /api/v4/users.json — #tag/Users",
    "description": "List firm users (attorneys, staff) and rates.",
    "op": {
     "kind": "list",
@@ -1635,7 +1987,7 @@
   },
   {
    "name": "practice_areas_list",
-   "mirrors": "GET /api/v4/practice_areas.json \u2014 #tag/Practice-areas",
+   "mirrors": "GET /api/v4/practice_areas.json — #tag/Practice-areas",
    "description": "List the firm's practice areas.",
    "op": {
     "kind": "list",
@@ -1645,14 +1997,13 @@
     ]
    },
    "params": {
-    "category": "string",
     "limit": "integer"
    },
    "scenario": "Intake maps the new engagement to the right practice area for conflicts routing."
   },
   {
    "name": "audit_events_list",
-   "mirrors": "internal audit feed \u2014 NO public Clio equivalent (Clio exposes no audit-log API); fidelity ceiling documented, kept because controlled-change verifiers pin these rows",
+   "mirrors": "internal audit feed — NO public Clio equivalent (Clio exposes no audit-log API); fidelity ceiling documented, kept because controlled-change verifiers pin these rows",
    "description": "List controlled-change audit events for a record.",
    "op": {
     "kind": "list",
@@ -1669,7 +2020,8 @@
     "actor_role": "string",
     "limit": "integer"
    },
-   "scenario": "A partner reviews who changed the invoice amount and why."
+   "scenario": "A partner reviews who changed the invoice amount and why.",
+   "agent_visible": false
   }
  ],
  "dialect": "clio",

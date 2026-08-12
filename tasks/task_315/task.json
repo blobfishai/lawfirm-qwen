@@ -1,71 +1,77 @@
 {
- "task_id": "task_315",
- "outcome_class": "eligible_action",
- "prompt": "Quantify the shortfall in the counterparty production for the Kestrel Logistics supply dispute. Read the production index in the matter folder in full and count how many listed exhibits were not delivered, then record that count by calling legal_matters_amount_history_create against legal_matters_007 with fee_budget set to the number of missing exhibits and changed_by_role exactly \"discovery-counsel\". Count only exhibits the index lists that are absent from the production.",
- "goal": "Quantify the shortfall in the counterparty production for the Kestrel Logistics supply dispute. Read the production inde",
- "required_tools": [
-  "query_matter_documents",
-  "read_matter_document",
-  "legal_matters_amount_history_create"
- ],
+ "acceptance_label": "pending_calibration",
  "complexity": "medium",
+ "difficulty_tier": "medium",
+ "effects": [
+  {
+   "op": "insert",
+   "table": "pm_notes"
+  }
+ ],
+ "expansion": {
+  "pack": "production-gap-disclosure.json",
+  "slug": "production-gap-count"
+ },
+ "expected_state_changes": [
+  {
+   "field": "(new row)",
+   "id": "(new product row)",
+   "note": ">=1 rows with pinned fields",
+   "table": "pm_notes"
+  }
+ ],
+ "goal": "Quantify the shortfall in the counterparty production for the Kestrel Logistics supply dispute. Read the production inde",
  "method": "eval_anchored_expansion",
+ "outcome_class": "eligible_action",
+ "prompt": "Quantify the shortfall in the counterparty production for the Kestrel Logistics supply dispute. Read the production index in the matter folder in full and count how many listed exhibits were not delivered, then record that count by calling notes_create against legal_matters_007 with fee_budget set to the number of missing exhibits and changed_by_role exactly \"discovery-counsel\". Count only exhibits the index lists that are absent from the production.\n\nSYSTEM MIGRATION — WORLD V16\n- Matter documents now live in MatterVault DMS: search with documents_search_fulltext(query), read full text with documents_download(id), and file deliverables with documents_create using workspace_id=1, folder_id=1, name for the requested filename, doc_class for the requested document type, author=\"agent@simulated-firm.example\", and the complete deliverable in body.\n- A legacy legal_matters_amount_history record is now filed through notes_create: use matter_id=100153, author_user_id=1, subject exactly 'legal_matters_amount_history', and detail as a JSON object containing every legacy field named in the instruction.",
+ "provenance": {
+  "source_workflow": "workflow_research: production-gap-disclosure/production-gap-count",
+  "surface_migration": {
+   "compiler": "world/migrate/gen1_to_v16.py",
+   "from": "Gen-1 synthesized tools",
+   "to": "v3 product contracts"
+  }
+ },
+ "reference_args": [
+  {
+   "query": "Production index — Kestrel Logistics supply dispute (EX-0001"
+  },
+  {
+   "id": 100327
+  },
+  {
+   "author_user_id": 1,
+   "detail": "{\"change_reason\":\"The index lists eight exhibits (EX-0001 to EX-0008); seven were delivered. EX-0006, the supplier's root-cause analysis of 2 April 2026, is absent from the production.\",\"changed_by_role\":\"discovery-counsel\",\"fee_budget\":1,\"legal_matters_id\":\"legal_matters_007\"}",
+   "matter_id": 100153,
+   "subject": "legal_matters_amount_history"
+  }
+ ],
+ "relevant_data": [
+  {
+   "field": "name",
+   "id": 100327,
+   "table": "dm_documents",
+   "value": "Production index — Kestrel Logistics supply dispute (EX-0001 to EX-0008)"
+  }
+ ],
+ "required_tools": [
+  "documents_search_fulltext",
+  "documents_download",
+  "notes_create"
+ ],
  "steps": [
   "Locate the input documents for this engagement in the matter folder",
   "Read every required input document in full",
   "Derive the graded determinations strictly from the documents",
   "Record the determinations with the required write tools"
  ],
- "relevant_data": [
-  {
-   "table": "matter_documents",
-   "id": 322,
-   "field": "title",
-   "value": "Production index — Kestrel Logistics supply dispute (EX-0001 to EX-0008)"
-  }
- ],
- "expected_state_changes": [
-  {
-   "table": "legal_matters_amount_history",
-   "field": "(new row)",
-   "note": ">=1 rows with pinned fields"
-  }
- ],
  "tables_affected": [
-  "legal_matters_amount_history"
+  "pm_notes"
  ],
+ "task_id": "task_315",
  "walk": [
-  "query_matter_documents",
-  "read_matter_document",
-  "legal_matters_amount_history_create"
- ],
- "reference_args": [
-  {
-   "title": "Production index — Kestrel Logistics supply dispute (EX-0001"
-  },
-  {
-   "id": 322
-  },
-  {
-   "legal_matters_id": "legal_matters_007",
-   "fee_budget": 1,
-   "changed_by_role": "discovery-counsel",
-   "change_reason": "The index lists eight exhibits (EX-0001 to EX-0008); seven were delivered. EX-0006, the supplier's root-cause analysis of 2 April 2026, is absent from the production."
-  }
- ],
- "effects": [
-  {
-   "table": "legal_matters_amount_history",
-   "op": "insert"
-  }
- ],
- "provenance": {
-  "source_workflow": "workflow_research: production-gap-disclosure/production-gap-count"
- },
- "difficulty_tier": "medium",
- "acceptance_label": "pending_calibration",
- "expansion": {
-  "pack": "production-gap-disclosure.json",
-  "slug": "production-gap-count"
- }
+  "documents_search_fulltext",
+  "documents_download",
+  "notes_create"
+ ]
 }

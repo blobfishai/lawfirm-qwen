@@ -22,6 +22,8 @@ const OUT = join(ROOT, "docs", "leaderboard", "index.html");
 const config = JSON.parse(readFileSync(join(ROOT, "config", "world.config.json"), "utf8"));
 const worldRaw = JSON.parse(readFileSync(join(ROOT, config.blobfish.world), "utf8"));
 const world = worldRaw.world ?? worldRaw;
+const conformance = JSON.parse(readFileSync(join(ROOT, "data", "conformance.json"), "utf8"));
+const visibleToolCount = conformance.summary.contract_tools;
 const expandedPath = join(ROOT, "world", "blobfish", "world-expanded.json");
 const expansion = existsSync(expandedPath)
   ? (JSON.parse(readFileSync(expandedPath, "utf8")).world ?? JSON.parse(readFileSync(expandedPath, "utf8"))).expansion_report
@@ -203,9 +205,10 @@ const AA_CONTEXT = [
   ["gpt-oss-120b (high)", "13.9", "0.0"],
 ];
 
-const totalDocs = world.tables.find((t) => t.name === "matter_documents").sample_rows.length +
-  (expansion?.documents_added ?? 0);
-const totalTasks = world.tasks.length + (expansion?.tasks_added ?? 0);
+const documentTable = world.tables.find((t) => t.name === "dm_documents")
+  ?? world.tables.find((t) => t.name === "matter_documents");
+const totalDocs = documentTable?.sample_rows.length ?? 0;
+const totalTasks = world.tasks.length;
 const generatedAt = new Date().toISOString().slice(0, 16).replace("T", " ") + " UTC";
 
 const html = `<title>lawfirm-qwen — Legal Agent Leaderboard</title>
@@ -313,8 +316,7 @@ const html = `<title>lawfirm-qwen — Legal Agent Leaderboard</title>
   <div class="eyebrow">lawfirm-qwen · Eve Litigation world (simulated)</div>
   <h1>Legal Agent Leaderboard</h1>
   <p class="sub">Models measured as agents inside an executable law-firm simulation:
-  ${world.tables.length} live tables, ${world.tools.length} executable tools, ${totalTasks} tasks
-  (${world.tasks.length} original + ${expansion ? expansion.tasks_added : 0} eval-anchored expansion),
+  ${world.tables.length} live tables, ${visibleToolCount} agent-visible product tools, ${totalTasks} admitted tasks,
   ${totalDocs} seeded matter documents. Every score comes from deterministic VCode verifiers —
   per-assertion verdicts, anti-hack vetoes, no LLM judge — over ${results[0]?.episodesPerTask ?? 3}
   episodes per task.</p>
@@ -389,7 +391,7 @@ const html = `<title>lawfirm-qwen — Legal Agent Leaderboard</title>
     tool failures, 15% ambiguous write-acks, per-session write cap — all deterministic.</p>
     <h3>Protocol</h3>
     <p>Each episode: fresh session (pristine DB copy), the task prompt verbatim, all
-    ${world.tools.length} world tools exposed via MCP, reference-relative turn budget
+    ${visibleToolCount} world tools exposed via MCP, reference-relative turn budget
     (3&times; walk length + 6, min 50). Scoring calls the task's VCode verifier with the full
     rollout trace: structural conditions decide pass/fail; anti-hack conditions (workflow
     shortcuts, fabricated rows, collateral damage) veto reward to 0; tool-success is advisory.

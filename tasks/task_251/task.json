@@ -1,71 +1,77 @@
 {
- "task_id": "task_251",
- "outcome_class": "eligible_action",
- "prompt": "Formation budget: read the state filing checklist in the matter folder in full and record the TOTAL state filing fees for the Delaware incorporation plus the Washington foreign qualification against THIS MATTER by calling legal_matters_amount_history_create with fee_budget set to exactly that total (a number) and changed_by_role exactly \"formation-paralegal\". A withdrawn 2024 chart in the folder states different fees; use the current checklist.",
- "goal": "Formation budget: read the state filing checklist in the matter folder in full and record the TOTAL state filing fees fo",
- "required_tools": [
-  "query_matter_documents",
-  "read_matter_document",
-  "legal_matters_amount_history_create"
- ],
+ "acceptance_label": "pending_calibration",
  "complexity": "high",
+ "difficulty_tier": "high",
+ "effects": [
+  {
+   "op": "insert",
+   "table": "pm_notes"
+  }
+ ],
+ "expansion": {
+  "pack": "lawflow-entity-formation.json",
+  "slug": "lawflow-filing-fee-total"
+ },
+ "expected_state_changes": [
+  {
+   "field": "(new row)",
+   "id": "(new product row)",
+   "note": ">=1 rows with pinned fields",
+   "table": "pm_notes"
+  }
+ ],
+ "goal": "Formation budget: read the state filing checklist in the matter folder in full and record the TOTAL state filing fees fo",
  "method": "eval_anchored_expansion",
+ "outcome_class": "eligible_action",
+ "prompt": "Formation budget: read the state filing checklist in the matter folder in full and record the TOTAL state filing fees for the Delaware incorporation plus the Washington foreign qualification against THIS MATTER by calling notes_create with fee_budget set to exactly that total (a number) and changed_by_role exactly \"formation-paralegal\". A withdrawn 2024 chart in the folder states different fees; use the current checklist.\n\nSYSTEM MIGRATION — WORLD V16\n- Matter documents now live in MatterVault DMS: search with documents_search_fulltext(query), read full text with documents_download(id), and file deliverables with documents_create using workspace_id=1, folder_id=1, name for the requested filename, doc_class for the requested document type, author=\"agent@simulated-firm.example\", and the complete deliverable in body.\n- A legacy legal_matters_amount_history record is now filed through notes_create: use matter_id=100147, author_user_id=1, subject exactly 'legal_matters_amount_history', and detail as a JSON object containing every legacy field named in the instruction.",
+ "provenance": {
+  "source_workflow": "lawflow: lawflow-entity-formation/lawflow-filing-fee-total",
+  "surface_migration": {
+   "compiler": "world/migrate/gen1_to_v16.py",
+   "from": "Gen-1 synthesized tools",
+   "to": "v3 product contracts"
+  }
+ },
+ "reference_args": [
+  {
+   "query": "Formation pack — State filing checklist: Delaware and Washin"
+  },
+  {
+   "id": 100241
+  },
+  {
+   "author_user_id": 1,
+   "detail": "{\"change_reason\":\"Delaware Certificate of Incorporation $89 + Washington foreign registration $180 = $269.\",\"changed_by_role\":\"formation-paralegal\",\"fee_budget\":269,\"legal_matters_id\":\"legal_matters_001\"}",
+   "matter_id": 100147,
+   "subject": "legal_matters_amount_history"
+  }
+ ],
+ "relevant_data": [
+  {
+   "field": "name",
+   "id": 100241,
+   "table": "dm_documents",
+   "value": "Formation pack — State filing checklist: Delaware and Washington"
+  }
+ ],
+ "required_tools": [
+  "documents_search_fulltext",
+  "documents_download",
+  "notes_create"
+ ],
  "steps": [
   "Locate the input documents for this engagement in the matter folder",
   "Read every required input document in full",
   "Derive the graded determinations strictly from the documents",
   "Record the determinations with the required write tools"
  ],
- "relevant_data": [
-  {
-   "table": "matter_documents",
-   "id": 236,
-   "field": "title",
-   "value": "Formation pack — State filing checklist: Delaware and Washington"
-  }
- ],
- "expected_state_changes": [
-  {
-   "table": "legal_matters_amount_history",
-   "field": "(new row)",
-   "note": ">=1 rows with pinned fields"
-  }
- ],
  "tables_affected": [
-  "legal_matters_amount_history"
+  "pm_notes"
  ],
+ "task_id": "task_251",
  "walk": [
-  "query_matter_documents",
-  "read_matter_document",
-  "legal_matters_amount_history_create"
- ],
- "reference_args": [
-  {
-   "title": "Formation pack — State filing checklist: Delaware and Washin"
-  },
-  {
-   "id": 236
-  },
-  {
-   "legal_matters_id": "legal_matters_001",
-   "fee_budget": 269,
-   "changed_by_role": "formation-paralegal",
-   "change_reason": "Delaware Certificate of Incorporation $89 + Washington foreign registration $180 = $269."
-  }
- ],
- "effects": [
-  {
-   "table": "legal_matters_amount_history",
-   "op": "insert"
-  }
- ],
- "provenance": {
-  "source_workflow": "lawflow: lawflow-entity-formation/lawflow-filing-fee-total"
- },
- "difficulty_tier": "high",
- "acceptance_label": "pending_calibration",
- "expansion": {
-  "pack": "lawflow-entity-formation.json",
-  "slug": "lawflow-filing-fee-total"
- }
+  "documents_search_fulltext",
+  "documents_download",
+  "notes_create"
+ ]
 }

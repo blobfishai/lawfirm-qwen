@@ -1,0 +1,44 @@
+name: CourtListener live differential
+
+on:
+  schedule:
+    - cron: "23 8 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: courtlistener-conformance-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pinned-live-diff:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out benchmark
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Check out pinned CourtListener source
+        run: |
+          git clone --filter=blob:none https://github.com/freelawproject/courtlistener.git \
+            research/repos/freelawproject@courtlistener
+          git -C research/repos/freelawproject@courtlistener checkout \
+            f7f45696fca033a83fabace3ebd880916aa36ec2
+
+      - name: Configure Docker Buildx
+        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
+
+      - name: Build pinned official image with cache
+        uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7.2.0
+        with:
+          context: research/repos/freelawproject@courtlistener
+          file: research/repos/freelawproject@courtlistener/docker/django/Dockerfile
+          load: true
+          tags: legal-sim-courtlistener:f7f4569
+          cache-from: type=gha,scope=courtlistener-f7f4569
+          cache-to: type=gha,mode=max,scope=courtlistener-f7f4569
+
+      - name: Replay all 13 CourtDock contracts
+        run: tools/conformance/run_courtlistener.sh --check

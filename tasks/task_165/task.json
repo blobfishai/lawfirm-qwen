@@ -1,84 +1,87 @@
 {
- "task_id": "task_165",
- "outcome_class": "eligible_action",
- "prompt": "Comparative review, single category: change_of_control. Read the EXECUTED master services agreement between the analytics vendor and the freight client, then the EXECUTED supply agreement between the components supplier and the vehicle manufacturer. Exactly determine which of the two executed agreements contains a change-of-control clause (a termination, consent, or notice right triggered by merger, stock sale, or asset sale of a party). File one evidence record with evidence_type set to change_of_control ONLY for the agreement(s) where the clause is present, using the tracking mapping: the services agreement is matter legal_matters_001 (legal_matters_evidence_create); the supply agreement is litigation case litigation_cases_001 (litigation_cases_evidence_create). File nothing for an agreement whose text expressly excludes change-of-control rights. Rules: query the document store first to identify the correct document(s), read each listed document in full before filing anything, and file exactly one evidence record per clause category that is actually present in the executed text — set evidence_type to the exact category slug, verbatim from the candidate list. Do NOT file a record for any category that is absent from the executed agreement, even if a draft, term sheet, or email mentions it. Use a short quote or section reference of the supporting clause as content_summary, and any reasonable source_uri.",
- "goal": "Change of control is present only in the supply agreement; the MSA expressly states change of control is not an assignment and triggers no rights.",
- "required_tools": [
-  "query_matter_documents",
-  "read_matter_document",
-  "litigation_cases_evidence_create"
- ],
+ "acceptance_label": "pending_calibration",
  "complexity": "medium",
+ "difficulty_tier": "medium",
+ "effects": [
+  {
+   "op": "insert",
+   "table": "pm_notes"
+  }
+ ],
+ "expansion": {
+  "pack": "cuad-clause-extraction.json",
+  "slug": "cuad-cross-contract-change-of-control"
+ },
+ "expected_state_changes": [
+  {
+   "field": "(new row)",
+   "id": "(new product row)",
+   "note": ">=1 rows with pinned fields",
+   "table": "pm_notes"
+  }
+ ],
+ "goal": "Change of control is present only in the supply agreement; the MSA expressly states change of control is not an assignment and triggers no rights.",
  "method": "eval_anchored_expansion",
+ "outcome_class": "eligible_action",
+ "prompt": "Comparative review, single category: change_of_control. Read the EXECUTED master services agreement between the analytics vendor and the freight client, then the EXECUTED supply agreement between the components supplier and the vehicle manufacturer. Exactly determine which of the two executed agreements contains a change-of-control clause (a termination, consent, or notice right triggered by merger, stock sale, or asset sale of a party). File one evidence record with evidence_type set to change_of_control ONLY for the agreement(s) where the clause is present, using the tracking mapping: the services agreement is matter legal_matters_001 (legal_matters_evidence_create); the supply agreement is litigation case litigation_cases_001 (notes_create). File nothing for an agreement whose text expressly excludes change-of-control rights. Rules: query the document store first to identify the correct document(s), read each listed document in full before filing anything, and file exactly one evidence record per clause category that is actually present in the executed text — set evidence_type to the exact category slug, verbatim from the candidate list. Do NOT file a record for any category that is absent from the executed agreement, even if a draft, term sheet, or email mentions it. Use a short quote or section reference of the supporting clause as content_summary, and any reasonable source_uri.\n\nSYSTEM MIGRATION — WORLD V16\n- Matter documents now live in MatterVault DMS: search with documents_search_fulltext(query), read full text with documents_download(id), and file deliverables with documents_create using workspace_id=1, folder_id=1, name for the requested filename, doc_class for the requested document type, author=\"agent@simulated-firm.example\", and the complete deliverable in body.\n- A legacy litigation_cases_evidence_records record is now filed through notes_create: use matter_id=100000, author_user_id=1, subject exactly 'litigation_cases_evidence_records', and detail as a JSON object containing every legacy field named in the instruction.",
+ "provenance": {
+  "source_workflow": "cuad: cuad-clause-extraction/cuad-cross-contract-change-of-control",
+  "surface_migration": {
+   "compiler": "world/migrate/gen1_to_v16.py",
+   "from": "Gen-1 synthesized tools",
+   "to": "v3 product contracts"
+  }
+ },
+ "reference_args": [
+  {
+   "query": "CUAD pack — Master Services Agreement (Meridian Analytics / "
+  },
+  {
+   "id": 100136
+  },
+  {
+   "id": 100138
+  },
+  {
+   "author_user_id": 1,
+   "detail": "{\"content_digest\":\"sha256:reference-digest\",\"content_summary\":\"Section 8 of the supply agreement: Buyer may terminate on written notice within 90 days of Supplier change of control.\",\"evidence_type\":\"change_of_control\",\"litigation_cases_id\":\"litigation_cases_001\",\"owner_role\":\"associate\",\"source_uri\":\"matter://litigation_cases_001/supply-bluewater-argent-execution\",\"status\":\"open\"}",
+   "matter_id": 100000,
+   "subject": "litigation_cases_evidence_records"
+  }
+ ],
+ "relevant_data": [
+  {
+   "field": "name",
+   "id": 100136,
+   "table": "dm_documents",
+   "value": "CUAD pack — Master Services Agreement (Meridian Analytics / Corvus Freight) execution copy"
+  },
+  {
+   "field": "name",
+   "id": 100138,
+   "table": "dm_documents",
+   "value": "CUAD pack — Supply Agreement (Bluewater Components / Argent Motors) execution copy"
+  }
+ ],
+ "required_tools": [
+  "documents_search_fulltext",
+  "documents_download",
+  "notes_create"
+ ],
  "steps": [
   "Locate the input documents for this engagement in the matter folder",
   "Read every required input document in full",
   "Derive the graded determinations strictly from the documents",
   "Record the determinations with the required write tools"
  ],
- "relevant_data": [
-  {
-   "table": "matter_documents",
-   "id": 131,
-   "field": "title",
-   "value": "CUAD pack — Master Services Agreement (Meridian Analytics / Corvus Freight) execution copy"
-  },
-  {
-   "table": "matter_documents",
-   "id": 133,
-   "field": "title",
-   "value": "CUAD pack — Supply Agreement (Bluewater Components / Argent Motors) execution copy"
-  }
- ],
- "expected_state_changes": [
-  {
-   "table": "litigation_cases_evidence_records",
-   "field": "(new row)",
-   "note": ">=1 rows with pinned fields"
-  }
- ],
  "tables_affected": [
-  "litigation_cases_evidence_records"
+  "pm_notes"
  ],
+ "task_id": "task_165",
  "walk": [
-  "query_matter_documents",
-  "read_matter_document",
-  "read_matter_document",
-  "litigation_cases_evidence_create"
- ],
- "reference_args": [
-  {
-   "title": "CUAD pack — Master Services Agreement (Meridian Analytics / "
-  },
-  {
-   "id": 131
-  },
-  {
-   "id": 133
-  },
-  {
-   "litigation_cases_id": "litigation_cases_001",
-   "evidence_type": "change_of_control",
-   "source_uri": "matter://litigation_cases_001/supply-bluewater-argent-execution",
-   "content_summary": "Section 8 of the supply agreement: Buyer may terminate on written notice within 90 days of Supplier change of control.",
-   "content_digest": "sha256:reference-digest",
-   "owner_role": "associate",
-   "status": "open"
-  }
- ],
- "effects": [
-  {
-   "table": "litigation_cases_evidence_records",
-   "op": "insert"
-  }
- ],
- "provenance": {
-  "source_workflow": "cuad: cuad-clause-extraction/cuad-cross-contract-change-of-control"
- },
- "difficulty_tier": "medium",
- "acceptance_label": "pending_calibration",
- "expansion": {
-  "pack": "cuad-clause-extraction.json",
-  "slug": "cuad-cross-contract-change-of-control"
- }
+  "documents_search_fulltext",
+  "documents_download",
+  "documents_download",
+  "notes_create"
+ ]
 }

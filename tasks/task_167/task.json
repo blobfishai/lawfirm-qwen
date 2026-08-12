@@ -1,71 +1,77 @@
 {
- "task_id": "task_167",
- "outcome_class": "eligible_action",
- "prompt": "The lost-profits count in the Meridian v. Corvess matter needs its total claim amount recorded. Query the document index and locate the final executed stipulated damages schedule for the case (ignore any superseded drafts). Read it in full. Compute the total stipulated claim on the lost-profits count: the stipulated lost profits plus simple prejudgment interest at the rate and for the accrual period stated in the schedule. Round to whole dollars. Then record the result on the case's amount history using litigation_cases_amount_history_create for litigation_cases_001, with claimed_amount set to the computed total and changed_by_role set to exactly damages_analyst. Do not record the principal alone; the recorded figure must include the interest.",
- "goal": "Compute lost profits + 6% simple interest over 30 months and record the total claim.",
- "required_tools": [
-  "query_matter_documents",
-  "read_matter_document",
-  "litigation_cases_amount_history_create"
- ],
+ "acceptance_label": "pending_calibration",
  "complexity": "medium",
+ "difficulty_tier": "medium",
+ "effects": [
+  {
+   "op": "insert",
+   "table": "pm_notes"
+  }
+ ],
+ "expansion": {
+  "pack": "damages-computation.json",
+  "slug": "dc-lost-profits-total-claim"
+ },
+ "expected_state_changes": [
+  {
+   "field": "(new row)",
+   "id": "(new product row)",
+   "note": ">=1 rows with pinned fields",
+   "table": "pm_notes"
+  }
+ ],
+ "goal": "Compute lost profits + 6% simple interest over 30 months and record the total claim.",
  "method": "eval_anchored_expansion",
+ "outcome_class": "eligible_action",
+ "prompt": "The lost-profits count in the Meridian v. Corvess matter needs its total claim amount recorded. Query the document index and locate the final executed stipulated damages schedule for the case (ignore any superseded drafts). Read it in full. Compute the total stipulated claim on the lost-profits count: the stipulated lost profits plus simple prejudgment interest at the rate and for the accrual period stated in the schedule. Round to whole dollars. Then record the result on the case's amount history using notes_create for litigation_cases_001, with claimed_amount set to the computed total and changed_by_role set to exactly damages_analyst. Do not record the principal alone; the recorded figure must include the interest.\n\nSYSTEM MIGRATION — WORLD V16\n- Matter documents now live in MatterVault DMS: search with documents_search_fulltext(query), read full text with documents_download(id), and file deliverables with documents_create using workspace_id=1, folder_id=1, name for the requested filename, doc_class for the requested document type, author=\"agent@simulated-firm.example\", and the complete deliverable in body.\n- A legacy litigation_cases_amount_history record is now filed through notes_create: use matter_id=100000, author_user_id=1, subject exactly 'litigation_cases_amount_history', and detail as a JSON object containing every legacy field named in the instruction.",
+ "provenance": {
+  "source_workflow": "taxcalcbench: damages-computation/dc-lost-profits-total-claim",
+  "surface_migration": {
+   "compiler": "world/migrate/gen1_to_v16.py",
+   "from": "Gen-1 synthesized tools",
+   "to": "v3 product contracts"
+  }
+ },
+ "reference_args": [
+  {
+   "query": "damages-computation pack — Stipulated Damages Schedule (Meri"
+  },
+  {
+   "id": 100142
+  },
+  {
+   "author_user_id": 1,
+   "detail": "{\"change_reason\":\"Total stipulated lost-profits claim including prejudgment interest per the final executed damages schedule.\",\"changed_by_role\":\"damages_analyst\",\"claimed_amount\":2116000,\"litigation_cases_id\":\"litigation_cases_001\"}",
+   "matter_id": 100000,
+   "subject": "litigation_cases_amount_history"
+  }
+ ],
+ "relevant_data": [
+  {
+   "field": "name",
+   "id": 100142,
+   "table": "dm_documents",
+   "value": "damages-computation pack — Stipulated Damages Schedule (Meridian Fabrication v. Corvess Industrial) — Final Executed Copy"
+  }
+ ],
+ "required_tools": [
+  "documents_search_fulltext",
+  "documents_download",
+  "notes_create"
+ ],
  "steps": [
   "Locate the input documents for this engagement in the matter folder",
   "Read every required input document in full",
   "Derive the graded determinations strictly from the documents",
   "Record the determinations with the required write tools"
  ],
- "relevant_data": [
-  {
-   "table": "matter_documents",
-   "id": 137,
-   "field": "title",
-   "value": "damages-computation pack — Stipulated Damages Schedule (Meridian Fabrication v. Corvess Industrial) — Final Executed Copy"
-  }
- ],
- "expected_state_changes": [
-  {
-   "table": "litigation_cases_amount_history",
-   "field": "(new row)",
-   "note": ">=1 rows with pinned fields"
-  }
- ],
  "tables_affected": [
-  "litigation_cases_amount_history"
+  "pm_notes"
  ],
+ "task_id": "task_167",
  "walk": [
-  "query_matter_documents",
-  "read_matter_document",
-  "litigation_cases_amount_history_create"
- ],
- "reference_args": [
-  {
-   "title": "damages-computation pack — Stipulated Damages Schedule (Meri"
-  },
-  {
-   "id": 137
-  },
-  {
-   "litigation_cases_id": "litigation_cases_001",
-   "claimed_amount": 2116000,
-   "changed_by_role": "damages_analyst",
-   "change_reason": "Total stipulated lost-profits claim including prejudgment interest per the final executed damages schedule."
-  }
- ],
- "effects": [
-  {
-   "table": "litigation_cases_amount_history",
-   "op": "insert"
-  }
- ],
- "provenance": {
-  "source_workflow": "taxcalcbench: damages-computation/dc-lost-profits-total-claim"
- },
- "difficulty_tier": "medium",
- "acceptance_label": "pending_calibration",
- "expansion": {
-  "pack": "damages-computation.json",
-  "slug": "dc-lost-profits-total-claim"
- }
+  "documents_search_fulltext",
+  "documents_download",
+  "notes_create"
+ ]
 }

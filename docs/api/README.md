@@ -1,74 +1,31 @@
-# Mock services — the seven answers
+# Mock services — canonical product API documentation
 
-## 1–2 · Where are the mock tools, and the full list
+Each product tool maps to a cited vendor operation and executes against
+session-private SQLite. Mapping is not exactness: input, response, pagination,
+encoding, and error conformance are tracked separately in `docs/CONFORMANCE.md`.
+Serve the canonical product-only world with:
 
-All **102 tools** are defined as contracts in `world/blobfish/world-expanded.json`
-(`tools[]`), executed by the synthesizer in `world/local/server.py` (`ToolRuntime.call` dispatch),
-served over MCP by the 8 per-system servers in `mcp/` (`systems.json` is the partition), and
-documented per system in this folder:
+```bash
+python3 world/local/server.py --port 8979 \
+  --world world/blobfish/world-v16.json --v2-contracts mcp/v3/contracts
+```
 
-- [`practice-management`](./practice-management.md) — 16 tools — LexOperis PM (SIMULATED practice-management suite; Clio-class)
-- [`litigation-docketing`](./litigation-docketing.md) — 42 tools — CourtDock (SIMULATED litigation docketing/CMS)
-- [`discovery-platform`](./discovery-platform.md) — 7 tools — DiscoParse (SIMULATED e-discovery platform; Relativity-class)
-- [`billing`](./billing.md) — 9 tools — LedgerBill (SIMULATED legal billing/e-billing)
-- [`dms`](./dms.md) — 4 tools — MatterVault DMS (SIMULATED document management; iManage-class)
-- [`office-suite`](./office-suite.md) — 7 tools — Fieldstone Workspace (SIMULATED office suite)
-- [`hr-directory`](./hr-directory.md) — 9 tools — StaffDesk (SIMULATED HR / staffing directory)
-- [`knowledge-assistant`](./knowledge-assistant.md) — 8 tools — Cortex Notes (SIMULATED knowledge/memory assistant)
-
-## 3 · The tools' API
-
-Each per-system page documents every tool: description, parameter table (types + required),
-input/output format, example call, SQL backing, executor family, and anchoring. The MCP
-schema exposed to agents is generated from the same contracts (`server.py` tools/list).
-
-## 4 · The real MCP servers found in research
-
-The generation-time research corpus contains **4 real MCP servers** (with real tool schemas
-captured for some): `gbrussich52/legalaimcp`, `mcp-dir/astrea-mcp`, `offshoreproz/agent-company`
-(all on smithery.ai) — legal-AI *directory/marketplace* servers, not practice-management
-products. **None of their tools were mocked.** The fourth 'server' anchor is blobfish's own
-`law_firm_core` Service Forge archetype (internal).
-
-## 5 · Mock API documentation
-
-This folder — generated from the live contracts by `node world/expansion/mock-api-report.mjs`.
-
-## 6 · How much of the REAL services are we mocking (the honest number)
-
-**At API-shape level: effectively 0%.** The tools mirror blobfish's internal `law_firm_core`
-archetype (74 tool schemas + 60 entity schemas in the anchor corpus, all `blobfish://` URIs),
-not any vendor's API. Anchoring tiers across the 102 tools:
-
-- external-research-anchored: **8** (and those anchors are directory servers, not the mocked product)
-- internal forge-catalog-anchored: **72**
-- unanchored (execution-tested only): **22**
-
-Conceptual overlap with real products is the generic CRUD/query subset. What real APIs have
-that the mocks do not: vendor object models and field names, auth/scopes, pagination cursors,
-search DSLs (SOQL/dtSearch), webhooks, bulk endpoints, rate-limit semantics beyond our seeded
-friction, file/binary handling. Approximate scale comparison:
-
-| System | Real product (reference) | Real API surface (approx.) | Our mock tools |
+| Product | Dialect | Tools | Real API mirrored |
 |---|---|---|---|
-| practice-management | Clio (real API v4) | ~200+ REST endpoints (matters, contacts, activities, bills, calendars, documents, trust, webhooks) | 16 |
-| litigation-docketing | CourtAlert / CalendarRules-class | rules engines: thousands of court rules, trigger APIs, recalcs | 42 |
-| discovery-platform | Relativity (real API) | hundreds of endpoints (workspaces, documents, productions, imaging, dtSearch) | 7 |
-| billing | LEDES/e-billing platforms | invoice submission, UTBMS validation, appeals workflows | 9 |
-| dms | iManage Work API | ~100+ endpoints (documents, versions, workspaces, security, search) | 4 |
-| office-suite | Google Workspace APIs | Docs/Sheets/Drive/Calendar: hundreds of methods | 7 |
-| hr-directory | HRIS APIs (BambooHR-class) | dozens of endpoints | 9 |
-| knowledge-assistant | KM platforms | varies | 8 |
+| [deadline-rules-v3](./v3-deadlines.md) | `calendar_rules` | 1 | https://www.uscourts.gov/forms-rules/current-rules-practice-procedure/federal-rules-civil-procedure |
+| [dms-v3](./v3-dms.md) | `imanage` | 12 | https://docs.imanage.com/work-api/ |
+| [docket-records-v3](./v3-docket-records.md) | `courtlistener` | 13 | https://www.courtlistener.com/help/api/rest/ |
+| [ebilling-v3](./v3-ebilling.md) | `ledes` | 2 | https://ledes.org/ledes-98b-format/ |
+| [ediscovery-v3](./v3-ediscovery.md) | `relativity` | 12 | https://platform.relativity.com/ |
+| [courtfile-efiling-v3](./v3-efiling.md) | `cmecf` | 4 | https://pacer.uscourts.gov/file-case/how-file-case ; https://www.ord.uscourts.gov/index.php/filing-and-forms/cm-ecf/user-manual |
+| [sealpoint-esign-v3](./v3-esign.md) | `docusign` | 4 | https://github.com/docusign/OpenAPI-Specifications/blob/master/esignature.rest.swagger-v2.1.json |
+| [practice-management-v3](./v3-practice-management.md) | `clio` | 33 | https://docs.developers.clio.com/api-reference/ |
+| [workspace-v3](./v3-workspace.md) | `google` | 10 | https://developers.google.com/sheets/api \| drive/api \| gmail/api \| calendar/api |
 
-This is exactly the gap the creation workflow closes for the sales world
-(`docs/SALES-WORLD-DESIGN.md` §2: tools mocked 1:1 from each product's MCP/API docs).
+**91 agent-visible tools across 9 products.**
 
-## 7 · SQL backing
+11 internal simulator/migration operations are excluded from MCP discovery and vendor conformance scoring.
 
-**Yes — every tool executes against SQLite.** 74 tables, 1,168 seeded rows; pristine seed at `world/local/state/<world>/seed.db`, one copied DB per episode session,
-task-seed bundles upserted at session creation, verifier snapshots diff the same DB.
-Known deviation from the target architecture: ONE shared substrate rather than one DB per
-product (per-system storage is the sales-world design; see also `docs/DOMAIN-AUDIT.md` for
-the two ERP-template tables in this substrate).
-
-*Generated by `node world/expansion/mock-api-report.mjs` from the world document.*
+Graded by the v3 workflow task pack (`world/expansion/build-v3-tasks.mjs`, 15 tasks) —
+see `docs/MCP-JUSTIFICATION.md` for why each product was chosen and how the mock
+compares to the real API surface.

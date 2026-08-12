@@ -37,8 +37,11 @@ const TASKS = join(ROOT, "tasks");
 rmSync(TASKS, { recursive: true, force: true });
 mkdirSync(TASKS, { recursive: true });
 const verifierByTask = Object.fromEntries(world.verifiers.map((v) => [v.task_id, v]));
-const mdTable = world.tables.find((t) => t.name === "matter_documents");
+const mdTable = world.tables.find((t) => t.name === "dm_documents")
+  ?? world.tables.find((t) => t.name === "matter_documents");
+if (!mdTable) throw new Error("world has no DMS document table");
 const mdById = new Map(mdTable.sample_rows.map((r) => [r.id, r]));
+const docTitle = (row) => row?.name ?? row?.title ?? "untitled-document";
 const slug = (s) => String(s).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60);
 
 for (const t of world.tasks) {
@@ -56,16 +59,17 @@ for (const t of world.tasks) {
   writeFileSync(join(seedDir, "core-data.json"), JSON.stringify(s.core_data, null, 1));
   writeFileSync(join(seedDir, "mcp.json"), JSON.stringify(s.mcp, null, 1));
   writeFileSync(join(seedDir, "input-documents.json"), JSON.stringify(
-    s.input_documents.map((id) => ({ id, title: mdById.get(id)?.title ?? null })), null, 1));
+    s.input_documents.map((id) => ({ id, title: docTitle(mdById.get(id)) })), null, 1));
   for (const id of s.documents) {
     const row = mdById.get(id);
     if (!row) continue;
+    const title = docTitle(row);
     const marker = s.input_documents.includes(id) ? "INPUT (must be read in full)"
-      : /distract|unrelated|superseded/i.test(`${row.title} ${row.doc_type}`) ? "distractor/superseded"
+      : /distract|unrelated|superseded/i.test(`${title} ${row.doc_class ?? row.doc_type}`) ? "distractor/superseded"
       : "cluster material";
-    writeFileSync(join(docsDir, `${String(id).padStart(3, "0")}-${slug(row.title)}.md`),
-      `<!-- matter_documents id ${id} · doc_type: ${row.doc_type} · role: ${marker} -->\n` +
-      `# ${row.title}\n\n${row.body}\n`);
+    writeFileSync(join(docsDir, `${String(id).padStart(3, "0")}-${slug(title)}.md`),
+      `<!-- ${mdTable.name} id ${id} · doc_class: ${row.doc_class ?? row.doc_type} · role: ${marker} -->\n` +
+      `# ${title}\n\n${row.body}\n`);
   }
   counts.tasks++;
 }
@@ -76,7 +80,7 @@ writeFileSync(join(TASKS, "README.md"),
   `\`\`\`\ntasks/task_NNN/\n  task.json                 the task definition (prompt, walk, provenance, labels)\n` +
   `  verifier.py               the shipped VCode verifier, verbatim\n` +
   `  seed/\n    documents/*.md          seeded documents (header marks INPUT vs distractor vs cluster)\n` +
-  `    input-documents.json    the special input documents the task must read in full\n` +
+  `    input-documents.json    the special DMS documents the task must read in full\n` +
   `    core-data.json          special core data: entity rows the task references/mutates\n` +
   `    mcp.json                special MCP seeding: which system server owns which seeded data\n\`\`\`\n\n` +
   `The runtime applies a task's bundle to its session at creation ` +

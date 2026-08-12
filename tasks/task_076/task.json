@@ -1,168 +1,23 @@
 {
- "task_id": "task_076",
- "prompt": "Run the uploaded arbitration international dispute resolution matter workflow for matters record the matter whose title is \"Fairview Group Legal Matters\" and whose status is \"Active\" in Law Firm Company: list legal matters, get legal matters, then create legal matters evidence. Create the required new legal matters evidence records record.",
- "prompt_generation": {
-  "source": "deterministic",
-  "template_family": "graph.researched_workflow@1",
-  "template_key": "arbitration international dispute resolution <entity> workflow|list legal <entity>|get legal <entity>|create legal <entity> evidence",
-  "template_signature": "template:8fe79fd129ab484a"
- },
- "goal": "Complete the uploaded arbitration international dispute resolution matter workflow using the anchored workflow sequence and verified state changes.",
- "required_tools": [],
- "complexity": "high",
- "method": "graph_walk",
- "steps": [
-  "list legal matters",
-  "get legal matters",
-  "create legal matters evidence"
- ],
- "relevant_data": [
-  {
-   "table": "matters",
-   "id": "legal_matters_002",
-   "field": "title",
-   "value": "Fairview Group Legal Matters"
-  }
- ],
- "expected_state_changes": [
-  {
-   "table": "legal_matters_evidence_records",
-   "id": "legal_matters_evidence_110",
-   "field": "(new row)",
-   "from": "9 rows",
-   "to": "10 rows"
-  }
- ],
- "tables_affected": [
-  "legal_matters_evidence_records"
- ],
- "walk": [
+ "_reference_tools": [
   "legal_matters_list",
   "legal_matters_get",
   "operations_records_agent",
   "legal_matters_evidence_create"
  ],
- "effects": [
-  {
-   "table": "legal_matters_evidence_records",
-   "op": "insert"
-  }
- ],
- "difficulty_tier": "hard",
- "sequence_integrity": {
-  "schemaVersion": 1,
-  "passed": true,
-  "pathLength": 4,
-  "uniqueTools": 4,
-  "rules": [
-   "every transition has an evidence-backed edge",
-   "no tool immediately repeats itself, and no tool is used more than 4 times",
-   "terminal actions cannot restart the same entity lifecycle",
-   "the same mutating action cannot repeat on the same entity"
-  ],
-  "transitions": [
-   {
-    "source": "legal_matters_list",
-    "target": "legal_matters_get",
-    "allowed": true,
-    "rule": "lifecycle_compatible",
-    "sourceAction": "list",
-    "targetAction": "get",
-    "sharedEntities": [
-     "matter"
-    ],
-    "stepIndex": 1,
-    "edgeSupported": true
-   },
-   {
-    "source": "legal_matters_get",
-    "target": "operations_records_agent",
-    "allowed": true,
-    "rule": "lifecycle_compatible",
-    "sourceAction": "get",
-    "targetAction": "",
-    "sharedEntities": [],
-    "stepIndex": 2,
-    "edgeSupported": true
-   },
-   {
-    "source": "operations_records_agent",
-    "target": "legal_matters_evidence_create",
-    "allowed": true,
-    "rule": "lifecycle_compatible",
-    "sourceAction": "",
-    "targetAction": "create",
-    "sharedEntities": [],
-    "stepIndex": 3,
-    "edgeSupported": true
-   }
-  ],
-  "issues": []
+ "acceptance_evidence": {
+  "accepted_by": "discrimination_gate",
+  "attempts": 1,
+  "contract_digest": "acceptance_v2_96da9a63260360c00f30b6a19d0a9d6eb66b7d9d913983768f75c6500f5bdb84",
+  "negative_probes_passed": true,
+  "pass_rate": 1,
+  "passes": 1,
+  "protocol": "vcode_discrimination",
+  "reason": "accepted: deterministic reference execution passed; null, shortcut, wrong-row, wrong-value, blind-fallback + incomplete baselines fail",
+  "reference_passed": true,
+  "timed_out": false
  },
- "provenance": {
-  "source_workflow": "harvey_lab: arbitration-international-dispute-resolution matter workflow: list legal matters -> get legal matters -> create legal matters evidence",
-  "evidence_ids": [
-   "anc_f05fb377aefb"
-  ],
-  "tool_graph_path": [
-   "legal_matters_list",
-   "legal_matters_get",
-   "legal_matters_evidence_create"
-  ],
-  "tool_graph_edges": [
-   "legal_matters_list\u0000legal_matters_get",
-   "legal_matters_get\u0000legal_matters_evidence_create"
-  ],
-  "verifier_id": "task_002",
-  "difficulty_reason": "4-step walk, 1 effects",
-  "workflow_binding": {
-   "workflow_name": "harvey_lab: arbitration-international-dispute-resolution matter workflow",
-   "steps": [
-    "list legal matters",
-    "get legal matters",
-    "create legal matters evidence"
-   ],
-   "step_bindings": [
-    {
-     "step": "list legal matters",
-     "tool": "legal_matters_list",
-     "matched_tokens": [
-      "list",
-      "legal",
-      "matter"
-     ]
-    },
-    {
-     "step": "get legal matters",
-     "tool": "legal_matters_get",
-     "matched_tokens": [
-      "get",
-      "legal",
-      "matter"
-     ]
-    },
-    {
-     "step": "create legal matters evidence",
-     "tool": "legal_matters_evidence_create",
-     "matched_tokens": [
-      "create",
-      "legal",
-      "matter",
-      "evidence"
-     ]
-    }
-   ],
-   "passed": true,
-   "reasons": [],
-   "source_steps": [
-    "list legal matters",
-    "get legal matters",
-    "create legal matters evidence"
-   ],
-   "omitted_steps": [],
-   "scope": "full"
-  }
- },
+ "acceptance_label": "too_hard",
  "anchor_refs": [
   "anc_667869153f64",
   "anc_596f2fa3b049",
@@ -191,23 +46,194 @@
   "anc_83d9ca516d96",
   "anc_65410eecdcbf"
  ],
- "_reference_tools": [
-  "legal_matters_list",
-  "legal_matters_get",
-  "operations_records_agent",
-  "legal_matters_evidence_create"
+ "complexity": "high",
+ "difficulty_tier": "hard",
+ "effects": [
+  {
+   "op": "insert",
+   "table": "pm_notes"
+  }
  ],
- "acceptance_evidence": {
-  "protocol": "vcode_discrimination",
-  "attempts": 1,
-  "passes": 1,
-  "pass_rate": 1,
-  "reference_passed": true,
-  "negative_probes_passed": true,
-  "timed_out": false,
-  "accepted_by": "discrimination_gate",
-  "contract_digest": "acceptance_v2_96da9a63260360c00f30b6a19d0a9d6eb66b7d9d913983768f75c6500f5bdb84",
-  "reason": "accepted: deterministic reference execution passed; null, shortcut, wrong-row, wrong-value, blind-fallback + incomplete baselines fail"
+ "expected_state_changes": [
+  {
+   "field": "(new row)",
+   "from": "9 rows",
+   "id": "(new product row)",
+   "table": "pm_notes",
+   "to": "10 rows"
+  }
+ ],
+ "goal": "Complete the uploaded arbitration international dispute resolution matter workflow using the anchored workflow sequence and verified state changes.",
+ "method": "graph_walk",
+ "prompt": "Run the uploaded arbitration international dispute resolution matter workflow for matters record the matter whose title is \"Fairview Group Legal Matters\" and whose status is \"Active\" in Law Firm Company: list legal matters, get legal matters, then create legal matters evidence. Create the required new legal matters evidence records record.\n\nSYSTEM MIGRATION — WORLD V16\n- A legacy legal_matters_evidence_records record is now filed through notes_create: use matter_id=29, author_user_id=1, subject exactly 'legal_matters_evidence_records', and detail as a JSON object containing every legacy field named in the instruction.",
+ "prompt_generation": {
+  "source": "deterministic",
+  "template_family": "graph.researched_workflow@1",
+  "template_key": "arbitration international dispute resolution <entity> workflow|list legal <entity>|get legal <entity>|create legal <entity> evidence",
+  "template_signature": "template:8fe79fd129ab484a"
  },
- "acceptance_label": "too_hard"
+ "provenance": {
+  "difficulty_reason": "4-step walk, 1 effects",
+  "evidence_ids": [
+   "anc_f05fb377aefb"
+  ],
+  "source_workflow": "harvey_lab: arbitration-international-dispute-resolution matter workflow: list legal matters -> get legal matters -> create legal matters evidence",
+  "surface_migration": {
+   "compiler": "world/migrate/gen1_to_v16.py",
+   "from": "Gen-1 synthesized tools",
+   "to": "v3 product contracts"
+  },
+  "tool_graph_edges": [
+   "matters_list\u0000matters_get",
+   "matters_get\u0000notes_create"
+  ],
+  "tool_graph_path": [
+   "matters_list",
+   "matters_get",
+   "notes_create"
+  ],
+  "verifier_id": "task_002",
+  "workflow_binding": {
+   "omitted_steps": [],
+   "passed": true,
+   "reasons": [],
+   "scope": "full",
+   "source_steps": [
+    "list legal matters",
+    "get legal matters",
+    "create legal matters evidence"
+   ],
+   "step_bindings": [
+    {
+     "matched_tokens": [
+      "list",
+      "legal",
+      "matter"
+     ],
+     "step": "list legal matters",
+     "tool": "legal_matters_list"
+    },
+    {
+     "matched_tokens": [
+      "get",
+      "legal",
+      "matter"
+     ],
+     "step": "get legal matters",
+     "tool": "legal_matters_get"
+    },
+    {
+     "matched_tokens": [
+      "create",
+      "legal",
+      "matter",
+      "evidence"
+     ],
+     "step": "create legal matters evidence",
+     "tool": "legal_matters_evidence_create"
+    }
+   ],
+   "steps": [
+    "list legal matters",
+    "get legal matters",
+    "create legal matters evidence"
+   ],
+   "workflow_name": "harvey_lab: arbitration-international-dispute-resolution matter workflow"
+  }
+ },
+ "reference_args": [
+  {},
+  {
+   "id": 100148
+  },
+  {
+   "limit": 20,
+   "query": "Fairview Group Legal Matters"
+  },
+  {
+   "author_user_id": 1,
+   "detail": "{\"content_digest\":\"oracle:content_digest\",\"evidence_type\":\"document\",\"legal_matters_id\":\"1\",\"owner_role\":\"associate\",\"source_uri\":\"matter://oracle/reference\",\"status\":\"oracle:status\"}",
+   "matter_id": 29,
+   "subject": "legal_matters_evidence_records"
+  }
+ ],
+ "relevant_data": [
+  {
+   "field": "title",
+   "id": 100148,
+   "table": "pm_matters",
+   "value": "Fairview Group Legal Matters"
+  }
+ ],
+ "required_tools": [
+  "matters_list",
+  "matters_get",
+  "matters_search",
+  "notes_create"
+ ],
+ "sequence_integrity": {
+  "issues": [],
+  "passed": true,
+  "pathLength": 4,
+  "rules": [
+   "every transition has an evidence-backed edge",
+   "no tool immediately repeats itself, and no tool is used more than 4 times",
+   "terminal actions cannot restart the same entity lifecycle",
+   "the same mutating action cannot repeat on the same entity"
+  ],
+  "schemaVersion": 1,
+  "transitions": [
+   {
+    "allowed": true,
+    "edgeSupported": true,
+    "rule": "lifecycle_compatible",
+    "sharedEntities": [
+     "matter"
+    ],
+    "source": "legal_matters_list",
+    "sourceAction": "list",
+    "stepIndex": 1,
+    "target": "legal_matters_get",
+    "targetAction": "get"
+   },
+   {
+    "allowed": true,
+    "edgeSupported": true,
+    "rule": "lifecycle_compatible",
+    "sharedEntities": [],
+    "source": "legal_matters_get",
+    "sourceAction": "get",
+    "stepIndex": 2,
+    "target": "operations_records_agent",
+    "targetAction": ""
+   },
+   {
+    "allowed": true,
+    "edgeSupported": true,
+    "rule": "lifecycle_compatible",
+    "sharedEntities": [],
+    "source": "operations_records_agent",
+    "sourceAction": "",
+    "stepIndex": 3,
+    "target": "legal_matters_evidence_create",
+    "targetAction": "create"
+   }
+  ],
+  "uniqueTools": 4
+ },
+ "steps": [
+  "list legal matters",
+  "get legal matters",
+  "create legal matters evidence"
+ ],
+ "tables_affected": [
+  "pm_notes"
+ ],
+ "task_id": "task_076",
+ "walk": [
+  "matters_list",
+  "matters_get",
+  "matters_search",
+  "notes_create"
+ ]
 }

@@ -1,49 +1,46 @@
 {
- "task_id": "task_v3_009",
- "outcome_class": "eligible_action",
- "prompt": "Docket monitoring: find the docket for \"Talvern Logistics v. Halcyon Therapeutics\" (search by case name). Before subscribing, inspect the firm's existing docket alerts to learn the exact alert_type vocabulary this system uses — do not invent a value. Then subscribe a new-filing alert on that docket for exactly \"docketing@simulated-firm.example\", using the alert_type value that means a new docket entry.",
+ "acceptance_label": "pending_calibration",
+ "complexity": "medium",
+ "difficulty_tier": "medium",
+ "effects": [
+  {
+   "op": "insert",
+   "table": "cl_docket_alerts"
+  }
+ ],
  "goal": "Docket monitoring: find the docket for \"Talvern Logistics v. Halcyon Therapeutics\" (search by case name). Befo",
+ "method": "v3_workflow",
+ "outcome_class": "eligible_action",
+ "prompt": "Docket monitoring: find the docket for \"Talvern Logistics v. Halcyon Therapeutics\" (search by case name). Before subscribing, inspect the current CourtListener user's existing docket alerts to learn the exact alert_type vocabulary this system uses — do not invent a value. Then subscribe that authenticated user to docket 7 using alert_type 1 (subscription).",
+ "provenance": {
+  "source_workflow": "workflow_research: courtlistener-docket-watch"
+ },
+ "reference_args": [
+  {
+   "q": "Talvern Logistics v. Halcyon"
+  },
+  {},
+  {
+   "alert_type": 1,
+   "docket": 7
+  }
+ ],
  "required_tools": [
   "dockets_search",
   "docket_alerts_list",
   "docket_alerts_create"
  ],
- "complexity": "medium",
- "method": "v3_workflow",
+ "tables_affected": [
+  "cl_docket_alerts"
+ ],
+ "task_id": "task_v3_009",
+ "v3": {
+  "dialect_surface": true,
+  "family": "courtlistener-docket-watch"
+ },
  "walk": [
   "dockets_search",
   "docket_alerts_list",
   "docket_alerts_create"
- ],
- "reference_args": [
-  {
-   "q": "Talvern Logistics v. Halcyon"
-  },
-  {
-   "limit": 20
-  },
-  {
-   "docket": 7,
-   "alert_type": "entry",
-   "recipient": "docketing@simulated-firm.example"
-  }
- ],
- "tables_affected": [
-  "cl_docket_alerts"
- ],
- "effects": [
-  {
-   "table": "cl_docket_alerts",
-   "op": "insert"
-  }
- ],
- "provenance": {
-  "source_workflow": "workflow_research: courtlistener-docket-watch"
- },
- "difficulty_tier": "medium",
- "acceptance_label": "pending_calibration",
- "v3": {
-  "family": "courtlistener-docket-watch",
-  "dialect_surface": true
- }
+ ]
 }

@@ -27,18 +27,23 @@ def main() -> int:
     world = load(V16)
     failures: list[str] = []
     legacy = {tool["name"] for tool in old.get("tools") or []}
+    all_contract_names: list[str] = []
     contract_names: list[str] = []
+    internal_names: list[str] = []
     for path in sorted(CONTRACTS.glob("*.json")):
-        contract_names.extend(
-            tool["name"] for tool in json.loads(path.read_text()).get("tools") or []
-        )
+        for tool in json.loads(path.read_text()).get("tools") or []:
+            all_contract_names.append(tool["name"])
+            if tool.get("agent_visible") is False:
+                internal_names.append(tool["name"])
+            else:
+                contract_names.append(tool["name"])
     routes = json.loads(ROUTES.read_text()).get("systems") or {}
     routed = [name for system in routes.values() for name in system.get("tools") or []]
     walks = [name for task in world.get("tasks") or [] for name in task.get("walk") or []]
 
     if world.get("tools"):
         failures.append(f"canonical world embeds {len(world['tools'])} tool specs")
-    duplicates = sorted(name for name, count in Counter(contract_names).items() if count > 1)
+    duplicates = sorted(name for name, count in Counter(all_contract_names).items() if count > 1)
     if duplicates:
         failures.append(f"contract tool names are not unique: {duplicates[:8]}")
     route_duplicates = sorted(name for name, count in Counter(routed).items() if count > 1)
@@ -53,6 +58,9 @@ def main() -> int:
     unknown_walk = sorted(set(walks) - set(contract_names))
     if unknown_walk:
         failures.append(f"task walks use non-contract tools: {unknown_walk[:8]}")
+    internal_walk = sorted(set(walks) & set(internal_names))
+    if internal_walk:
+        failures.append(f"task walks expose internal operations: {internal_walk[:8]}")
     leaked_walk = sorted(set(walks) & legacy)
     if leaked_walk:
         failures.append(f"task walks retain Gen-1 tools: {leaked_walk[:8]}")
@@ -96,7 +104,8 @@ def main() -> int:
         return 1
     print(
         f"product surface: {len(tasks)} tasks / {len(verifiers)} verifiers; "
-        f"{len(contract_names)} tools routed exactly once; 0 Gen-1/runtime leaks"
+        f"{len(contract_names)} agent tools routed exactly once; "
+        f"{len(internal_names)} internal operations unrouted; 0 Gen-1/runtime leaks"
     )
     return 0
 

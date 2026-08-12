@@ -26,53 +26,14 @@ def verify(initial_state, final_state, trace):
     chk("state_changed", initial_state != final_state,
         "world state changed" if initial_state != final_state else "NO state change")
 
-    _required_workflow_path = ["citation_lookup","citation_lookup","notes_create"]
-    _path_is_write = [False,False,True]
-    # Ordering is graded where it carries meaning: writes in declared order,
-    # and every read before the write it justifies. Reads are unordered among
-    # themselves — the reference walk's browsing order is not a requirement.
-    _pos = {}
-    for _i, _t in enumerate(tools):
-        _pos.setdefault(_t, []).append(_i)
-    _missing_workflow = [t for t in _required_workflow_path if t not in _pos]
-    _wpos = {}
-    if not _missing_workflow:
-        _cursor = -1
-        for _i, _t in enumerate(_required_workflow_path):
-            if not _path_is_write[_i]:
-                continue
-            _nxt = None
-            for _x in _pos[_t]:
-                if _x > _cursor:
-                    _nxt = _x
-                    break
-            if _nxt is None:
-                _missing_workflow.append(_t)
-                break
-            _wpos[_i] = _nxt
-            _cursor = _nxt
-    if not _missing_workflow:
-        _need, _due = {}, {}
-        for _i, _t in enumerate(_required_workflow_path):
-            if _path_is_write[_i]:
-                continue
-            _need[_t] = _need.get(_t, 0) + 1
-            _d = None
-            for _k in range(_i + 1, len(_required_workflow_path)):
-                if _path_is_write[_k] and _k in _wpos:
-                    _d = _wpos[_k]
-                    break
-            if _d is not None:
-                _due[_t] = _d if _t not in _due else min(_due[_t], _d)
-        for _t, _n in _need.items():
-            _d = _due.get(_t)
-            _seen = [_x for _x in _pos.get(_t, []) if _d is None or _x < _d]
-            if len(_seen) < _n:
-                _missing_workflow.append(_t)
-    _workflow_complete = not _missing_workflow
-    chk("required_workflow_path", _workflow_complete,
-        "completed ordered workflow: " + " -> ".join(_required_workflow_path) if _workflow_complete
-        else "INCOMPLETE WORKFLOW: missing ordered checkpoints " + " -> ".join(_missing_workflow))
+    _path = ["citation_lookup","citation_lookup","notes_create"]
+    _cur = 0
+    for _t in tools:
+        if _cur < len(_path) and _t == _path[_cur]:
+            _cur += 1
+    chk("required_workflow_path", _cur == len(_path),
+        "completed: " + " -> ".join(_path) if _cur == len(_path)
+        else "INCOMPLETE: missing " + " -> ".join(_path[_cur:]))
 
     _bi_0 = _ids(initial_state.get("pm_notes", []))
     _af_0 = final_state.get("pm_notes", [])
@@ -81,7 +42,7 @@ def verify(initial_state, final_state, trace):
         f"pm_notes: {len(_bi_0)} -> {len(_af_0)} rows")
     _p0_0 = [r for r in _new_0 if _norm(r.get("subject")) == _norm("CITE CHECK: 1 verified, 1 unresolved")]
     chk("pm_notes_new_row_subject_is_CITE CHECK: 1 verified, 1 unresolved", len(_p0_0) > 0,
-        f"expected new pm_notes row with subject=CITE CHECK: 1 verified, 1 unresolved; saw " + str([_norm(r.get("subject")) for r in _new_0][:6]))
+        f"expected one new pm_notes row matching every declared pin (including subject=CITE CHECK: 1 verified, 1 unresolved); saw " + str([_norm(r.get("subject")) for r in _new_0][:6]))
 
 
     _destroyed = []

@@ -114,9 +114,8 @@
   <div class="eyebrow">lawfirm-qwen · Eve Litigation world (simulated)</div>
   <h1>Legal Agent Leaderboard</h1>
   <p class="sub">Models measured as agents inside an executable law-firm simulation:
-  74 live tables, 102 executable tools, 231 tasks
-  (156 original + 75 eval-anchored expansion),
-  211 seeded matter documents. Every score comes from deterministic VCode verifiers —
+  47 live tables, 91 agent-visible product tools, 291 admitted tasks,
+  432 seeded matter documents. Every score comes from deterministic VCode verifiers —
   per-assertion verdicts, anti-hack vetoes, no LLM judge — over 3
   episodes per task.</p>
   <p class="disclaimer"><strong>Simulation only.</strong> Every matter, client, document, attorney,
@@ -127,8 +126,8 @@
   <div class="stats">
     <div class="stat"><b>3</b><span>models measured</span></div>
     <div class="stat"><b>1,035</b><span>episodes run</span></div>
-    <div class="stat"><b>231</b><span>tasks in world</span></div>
-    <div class="stat"><b>211</b><span>seeded documents</span></div>
+    <div class="stat"><b>291</b><span>tasks in world</span></div>
+    <div class="stat"><b>432</b><span>seeded documents</span></div>
     <div class="stat"><b>21</b><span>boundary-proven flaky tasks</span></div>
     <div class="stat"><b>$170</b><span>total measurement cost</span></div>
   </div>
@@ -175,15 +174,15 @@
   
       <div class="fm-row">
         <div class="fm-head"><span class="dot s0"></span><strong>Grok 4.5</strong>
-          <span class="fm-n">16 failing episodes of 173</span></div>
-        <div class="fm-stack"><div class="seg" style="width:100%" data-mode="off_task_damage" title="Off-task damage: 16 episodes (100% of failures)"></div></div>
+          <span class="fm-n">17 failing episodes of 177</span></div>
+        <div class="fm-stack"><div class="seg" style="width:100%" data-mode="off_task_damage" title="Off-task damage: 17 episodes (100% of failures)"></div></div>
         <div class="fm-legend"><span class="mode-chip" data-mode="off_task_damage">Off-task damage 100%</span></div>
       </div>
       <div class="fm-row">
         <div class="fm-head"><span class="dot s1"></span><strong>DeepSeek V3.2 (chat)</strong>
-          <span class="fm-n">55 failing episodes of 465</span></div>
-        <div class="fm-stack"><div class="seg" style="width:38.18181818181819%" data-mode="workflow_shortcut" title="Workflow shortcut: 21 episodes (38.2% of failures)"></div><div class="seg" style="width:61.81818181818181%" data-mode="off_task_damage" title="Off-task damage: 34 episodes (61.8% of failures)"></div></div>
-        <div class="fm-legend"><span class="mode-chip" data-mode="off_task_damage">Off-task damage 61.8%</span><span class="mode-chip" data-mode="workflow_shortcut">Workflow shortcut 38.2%</span></div>
+          <span class="fm-n">71 failing episodes of 717</span></div>
+        <div class="fm-stack"><div class="seg" style="width:29.577464788732392%" data-mode="workflow_shortcut" title="Workflow shortcut: 21 episodes (29.6% of failures)"></div><div class="seg" style="width:5.633802816901409%" data-mode="wrong_value" title="Wrong graded value: 4 episodes (5.6% of failures)"></div><div class="seg" style="width:8.450704225352112%" data-mode="fabrication" title="Fabricated determination: 6 episodes (8.5% of failures)"></div><div class="seg" style="width:56.33802816901409%" data-mode="off_task_damage" title="Off-task damage: 40 episodes (56.3% of failures)"></div></div>
+        <div class="fm-legend"><span class="mode-chip" data-mode="off_task_damage">Off-task damage 56.3%</span><span class="mode-chip" data-mode="workflow_shortcut">Workflow shortcut 29.6%</span><span class="mode-chip" data-mode="fabrication">Fabricated determination 8.5%</span><span class="mode-chip" data-mode="wrong_value">Wrong graded value 5.6%</span></div>
       </div>
       <div class="fm-row">
         <div class="fm-head"><span class="dot s2"></span><strong>Claude Haiku 4.5</strong>
@@ -374,7 +373,7 @@
   <h2>Methodology</h2>
   <div class="meth">
     <h3>Environment</h3>
-    <p>The world (id <code>sbx_206712ec47f741d3</code>) runs fully locally:
+    <p>The world (id <code>legal-agent-simulation-world-v16</code>) runs fully locally:
     <code>world/local/server.py</code> hydrates the shipped world document into SQLite and serves
     the same session/MCP/verify surface the original hosted runtime exposed. Fidelity is proven by
     a reference-walk oracle: 156/156 original tasks execute and pass their shipped verifiers.
@@ -382,7 +381,7 @@
     tool failures, 15% ambiguous write-acks, per-session write cap — all deterministic.</p>
     <h3>Protocol</h3>
     <p>Each episode: fresh session (pristine DB copy), the task prompt verbatim, all
-    102 world tools exposed via MCP, reference-relative turn budget
+    91 world tools exposed via MCP, reference-relative turn budget
     (3&times; walk length + 6, min 50). Scoring calls the task's VCode verifier with the full
     rollout trace: structural conditions decide pass/fail; anti-hack conditions (workflow
     shortcuts, fabricated rows, collateral damage) veto reward to 0; tool-success is advisory.
@@ -405,6 +404,6 @@
     Adding a model = one entry in <code>config/world.config.json</code> models registry.</p>
   </div>
 
-  <footer>Generated 2026-08-10 20:02 UTC · lawfirm-qwen · world sbx_206712ec47f741d3 v19
+  <footer>Generated 2026-08-12 14:50 UTC · lawfirm-qwen · world legal-agent-simulation-world-v16 v16
   · all data in <code>data/leaderboard/</code></footer>
 </div>

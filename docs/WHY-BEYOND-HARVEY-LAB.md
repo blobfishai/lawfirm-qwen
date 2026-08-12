@@ -65,7 +65,7 @@ memo. Output: antitrust-risk-memo.docx"). The difference is the envelope:
 
 | Property | Harvey LAB | lawfirm-qwen world |
 |---|---|---|
-| Environment | none (files in a sandbox) | 74-table live SQLite law-firm ERP, 1,000+ seeded rows, 102 executable tools |
+| Environment | files in a sandbox | 47-table canonical world, 2,767 seeded rows, 91 agent-visible product tools across nine systems |
 | Input materials | documents in a folder | seeded `matter_documents` rows the agent must *find* (query → read-in-full chain enforced), with distractors, markups, disclosure schedules, superseded instructions |
 | Grading | LLM judge, all-pass | deterministic VCode verifiers: per-assertion verdicts, graded reward, anti-hack vetoes (shortcut/fabrication/collateral-damage), advisory vs structural conditions |
 | Repeatability | judge-dependent | bit-identical re-runs (seeded world, deterministic clock, seeded friction schedule) |

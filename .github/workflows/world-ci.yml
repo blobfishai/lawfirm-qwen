@@ -37,6 +37,9 @@ jobs:
           python3 -m py_compile \
             world/local/server.py \
             world/local/evidence.py \
+            world/local/product_workflows.py \
+            world/local/paging.py \
+            world/local/query_dsl.py \
             world/local/discriminate.py \
             world/migrate/gen1_to_v16.py \
             world/migrate/verifier.py \
@@ -51,6 +54,8 @@ jobs:
             world/v17/ground_existing.py \
             world/v17/practice.py \
             world/v17/verifiers.py \
+            world/v18/build.py \
+            world/v18/verifiers.py \
             tools/check_atomic_seed.py \
             tools/check_lab_ingest.py \
             tools/check_harbor_file_lane.py \
@@ -61,8 +66,13 @@ jobs:
             tools/check_retrieval_grading.py \
             tools/check_practice_import.py \
             tools/check_existing_grounding.py \
+            tools/check_m3_contracts.py \
+            tools/check_pagination.py \
+            tools/check_query_dsl.py \
+            tools/check_auth_errors.py \
             tools/check_product_surface.py \
             tools/conformance/run.py \
+            tools/conformance/check_fixtures.py \
             tools/conformance/sync_specs.py \
             tools/check_discrimination.py \
             tools/check_harbor_result.py
@@ -84,9 +94,14 @@ jobs:
           python3 tools/check_retrieval_grading.py
           python3 tools/check_practice_import.py
           python3 tools/check_existing_grounding.py
+          python3 tools/check_m3_contracts.py
+          python3 tools/check_pagination.py
+          python3 tools/check_query_dsl.py
           python3 -m unittest discover -s world/manifest/tests -v
           python3 -m unittest discover -s world/port/tests -v
+          python3 -m unittest discover -s world/local/tests -v
           python3 tools/conformance/sync_specs.py --check
+          python3 tools/conformance/check_fixtures.py
           python3 tools/conformance/run.py --check
 
       - name: Run deterministic trust chain
@@ -116,6 +131,7 @@ jobs:
           fi
 
           python3 tools/conformance/live.py --base "$BASE" --check
+          python3 tools/check_auth_errors.py --base "$BASE" --world "$WORLD"
           python3 world/local/oracle.py --base "$BASE" --world "$WORLD" \
             --out data/oracle-v16.json
           python3 world/local/discriminate.py --base "$BASE" --world "$WORLD" \

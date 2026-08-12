@@ -27,10 +27,11 @@ const fail = (msg) => { console.error(`FAIL: ${msg}`); process.exit(1); };
 
 const sess = await fetch(`${BASE}/sessions`, { method: "POST", body: "{}", headers: { "Content-Type": "application/json" } }).then((r) => r.json());
 const sessionId = sess.session_id ?? fail("could not create session — is the world server up?");
+const accessToken = sess.access_token ?? fail("session did not issue a bearer token");
 console.log(`session ${sessionId} @ ${BASE}`);
 const upstreamList = await fetch(`${BASE}/mcp`, {
   method: "POST",
-  headers: { "Content-Type": "application/json", "Mcp-Session-Id": sessionId },
+  headers: { "Content-Type": "application/json", "Mcp-Session-Id": sessionId, Authorization: `Bearer ${accessToken}` },
   body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/list", params: {} }),
 }).then((r) => r.json());
 const upstreamNames = new Set((upstreamList.result?.tools ?? []).map((tool) => tool.name));
@@ -41,7 +42,7 @@ let toolCount = 0;
 for (const sysName of Object.keys(systems)) {
   const c = new McpClient("node", ["mcp/serve-system.mjs", "--system", sysName], {
     cwd: ROOT,
-    env: { ...process.env, BLOBFISH_SESSION_ID: sessionId, BLOBFISH_LOCAL_BASE: BASE },
+    env: { ...process.env, BLOBFISH_SESSION_ID: sessionId, BLOBFISH_SESSION_TOKEN: accessToken, BLOBFISH_LOCAL_BASE: BASE },
   });
   await c.start();
   const tools = await c.listTools();
@@ -81,7 +82,7 @@ for (let i = 0; i < vwalk.length; i++) {
 }
 const verdict = await fetch(`${BASE}/verify/${task.task_id}`, {
   method: "POST",
-  headers: { "Content-Type": "application/json", "Mcp-Session-Id": sessionId },
+  headers: { "Content-Type": "application/json", "Mcp-Session-Id": sessionId, Authorization: `Bearer ${accessToken}` },
   body: JSON.stringify({ trace: TRACE }),
 }).then((r) => r.json());
 // the two cross-system sanity reads are extra successful reads before the walk —
@@ -90,6 +91,6 @@ if (verdict.passed !== true) fail(`verifier failed: ${JSON.stringify(verdict.fai
 console.log(`verifier: PASSED (reward ${verdict.reward}) ✓`);
 
 for (const c of Object.values(clients)) c.close();
-await fetch(`${BASE}/sessions/${sessionId}`, { method: "DELETE" }).catch(() => {});
+await fetch(`${BASE}/sessions/${sessionId}`, { method: "DELETE", headers: { Authorization: `Bearer ${accessToken}` } }).catch(() => {});
 console.log("multi-server topology: ALL CHECKS PASSED");
 process.exit(0);

@@ -208,6 +208,7 @@ async function main() {
     const systems = JSON.parse(readFileSync(join(ROOT, "mcp", "systems.json"), "utf8")).systems;
     const sess = await fetch(`${localBase}/sessions`, { method: "POST", body: JSON.stringify({ task_id: taskId }), headers: { "Content-Type": "application/json" } }).then((r) => r.json());
     const sessionId = sess.session_id;
+    const accessToken = sess.access_token;
     const TRACE = [];
     const clients = {};
     const route = {};
@@ -216,7 +217,8 @@ async function main() {
     for (const [sysName, spec] of Object.entries(systems)) {
       const c = new McpClient("node", ["mcp/serve-system.mjs", "--system", sysName], {
         cwd: ROOT,
-        env: { ...process.env, BLOBFISH_SESSION_ID: sessionId, BLOBFISH_LOCAL_BASE: localBase },
+        env: { ...process.env, BLOBFISH_SESSION_ID: sessionId,
+          BLOBFISH_SESSION_TOKEN: accessToken, BLOBFISH_LOCAL_BASE: localBase },
       });
       const init = await c.start();
       instructions.push(`${spec.product}: ${spec.description}`);
@@ -241,13 +243,19 @@ async function main() {
       async verify(tid) {
         const res = await fetch(`${localBase}/verify/${encodeURIComponent(tid)}`, {
           method: "POST",
-          headers: { "Content-Type": "application/json", "Mcp-Session-Id": sessionId },
+          headers: { "Content-Type": "application/json", "Mcp-Session-Id": sessionId,
+            Authorization: `Bearer ${accessToken}` },
           body: JSON.stringify({ trace: TRACE }),
         });
         const data = await res.json().catch(() => null);
         return { ok: res.ok, text: JSON.stringify(data, null, 2), data };
       },
-      close() { for (const c of Object.values(clients)) c.close(); },
+      async close() {
+        for (const c of Object.values(clients)) c.close();
+        await fetch(`${localBase}/sessions/${sessionId}`, {
+          method: "DELETE", headers: { Authorization: `Bearer ${accessToken}` },
+        }).catch(() => {});
+      },
     };
   } else {
     const client = new McpClient(config.mcp.command, config.mcp.args, {
@@ -295,7 +303,7 @@ async function main() {
 
   const v = await mcp.verify(taskId);
   log({ type: "verify", taskId, result: v.text });
-  mcp.close();
+  await mcp.close();
 
   const passed = v.data?.passed === true;
   const costUsd = +((usage.prompt / 1e6) * ENGINE.pricing.inputPerM + (usage.completion / 1e6) * ENGINE.pricing.outputPerM).toFixed(5);

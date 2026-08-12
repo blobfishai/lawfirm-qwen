@@ -24,6 +24,7 @@ Full-text and profile search across documents.
 |---|---|---|---|
 | `anywhere` | string | no | `query` |
 | `limit` | integer | no | same |
+| `offset` | integer | no | same |
 
 **Op:** `search` on `dm_documents`
 
@@ -37,7 +38,7 @@ Fetch a document profile and its text.
 
 | Param (real API name) | Type | Required | Internal field |
 |---|---|---|---|
-| `id` | integer | no | same |
+| `body` | object | no | same |
 
 **Op:** `get` on `dm_documents`
 
@@ -84,11 +85,9 @@ Check a document back in; optionally as a new version.
 
 | Param (real API name) | Type | Required | Internal field |
 |---|---|---|---|
-| `id` | integer | no | same |
-| `checked_out_by` | string | no | same |
-| `latest_version` | integer | no | same |
-| `body` | string | no | same |
-| `edit_date` | string | no | same |
+| `updateOrCreate` | string | no | same |
+| `documentId` | string | no | `id` |
+| `file` | string | no | `body` |
 
 **Op:** `update` on `dm_documents`
 
@@ -117,12 +116,12 @@ File a new document into a folder.
 
 | Param (real API name) | Type | Required | Internal field |
 |---|---|---|---|
-| `folder_id` | integer | yes | same |
-| `workspace_id` | integer | yes | same |
-| `name` | string | yes | same |
-| `doc_class` | string | yes | same |
-| `author` | string | no | same |
-| `body` | string | yes | same |
+| `libraryId` | string | no | same |
+| `folderId` | string | yes | `folder_id` |
+| `inherit_profile_from_folder` | boolean | no | same |
+| `file` | string | yes | `body` |
+| `author` | string | no | `author` |
+| `class` | string | yes | `doc_class` |
 
 **Op:** `create` on `dm_documents`
 
@@ -151,8 +150,7 @@ Search workspaces by name or matter number.
 
 | Param (real API name) | Type | Required | Internal field |
 |---|---|---|---|
-| `name` | string | no | `query` |
-| `limit` | integer | no | same |
+| `body` | object | no | same |
 
 **Op:** `search` on `dm_workspaces`
 
@@ -166,8 +164,7 @@ List folders in a workspace.
 
 | Param (real API name) | Type | Required | Internal field |
 |---|---|---|---|
-| `workspace_id` | integer | no | same |
-| `limit` | integer | no | same |
+| `body` | object | no | same |
 
 **Op:** `list` on `dm_folders`
 
@@ -181,7 +178,7 @@ Download a document: the FULL body text, not the profile preview.
 
 | Param (real API name) | Type | Required | Internal field |
 |---|---|---|---|
-| `id` | integer | no | same |
+| `body` | object | no | same |
 
 **Op:** `get` on `dm_documents`
 
@@ -197,6 +194,7 @@ Full-text search over document bodies and names. Paged; page until has_more is f
 |---|---|---|---|
 | `query` | string | no | same |
 | `limit` | integer | no | same |
+| `offset` | integer | no | same |
 
 **Op:** `search` on `dm_documents`
 

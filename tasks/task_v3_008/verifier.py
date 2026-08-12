@@ -26,59 +26,24 @@ def verify(initial_state, final_state, trace):
     chk("state_changed", initial_state != final_state,
         "world state changed" if initial_state != final_state else "NO state change")
 
-    _required_workflow_path = ["documents_get","documents_checkout","documents_checkin","document_versions_list"]
-    _path_is_write = [False,True,True,False]
-    # Ordering is graded where it carries meaning: writes in declared order,
-    # and every read before the write it justifies. Reads are unordered among
-    # themselves — the reference walk's browsing order is not a requirement.
-    _pos = {}
-    for _i, _t in enumerate(tools):
-        _pos.setdefault(_t, []).append(_i)
-    _missing_workflow = [t for t in _required_workflow_path if t not in _pos]
-    _wpos = {}
-    if not _missing_workflow:
-        _cursor = -1
-        for _i, _t in enumerate(_required_workflow_path):
-            if not _path_is_write[_i]:
-                continue
-            _nxt = None
-            for _x in _pos[_t]:
-                if _x > _cursor:
-                    _nxt = _x
-                    break
-            if _nxt is None:
-                _missing_workflow.append(_t)
-                break
-            _wpos[_i] = _nxt
-            _cursor = _nxt
-    if not _missing_workflow:
-        _need, _due = {}, {}
-        for _i, _t in enumerate(_required_workflow_path):
-            if _path_is_write[_i]:
-                continue
-            _need[_t] = _need.get(_t, 0) + 1
-            _d = None
-            for _k in range(_i + 1, len(_required_workflow_path)):
-                if _path_is_write[_k] and _k in _wpos:
-                    _d = _wpos[_k]
-                    break
-            if _d is not None:
-                _due[_t] = _d if _t not in _due else min(_due[_t], _d)
-        for _t, _n in _need.items():
-            _d = _due.get(_t)
-            _seen = [_x for _x in _pos.get(_t, []) if _d is None or _x < _d]
-            if len(_seen) < _n:
-                _missing_workflow.append(_t)
-    _workflow_complete = not _missing_workflow
-    chk("required_workflow_path", _workflow_complete,
-        "completed ordered workflow: " + " -> ".join(_required_workflow_path) if _workflow_complete
-        else "INCOMPLETE WORKFLOW: missing ordered checkpoints " + " -> ".join(_missing_workflow))
+    _path = ["documents_get","documents_checkout","documents_checkin","document_versions_list"]
+    _cur = 0
+    for _t in tools:
+        if _cur < len(_path) and _t == _path[_cur]:
+            _cur += 1
+    chk("required_workflow_path", _cur == len(_path),
+        "completed: " + " -> ".join(_path) if _cur == len(_path)
+        else "INCOMPLETE: missing " + " -> ".join(_path[_cur:]))
 
 
     _row_u0 = next((r for r in final_state.get("dm_documents", []) if str(r.get("id")) == "5"), None)
     chk("dm_documents_5_latest_version_is_2.0",
         _row_u0 is not None and _norm(_row_u0.get("latest_version")) == _norm("2.0"),
         f"dm_documents[5].latest_version = " + (_norm(_row_u0.get("latest_version")) if _row_u0 else "(row missing)") + ", expected 2.0")
+    _row_u0 = next((r for r in final_state.get("dm_documents", []) if str(r.get("id")) == "5"), None)
+    chk("dm_documents_5_body_is_Settlement Model — revised ass",
+        _row_u0 is not None and _norm(_row_u0.get("body")) == _norm("Settlement Model — revised assumptions per partner comments (v2)."),
+        f"dm_documents[5].body = " + (_norm(_row_u0.get("body")) if _row_u0 else "(row missing)") + ", expected Settlement Model — revised assumptions p")
 
     _destroyed = []
     for _t in set(list(initial_state.keys()) + list(final_state.keys())):

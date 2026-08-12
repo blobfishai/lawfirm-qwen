@@ -1,71 +1,77 @@
 {
- "task_id": "task_314",
- "outcome_class": "eligible_action",
- "prompt": "Assess the limitation defence in the Kestrel Logistics supply dispute. Read the bench memorandum in the matter folder in full and determine the status of the authority the counterparty relies on, then record it by calling legal_matters_review_create against legal_matters_006 with reviewer_role exactly \"litigation-counsel\" and outcome set to exactly one value from the memorandum's determination vocabulary. Apply the memorandum's standing rule on provisions that cannot be retrieved.",
- "goal": "Assess the limitation defence in the Kestrel Logistics supply dispute. Read the bench memorandum in the matter folder in",
- "required_tools": [
-  "query_matter_documents",
-  "read_matter_document",
-  "legal_matters_review_create"
- ],
+ "acceptance_label": "pending_calibration",
  "complexity": "high",
+ "difficulty_tier": "high",
+ "effects": [
+  {
+   "op": "insert",
+   "table": "pm_notes"
+  }
+ ],
+ "expansion": {
+  "pack": "production-gap-disclosure.json",
+  "slug": "unretrieved-authority-disclosure"
+ },
+ "expected_state_changes": [
+  {
+   "field": "(new row)",
+   "id": "(new product row)",
+   "note": ">=1 rows with pinned fields",
+   "table": "pm_notes"
+  }
+ ],
+ "goal": "Assess the limitation defence in the Kestrel Logistics supply dispute. Read the bench memorandum in the matter folder in",
  "method": "eval_anchored_expansion",
+ "outcome_class": "eligible_action",
+ "prompt": "Assess the limitation defence in the Kestrel Logistics supply dispute. Read the bench memorandum in the matter folder in full and determine the status of the authority the counterparty relies on, then record it by calling notes_create against legal_matters_006 with reviewer_role exactly \"litigation-counsel\" and outcome set to exactly one value from the memorandum's determination vocabulary. Apply the memorandum's standing rule on provisions that cannot be retrieved.\n\nSYSTEM MIGRATION — WORLD V16\n- Matter documents now live in MatterVault DMS: search with documents_search_fulltext(query), read full text with documents_download(id), and file deliverables with documents_create using workspace_id=1, folder_id=1, name for the requested filename, doc_class for the requested document type, author=\"agent@simulated-firm.example\", and the complete deliverable in body.\n- A legacy legal_matters_reviews record is now filed through notes_create: use matter_id=100152, author_user_id=1, subject exactly 'legal_matters_reviews', and detail as a JSON object containing every legacy field named in the instruction.",
+ "provenance": {
+  "source_workflow": "workflow_research: production-gap-disclosure/unretrieved-authority-disclosure",
+  "surface_migration": {
+   "compiler": "world/migrate/gen1_to_v16.py",
+   "from": "Gen-1 synthesized tools",
+   "to": "v3 product contracts"
+  }
+ },
+ "reference_args": [
+  {
+   "query": "Bench memo — Kestrel Logistics limitation defence"
+  },
+  {
+   "id": 100335
+  },
+  {
+   "author_user_id": 1,
+   "detail": "{\"legal_matters_id\":\"legal_matters_006\",\"outcome\":\"authority_not_retrieved\",\"rationale\":\"Commercial Code s 2-725(4)(b) is cited by the counterparty but its text is not in the matter folder or the firm's authority library. Under the standing rule the citation is recorded as not retrieved and routed for retrieval rather than described from recollection.\",\"reviewer_role\":\"litigation-counsel\"}",
+   "matter_id": 100152,
+   "subject": "legal_matters_reviews"
+  }
+ ],
+ "relevant_data": [
+  {
+   "field": "name",
+   "id": 100335,
+   "table": "dm_documents",
+   "value": "Bench memo — Kestrel Logistics limitation defence"
+  }
+ ],
+ "required_tools": [
+  "documents_search_fulltext",
+  "documents_download",
+  "notes_create"
+ ],
  "steps": [
   "Locate the input documents for this engagement in the matter folder",
   "Read every required input document in full",
   "Derive the graded determinations strictly from the documents",
   "Record the determinations with the required write tools"
  ],
- "relevant_data": [
-  {
-   "table": "matter_documents",
-   "id": 330,
-   "field": "title",
-   "value": "Bench memo — Kestrel Logistics limitation defence"
-  }
- ],
- "expected_state_changes": [
-  {
-   "table": "legal_matters_reviews",
-   "field": "(new row)",
-   "note": ">=1 rows with pinned fields"
-  }
- ],
  "tables_affected": [
-  "legal_matters_reviews"
+  "pm_notes"
  ],
+ "task_id": "task_314",
  "walk": [
-  "query_matter_documents",
-  "read_matter_document",
-  "legal_matters_review_create"
- ],
- "reference_args": [
-  {
-   "title": "Bench memo — Kestrel Logistics limitation defence"
-  },
-  {
-   "id": 330
-  },
-  {
-   "legal_matters_id": "legal_matters_006",
-   "reviewer_role": "litigation-counsel",
-   "outcome": "authority_not_retrieved",
-   "rationale": "Commercial Code s 2-725(4)(b) is cited by the counterparty but its text is not in the matter folder or the firm's authority library. Under the standing rule the citation is recorded as not retrieved and routed for retrieval rather than described from recollection."
-  }
- ],
- "effects": [
-  {
-   "table": "legal_matters_reviews",
-   "op": "insert"
-  }
- ],
- "provenance": {
-  "source_workflow": "workflow_research: production-gap-disclosure/unretrieved-authority-disclosure"
- },
- "difficulty_tier": "high",
- "acceptance_label": "pending_calibration",
- "expansion": {
-  "pack": "production-gap-disclosure.json",
-  "slug": "unretrieved-authority-disclosure"
- }
+  "documents_search_fulltext",
+  "documents_download",
+  "notes_create"
+ ]
 }
