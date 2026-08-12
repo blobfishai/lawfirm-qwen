@@ -604,3 +604,71 @@ projected remaining spend, and 6,645 missing episode slots. It also reports the 
 turn-ceiling outcomes separately from infrastructure (61 were error-heavy in their last
 ten calls). M7.2 remains open until the same DeepSeek denominator reaches 6,972/6,972;
 switching engines would require a clean restart, never score mixing.
+
+## Bug 23 — the public exit flag did not aggregate every milestone gate (FIXED)
+
+**Symptom:** `data/superset-matrix-v19.json` correctly remained not-ready while
+calibration was incomplete, but its readiness calculation inspected only oracle,
+discrimination, fixture-count, and triage signals. If conformance, one of the three
+new product workflows, the capstone replay, or an ecosystem adapter later regressed
+while those four signals stayed green, the matrix could have declared the whole
+program ready.
+
+**Diagnosis:** M0–M8 had strong individual checkers but no single executable exit
+ledger. The public matrix was therefore a partial aggregate rather than the source of
+truth implied by `program_exit_ready`.
+
+**Fix:** `tools/build_program_exit_audit.py` now derives
+`data/program-exit-v19.json` and `docs/PROGRAM-STATUS.md` from every milestone's
+committed proof. Each check has a proof pointer and verification command;
+`tools/check_program_exit_audit.py` requires exact M0–M8 coverage, rejects missing
+proofs, and reconciles all failed checks with the top-level open-gate list. The
+superset matrix consumes this audit and cannot disagree with it. CI executes all
+upstream checks before rebuilding both aggregates.
+
+**Blast radius:** public readiness and release bookkeeping only. No task, verifier,
+model episode, or score changed. The stronger aggregate reports 8/9 numbered
+milestones green and exactly one external gate: M7.2 calibration.
+
+## Bug 24 — the calibration checkpoint's resume command targeted the wrong server (FIXED)
+
+**Symptom:** the committed checkpoint advertised a resume command without
+`--local-base`. In a clean shell, the runner falls back to
+`config/world.config.json` at port 8971, while the frozen world-v19 calibration
+server and handoff use port 8988. The command was descriptive but not directly
+runnable.
+
+**Diagnosis:** the first calibration process supplied its local base outside the
+command recorded by `tools/build_calibration_checkpoint.py`. That ambient setting was
+not present in `.env` and therefore was not reproducible from the checkpoint alone.
+
+**Fix:** the generated resume command now pins
+`--local-base http://127.0.0.1:8988`. The program-status artifact publishes both the
+matching server command and the exact resume command; its checker rejects a handoff
+that loses the explicit base URL.
+
+**Blast radius:** handoff metadata only. The 327 committed episodes, provider-halt
+proof, measurement protocol, and projected remaining spend are unchanged.
+
+## Program variance 1 — task-driven T1 is 91 tools, not the charter's estimated 150–170 (ACCEPTED)
+
+**Observed variance:** the charter estimated a nine-system end state of roughly
+150–170 tools. The conformance registry and agent surface contain 91 discoverable
+tools, with 11 additional non-discoverable simulator/migration operations.
+
+**Resolution:** the count was a planning estimate, while the same charter makes
+task demand the endpoint-admission rule and explicitly defers T2 endpoints that no
+task uses. The complete 2,324-task bank closes over the 91-tool surface: the full
+v18 oracle proves 2,289 tasks and the v19 M6 oracle proves the 35 additions. Every
+discoverable tool is conformance-registered and there are zero simulator-extension
+gaps. Adding dozens of uncalled endpoints would weaken, not strengthen, that rule.
+
+**Guard:** M2's `task_used_surface_closure` check now fails if the admitted task
+denominator no longer equals the union of the proven v18 and v19 reference walks.
+`PROGRAM-STATUS.md` publishes the variance beside the other denominators so the
+smaller surface cannot be mistaken for the original estimate or for full-product
+API coverage.
+
+**Blast radius:** scope accounting only. No task, endpoint, verifier, or score was
+changed. This does not broaden the fidelity claim: conformance remains per exposed,
+task-used endpoint, and full vendor surfaces remain out of scope.

@@ -4,7 +4,7 @@
 
 Program exit status: **NOT YET READY**.
 
-Open gate(s): M7.2 three-episode calibration sweep is incomplete.
+Open gate(s): M7/three_episode_calibration: 327/6972 valid episodes; 6645 remain.
 
 ## Imported LAB surface
 

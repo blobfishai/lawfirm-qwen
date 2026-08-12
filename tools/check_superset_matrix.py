@@ -16,11 +16,17 @@ DATA = ROOT / "data/superset-matrix-v19.json"
 
 def main() -> int:
     subprocess.run(
+        [sys.executable, str(ROOT / "tools" / "check_program_exit_audit.py")],
+        cwd=ROOT,
+        check=True,
+    )
+    subprocess.run(
         [sys.executable, str(ROOT / "tools/build_superset_matrix.py"), "--check"],
         cwd=ROOT,
         check=True,
     )
     report = json.loads(DATA.read_text())
+    program = json.loads((ROOT / "data" / "program-exit-v19.json").read_text())
     lab = report["lab_import"]
     world = report["world_scope"]
     if len(report["instruments"]) != 8:
@@ -39,6 +45,16 @@ def main() -> int:
         raise AssertionError("prose-quality non-claim disappeared")
     if not report["program_exit_ready"] and not report["program_exit_blockers"]:
         raise AssertionError("an open program gate must name its blocker")
+    if report["program_exit_ready"] != program["program_exit_ready"]:
+        raise AssertionError("public matrix readiness disagrees with the M0-M8 program audit")
+    if report["program_exit_audit"]["status"] != program["status"]:
+        raise AssertionError("public matrix embeds a stale M0-M8 status")
+    expected_blockers = [
+        f"{row['milestone']}/{row['check']}: {row['measure']}"
+        for row in program["open_gates"]
+    ]
+    if report["program_exit_blockers"] != expected_blockers:
+        raise AssertionError("public matrix does not expose every failed M0-M8 gate")
     for item in report["instruments"]:
         for proof in item["proof"]:
             if not (ROOT / proof).exists():

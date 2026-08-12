@@ -14,6 +14,28 @@ CourtListener, iManage, Relativity, LEDES, Google Workspace dialects — see
 failure-mode reports**. Originally generated via [blobfish.ai](https://blobfish.ai/studio);
 now **fully self-hosting** — the entire world runs offline from this repo.
 
+## Current LAB-Superset program status
+
+The complete release candidate is `world/blobfish/world-v19.json`: **2,324
+tasks**, **102 total operations / 91 agent-visible product tools**, nine
+mirrored systems, 2,009/2,010 Harvey LAB tasks hosted, five 50-call capstones,
+and 30 load-bearing multi-turn tasks. The deterministic implementation gates
+M0–M6 and M8 pass. M7 is externally blocked at 327/6,972 reference-model
+episodes because the pinned DeepSeek account has insufficient balance; the
+partial observations are not published as a pass³ result.
+
+The generated [program status](docs/PROGRAM-STATUS.md) maps every M0–M8 gate to
+its proof and exact verification command. `world-v16.json` remains the
+lightweight product-only default until the frozen v19 calibration completes;
+this prevents a release candidate with an unfinished denominator from silently
+becoming the default benchmark.
+
+The charter's `~150–170` tool count was a planning estimate, not an acceptance
+threshold. The admitted, task-driven T1 surface is smaller: all 2,324 task walks
+close over 91 agent-visible tools, plus 11 non-discoverable runtime operations.
+The T2 rule remains in force: endpoints no admitted task exercises are not added
+merely to increase the count.
+
 Three things live here:
 
 1. **The product-only world** — canonical `world-v16.json`: **291 tasks**,

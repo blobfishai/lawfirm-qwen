@@ -26,6 +26,7 @@ FILE_LANE = ROOT / "data/harbor-v17-file-lane-smoke.json"
 MULTISTEP = ROOT / "data/harbor-v19-multistep-smoke.json"
 CANARY = ROOT / "data/leaderboard/canary-proof-v19.json"
 TRIAGE = ROOT / "data/triage/world-v19.json"
+PROGRAM_EXIT = ROOT / "data/program-exit-v19.json"
 MATRIX_OUT = ROOT / "data/superset-matrix-v19.json"
 DOC_OUT = ROOT / "docs/WHY-BEYOND-HARVEY-LAB.md"
 
@@ -50,6 +51,7 @@ def build() -> tuple[dict[str, Any], str]:
     multistep = load(MULTISTEP)
     canary = load(CANARY)
     triage = load(TRIAGE)
+    program_exit = load(PROGRAM_EXIT)
 
     total_tasks = int(world["total_tasks"])
     oracle_total = int(oracle_base["total"]) + int(oracle_m6["total"])
@@ -136,15 +138,13 @@ def build() -> tuple[dict[str, Any], str]:
         },
     ]
 
-    blockers = []
-    if oracle_passed != total_tasks or oracle_total != total_tasks:
-        blockers.append("world-v19 oracle coverage is incomplete")
-    if discrimination_tasks != total_tasks or discrimination_failures or discrimination_errors:
-        blockers.append("world-v19 discrimination coverage is incomplete or broken")
-    if fixture_count != total_tasks:
-        blockers.append("golden verdict fixture coverage is incomplete")
-    if not triage.get("complete"):
-        blockers.append("M7.2 three-episode calibration sweep is incomplete")
+    # Program readiness is owned by the M0-M8 audit, which aggregates every
+    # milestone rather than only the four headline signals used here.  Its
+    # checker runs before this builder in CI and proves the artifact is current.
+    blockers = [
+        f"{row['milestone']}/{row['check']}: {row['measure']}"
+        for row in program_exit["open_gates"]
+    ]
 
     report = {
         "schema": "legal-agent-simulation.lab-superset-matrix.v1",
@@ -155,6 +155,12 @@ def build() -> tuple[dict[str, Any], str]:
         ),
         "program_exit_ready": not blockers,
         "program_exit_blockers": blockers,
+        "program_exit_audit": {
+            "status": program_exit["status"],
+            "milestones_passed": program_exit["milestones_passed"],
+            "milestones_total": program_exit["milestones_total"],
+            "proof": "data/program-exit-v19.json",
+        },
         "lab_import": {
             "source_tasks": source_tasks,
             "hosted_tasks": hosted,

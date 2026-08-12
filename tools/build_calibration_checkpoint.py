@@ -174,6 +174,7 @@ def build() -> dict[str, Any]:
         "resume_command": (
             "node sim/run-leaderboard.mjs --engines deepseek-chat --tasks all --episodes 3 "
             "--concurrency 32 --world-file world/blobfish/world-v19.json "
+            "--local-base http://127.0.0.1:8988 "
             "--label v19-triage --episode-namespace v19-triage --resume --retry-ungraded "
             "--compress-episodes --tool-scope all --max-cost-usd 1500 "
             "--max-episode-cost-usd 5 --canary-every 25"

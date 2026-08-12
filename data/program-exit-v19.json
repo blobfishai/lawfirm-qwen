@@ -1,0 +1,522 @@
+{
+  "denominator_notes": {
+    "calibration": "327/6972 valid single-model episodes under one frozen protocol",
+    "lab_practice_criteria": "65,596/111,814 criteria (58.7%); passes the executable 55% M5 admission floor; the earlier ~60% figure was an estimate, not a hidden pass",
+    "lab_task_hosting": "2,009/2,010 source tasks (99.95%)",
+    "milestone_numbering": "the source plan says eight milestones but enumerates M0 through M8; this audit covers all nine labels",
+    "tool_surface": "the charter's ~150-170 end-state count was a planning estimate, not an acceptance threshold; the shipped task-driven T1 surface is 91 agent-visible tools plus 11 non-discoverable simulator/migration operations. All 2,324 admitted task walks close over that surface, while the plan's own T2 rule forbids adding endpoints no task exercises"
+  },
+  "handoff": {
+    "do_not_mix_engines": true,
+    "resume_command": "node sim/run-leaderboard.mjs --engines deepseek-chat --tasks all --episodes 3 --concurrency 32 --world-file world/blobfish/world-v19.json --local-base http://127.0.0.1:8988 --label v19-triage --episode-namespace v19-triage --resume --retry-ungraded --compress-episodes --tool-scope all --max-cost-usd 1500 --max-episode-cost-usd 5 --canary-every 25",
+    "world_server_command": "python3 world/local/server.py --port 8988 --world world/blobfish/world-v19.json --v2-contracts mcp/v3/contracts"
+  },
+  "local_implementation_complete": true,
+  "milestones": [
+    {
+      "checks": [
+        {
+          "id": "golden_verdict_fixtures",
+          "measure": "2324/2324 current-world task fixture bundles",
+          "passed": true,
+          "proof": [
+            "tools/fixtures/verdicts",
+            "tools/check_fixtures.py"
+          ]
+        },
+        {
+          "id": "gate_the_gates",
+          "measure": "6/6 known-bad tasks represented",
+          "passed": true,
+          "proof": [
+            "tools/badbank/defects.py",
+            "tools/check_gates.py"
+          ]
+        },
+        {
+          "id": "ci_trust_chain",
+          "measure": "CI contains fixtures, badbank, and public-claim gates",
+          "passed": true,
+          "proof": [
+            ".github/workflows/world-ci.yml"
+          ]
+        }
+      ],
+      "checks_passed": 3,
+      "checks_total": 3,
+      "id": "M0",
+      "name": "Safety nets",
+      "passed": true,
+      "status": "passed",
+      "verification_commands": [
+        "python3 tools/check_fixtures.py --base http://127.0.0.1:8988",
+        "python3 tools/check_gates.py --world world/blobfish/world-v16.json --port 8975"
+      ]
+    },
+    {
+      "checks": [
+        {
+          "id": "gen1_retired_after_migration",
+          "measure": "99 Gen-1 tools retired after 276 migrated + 15 native tasks",
+          "passed": true,
+          "proof": [
+            "world/blobfish/world-v16.json",
+            "world/migrate/id-manifest.json"
+          ]
+        },
+        {
+          "id": "v16_oracle",
+          "measure": "291/291 reference walks pass",
+          "passed": true,
+          "proof": [
+            "data/oracle-v16.json"
+          ]
+        },
+        {
+          "id": "v16_discrimination",
+          "measure": "0 broken keys, 0 broken guards, 0 harness errors; 117 content gaps explicitly classified",
+          "passed": true,
+          "proof": [
+            "data/discrimination-v16-classified.json",
+            "docs/DISCRIMINATION-v16.md"
+          ]
+        },
+        {
+          "id": "v16_boundary_remeasurement",
+          "measure": "21/21 boundary tasks remeasured; 5 observed class changes explained",
+          "passed": true,
+          "proof": [
+            "data/migration/v16-boundary-shift.json",
+            "docs/V16-BOUNDARY-SHIFT.md"
+          ]
+        }
+      ],
+      "checks_passed": 4,
+      "checks_total": 4,
+      "id": "M1",
+      "name": "Product-surface migration",
+      "passed": true,
+      "status": "passed",
+      "verification_commands": [
+        "python3 world/migrate/gen1_to_v16.py --check",
+        "python3 tools/check_product_surface.py",
+        "node sim/compare-v16-boundary.mjs"
+      ]
+    },
+    {
+      "checks": [
+        {
+          "id": "conformance_registry",
+          "measure": "91/91 task-used product-contract tools registered; 0 harness/extension gaps",
+          "passed": true,
+          "proof": [
+            "data/conformance.json",
+            "docs/CONFORMANCE.md"
+          ]
+        },
+        {
+          "id": "task_used_surface_closure",
+          "measure": "all 2324 admitted task walks close over the 91 agent-visible tools; no unused endpoints were added to chase the planning estimate",
+          "passed": true,
+          "proof": [
+            "data/oracle-v18.json",
+            "data/oracle-v19-m6.json",
+            "docs/MCP-JUSTIFICATION.md"
+          ]
+        },
+        {
+          "id": "published_schema_conformance",
+          "measure": "53/53 published input schemas and 85/85 publicly verifiable vendor targets pass",
+          "passed": true,
+          "proof": [
+            "data/conformance.json",
+            "tools/conformance/specs/manifest.json"
+          ]
+        },
+        {
+          "id": "wire_and_behavior",
+          "measure": "91/91 success-wire calls and 19/19 vendor behavior fixtures pass",
+          "passed": true,
+          "proof": [
+            "data/conformance-wire.json",
+            "data/conformance-behavior.json"
+          ]
+        },
+        {
+          "id": "courtlistener_live_diff",
+          "measure": "13/13 CourtListener tools pass against pinned live-source serializers",
+          "passed": true,
+          "proof": [
+            "data/conformance-courtlistener.json"
+          ]
+        },
+        {
+          "id": "fidelity_ceiling_disclosed",
+          "measure": "iManage partner-gated ceiling is public",
+          "passed": true,
+          "proof": [
+            "docs/MCP-JUSTIFICATION.md"
+          ]
+        }
+      ],
+      "checks_passed": 6,
+      "checks_total": 6,
+      "id": "M2",
+      "name": "Vendor contract fidelity",
+      "passed": true,
+      "status": "passed",
+      "verification_commands": [
+        "python3 tools/conformance/run.py --check",
+        "python3 tools/conformance/check_fixtures.py",
+        "python3 tools/check_pagination.py",
+        "python3 tools/check_query_dsl.py",
+        "python3 tools/check_auth_errors.py --base http://127.0.0.1:8988 --world world/blobfish/world-v19.json"
+      ]
+    },
+    {
+      "checks": [
+        {
+          "id": "three_product_families",
+          "measure": "5 e-filing + 5 deadline + 5 e-signature tasks admitted",
+          "passed": true,
+          "proof": [
+            "world/v18/build-report.json"
+          ]
+        },
+        {
+          "id": "m3_oracle",
+          "measure": "15/15 new workflow reference walks pass",
+          "passed": true,
+          "proof": [
+            "data/oracle-v18-m3.json"
+          ]
+        },
+        {
+          "id": "m3_discrimination",
+          "measure": "0 broken guards/keys or harness errors; 5 e-filing wrong-value mutations explicitly tool-rejected",
+          "passed": true,
+          "proof": [
+            "data/discrimination-v18-m3.json"
+          ]
+        }
+      ],
+      "checks_passed": 3,
+      "checks_total": 3,
+      "id": "M3",
+      "name": "Court filing, deadline, and e-signature mocks",
+      "passed": true,
+      "status": "passed",
+      "verification_commands": [
+        "python3 tools/check_m3_contracts.py",
+        "python3 tools/check_v18_workflows.py"
+      ]
+    },
+    {
+      "checks": [
+        {
+          "id": "lab_evidence_ingest",
+          "measure": "51,674/51,683 LAB documents text-parsed; 9 failures named, source bytes preserved",
+          "passed": true,
+          "proof": [
+            "world/ingest/lab-ingest-report.json"
+          ]
+        },
+        {
+          "id": "manifest_compiler",
+          "measure": "build-time proposal/validation; grade time is pure code with 0 judge calls",
+          "passed": true,
+          "proof": [
+            "world/port/determinate/lab-report.json",
+            "world/manifest/schema.json"
+          ]
+        },
+        {
+          "id": "graph_walk_grounding",
+          "measure": "110/117 source-grounded text keys + 7 exact-state keys; 0 exceptions",
+          "passed": true,
+          "proof": [
+            "world/v17/build-report.json"
+          ]
+        }
+      ],
+      "checks_passed": 3,
+      "checks_total": 3,
+      "id": "M4",
+      "name": "Evidence and grounded grading",
+      "passed": true,
+      "status": "passed",
+      "verification_commands": [
+        "python3 tools/check_lab_ingest.py",
+        "python3 -m unittest discover -s world/manifest/tests -v",
+        "python3 tools/check_existing_grounding.py"
+      ]
+    },
+    {
+      "checks": [
+        {
+          "id": "lab_task_hosting",
+          "measure": "2,009/2,010 LAB tasks hosted; 1 quarantined with a published reason",
+          "passed": true,
+          "proof": [
+            "world/v17/build-report.json",
+            "docs/PARITY.md"
+          ]
+        },
+        {
+          "id": "determinate_criteria_floor",
+          "measure": "65,596/111,814 criteria (58.7%) clear the executable 55% admission floor; the earlier ~60% was an estimate",
+          "passed": true,
+          "proof": [
+            "world/v17/build-report.json",
+            "docs/LAB-DETERMINIZATION.md"
+          ]
+        },
+        {
+          "id": "v17_oracle_and_discrimination",
+          "measure": "2274/2274 oracle; 0 broken guards/keys",
+          "passed": true,
+          "proof": [
+            "data/oracle-v17.json",
+            "data/discrimination-v17.json"
+          ]
+        },
+        {
+          "id": "file_state_lanes",
+          "measure": "Harbor file/state oracle=1.0 and no-op=0.0",
+          "passed": true,
+          "proof": [
+            "data/harbor-v17-file-lane-smoke.json"
+          ]
+        },
+        {
+          "id": "retrieval_metrics",
+          "measure": "250 firm-knowledge tasks use F-beta with P/R/over-inclusion channels",
+          "passed": true,
+          "proof": [
+            "world/v17/build-report.json",
+            "tools/check_retrieval_grading.py"
+          ]
+        },
+        {
+          "id": "diligence_scale_grading",
+          "measure": "11/11 unique LAB diligence VDRs carry P/R/F-beta/over-inclusion grading (15 executable tasks because one source seeds five migrated tasks)",
+          "passed": true,
+          "proof": [
+            "world/blobfish/world-v17.json",
+            "tools/check_practice_import.py"
+          ]
+        }
+      ],
+      "checks_passed": 6,
+      "checks_total": 6,
+      "id": "M5",
+      "name": "Harvey LAB deterministic import",
+      "passed": true,
+      "status": "passed",
+      "verification_commands": [
+        "python3 tools/check_v17_import.py",
+        "python3 tools/check_lab_extractor_parity.py --check",
+        "python3 tools/check_harbor_file_lane.py",
+        "python3 tools/check_retrieval_grading.py"
+      ]
+    },
+    {
+      "checks": [
+        {
+          "id": "capstone_shape",
+          "measure": "5 capstones, each with a 50-call reference walk",
+          "passed": true,
+          "proof": [
+            "world/v19/build-report.json"
+          ]
+        },
+        {
+          "id": "multi_turn_shape",
+          "measure": "30 multi-turn tasks; 35 load-bearing corrections",
+          "passed": true,
+          "proof": [
+            "world/v19/build-report.json"
+          ]
+        },
+        {
+          "id": "m6_oracle_discrimination",
+          "measure": "35/35 new tasks pass oracle and reject adversarial modes",
+          "passed": true,
+          "proof": [
+            "data/oracle-v19-m6.json",
+            "data/discrimination-v19-m6.json"
+          ]
+        },
+        {
+          "id": "capstone_replay",
+          "measure": "5 capstones pass 3/3 with bit-identical state digests",
+          "passed": true,
+          "proof": [
+            "data/capstone-replay-v19.json"
+          ]
+        },
+        {
+          "id": "superseded_instruction_rejection",
+          "measure": "35/35 pre-correction walks rejected",
+          "passed": true,
+          "proof": [
+            "data/precorrection-v19.json"
+          ]
+        },
+        {
+          "id": "harbor_multistep_smoke",
+          "measure": "Harbor capstone and multi-turn cumulative rewards both equal 1.0",
+          "passed": true,
+          "proof": [
+            "data/harbor-v19-multistep-smoke.json"
+          ]
+        }
+      ],
+      "checks_passed": 6,
+      "checks_total": 6,
+      "id": "M6",
+      "name": "Long-horizon and multi-turn task families",
+      "passed": true,
+      "status": "passed",
+      "verification_commands": [
+        "python3 tools/check_v19_multistep.py",
+        "python3 tools/replay_v19_capstones.py --base http://127.0.0.1:8988 --world world/blobfish/world-v19.json"
+      ]
+    },
+    {
+      "checks": [
+        {
+          "id": "oracle_canary",
+          "measure": "clean canary passes; seeded defect halts before model spend",
+          "passed": true,
+          "proof": [
+            "data/leaderboard/canary-proof-v19.json"
+          ]
+        },
+        {
+          "id": "measurement_protocol",
+          "measure": "10-family fixed-50/all-tools protocol proof accepted",
+          "passed": true,
+          "proof": [
+            "data/leaderboard/protocol-proof/deepseek-chat/v19-all-tools-fixed50-context-v4/manifest.json"
+          ]
+        },
+        {
+          "blocker": {
+            "alternative": "Choose another single reference model and restart all 6,972 episodes; engines cannot be mixed in one denominator.",
+            "kind": "external_provider_billing",
+            "message": "DeepSeek API account reports Insufficient Balance",
+            "proof": "data/leaderboard/provider-halt-proof-v19.json",
+            "proof_sha256": "fe6d7bcb3a4e80eb81a6f1b2e9ba43749f98b5b7ba8507a5e16d5b30bc39128a",
+            "provider_status": 402,
+            "recommended_top_up_usd": 800
+          },
+          "id": "three_episode_calibration",
+          "measure": "327/6972 valid episodes; 6645 remain",
+          "passed": false,
+          "proof": [
+            "data/leaderboard/calibration-checkpoint-v19.json",
+            "data/triage/world-v19.json"
+          ]
+        },
+        {
+          "id": "leaderboard_pipeline",
+          "measure": "leaderboard is derivable for all 2324 tasks and honestly marks 327 partial observations",
+          "passed": true,
+          "proof": [
+            "data/leaderboard/results/deepseek-chat@v19-triage.v2.json",
+            "docs/leaderboard/index.html"
+          ]
+        },
+        {
+          "id": "suspect_audit_pipeline",
+          "measure": "suspect-audit decision boundary is complete with 0 unresolved rows",
+          "passed": true,
+          "proof": [
+            "data/triage/world-v19-suspect-audit.json"
+          ]
+        }
+      ],
+      "checks_passed": 4,
+      "checks_total": 5,
+      "id": "M7",
+      "name": "Calibration, canaries, leaderboard, and public claim",
+      "passed": false,
+      "status": "blocked_external",
+      "verification_commands": [
+        "python3 tools/check_sweep_health.py --proof data/leaderboard/canary-proof-v19.json",
+        "python3 tools/check_measurement_protocol_proof.py",
+        "python3 tools/build_calibration_checkpoint.py",
+        "python3 tools/check_triage_world.py",
+        "python3 tools/check_leaderboard_v2.py",
+        "python3 tools/check_superset_matrix.py"
+      ]
+    },
+    {
+      "checks": [
+        {
+          "id": "skill_census",
+          "measure": "175/175 legal skills pinned; 100 candidates; 0 unsafe auto-admissions",
+          "passed": true,
+          "proof": [
+            "data/ecosystem/skill-census.json",
+            "data/ecosystem/skill-task-candidates.json"
+          ]
+        },
+        {
+          "id": "mcp_schema_diff",
+          "measure": "27 production-MCP tools classified without false exactness; 1 adapter",
+          "passed": true,
+          "proof": [
+            "data/ecosystem/mcp-schema-diff.json",
+            "docs/MCP-SCHEMA-DIFF.md"
+          ]
+        },
+        {
+          "id": "byo_mcp",
+          "measure": "legal-mcp base-URL swap passes with external network disabled",
+          "passed": true,
+          "proof": [
+            "data/ecosystem/byo-mcp-proof.json",
+            "docs/BYO-MCP.md"
+          ]
+        }
+      ],
+      "checks_passed": 3,
+      "checks_total": 3,
+      "id": "M8",
+      "name": "Legal eval, skill, and MCP ecosystem adapters",
+      "passed": true,
+      "status": "passed",
+      "verification_commands": [
+        "python3 world/ecosystem/compile_skills.py --check",
+        "python3 tools/check_skill_task_compiler.py",
+        "python3 world/ecosystem/diff_mcp_schemas.py --check",
+        "python3 tools/check_mcp_schema_diff.py",
+        "python3 tools/check_byo_mcp.py --check-proof"
+      ]
+    }
+  ],
+  "milestones_passed": 8,
+  "milestones_total": 9,
+  "open_gates": [
+    {
+      "blocker": {
+        "alternative": "Choose another single reference model and restart all 6,972 episodes; engines cannot be mixed in one denominator.",
+        "kind": "external_provider_billing",
+        "message": "DeepSeek API account reports Insufficient Balance",
+        "proof": "data/leaderboard/provider-halt-proof-v19.json",
+        "proof_sha256": "fe6d7bcb3a4e80eb81a6f1b2e9ba43749f98b5b7ba8507a5e16d5b30bc39128a",
+        "provider_status": 402,
+        "recommended_top_up_usd": 800
+      },
+      "check": "three_episode_calibration",
+      "measure": "327/6972 valid episodes; 6645 remain",
+      "milestone": "M7"
+    }
+  ],
+  "program_exit_ready": false,
+  "schema": "legal-agent-simulation.program-exit.v1",
+  "status": "blocked_external",
+  "world": "world-v19"
+}
