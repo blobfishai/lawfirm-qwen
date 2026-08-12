@@ -13,7 +13,12 @@ import urllib.request
 
 
 ROOT = Path(__file__).resolve().parents[1]
-WORLD = ROOT / "world" / "blobfish" / "world-v19.json"
+# The canary-proof gate proves HARNESS mechanics (clean canary passes, a
+# seeded defect halts before any model episode). Those mechanics are world-
+# agnostic, and the 76 MB v19 world OOM-kills the server on 7 GB CI runners
+# (three concurrent world loads during the probe). The small frozen v16
+# world proves the same contract everywhere.
+WORLD = ROOT / "world" / "blobfish" / "world-v16.json"
 CONTRACTS = ROOT / "mcp" / "v3" / "contracts"
 sys.path.insert(0, str(ROOT / "world" / "local"))
 from oracle import OracleSession  # noqa: E402
@@ -110,7 +115,7 @@ def main() -> int:
     try:
         process, base = start_server(WORLD)
         try:
-            good_code, good = probe("world/blobfish/world-v19.json", base, good_health_rel)
+            good_code, good = probe("world/blobfish/world-v16.json", base, good_health_rel)
             session = OracleSession(base, task_id="task_003")
             try:
                 rpc_ok, _ = session.call("definitely_not_a_tool", {}, retries=0)
