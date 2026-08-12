@@ -123,6 +123,8 @@ def wrap_output(dialect: str, tool: dict, ok: bool, text: str) -> tuple[bool, st
         return ok, json.dumps({"data": obj})
 
     if dialect == "relativity":
+        if kind == "job_poll":
+            kind = "get"  # async job rows wrap like any Relativity object
         if kind in ("list", "search"):
             objects = [{"ArtifactID": r.get("id"), **{k: v for k, v in r.items() if k != "id"}}
                        for r in rows()]

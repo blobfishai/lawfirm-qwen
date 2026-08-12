@@ -322,6 +322,8 @@ class V2Runtime:
                 return self._update(conn, op, args, name)
             if kind == "aggregate":
                 return self._aggregate(conn, op, args)
+            if kind == "job_poll":
+                return self._job_poll(conn, op, args, name)
             return False, f"ERROR: unsupported op kind '{kind}'"
         except sqlite3.Error as e:
             return False, f"ERROR sqlite: {e}"
@@ -395,6 +397,36 @@ class V2Runtime:
                 (*[f"%{q}%"] * len(op["fields"]), limit))
         rows = self._clip(self._rows(cur), op.get("preview"))
         return True, json.dumps({"query": q, "count": len(rows), "results": rows}, default=str)
+
+    def _job_poll(self, conn, op, args, name):
+        """Async job semantics without a wall clock: state advances one step
+        per poll of THIS session's row (staged -> running -> completed), so
+        an agent that answers before the job finishes is deterministically
+        catchable, and re-runs are bit-identical. Never regresses a row that
+        was seeded further along."""
+        rid = args.get("id")
+        if rid in (None, ""):
+            return False, f"TypeError: {name}() missing 1 required positional argument: 'id'"
+        cur = conn.execute(f'SELECT * FROM "{op["table"]}" WHERE id = ?', (rid,))
+        rows = self._rows(cur)
+        if not rows:
+            return False, f"ERROR 404: no {op['table']} record with id {rid}"
+        row = rows[0]
+        states = op["states"]
+        polls = int(row.get("poll_count") or 0) + 1
+        cur_idx = states.index(row["status"]) if row.get("status") in states else 0
+        new_idx = max(cur_idx, min(polls, len(states) - 1))
+        status = states[new_idx]
+        conn.execute(
+            f'UPDATE "{op["table"]}" SET poll_count = ?, status = ? WHERE id = ?',
+            (polls, status, rid))
+        if status == states[-1]:
+            for f, v in (op.get("on_complete") or {}).items():
+                conn.execute(f'UPDATE "{op["table"]}" SET "{f}" = ? WHERE id = ? '
+                             f'AND ("{f}" IS NULL OR "{f}" = 0)', (v, rid))
+        conn.commit()
+        cur = conn.execute(f'SELECT * FROM "{op["table"]}" WHERE id = ?', (rid,))
+        return True, json.dumps(self._rows(cur)[0], default=str)
 
     def _create(self, conn, op, args, name):
         missing = [p for p in op.get("required", []) if args.get(p) in (None, "")]

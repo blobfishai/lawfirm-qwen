@@ -1,7 +1,7 @@
 {
  "$schema": "lawfirm-qwen.mcp-contract.v3",
  "system": "dms-v3",
- "product": "MatterVault DMS (SIMULATED) — API surface mirrors iManage Work API",
+ "product": "MatterVault DMS (SIMULATED) \u2014 API surface mirrors iManage Work API",
  "provenance": "https://docs.imanage.com/work-api/ (documents, versions, workspaces, folders, search, checkout/checkin)",
  "tables": [
   {
@@ -365,6 +365,40 @@
     "limit": "integer"
    },
    "scenario": "Before filing, the secretary checks which folders the workspace already has."
+  },
+  {
+   "name": "documents_download",
+   "mirrors": "GET /api/v2/customers/{c}/libraries/{l}/documents/{id}/download \u2014 iManage Work document download",
+   "description": "Download a document: the FULL body text, not the profile preview.",
+   "op": {
+    "kind": "get",
+    "table": "dm_documents"
+   },
+   "params": {
+    "id": "integer"
+   },
+   "scenario": "An associate pulls the full executed agreement text before drafting."
+  },
+  {
+   "name": "documents_search_fulltext",
+   "mirrors": "POST /api/v2/customers/{c}/libraries/{l}/documents/search (anyword/fulltext) \u2014 iManage Work search",
+   "description": "Full-text search over document bodies and names. Paged; page until has_more is false.",
+   "op": {
+    "kind": "search",
+    "table": "dm_documents",
+    "fields": [
+     "name",
+     "body"
+    ],
+    "preview": [
+     "body"
+    ]
+   },
+   "params": {
+    "query": "string",
+    "limit": "integer"
+   },
+   "scenario": "Find every document mentioning the escrow release condition."
   }
  ],
  "dialect": "imanage",

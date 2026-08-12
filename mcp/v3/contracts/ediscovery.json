@@ -1,7 +1,7 @@
 {
  "$schema": "lawfirm-qwen.mcp-contract.v3",
  "system": "ediscovery-v3",
- "product": "DiscoParse (SIMULATED) — API surface mirrors Relativity REST (Object Manager + productions)",
+ "product": "DiscoParse (SIMULATED) \u2014 API surface mirrors Relativity REST (Object Manager + productions)",
  "provenance": "https://platform.relativity.com/ (Object Manager query, documents, productions, holds)",
  "tables": [
   {
@@ -125,6 +125,10 @@
     {
      "name": "created_at",
      "type": "TEXT"
+    },
+    {
+     "name": "poll_count",
+     "type": "INTEGER"
     }
    ],
    "seed": {
@@ -358,7 +362,7 @@
   {
    "name": "productions_create",
    "mirrors": "POST production set",
-   "description": "Stage a production set with a Bates prefix.",
+   "description": "Stage a production set with a Bates prefix. Production jobs run ASYNC: poll jobs_get until status is completed before relying on the result.",
    "op": {
     "kind": "create",
     "table": "ed_productions",
@@ -369,7 +373,8 @@
     ],
     "defaults": {
      "status": "staged",
-     "doc_count": 0
+     "doc_count": 0,
+     "poll_count": 0
     }
    },
    "params": {
@@ -463,7 +468,28 @@
     "custodian": "string",
     "issued_at": "string"
    },
-   "scenario": "New complaint filed — counsel issues litigation holds to the five key custodians."
+   "scenario": "New complaint filed \u2014 counsel issues litigation holds to the five key custodians."
+  },
+  {
+   "name": "jobs_get",
+   "mirrors": "GET /Relativity.REST/api/relativity-infrastructure/v1/workspaces/{id}/jobs \u2014 long-running job status (Relativity jobs are asynchronous)",
+   "description": "Poll a production job. Status advances staged -> running -> completed; results are reliable only once completed.",
+   "op": {
+    "kind": "job_poll",
+    "table": "ed_productions",
+    "states": [
+     "staged",
+     "running",
+     "completed"
+    ],
+    "on_complete": {
+     "doc_count": 100
+    }
+   },
+   "params": {
+    "id": "integer"
+   },
+   "scenario": "Lit support polls the Friday production until it completes before serving."
   }
  ],
  "dialect": "relativity",
