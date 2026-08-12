@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import argparse
 import glob
+import gzip
 import json
 import os
 import sys
@@ -106,9 +107,13 @@ def main() -> int:
     ap.add_argument("--verbose", action="store_true")
     args = ap.parse_args()
 
-    paths = sorted(glob.glob(os.path.join(args.fixtures, "*.json")))
+    paths = sorted(glob.glob(os.path.join(args.fixtures, "*.json"))
+                   + glob.glob(os.path.join(args.fixtures, "*.json.gz")))
     if args.tasks:
-        want = {t + ".json" for t in args.tasks.split(",")}
+        want = set()
+        for t in args.tasks.split(","):
+            want.add(t + ".json")
+            want.add(t + ".json.gz")
         paths = [p for p in paths if os.path.basename(p) in want]
     if not paths:
         print("no fixtures found — run tools/record_fixtures.py first",
@@ -118,7 +123,9 @@ def main() -> int:
     n_ep = 0
     failures = []
     for n, path in enumerate(paths, 1):
-        fx = json.load(open(path))
+        opener = gzip.open if path.endswith(".gz") else open
+        with opener(path, "rt") as fh:
+            fx = json.load(fh)
         tid = fx["task_id"]
         for mode, recorded in sorted(fx["episodes"].items()):
             n_ep += 1

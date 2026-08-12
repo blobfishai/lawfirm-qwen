@@ -22,9 +22,11 @@ Run (server must be up with --v2-contracts):
 from __future__ import annotations
 
 import argparse
+import gzip
 import json
 import os
 import sys
+import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
@@ -92,7 +94,14 @@ def main() -> int:
         ROOT, "world", "blobfish", "world-v16.json"))
     ap.add_argument("--out", default=os.path.join(HERE, "fixtures", "verdicts"))
     ap.add_argument("--tasks", default="", help="comma-separated task_id filter")
+    ap.add_argument("--resume", action="store_true",
+                    help="skip tasks whose fixture for THIS world already exists")
+    ap.add_argument("--max-seconds", type=float, default=0,
+                    help="stop cleanly after this budget (chunked runs); 0 = no limit")
+    ap.add_argument("--gzip", action="store_true",
+                    help="write .json.gz fixtures (checker reads both)")
     args = ap.parse_args()
+    t0 = time.monotonic()
 
     raw = json.load(open(args.world))
     world = raw.get("world", raw)
@@ -103,8 +112,31 @@ def main() -> int:
         tasks = [t for t in tasks if t["task_id"] in want]
 
     os.makedirs(args.out, exist_ok=True)
+    world_name = os.path.basename(args.world)
+
+    def fixture_current(tid: str) -> bool:
+        for suffix, opener in ((".json.gz", gzip.open), (".json", open)):
+            p = os.path.join(args.out, f"{tid}{suffix}")
+            if os.path.exists(p):
+                try:
+                    with opener(p, "rt") as f:
+                        return json.load(f).get("world") == world_name
+                except Exception:
+                    return False
+        return False
+
+    if args.resume:
+        before = len(tasks)
+        tasks = [t for t in tasks if not fixture_current(t["task_id"])]
+        print(f"resume: {before - len(tasks)} current, {len(tasks)} to record")
+
     n_bad_oracle = 0
+    recorded = 0
     for n, task in enumerate(tasks, 1):
+        if args.max_seconds and time.monotonic() - t0 > args.max_seconds:
+            print(f"budget reached after {recorded} tasks — resume to continue",
+                  flush=True)
+            break
         tid = task["task_id"]
         v = verifiers.get(tid)
         episodes: dict[str, dict] = {}
@@ -117,16 +149,25 @@ def main() -> int:
             n_bad_oracle += 1
             print(f"  !! {tid}: ORACLE EPISODE DID NOT PASS — fixture suspect",
                   file=sys.stderr)
-        with open(os.path.join(args.out, f"{tid}.json"), "w") as f:
-            # NO sort_keys: argument insertion order must be preserved exactly —
-            # the server echoes rows in merge order, so alphabetizing recorded
-            # args makes replayed observation strings diverge spuriously.
-            json.dump({"task_id": tid, "world": os.path.basename(args.world),
-                       "episodes": episodes}, f, indent=1, default=str)
+        payload = {"task_id": tid, "world": world_name, "episodes": episodes}
+        # NO sort_keys: argument insertion order must be preserved exactly —
+        # the server echoes rows in merge order, so alphabetizing recorded
+        # args makes replayed observation strings diverge spuriously.
+        if args.gzip:
+            # remove a stale plain-json twin so the checker never reads both
+            stale = os.path.join(args.out, f"{tid}.json")
+            if os.path.exists(stale):
+                os.remove(stale)
+            with gzip.open(os.path.join(args.out, f"{tid}.json.gz"), "wt") as f:
+                json.dump(payload, f, indent=1, default=str)
+        else:
+            with open(os.path.join(args.out, f"{tid}.json"), "w") as f:
+                json.dump(payload, f, indent=1, default=str)
+        recorded += 1
         if n % 25 == 0:
             print(f"  [{n}/{len(tasks)}] recorded", flush=True)
 
-    print(f"recorded {len(tasks)} tasks x {len(MODES)} episodes -> {args.out}")
+    print(f"recorded {recorded} tasks x {len(MODES)} episodes -> {args.out}")
     if n_bad_oracle:
         print(f"WARNING: {n_bad_oracle} oracle episodes did not pass", file=sys.stderr)
     return 2 if n_bad_oracle else 0
