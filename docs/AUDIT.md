@@ -487,8 +487,8 @@ most recent tool results verbatim and deterministically compact older results
 to 1,000 characters (six/300 under context pressure), while preserving every
 assistant/tool protocol link and the full immutable episode trace. Episode records can be stored
 as deterministic JSON.GZ with raw/compressed collision checks and byte-identical
-rebuild tests. A post-fix five-call probe passed for $0.06712: 245,290 prompt
-tokens, six turns, and a 138,293-byte three-system schema surface.
+rebuild tests. A final-protocol probe passed for $0.07966: 290,296 prompt
+tokens, seven turns/eight calls, and a 138,293-byte three-system schema surface.
 
 **Blast radius:** the pilot never entered a completed calibration report. Its
 31 records are preserved under
