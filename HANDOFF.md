@@ -13,7 +13,7 @@ picking the work back up.
 | Ported benchmarks | 543 tasks — C&H 250, LegalBench 160, MAUD 92, CUAD 41 (`docs/PARITY.md`, 23.5%) |
 | Generated | 726 tasks over the corpus with **computed** ground truth (`world/blobfish/corpus-wave-tasks.json`) |
 | **Runnable total** | **1,560** |
-| Harbor | `dist/harbor`, regenerate with `python3 world/local/export_harbor.py` |
+| Harbor | **real harbor-framework tasks**: `python3 harbor/generate.py --build-image` → `dist/harbor/tasks/` (291 tasks, validated with `harbor run -a oracle`; see `harbor/README.md`). Legacy blobfish-style bundle: `world/local/export_harbor.py` → `dist/harbor-legacy` |
 
 ## In flight when this was written
 

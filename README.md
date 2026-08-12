@@ -156,6 +156,11 @@ node sim/run-leaderboard.mjs --engines deepseek-chat,claude-haiku-4-5 \
 # 5. Failure-mode reports + the leaderboard page
 node sim/build-failure-report.mjs --all
 node docs/leaderboard/build-page.mjs
+
+# 6. Harbor format (github.com/harbor-framework/harbor) — one Harbor task per
+#    world task, agent/world isolated in separate containers (see harbor/README.md)
+python3 harbor/generate.py --build-image
+uvx harbor run -p "dist/harbor/tasks/task_005" -a oracle   # reward 1.0
 ```
 
 Engines resolve from the `models` registry in `config/world.config.json` —

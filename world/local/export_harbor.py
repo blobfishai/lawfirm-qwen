@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""Harbor package exporter — emits a self-contained Harbor-style bundle from
+"""LEGACY blobfish-style bundle exporter (single task.yaml + tasks.jsonl).
+
+For tasks in the actual harbor-framework format (github.com/harbor-framework/
+harbor: per-task instruction.md / task.toml / environment / tests / solution),
+use harbor/generate.py instead — that is what `harbor run` consumes.
+
+Emits a self-contained Harbor-style bundle from
 the world document, matching the layout blobfish's s09_harbor stage produces
 (README, task.yaml, Dockerfile, environment DB + server, tasks.jsonl,
 integrity manifest) so any Harbor-compatible harness can run this world
@@ -42,7 +48,7 @@ def sha256_file(path: str) -> str:
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--world", default=os.path.join(ROOT, "world", "blobfish", "world-v13.json"))
-    ap.add_argument("--out", default=os.path.join(ROOT, "dist", "harbor"))
+    ap.add_argument("--out", default=os.path.join(ROOT, "dist", "harbor-legacy"))
     args = ap.parse_args()
 
     world = runtime.load_world(args.world)
