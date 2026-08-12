@@ -17,21 +17,35 @@ picking the work back up.
 
 ## In flight when this was written
 
-The C&H measurement is **running again** on the remaining 115 tasks, resumed
-with the commands below. It had reached 135 of the bank's **250** tasks and
-stopped at `fk_173`. Resume is safe at any point — episodes with real tool
-calls are kept and zero-call records are re-run.
+Nothing is running. **The C&H deterministic set is complete: 201/201 on
+deepseek-chat.** Total spend for the final 68 tasks was $59.12.
 
-Note the denominator: `world/blobfish/firm-knowledge-tasks.json` has a
-`taskList` of **250**, not the 201 an earlier revision of this file claimed.
-Count remaining with the snippet in "Things that will bite you" rather than
-trusting a number written here — it drifts.
+The denominator is 201 and always was: the bank's `taskList` holds 250, split
+`deterministic` 201 / `mixed` 42 / `judge_only` 7, and `--grading
+deterministic` selects the 201. A `taskList`-length count says 250 and is
+wrong for this run — count within the grading class, as the snippet in
+"Things that will bite you" now does.
 
-Aggregate over the 135 graded tasks: 30% all-pass, mean recall 0.40, mean
-precision 0.30 (defined on the 85 that returned anything), 813 total
-over-inclusions, 44 tasks exhausting the 40-turn budget. Same shape as the
-pilot — recall decent, precision a third of it — which is the agreement check
-described at the bottom of this file.
+| | |
+|---|---|
+| all-pass | 64/201 (32%) |
+| mean recall | 46.5 |
+| mean precision | 33.1 (defined on the 132 that returned anything) |
+| returned nothing | 69 (34%) |
+| turn-exhausted | 58 (29%) |
+| over-included, total | 1,195 |
+| **saw `has_more`** | **201 (all of them)** |
+| **stopped anyway** | **103 (51%)** |
+
+The last two rows are the result worth carrying. `server.py` answers every
+page with plain language — *"You have NOT seen every match — call again with
+offset=N"* — and the model read that on all 201 tasks and stopped early on
+half of them. That is not a retrieval-quality finding that a recall number can
+express; the harness stated the incompleteness outright and was ignored.
+
+The 42 `mixed` tasks are still unrun and are the obvious next measurement:
+same corpus, same tools, but their criteria are part prose, so they test
+whether the deterministic story survives contact with rubric grading.
 
 ```bash
 python3 world/local/server.py --world world/blobfish/world-v14.json \
@@ -92,20 +106,31 @@ should be grown or dropped.
 
 ## Things that will bite you
 
-- Progress counts in this file go stale. Compute the real one — it counts a
-  task as done only if the episode made tool calls, which is exactly what the
-  runner's resume logic does:
+- Progress counts in this file go stale, and the obvious count is wrong.
+  `taskList` is 250, but a run is scoped by `--grading`, so the denominator is
+  201 for `deterministic` and 42 for `mixed`. Count *within the class you are
+  running*, treating a task as done only when its episode made tool calls —
+  the same rule the runner's resume uses (`run-firm-knowledge.mjs:249-252`):
 
   ```bash
   python3 -c "
   import json, glob
-  ids = [t['task_id'] for t in
-         json.load(open('world/blobfish/firm-knowledge-tasks.json'))['taskList']]
+  CLASS = 'deterministic'   # or 'mixed'
+  ids = {t['task_id'] for t in
+         json.load(open('world/blobfish/firm-knowledge-tasks.json'))['taskList']
+         if t['grading'] == CLASS}
   done = {d['task_id'] for f in glob.glob('data/firm-knowledge/deepseek-chat/fk_*.json')
-          for d in [json.load(open(f))] if d.get('tool_calls', 0) > 0}
-  print(f'{len(done)}/{len(ids)} done, {len([i for i in ids if i not in done])} remaining')"
+          for d in [json.load(open(f))] if d.get('tool_calls', 0) > 0} & ids
+  print(f'{CLASS}: {len(done)}/{len(ids)} done, {len(ids - done)} remaining')"
   ```
 
+- A dropped API connection records as a **graded zero, not an error**. `fk_201`
+  came back `recall 0` with `error: "TypeError: terminated"`, `tool_calls: 0`
+  and empty `usage`; re-run untouched it scores **recall 100 / precision 100**.
+  Nothing in the aggregate distinguishes that from a genuine miss, so the
+  zero-call rule is not hygiene — it is the thing standing between you and
+  defect 11. Never commit a zero-call record, and re-run it before believing
+  any number computed over it.
 - `data/firm-knowledge/<engine>/_summary.json` is **not** a summary of that
   directory. The runner overwrites it with the results of its last invocation
   only, whatever family those were — right now it holds 15 `cw_*` records from
