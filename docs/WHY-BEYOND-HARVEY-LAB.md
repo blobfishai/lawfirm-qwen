@@ -4,7 +4,7 @@
 
 Program exit status: **NOT YET READY**.
 
-Open gate(s): M7/three_episode_calibration: 327/6972 valid episodes; 6645 remain.
+Open gate(s): M7/three_episode_calibration: 856/6972 valid episodes; 6116 remain.
 
 ## Imported LAB surface
 

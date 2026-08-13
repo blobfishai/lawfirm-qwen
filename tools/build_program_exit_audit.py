@@ -125,6 +125,9 @@ def build() -> dict[str, Any]:
         "v19-all-tools-fixed50-context-v4/manifest.json"
     )
     checkpoint = load("data/leaderboard/calibration-checkpoint-v19.json")
+    sweep_health = load(
+        "data/leaderboard/results/deepseek-chat@v19-triage.sweep-health.json"
+    )
     triage = load("data/triage/world-v19.json")
     suspect_audit = load("data/triage/world-v19-suspect-audit.json")
     leaderboard = load("data/leaderboard/results/deepseek-chat@v19-triage.v2.json")
@@ -549,6 +552,24 @@ def build() -> dict[str, Any]:
                     ),
                 ),
                 check(
+                    "production_sweep_health",
+                    sweep_health["classes"].get("graded") == checkpoint["episodes_valid"]
+                    and sweep_health["classes"].get("infra_error", 0) >= 1
+                    and sweep_health["canaries"]["failed"] == 0
+                    and sweep_health["verifierCrashes"] == 0
+                    and "HTTP 402" in str(sweep_health.get("haltedBy") or ""),
+                    (
+                        f"{checkpoint['episodes_valid']} graded records reconcile; "
+                        f"{sweep_health['classes'].get('infra_error', 0)} infrastructure "
+                        "outcomes excluded; 0 canary/verifier failures; "
+                        f"friction={100 * sweep_health['friction']['rate']:.2f}% "
+                        f"(configured {100 * sweep_health['friction']['expectedRate']:.2f}%, "
+                        f"alert={str(sweep_health['friction']['driftAlert']).lower()})"
+                    ),
+                    "data/leaderboard/results/deepseek-chat@v19-triage.sweep-health.json",
+                    "data/leaderboard/calibration-checkpoint-v19.json",
+                ),
+                check(
                     "three_episode_calibration",
                     checkpoint["complete"] is True
                     and checkpoint["episodes_valid"] == checkpoint["episodes_required"] == 6972
@@ -684,6 +705,13 @@ def build() -> dict[str, Any]:
                 f"{checkpoint['episodes_valid']}/{checkpoint['episodes_required']} valid "
                 "single-model episodes under one frozen protocol"
             ),
+            "friction_schedule": (
+                f"world-v19 freezes the legacy deterministic (tool, call-index) schedule; "
+                f"the production sweep observed {100 * sweep_health['friction']['rate']:.2f}% "
+                f"against the configured {100 * sweep_health['friction']['expectedRate']:.2f}% "
+                "and keeps the drift alert public. Changing schedule scope requires a new "
+                "world/protocol namespace, never a mid-denominator runtime edit"
+            ),
         },
         "handoff": {
             "world_server_command": (
@@ -691,6 +719,8 @@ def build() -> dict[str, Any]:
                 "world/blobfish/world-v19.json --v2-contracts mcp/v3/contracts"
             ),
             "resume_command": checkpoint["resume_command"],
+            "episodes_committed": checkpoint["episodes_valid"],
+            "episodes_required": checkpoint["episodes_required"],
             "do_not_mix_engines": True,
         },
     }
@@ -760,7 +790,11 @@ def render(report: dict[str, Any]) -> str:
         report["handoff"]["resume_command"],
         "```",
         "",
-        "Do not mix another engine into the 327 committed DeepSeek episodes. A provider switch requires a fresh 6,972-episode namespace.",
+        (
+            f"Do not mix another engine into the {report['handoff']['episodes_committed']:,} "
+            "committed DeepSeek episodes. A provider switch requires a fresh "
+            f"{report['handoff']['episodes_required']:,}-episode namespace."
+        ),
         "",
         "## Rebuild and verify",
         "",

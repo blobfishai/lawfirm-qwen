@@ -1,6 +1,7 @@
 {
   "denominator_notes": {
-    "calibration": "327/6972 valid single-model episodes under one frozen protocol",
+    "calibration": "856/6972 valid single-model episodes under one frozen protocol",
+    "friction_schedule": "world-v19 freezes the legacy deterministic (tool, call-index) schedule; the production sweep observed 3.58% against the configured 3.00% and keeps the drift alert public. Changing schedule scope requires a new world/protocol namespace, never a mid-denominator runtime edit",
     "lab_practice_criteria": "65,596/111,814 criteria (58.7%); passes the executable 55% M5 admission floor; the earlier ~60% figure was an estimate, not a hidden pass",
     "lab_task_hosting": "2,009/2,010 source tasks (99.95%)",
     "milestone_numbering": "the source plan says eight milestones but enumerates M0 through M8; this audit covers all nine labels",
@@ -8,7 +9,9 @@
   },
   "handoff": {
     "do_not_mix_engines": true,
-    "resume_command": "node sim/run-leaderboard.mjs --engines deepseek-chat --tasks all --episodes 3 --concurrency 32 --world-file world/blobfish/world-v19.json --local-base http://127.0.0.1:8988 --label v19-triage --episode-namespace v19-triage --resume --retry-ungraded --compress-episodes --tool-scope all --max-cost-usd 1500 --max-episode-cost-usd 5 --canary-every 25",
+    "episodes_committed": 856,
+    "episodes_required": 6972,
+    "resume_command": "node sim/run-leaderboard.mjs --engines deepseek-chat --tasks all --episodes 3 --concurrency 32 --world-file world/blobfish/world-v19.json --local-base http://127.0.0.1:8988 --label v19-triage --episode-namespace v19-triage --resume --retry-ungraded --compress-episodes --tool-scope all --max-cost-usd 1500 --max-episode-cost-usd 5 --min-free-disk-mb 1024 --canary-every 25",
     "world_server_command": "python3 world/local/server.py --port 8988 --world world/blobfish/world-v19.json --v2-contracts mcp/v3/contracts"
   },
   "local_implementation_complete": true,
@@ -402,17 +405,27 @@
           ]
         },
         {
+          "id": "production_sweep_health",
+          "measure": "856 graded records reconcile; 32 infrastructure outcomes excluded; 0 canary/verifier failures; friction=3.58% (configured 3.00%, alert=true)",
+          "passed": true,
+          "proof": [
+            "data/leaderboard/results/deepseek-chat@v19-triage.sweep-health.json",
+            "data/leaderboard/calibration-checkpoint-v19.json"
+          ]
+        },
+        {
           "blocker": {
             "alternative": "Choose another single reference model and restart all 6,972 episodes; engines cannot be mixed in one denominator.",
+            "classification_proof": "data/leaderboard/provider-halt-proof-v19.json",
             "kind": "external_provider_billing",
             "message": "DeepSeek API account reports Insufficient Balance",
-            "proof": "data/leaderboard/provider-halt-proof-v19.json",
-            "proof_sha256": "fe6d7bcb3a4e80eb81a6f1b2e9ba43749f98b5b7ba8507a5e16d5b30bc39128a",
+            "proof": "data/leaderboard/results/deepseek-chat@v19-triage.sweep-health.json",
+            "proof_sha256": "8e4da1fe7e13f6f2ec1114eaf8d55d2411c9fdcb7f17e2802ed1512203b274d6",
             "provider_status": 402,
-            "recommended_top_up_usd": 800
+            "recommended_top_up_usd": 1150
           },
           "id": "three_episode_calibration",
-          "measure": "327/6972 valid episodes; 6645 remain",
+          "measure": "856/6972 valid episodes; 6116 remain",
           "passed": false,
           "proof": [
             "data/leaderboard/calibration-checkpoint-v19.json",
@@ -421,7 +434,7 @@
         },
         {
           "id": "leaderboard_pipeline",
-          "measure": "leaderboard is derivable for all 2324 tasks and honestly marks 327 partial observations",
+          "measure": "leaderboard is derivable for all 2324 tasks and honestly marks 856 partial observations",
           "passed": true,
           "proof": [
             "data/leaderboard/results/deepseek-chat@v19-triage.v2.json",
@@ -437,8 +450,8 @@
           ]
         }
       ],
-      "checks_passed": 4,
-      "checks_total": 5,
+      "checks_passed": 5,
+      "checks_total": 6,
       "id": "M7",
       "name": "Calibration, canaries, leaderboard, and public claim",
       "passed": false,
@@ -503,15 +516,16 @@
     {
       "blocker": {
         "alternative": "Choose another single reference model and restart all 6,972 episodes; engines cannot be mixed in one denominator.",
+        "classification_proof": "data/leaderboard/provider-halt-proof-v19.json",
         "kind": "external_provider_billing",
         "message": "DeepSeek API account reports Insufficient Balance",
-        "proof": "data/leaderboard/provider-halt-proof-v19.json",
-        "proof_sha256": "fe6d7bcb3a4e80eb81a6f1b2e9ba43749f98b5b7ba8507a5e16d5b30bc39128a",
+        "proof": "data/leaderboard/results/deepseek-chat@v19-triage.sweep-health.json",
+        "proof_sha256": "8e4da1fe7e13f6f2ec1114eaf8d55d2411c9fdcb7f17e2802ed1512203b274d6",
         "provider_status": 402,
-        "recommended_top_up_usd": 800
+        "recommended_top_up_usd": 1150
       },
       "check": "three_episode_calibration",
-      "measure": "327/6972 valid episodes; 6645 remain",
+      "measure": "856/6972 valid episodes; 6116 remain",
       "milestone": "M7"
     }
   ],

@@ -672,3 +672,45 @@ API coverage.
 **Blast radius:** scope accounting only. No task, endpoint, verifier, or score was
 changed. This does not broaden the fidelity claim: conformance remains per exposed,
 task-used endpoint, and full vendor surfaces remain out of scope.
+
+## Bug 25 — paid sweep could start without enough disk to checkpoint health (FIXED)
+
+**Symptom:** the first funded resume crossed the 327-record cache and then crashed
+with `ENOSPC` while writing `deepseek-chat@v19-triage.sweep-health.json`. The data
+volume had only 179 MiB free. The crash occurred before any new graded episode was
+committed, so the canonical denominator remained exactly 327.
+
+**Diagnosis:** episode writes were atomic and resumable, but the scheduler had no
+storage preflight. A full volume could therefore consume model time before discovering
+that the final health/checkpoint artifact could not be written.
+
+**Fix:** 24+ GiB was recovered by clearing only the re-downloadable `uv` package
+cache; source, LAB evidence, Docker volumes, and episode data were untouched.
+`sim/lib/storage-headroom.mjs` now provides a deterministic storage gate, and every
+paid leaderboard run requires at least 1,024 MiB free before its first model call
+(configurable with `--min-free-disk-mb`). Low storage exits as infrastructure code 6.
+The pure unit gate runs in CI and the exact resume command pins the threshold.
+
+**Blast radius:** no task, verifier, or model score changed. No newly paid episode was
+lost. The subsequent exact resume advanced the same namespace from 327 to 856 valid
+records before the provider's HTTP-402 guard stopped it.
+
+## Audit finding 1 — v19 friction is deterministic but correlated by tool/call index (OPEN CAVEAT)
+
+**Finding:** production sweep health reports 2,207 friction-shaped observations over
+61,586 tool calls: 3.58% versus the configured 3.00%, crossing the 0.5-point alert
+threshold. Canaries and verifiers remained clean; the sweep stopped on HTTP 402, not
+on the advisory drift alert.
+
+**Cause:** the frozen v19 runtime hashes `(seed, tool, call_index)`. Sessions reset the
+call index but do not contribute a deterministic episode key, so agents that repeat a
+tool sequence repeat the same scheduled failures. The configured 3% is a hash
+threshold, not an independently sampled per-call aggregate, and repeated sequences
+can therefore produce a correlated realized rate.
+
+**Disposition:** do not silently change the schedule during the paid v19 denominator;
+that would mix two environments under one protocol id and invalidate all 856 records.
+The production sweep-health artifact and M7 exit ledger keep the alert visible. A
+future schedule-scope change must introduce a deterministic task/episode key, bump the
+world/measurement protocol, and start a fresh namespace. This is a comparability
+caveat, not permission to relabel the partial sweep as complete.

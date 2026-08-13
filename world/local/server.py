@@ -16,7 +16,7 @@ Surface (matches mcp/blobfish-lawfirm-bridge.mjs BLOBFISH_LOCAL=1 mode):
                                  tools/list | tools/call   (session via Mcp-Session-Id)
   POST /verify/{task_id}       — {"trace":[...]} -> VCode verdict for the session
 
-Friction (from world.friction, seeded, deterministic per session+call-index):
+Friction (from world.friction, seeded, deterministic per tool+call-index):
   tool_failure_signature_rate  — injected `rate_limited` / `stale_reference` errors
   ambiguous_ack_rate           — write acks that don't echo the created id
   delegation_write_cap         — hard cap on writes per session

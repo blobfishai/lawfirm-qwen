@@ -20,7 +20,10 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_WORLD = ROOT / "world" / "blobfish" / "world-v19.json"
 DEFAULT_PROTOCOL = "v19-all-tools-fixed50-context-v4"
-PROVIDER_HALT_PROOF = ROOT / "data" / "leaderboard" / "provider-halt-proof-v19.json"
+PROVIDER_HALT_PROOF = (
+    ROOT / "data" / "leaderboard" / "results" /
+    "deepseek-chat@v19-triage.sweep-health.json"
+)
 REFUSAL_RE = re.compile(
     r"\b(cannot assist|can't assist|cannot help with|unable to (help|assist)|"
     r"i (must|have to) (decline|refuse)|against my (guidelines|principles))\b",
@@ -235,9 +238,11 @@ def markdown(report: dict[str, Any]) -> str:
             "",
             "```bash",
             "node sim/run-leaderboard.mjs --engines deepseek-chat --tasks all --episodes 3 \\",
-            "  --world-file world/blobfish/world-v19.json --label v19-triage \\",
+            "  --world-file world/blobfish/world-v19.json --local-base http://127.0.0.1:8988 \\",
+            "  --label v19-triage \\",
             "  --episode-namespace v19-triage --resume --retry-ungraded --compress-episodes \\",
-            "  --concurrency 32 --tool-scope all --max-cost-usd 1500 --max-episode-cost-usd 5 --canary-every 25",
+            "  --concurrency 32 --tool-scope all --max-cost-usd 1500 --max-episode-cost-usd 5 \\",
+            "  --min-free-disk-mb 1024 --canary-every 25",
             "python3 tools/triage_world.py --engine deepseek-chat --namespace v19-triage",
             "```",
             "",

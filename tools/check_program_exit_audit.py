@@ -62,6 +62,8 @@ def main() -> int:
     checkpoint = json.loads(
         (ROOT / "data" / "leaderboard" / "calibration-checkpoint-v19.json").read_text()
     )
+    if report["handoff"]["episodes_committed"] != checkpoint["episodes_valid"]:
+        raise AssertionError("resume handoff has a stale committed-episode denominator")
     calibration = next(
         row for row in by_id["M7"]["checks"] if row["id"] == "three_episode_calibration"
     )
@@ -87,6 +89,8 @@ def main() -> int:
         raise AssertionError("the admitted task bank no longer closes over the tool surface")
     if "--local-base http://127.0.0.1:8988" not in report["handoff"]["resume_command"]:
         raise AssertionError("resume command is not pinned to the preserved world server")
+    if "--min-free-disk-mb 1024" not in report["handoff"]["resume_command"]:
+        raise AssertionError("resume command lost the paid-sweep storage preflight")
 
     print(
         f"program exit audit accepted: {report['milestones_passed']}/"

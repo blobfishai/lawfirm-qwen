@@ -20,7 +20,7 @@ The complete release candidate is `world/blobfish/world-v19.json`: **2,324
 tasks**, **102 total operations / 91 agent-visible product tools**, nine
 mirrored systems, 2,009/2,010 Harvey LAB tasks hosted, five 50-call capstones,
 and 30 load-bearing multi-turn tasks. The deterministic implementation gates
-M0–M6 and M8 pass. M7 is externally blocked at 327/6,972 reference-model
+M0–M6 and M8 pass. M7 is externally blocked at 856/6,972 reference-model
 episodes because the pinned DeepSeek account has insufficient balance; the
 partial observations are not published as a pass³ result.
 

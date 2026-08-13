@@ -34,6 +34,7 @@ import { MEASUREMENT_PROTOCOL } from "./lib/measurement-protocol.mjs";
 import {
   appendDiagnosticTail, classifyInfrastructureFailure,
 } from "./lib/infrastructure-failure.mjs";
+import { readStorageHeadroom } from "./lib/storage-headroom.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const config = JSON.parse(readFileSync(join(ROOT, "config", "world.config.json"), "utf8"));
@@ -51,6 +52,7 @@ const RETRY_UNGRADED = argv.includes("--retry-ungraded"); // replace cached infr
 const COMPRESS_EPISODES = argv.includes("--compress-episodes"); // deterministic .json.gz evidence
 const MAX_COST_USD = Number(opt("--max-cost-usd", "0")); // conservative reported-cost circuit breaker
 const MAX_EPISODE_COST_USD = Number(opt("--max-episode-cost-usd", "0"));
+const MIN_FREE_DISK_MB = Number(opt("--min-free-disk-mb", "1024"));
 const AGG_ONLY = argv.includes("--aggregate-only"); // no API calls: aggregate existing episode files
 const CANARY_PROBE = argv.includes("--canary-probe"); // one oracle check, no model calls
 const HEALTH_OUT = opt("--health-out", null);
@@ -70,8 +72,9 @@ if (!["all", "systems"].includes(TOOL_SCOPE)) {
   console.error("--tool-scope must be all or systems");
   process.exit(1);
 }
-if (![MAX_COST_USD, MAX_EPISODE_COST_USD].every((value) => Number.isFinite(value) && value >= 0)) {
-  console.error("cost limits must be non-negative numbers (0 disables)");
+if (![MAX_COST_USD, MAX_EPISODE_COST_USD, MIN_FREE_DISK_MB]
+  .every((value) => Number.isFinite(value) && value >= 0)) {
+  console.error("cost and disk limits must be non-negative numbers (0 disables)");
   process.exit(1);
 }
 
@@ -133,6 +136,7 @@ function anchor(task) {
 const EP_DIR = join(ROOT, "data", "leaderboard", "episodes");
 const RES_DIR = join(ROOT, "data", "leaderboard", "results");
 mkdirSync(RES_DIR, { recursive: true });
+mkdirSync(EP_DIR, { recursive: true });
 
 function runEpisode(engine, taskId, ep) {
   // A measured migration comparison must never overwrite the historical
@@ -456,6 +460,17 @@ const ids = taskIds();
 if (!ids.length) {
   console.error("task selection is empty");
   process.exit(1);
+}
+if (!AGG_ONLY && !CANARY_PROBE && MIN_FREE_DISK_MB) {
+  const headroom = readStorageHeadroom(EP_DIR, MIN_FREE_DISK_MB);
+  if (!headroom.ok) {
+    console.error(
+      `infrastructure_error: insufficient disk headroom before paid sweep ` +
+      `(${headroom.availableMb.toFixed(1)} MiB available; ` +
+      `${headroom.requiredMb.toFixed(1)} MiB required)`,
+    );
+    process.exit(6);
+  }
 }
 console.log(`Leaderboard '${LABEL}': engines=[${ENGINES.join(", ")}] tasks=${ids.length} (${TASKSET}) x ${EPISODES} episodes`);
 
